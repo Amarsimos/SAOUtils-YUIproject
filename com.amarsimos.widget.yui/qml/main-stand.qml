@@ -21,8 +21,10 @@ T.Widget {
 
     id: widget
 
-    property Component settingsDialog: Qt.createComponent("CoreSettings.qml")
+    property Component coreSettingsDialog: Qt.createComponent("CoreSettings.qml")
     property Component styleSettingsDialog: Qt.createComponent("StyleSettings.qml")
+    property var styleSettingsDialogInstance: null
+    property var coreSettingsDialogInstance: null
     property var modelList: ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gemini-pro", "gemini-1.0-pro", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-3-pro-preview", "gemini-3-pro-image-preview", "gemini-3-flash-preview", "gemini-2.5-flash-preview-09-2025", "gemini-2.5-flash-image", "gemini-2.5-flash-native-audio-preview-12-2025", "gemini-2.5-flash-native-audio-preview-09-2025", "gemini-2.5-flash-preview-tts", "gemini-2.5-flash-lite-preview-09-2025", "gemini-2.5-pro-preview-tts", "gemini-2.0-flash-001", "gemini-2.0-flash-exp", "gemini-2.0-flash-preview-image-generation", "gemini-2.0-flash-lite-001"]
     property bool showChat: true
     readonly property var fonts: Qt.fontFamilies()
@@ -31,7 +33,7 @@ T.Widget {
         "background_image_path": Qt.resolvedUrl("../Images/scrim-dark-40.png"),
         "user_bubble_color": "#2196f3",
         "ai_bubble_color": "#f8bbd0",
-        "bubble_font_family": fonts.indexOf("Microsoft YaHei UI") !== -1 ? fonts.indexOf("Microsoft Ya Hei UI") : 0,
+        "bubble_font_family": fonts.indexOf("Microsoft YaHei") !== -1 ? fonts.indexOf("Microsoft YaHei") : 0,
         "bubble_font_color": "#000000"
     }
 
@@ -226,7 +228,6 @@ T.Widget {
     implicitWidth: 700
     implicitHeight: 600
     visible: true
-    editing: styleDialog.active
     Component.onCompleted: {
         widget.width = 800; // 强制设置初始宽度
         widget.height = 400; // 强制设置初始高度
@@ -331,7 +332,7 @@ T.Widget {
                             color: widget.settings.styles.bubble_font_color || "#FFFFFF"
                             width: parent.width - 20
                             anchors.centerIn: parent
-                            font.family: (widget.fonts && widget.fonts.length > 0) ? widget.fonts[widget.settings.styles.bubble_font_family || 0] : "Microsoft YaHei UI"
+                            font.family: (widget.fonts && widget.fonts.length > 0) ? widget.fonts[widget.settings.styles.bubble_font_family || 0] : "Microsoft YaHei"
                         }
 
                     }
@@ -425,26 +426,36 @@ T.Widget {
         Action {
             text: qsTr("Core Settings") + "..."
             onTriggered: {
-                var dialog = settingsDialog.createObject(widget, {
-                    "targetWidget": widget
-                });
-                if (dialog)
-                    dialog.visible = true;
-                else
-                    console.log("Error creating/showing settings dialog:", settingsDialog.errorString());
+                if (!widget.coreSettingsDialogInstance) {
+                    var dialog = widget.coreSettingsDialog.createObject(widget, {
+                        "targetWidget": widget
+                    });
+                    if (dialog) {
+                        dialog.visible = true;
+                        widget.coreSettingsDialogInstance = dialog; // 将新创建的对话框实例存储起来
+                    } else {
+                        console.log("Error creating/showing core settings dialog:", coreSettingsDialog.errorString());
+                    }
+                }
             }
         }
 
         Action {
+            // widget.styleSettingsDialogInstance.visible = !widget.styleSettingsDialogInstance.visible; // 切换对话框的可见性
+
             text: qsTr("Style Settings") + "..."
             onTriggered: {
-                var dialog = styleSettingsDialog.createObject(widget, {
-                    "targetWidget": widget
-                });
-                if (dialog)
-                    dialog.visible = true;
-                else
-                    console.log("Error creating/showing style settings dialog:", styleSettingsDialog.errorString());
+                if (!widget.styleSettingsDialogInstance) {
+                    var dialog = widget.styleSettingsDialog.createObject(widget, {
+                        "targetWidget": widget
+                    });
+                    if (dialog) {
+                        dialog.visible = true;
+                        widget.styleSettingsDialogInstance = dialog; // 将新创建的对话框实例存储起来
+                    } else {
+                        console.log("Error creating/showing style settings dialog:", styleSettingsDialog.errorString());
+                    }
+                }
             }
         }
 
