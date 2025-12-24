@@ -1,0 +1,43 @@
+{
+    "name": "com.amarsimos.widget.yui",
+    "version": "0.0.1",
+
+    "title": {
+        "en": "SAO YUI project",
+        "zh": "SAO YUI 计划"
+    },
+
+    "description": {
+        "en": "SAO YUI project\n",
+        "zh": "SAO YUI 计划\n实在是很想要一个YUI,但是没人做,只能自己搓一个了,全Ai编程,本体就是个AI套壳.需要自己设置api.\n有意见可以反馈,但是我不一定能改出来orz.\n"
+    },
+
+    "homepage": "https://moe.amarsioms.top",
+
+    "main": "module.qml",
+
+    "bugs": {
+        "email": "amarsimoss@gmail.com",
+        "url": "https://moe.amarsioms.top"
+    },
+
+    "author": {
+        "name": "Amarsimos",
+        "email": "amarsimoss@gmail.com",
+        "url": "https://moe.amarsioms.top"
+    },
+
+    "dependencies": {
+
+    },
+
+    "resources": [
+        {
+            "location": "/widget/mhcp-yui",
+            "catalog": "widget",
+            "title": "MHCP-YUI",
+            "preview": "Presets/widget-yui.png",
+            "entry": "qml/main-stand.qml"
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map>
+    <value name="current_style">"nvg://widget.amarsimos.com/widget-yui/preset/default"</value>
+    <value name="nvg://widget.amarsimos.com/widget-yui/preset/default">{"Character Image Path":"","Background Image Path":"","User Bubble Color":"#800080","Other Bubble Color":"#008000","Bubble Opacity":80,"Bubble Font Size":14,"Bubble Font Family":"Arial","Bubble Padding":10,"Bubble Tail Size":12,"Show Timestamps":true,"Timestamp Font Size":10,"Timestamp Color":"#808080","Timestamp Format":"HH:mm","Max Messages":50}</value>
+</map>
