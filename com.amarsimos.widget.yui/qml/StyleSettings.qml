@@ -32,7 +32,7 @@ NVG.Window {
         targetWidget.settings.styles = fromPreferences(rootPreference.save());
     }
 
-    title: qsTr("Style Settings")
+    title: qsTr("Equipment")
     visible: true
     minimumWidth: 480
     minimumHeight: 480
@@ -70,55 +70,144 @@ NVG.Window {
                         rootPreference.load(toPreferences(targetWidget.styles));
                     }
 
+                    // ---------------------------------------------------------------- Avatar
                     Heading {
-                        text: qsTr("Style Configuration")
+                        text: qsTr("Avatar")
                     }
 
                     P.ImagePreference {
                         name: "character_image_path"
-                        label: qsTr("Character Image")
+                        label: qsTr("Avatar")
                         defaultValue: targetWidget.defaultValues.character_image_path
+                    }
+
+                    SettingNote {
+                        text: qsTr("Yui's main image, shown next to the message window.")
                     }
 
                     P.BackgroundPreference {
                         name: "background_image_path"
-                        label: qsTr("Background Image")
+                        label: qsTr("Field")
                         defaultValue: targetWidget.defaultValues.background_image_path
+                    }
+
+                    SettingNote {
+                        text: qsTr("The background behind the whole widget.")
+                    }
+
+                    // ---------------------------------------------------------------- Message window
+                    Heading {
+                        text: qsTr("Message Window")
                     }
 
                     P.ColorPreference {
                         name: "user_bubble_color"
-                        label: qsTr("User Bubble Color")
+                        label: qsTr("Player Message Color")
                         defaultValue: targetWidget.defaultValues.user_bubble_color
                     }
 
                     P.ColorPreference {
                         name: "ai_bubble_color"
-                        label: qsTr("AI Bubble Color")
+                        label: qsTr("Yui Message Color")
                         defaultValue: targetWidget.defaultValues.ai_bubble_color
+                    }
+
+                    SettingNote {
+                        text: qsTr("Bubble colors of your messages and of Yui's replies.")
                     }
 
                     P.SelectPreference {
                         name: "bubble_font_family"
-                        label: qsTr("Bubble Font")
+                        label: qsTr("Message Font")
                         model: targetWidget.fonts
                         defaultValue: fontIndexOf(targetWidget.defaultValues.bubble_font_family)
                     }
 
                     P.SliderPreference {
                         name: "bubble_font_size"
-                        label: qsTr("Bubble Font Size")
+                        label: qsTr("Message Size")
                         from: 10
                         to: 32
                         stepSize: 1
                         defaultValue: targetWidget.defaultValues.bubble_font_size
-                        displayValue: value + " px"
+                        displayValue: qsTr("%1 px").arg(value)
                     }
 
                     P.ColorPreference {
                         name: "bubble_font_color"
-                        label: qsTr("Bubble Font Color")
+                        label: qsTr("Message Color")
                         defaultValue: targetWidget.defaultValues.bubble_font_color
+                    }
+
+                    SettingNote {
+                        text: qsTr("Font, size and color of the text in the bubbles.")
+                    }
+
+                    // ---------------------------------------------------------------- Forms
+                    Heading {
+                        text: qsTr("Forms")
+                    }
+
+                    P.ImagePreference {
+                        name: "pixie_image_path"
+                        label: qsTr("Navigation Pixie Form")
+                    }
+
+                    P.SliderPreference {
+                        name: "pixie_size"
+                        label: qsTr("Pixie Size")
+                        from: 80
+                        to: 400
+                        stepSize: 10
+                        defaultValue: targetWidget.defaultValues.pixie_size
+                        displayValue: qsTr("%1 px").arg(value)
+                    }
+
+                    SettingNote {
+                        text: qsTr("When set, Yui turns into a small pixie while the message window is hidden. Pixie Size is its height.")
+                    }
+
+                    P.ImagePreference {
+                        name: "sleep_image_path"
+                        label: qsTr("Standby Form")
+                    }
+
+                    SettingNote {
+                        text: qsTr("Shown while Yui is asleep. Without it, the avatar is dimmed instead.")
+                    }
+
+                    // ---------------------------------------------------------------- Emotion display
+                    Heading {
+                        text: qsTr("Emotion Display")
+                    }
+
+                    SettingNote {
+                        text: qsTr("Yui changes her expression with the mood of each reply. Empty slots use the avatar.")
+                    }
+
+                    P.ImagePreference {
+                        name: "expression_happy"
+                        label: qsTr("Happy")
+                    }
+
+                    P.ImagePreference {
+                        name: "expression_sad"
+                        label: qsTr("Sad")
+                    }
+
+                    P.ImagePreference {
+                        name: "expression_surprised"
+                        label: qsTr("Surprised")
+                    }
+
+                    P.ImagePreference {
+                        name: "expression_angry"
+                        label: qsTr("Angry")
+                    }
+
+                    P.ImagePreference {
+                        name: "expression_shy"
+                        label: qsTr("Shy")
                     }
 
                 }
@@ -128,15 +217,15 @@ NVG.Window {
         }
 
         header: TitleBar {
-            text: qsTr("Style Settings")
+            text: qsTr("Equipment")
             standardButtons: Dialog.Save | Dialog.Reset
             onAccepted: {
                 saveStyles();
                 styleSettingsWindow.close();
             }
             onReset: {
-                rootPreference.load(); // 这会自动加载所有 defaultValue
-                // 立即保存重置后的状态
+                rootPreference.load(); // loads every defaultValue
+                // and saves the reset state right away
                 saveStyles();
             }
         }

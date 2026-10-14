@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-15
+
+### Added
+
+- AI providers: OpenAI, Google Gemini, DeepSeek, Kimi (Moonshot), Anthropic Claude and a
+  custom OpenAI-compatible server, picked as Seed Server + Core Program. Each server keeps its
+  own model, address and access key.
+- Scan Cores: fetch the current model list from the server; Manual Core ID for any model id.
+- Streaming replies (text appears as it is generated), with Cancel to stop a reply and a
+  regenerate button on Yui's last reply.
+- Conversation memory: recent messages are sent as context, and the last 50 messages are kept
+  across restarts.
+- Yui knows the current date and time.
+- Multi-line input: Enter sends, Shift+Enter starts a new line.
+- Registered Parent: Yui calls you Papa or Mama.
+- Yui's Heart: long-term memories Yui saves herself, viewable and editable in the Cardinal
+  System dialog.
+- Emotion Display: Yui changes her expression with the mood of each reply (optional images).
+- Navigation Pixie Form: with a pixie image set, Yui turns into a small hovering pixie while the
+  message window is hidden.
+- Standby Mode: Yui falls asleep after a while without interaction; click her to wake her up.
+- Login Greeting: Yui welcomes you back after you have been away.
+- Mental Health Counseling: reminders to sleep late at night and to rest after long sessions.
+- Navigation Reports: warnings about low battery and high CPU or memory usage.
+- Navigation: Yui can offer to open a page or a search; it is confirmed in SAO Utils' system
+  message box and opened by SAO Utils (or the system browser with External Browser on).
+- "System Call" easter egg: Sacred Arts element commands from Alicization.
+- SAO-style scroll bars and a comic-style tail on Yui's message bubbles.
+- Message font size setting.
+- Translations: all interface text can be localized (`i18n/`, `Locales/`); Chinese descriptions
+  are included.
+
+### Changed
+
+- Settings renamed after SAO: "Cardinal System" (formerly Core Settings) and "Equipment"
+  (formerly Style Settings), with a description under each setting.
+- The character image keeps its aspect ratio and is centered; the message window fills the
+  remaining width. Minimum size: 300 x 400 for the character, room for the input row beside it.
+- Hiding the message window shrinks the widget to the character and showing it restores the
+  previous size; the widget can still be resized either way.
+- Error messages are written in Yui's voice.
+- Fonts are saved by name instead of list position.
+- Settings from 0.0.2 (API key, endpoint and model) are migrated automatically.
+
+### Fixed
+
+- The selected model did not match the model actually sent to the API.
+- A custom API endpoint was overwritten when switching models.
+- The settings dialogs could only be opened once.
+- The background image setting had no effect, and a chosen Field background reset to the
+  default after a restart (set it again once after updating).
+- Long text without spaces overflowed the message bubbles; replies could be shown as rich text.
+- The chat did not always scroll to the newest message.
+- Requests that never answered left the chat stuck; they now time out.
+
 ## [0.0.2] - 2025-12-24
 
 ### Changed
