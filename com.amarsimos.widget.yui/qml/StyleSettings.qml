@@ -9,12 +9,35 @@ NVG.Window {
     id: styleSettingsWindow
 
     property var targetWidget
-    property var configuration
+
+    // The font is saved by name (font indexes shift when fonts are installed or removed),
+    // but SelectPreference works with indexes, so convert on load and save.
+    function fontIndexOf(value) {
+        var index = targetWidget.fonts.indexOf(targetWidget.fontFamilyOf(value));
+        return index >= 0 ? index : 0;
+    }
+
+    function toPreferences(styles) {
+        var values = JSON.parse(JSON.stringify(styles));
+        values.bubble_font_family = fontIndexOf(styles.bubble_font_family);
+        return values;
+    }
+
+    function fromPreferences(values) {
+        values.bubble_font_family = targetWidget.fonts[values.bubble_font_family] || targetWidget.defaultValues.bubble_font_family;
+        return values;
+    }
+
+    function saveStyles() {
+        targetWidget.settings.styles = fromPreferences(rootPreference.save());
+    }
 
     title: qsTr("Style Settings")
     visible: true
     minimumWidth: 480
-    minimumHeight: 640
+    minimumHeight: 480
+    width: minimumWidth
+    height: 640
     transientParent: widget.NVG.View.window
     onClosing: {
         destroy();
@@ -41,14 +64,10 @@ NVG.Window {
                 P.PreferenceGroup {
                     id: rootPreference
 
-                    // width: scrollView.width
                     Layout.fillWidth: true
                     spacing: 10
                     Component.onCompleted: {
-                        if (targetWidget) {
-                            rootPreference.load(targetWidget.settings.styles);
-                            configuration = targetWidget.settings.styles;
-                        }
+                        rootPreference.load(toPreferences(targetWidget.styles));
                     }
 
                     Heading {
@@ -83,7 +102,17 @@ NVG.Window {
                         name: "bubble_font_family"
                         label: qsTr("Bubble Font")
                         model: targetWidget.fonts
-                        defaultValue: targetWidget.defaultValues.bubble_font_family
+                        defaultValue: fontIndexOf(targetWidget.defaultValues.bubble_font_family)
+                    }
+
+                    P.SliderPreference {
+                        name: "bubble_font_size"
+                        label: qsTr("Bubble Font Size")
+                        from: 10
+                        to: 32
+                        stepSize: 1
+                        defaultValue: targetWidget.defaultValues.bubble_font_size
+                        displayValue: value + " px"
                     }
 
                     P.ColorPreference {
@@ -102,18 +131,13 @@ NVG.Window {
             text: qsTr("Style Settings")
             standardButtons: Dialog.Save | Dialog.Reset
             onAccepted: {
-                configuration = rootPreference.save();
-                widget.settings.styles = configuration;
-                styleSettingsWindow.close();
-            }
-            onRejected: {
+                saveStyles();
                 styleSettingsWindow.close();
             }
             onReset: {
                 rootPreference.load(); // 这会自动加载所有 defaultValue
                 // 立即保存重置后的状态
-                configuration = rootPreference.save();
-                widget.settings.styles = configuration;
+                saveStyles();
             }
         }
 
