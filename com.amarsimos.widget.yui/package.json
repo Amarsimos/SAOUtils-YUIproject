@@ -8,8 +8,8 @@
     },
 
     "description": {
-        "en": "SAO YUI project\n",
-        "zh": "SAO YUI 计划\n实在是很想要一个YUI,但是没人做,只能自己搓一个了,全Ai编程,本体就是个AI套壳.需要自己设置api.\n有意见可以反馈,但是我不一定能改出来orz.\n"
+        "en": "SAO YUI project\nAn AI chat companion in the style of Yui (MHCP001). Set up your own API in Cardinal System.\n\n1.0.0:\n- Supports OpenAI, Gemini, DeepSeek, Kimi, Claude and custom servers, with streaming replies\n- Remembers the conversation and what you tell her (Yui's Heart)\n- Expressions, navigation pixie form, standby / wake up, welcome-back greeting\n- Care reminders late at night and after long sessions, battery / CPU / memory warnings\n- Opens links and searches for you after confirmation\n- SAO-style settings (Cardinal System / Equipment), localizable interface\n",
+        "zh": "SAO YUI 计划\n实在是很想要一个YUI,但是没人做,只能自己搓一个了,全Ai编程,本体就是个AI套壳.需要自己设置api.\n有意见可以反馈,但是我不一定能改出来orz.\n\n1.0.0 更新:\n- 支持 OpenAI、Gemini、DeepSeek、Kimi、Claude 和自定义服务,回复逐字显示\n- 记住对话内容和你告诉她的事(结衣之心)\n- 表情切换、导航妖精形态、待机与唤醒、回来时的问候\n- 深夜和长时间使用时的关心提醒,电量/CPU/内存警告\n- 确认后帮你打开网页或搜索\n- SAO 风格的设置界面(Cardinal System / Equipment),界面支持多语言\n"
     },
 
     "homepage": "https://moe.amarsioms.top",
