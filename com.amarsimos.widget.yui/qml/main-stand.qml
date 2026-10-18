@@ -94,6 +94,7 @@ T.Widget {
     property QtObject batteryStatus
     property QtObject batteryLevel
     property QtObject cpuLoad
+    property QtObject gpuLoad
     property QtObject ramUsage
     property int batteryWarnedAt: 101
     property int highCpuChecks: 0
@@ -103,6 +104,8 @@ T.Widget {
     // Messages before this index are not sent as history (e.g. written before the API was configured).
     property int historyStart: 0
     property bool showChat: true
+    // The console (Console.qml) opened over the chat area.
+    property bool consoleOpen: false
     property bool applyingFrameSize: false
     // Width of the character image at the current widget height, without any constraint.
     readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? height * characterImage.implicitWidth / characterImage.implicitHeight : 0
@@ -899,6 +902,18 @@ T.Widget {
         checkCare(now);
     }
 
+    // Yui's Heart entries (long-term memories), as a list of strings.
+    function heartEntries() {
+        return widget.settings.yui_heart || [];
+    }
+
+    // Switch the collapsed form ("pixie" / "crystal") from the console.
+    function setCollapsedForm(form) {
+        var styles = JSON.parse(JSON.stringify(widget.settings.styles || defaultValues));
+        styles.collapsed_form = form;
+        widget.settings.styles = styles;
+    }
+
     function readData(source) {
         if (!source)
             return NaN;
@@ -1179,6 +1194,11 @@ T.Widget {
     Loader {
         source: Qt.resolvedUrl("nvg://system/data#cpu")
         onLoaded: widget.cpuLoad = item.query("load")
+    }
+
+    Loader {
+        source: Qt.resolvedUrl("nvg://system/data#gpu")
+        onLoaded: widget.gpuLoad = item.query("load")
     }
 
     Loader {
@@ -1911,6 +1931,50 @@ T.Widget {
 
     }
 
+
+    // Console opened over the chat list (TEMPORARY layout, pending decision: it covers the message
+    // list but not the input row; the toggle button sits at the top-right corner of the chat area).
+    Console {
+        id: consolePanel
+
+        z: 20
+        visible: showChat && widget.consoleOpen
+        x: chatContainer.x
+        y: chatContainer.y + chatView.y
+        width: chatContainer.width
+        height: chatView.height
+        yui: widget
+        onCloseRequested: widget.consoleOpen = false
+    }
+
+    Rectangle {
+        z: 21
+        visible: showChat
+        x: chatContainer.x + chatContainer.width - width - 2
+        y: chatContainer.y + 2
+        width: 26
+        height: 26
+        radius: 13
+        color: widget.consoleOpen ? "#F59B00" : (consoleToggleArea.containsMouse ? "#FFFFFFFF" : "#CCFFFFFF")
+        border.color: "#55000000"
+
+        Text {
+            anchors.centerIn: parent
+            text: "⬡"
+            color: widget.consoleOpen ? "#FFFFFF" : "#555555"
+            font.pixelSize: 15
+        }
+
+        MouseArea {
+            id: consoleToggleArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: widget.consoleOpen = !widget.consoleOpen
+        }
+
+    }
 
     menu: Menu {
         Action {

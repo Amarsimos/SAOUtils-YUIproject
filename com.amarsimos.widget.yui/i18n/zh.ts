@@ -2,6 +2,95 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN" sourcelanguage="en">
 <context>
+    <name>Console</name>
+    <message>
+        <location filename="../qml/Console.qml" line="74"/>
+        <source>Talk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="77"/>
+        <source>Cardinal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="80"/>
+        <source>Memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="83"/>
+        <location filename="../qml/Console.qml" line="354"/>
+        <source>Option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="248"/>
+        <source>Computing Load (CPU)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="251"/>
+        <source>Visual Engine (GPU)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="254"/>
+        <source>Memory Capacity (RAM)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="257"/>
+        <source>Player HP (Battery)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="269"/>
+        <source>N/A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="311"/>
+        <source>Yui&apos;s Heart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="339"/>
+        <source>No memories yet</source>
+        <translation type="unfinished">还没有记忆</translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="361"/>
+        <source>Collapsed Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="372"/>
+        <source>Navigation Pixie</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="375"/>
+        <source>Yui&apos;s Heart Crystal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="389"/>
+        <source>Reset Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="400"/>
+        <source>Cardinal System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/Console.qml" line="405"/>
+        <source>Equipment</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CoreSettings</name>
     <message>
         <location filename="../qml/CoreSettings.qml" line="52"/>
@@ -420,68 +509,68 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="826"/>
+        <location filename="../qml/main-stand.qml" line="829"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="826"/>
+        <location filename="../qml/main-stand.qml" line="829"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1078"/>
+        <location filename="../qml/main-stand.qml" line="1093"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="829"/>
-        <location filename="../qml/main-stand.qml" line="1141"/>
+        <location filename="../qml/main-stand.qml" line="832"/>
+        <location filename="../qml/main-stand.qml" line="1156"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1729"/>
+        <location filename="../qml/main-stand.qml" line="1749"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1729"/>
+        <location filename="../qml/main-stand.qml" line="1749"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1729"/>
+        <location filename="../qml/main-stand.qml" line="1749"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1856"/>
+        <location filename="../qml/main-stand.qml" line="1876"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1882"/>
+        <location filename="../qml/main-stand.qml" line="1902"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1882"/>
+        <location filename="../qml/main-stand.qml" line="1902"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1899"/>
+        <location filename="../qml/main-stand.qml" line="1919"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1917"/>
+        <location filename="../qml/main-stand.qml" line="1981"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1922"/>
+        <location filename="../qml/main-stand.qml" line="1986"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
