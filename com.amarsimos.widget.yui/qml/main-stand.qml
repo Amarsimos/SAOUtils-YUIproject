@@ -1073,6 +1073,26 @@ T.Widget {
         loadHeart();
     }
 
+    // SAO Utils exports / imports widget data (e.g. "My Widgets"); the settings travel on their own,
+    // Yui's Heart lives in the database, so it is carried here.
+    function exportData() {
+        return {
+            "yui_heart": heartEntries()
+        };
+    }
+
+    function importData(data) {
+        if (!data || !Array.isArray(data.yui_heart))
+            return ;
+
+        if (!database)
+            openDatabase();
+
+        setHeartEntries(data.yui_heart.map(function(entry) {
+            return String(entry);
+        }));
+    }
+
     // Keep every finished message in the complete history.
     function logMessage(author, message) {
         if (!database)
