@@ -6,8 +6,9 @@
 // Expressions the AI may choose with <<emotion:...>>; "normal" uses the main character image.
 var EMOTIONS = ["normal", "happy", "sad", "surprised", "angry", "shy"];
 
-// At most this many entries are kept in Yui's Heart (long-term memory).
-var MAX_MEMORIES = 30;
+// At most this many entries are kept in Yui's Heart (long-term memory). TEMPORARY value, pending a
+// decision on how memories are retrieved (all of them are sent with every request for now).
+var MAX_MEMORIES = 100;
 
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>

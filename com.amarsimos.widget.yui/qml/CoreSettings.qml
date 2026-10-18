@@ -133,7 +133,7 @@ NVG.Window {
                         statusPreference.value = settings.status_reports !== false;
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
-                        heartPreference.value = (settings.yui_heart || []).join("\n");
+                        heartPreference.value = targetWidget.heartEntries().join("\n");
                         loading = false;
                     }
 
@@ -419,11 +419,11 @@ NVG.Window {
                 targetWidget.settings.status_reports = !!statusPreference.value;
                 targetWidget.settings.external_browser = !!externalBrowserPreference.value;
                 targetWidget.settings.sleep_minutes = sleepPreference.value;
-                targetWidget.settings.yui_heart = String(heartPreference.value || "").split("\n").map(function(line) {
+                targetWidget.setHeartEntries(String(heartPreference.value || "").split("\n").map(function(line) {
                     return line.trim();
                 }).filter(function(line) {
                     return line.length > 0;
-                });
+                }));
                 coreSettings.close();
             }
             onReset: {

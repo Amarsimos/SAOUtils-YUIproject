@@ -308,7 +308,7 @@ Item {
                 spacing: 8
 
                 Text {
-                    text: "♥ " + qsTr("Yui's Heart") + "  (" + console_.yui.heartEntries().length + ")"
+                    text: "♥ " + qsTr("Yui's Heart") + "  (" + console_.yui.heartCache.length + ")"
                     color: "#FFFFFF"
                     font.pixelSize: 13
                     font.bold: true
@@ -319,7 +319,7 @@ Item {
                     Layout.fillHeight: true
                     clip: true
                     spacing: 6
-                    model: console_.visible && console_.page === "memory" ? console_.yui.heartEntries() : []
+                    model: console_.yui.heartCache
 
                     delegate: Text {
                         width: ListView.view.width
@@ -335,7 +335,7 @@ Item {
                 }
 
                 Text {
-                    visible: console_.yui.heartEntries().length === 0
+                    visible: console_.yui.heartCache.length === 0
                     text: qsTr("No memories yet")
                     color: "#99FFFFFF"
                     font.pixelSize: 12

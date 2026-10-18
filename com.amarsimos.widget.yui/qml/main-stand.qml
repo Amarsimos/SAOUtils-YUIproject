@@ -5,6 +5,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
+import QtQuick.LocalStorage 2.12
 import "yui.js" as Yui
 
 T.Widget {
@@ -106,6 +107,10 @@ T.Widget {
     property bool showChat: true
     // The console (Console.qml) opened over the chat area.
     property bool consoleOpen: false
+    // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
+    // memories table so bindings and requests do not query the database.
+    property var database: null
+    property var heartCache: []
     property bool applyingFrameSize: false
     // Width of the character image at the current widget height, without any constraint.
     readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? height * characterImage.implicitWidth / characterImage.implicitHeight : 0
@@ -269,7 +274,7 @@ T.Widget {
 
     // Everything appended to the system prompt: time, feature instructions and Yui's Heart.
     function systemExtras(title) {
-        return timeContext() + Yui.featureInstructions(title, widget.settings.yui_heart || []);
+        return timeContext() + Yui.featureInstructions(title, heartEntries());
     }
 
     // Appended to the system prompt on every request, so Yui knows the current date and time.
@@ -616,6 +621,7 @@ T.Widget {
         });
         chatView.stickToBottom = true;
         scheduleSave();
+        logMessage(author, message);
     }
 
     // Keep the last maxSavedMessages finished messages in settings so the chat survives restarts.
@@ -693,7 +699,7 @@ T.Widget {
                     setEmotion(reply.emotion);
 
                 if (reply.memories.length > 0) {
-                    widget.settings.yui_heart = Yui.mergeMemories(widget.settings.yui_heart, reply.memories);
+                    addMemories(reply.memories);
                     note = "💗 结衣之心：" + reply.memories.join("；");
                 }
                 if (reply.action)
@@ -718,6 +724,9 @@ T.Widget {
             widget.busy = false;
             widget.currentRequest = null;
             scheduleSave();
+            if (!isError)
+                logMessage("ai", text);
+
             if (action)
                 Qt.callLater(confirmAction, index);
 
@@ -980,9 +989,102 @@ T.Widget {
         checkCare(now);
     }
 
-    // Yui's Heart entries (long-term memories), as a list of strings.
+    // ---------------------------------------------------------------- Yui's Heart (SQLite)
+    // Tables (TEMPORARY design, pending a decision):
+    //   memories(id, text, created)            long-term memories, oldest first
+    //   messages(id, author, message, created) every finished chat message (complete history)
+    function openDatabase() {
+        try {
+            database = LocalStorage.openDatabaseSync("MHCP001-Yui", "1.0", "MHCP001 Yui's Heart", 5000000);
+            database.transaction(function(tx) {
+                tx.executeSql("CREATE TABLE IF NOT EXISTS memories(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, created INTEGER)");
+                tx.executeSql("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, message TEXT, created INTEGER)");
+            });
+            // First start with the database: move the memories kept in settings (1.0.0) into it.
+            // settings.yui_heart is left in place as a backup.
+            var count = 0;
+            database.readTransaction(function(tx) {
+                count = tx.executeSql("SELECT COUNT(*) AS n FROM memories").rows.item(0).n;
+            });
+            if (count === 0 && (widget.settings.yui_heart || []).length > 0 && !widget.settings.heart_migrated)
+                setHeartEntries(widget.settings.yui_heart);
+
+            widget.settings.heart_migrated = true;
+            loadHeart();
+        } catch (e) {
+            console.log("Yui's Heart database unavailable, using settings:", e);
+            database = null;
+            heartCache = widget.settings.yui_heart || [];
+        }
+    }
+
+    function loadHeart() {
+        var entries = [];
+        database.readTransaction(function(tx) {
+            var rows = tx.executeSql("SELECT text FROM memories ORDER BY id").rows;
+            for (var i = 0; i < rows.length; i++)
+                entries.push(rows.item(i).text);
+        });
+        heartCache = entries;
+    }
+
+    // Yui's Heart entries (long-term memories), oldest first.
     function heartEntries() {
-        return widget.settings.yui_heart || [];
+        return heartCache;
+    }
+
+    // Replace all memories (Cardinal System editor).
+    function setHeartEntries(entries) {
+        if (!database) {
+            widget.settings.yui_heart = entries;
+            heartCache = entries;
+            return ;
+        }
+        var now = Date.now();
+        database.transaction(function(tx) {
+            tx.executeSql("DELETE FROM memories");
+            for (var i = 0; i < entries.length; i++)
+                tx.executeSql("INSERT INTO memories(text, created) VALUES(?, ?)", [entries[i], now]);
+        });
+        loadHeart();
+    }
+
+    // Add memories Yui saved with <<memory:...>> (duplicates skipped, oldest dropped beyond the limit).
+    function addMemories(memories) {
+        var merged = Yui.mergeMemories(heartCache, memories);
+        if (!database) {
+            widget.settings.yui_heart = merged;
+            heartCache = merged;
+            return ;
+        }
+        var now = Date.now();
+        database.transaction(function(tx) {
+            for (var i = 0; i < merged.length; i++) {
+                if (heartCache.indexOf(merged[i]) === -1)
+                    tx.executeSql("INSERT INTO memories(text, created) VALUES(?, ?)", [merged[i], now]);
+
+            }
+            for (var j = 0; j < heartCache.length; j++) {
+                if (merged.indexOf(heartCache[j]) === -1)
+                    tx.executeSql("DELETE FROM memories WHERE text = ?", [heartCache[j]]);
+
+            }
+        });
+        loadHeart();
+    }
+
+    // Keep every finished message in the complete history.
+    function logMessage(author, message) {
+        if (!database)
+            return ;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql("INSERT INTO messages(author, message, created) VALUES(?, ?, ?)", [author, message, Date.now()]);
+            });
+        } catch (e) {
+            console.log("could not log message:", e);
+        }
     }
 
     // Switch the collapsed form ("pixie" / "crystal") from the console.
@@ -1184,6 +1286,7 @@ T.Widget {
         else
             widget.settings.styles = updateObject(JSON.parse(JSON.stringify(defaultValues)), widget.settings.styles);
         migrateSettings();
+        openDatabase();
         // The frame size itself is restored by SAO Utils.
         if (widget.settings.chat_hidden)
             showChat = false;
