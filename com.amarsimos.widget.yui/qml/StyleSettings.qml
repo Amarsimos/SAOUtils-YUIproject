@@ -17,14 +17,19 @@ NVG.Window {
         return index >= 0 ? index : 0;
     }
 
+    // Collapsed forms, stored by id; the SelectPreference works with indexes.
+    readonly property var collapsedFormIds: ["pixie", "crystal"]
+
     function toPreferences(styles) {
         var values = JSON.parse(JSON.stringify(styles));
         values.bubble_font_family = fontIndexOf(styles.bubble_font_family);
+        values.collapsed_form = Math.max(0, collapsedFormIds.indexOf(styles.collapsed_form));
         return values;
     }
 
     function fromPreferences(values) {
         values.bubble_font_family = targetWidget.fonts[values.bubble_font_family] || targetWidget.defaultValues.bubble_font_family;
+        values.collapsed_form = collapsedFormIds[values.collapsed_form] || "pixie";
         return values;
     }
 
@@ -146,6 +151,27 @@ NVG.Window {
                     // ---------------------------------------------------------------- Forms
                     Heading {
                         text: qsTr("Forms")
+                    }
+
+                    P.SelectPreference {
+                        name: "collapsed_form"
+                        label: qsTr("Collapsed Form")
+                        model: [qsTr("Navigation Pixie"), qsTr("Yui's Heart Crystal")]
+                        defaultValue: 0
+                    }
+
+                    P.SliderPreference {
+                        name: "crystal_size"
+                        label: qsTr("Crystal Size")
+                        from: 60
+                        to: 300
+                        stepSize: 10
+                        defaultValue: targetWidget.defaultValues.crystal_size
+                        displayValue: qsTr("%1 px").arg(value)
+                    }
+
+                    SettingNote {
+                        text: qsTr("What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.")
                     }
 
                     P.ImagePreference {

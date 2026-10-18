@@ -80,6 +80,15 @@ T.Widget {
     property double lastProactive: 0
     // Navigation pixie: shown instead of the character while the chat is hidden, when an image is set.
     readonly property bool pixieMode: hasImage(styles.pixie_image_path) && pixieImage.implicitHeight > 0
+    // Form shown while the chat is hidden: "crystal" (Yui's Heart), "pixie" (when a pixie image is
+    // set) or "avatar" (the character image itself).
+    readonly property string collapsedForm: styles.collapsed_form === "crystal" ? "crystal" : (pixieMode ? "pixie" : "avatar")
+    // CPU load in percent (NaN until read), shown by the crystal's color.
+    property real cpuPercent: NaN
+    // TEMPORARY thresholds for the crystal colors (pending decision): below 70 % green, below 90 % yellow.
+    readonly property real crystalYellowAt: 70
+    readonly property real crystalRedAt: 90
+    readonly property color crystalColor: !(cpuPercent >= crystalYellowAt) ? "#2CE67C" : (cpuPercent < crystalRedAt ? "#FFCC00" : "#FF3B30")
     // System status sources (same data sources as SAO Utils' HP bar widgets).
     property QtObject acStatus
     property QtObject batteryStatus
@@ -109,6 +118,8 @@ T.Widget {
         "bubble_font_family": "Microsoft YaHei",
         "bubble_font_size": 14,
         "pixie_size": 160,
+        "collapsed_form": "pixie",
+        "crystal_size": 120,
         "bubble_font_color": "#000000"
     }
 
@@ -1001,7 +1012,10 @@ T.Widget {
             widget.settings.expanded_width = widget.width;
             widget.settings.expanded_height = widget.height;
             showChat = false;
-            if (pixieMode) {
+            if (collapsedForm === "crystal") {
+                var crystalHeight = widget.styles.crystal_size > 0 ? widget.styles.crystal_size : widget.defaultValues.crystal_size;
+                applyFrameSize(Math.ceil(crystalHeight * 0.75), crystalHeight);
+            } else if (collapsedForm === "pixie") {
                 var pixieHeight = widget.styles.pixie_size > 0 ? widget.styles.pixie_size : widget.defaultValues.pixie_size;
                 // Extra room for the hovering animation.
                 applyFrameSize(Math.ceil(naturalWidthAt(pixieImage, pixieHeight)), pixieHeight + 12);
@@ -1032,8 +1046,8 @@ T.Widget {
     }
 
     function releaseMinimumSize() {
-        if (!showChat && pixieMode) {
-            // The pixie can be made quite small.
+        if (!showChat && collapsedForm !== "avatar") {
+            // The pixie and the crystal can be made quite small.
             widget.implicitWidth = 40;
             widget.implicitHeight = 60;
             return ;
@@ -1209,7 +1223,7 @@ T.Widget {
 
             return styles.character_image_path;
         }
-        visible: showChat || !widget.pixieMode
+        visible: showChat || widget.collapsedForm === "avatar"
         // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below).
         opacity: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
         anchors.left: parent.left
@@ -1251,7 +1265,7 @@ T.Widget {
         property real hover: 0
 
         configuration: widget.styles.pixie_image_path
-        visible: !showChat && widget.pixieMode
+        visible: !showChat && widget.collapsedForm === "pixie"
         anchors.fill: parent
         anchors.topMargin: 6
         anchors.bottomMargin: 6
@@ -1293,11 +1307,40 @@ T.Widget {
 
     }
 
+    // Yui's Heart crystal: the other collapsed form, colored by CPU load.
+    YuiCrystal {
+        id: crystalForm
+
+        visible: !showChat && widget.collapsedForm === "crystal"
+        anchors.fill: parent
+        statusColor: widget.crystalColor
+        sleeping: widget.sleeping
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (!widget.wakeUp())
+                    setChatVisible(true);
+
+            }
+        }
+
+    }
+
+    // Keeps the crystal color current while it is shown.
+    Timer {
+        interval: 5000
+        running: crystalForm.visible
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: widget.cpuPercent = widget.readData(widget.cpuLoad)
+    }
+
     // "Zzz" floating up from a sleeping Yui.
     Item {
         id: sleepMark
 
-        readonly property Item target: pixieImage.visible ? pixieImage : characterImage
+        readonly property Item target: crystalForm.visible ? crystalForm : (pixieImage.visible ? pixieImage : characterImage)
 
         visible: widget.sleeping
         x: target.x + target.width * 0.62
