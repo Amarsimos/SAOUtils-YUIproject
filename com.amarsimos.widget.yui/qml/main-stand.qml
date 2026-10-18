@@ -699,6 +699,9 @@ T.Widget {
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
+                if (reply.blocked)
+                    note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
+
             }
             chatModel.set(index, {
                 "message": text,
@@ -826,10 +829,17 @@ T.Widget {
     // "Are you sure to execute this action?" before actions. Falls back to a plain dialog.
     function confirmAction(index) {
         var action = JSON.parse(chatModel.get(index).action);
-        var question = (action.type === "search" ? qsTr("Yui will search for:") : qsTr("Yui will open this page:")) + "\n" + action.target;
+        var questions = {
+            "open": qsTr("Yui will open this page:"),
+            "search": qsTr("Yui will search for:"),
+            "launch": qsTr("Yui will start this program:"),
+            "find": qsTr("Yui will search your computer for:"),
+            "kill": qsTr("Yui will close this program:")
+        };
+        var question = (questions[action.type] || "") + "\n" + action.target;
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Navigation"),
+                "title": action.type === "kill" ? qsTr("Warning") : qsTr("Navigation"),
                 "text": question,
                 "modal": true
             });
@@ -862,13 +872,81 @@ T.Widget {
         var item = chatModel.get(index);
         try {
             var action = JSON.parse(item.action);
-            if (/^https?:\/\//i.test(action.url) && !openLink(action.url))
-                chatModel.setProperty(index, "note", (item.note ? item.note + "\n" : "") + "⚠ 内置浏览器打开失败，已改用系统浏览器");
+            if (action.type === "open" || action.type === "search") {
+                if (/^https?:\/\//i.test(action.url) && !openLink(action.url))
+                    addNote(index, "⚠ 内置浏览器打开失败，已改用系统浏览器");
 
+            } else if (action.type === "launch") {
+                if (!NVG.SystemCall.execute(action.target))
+                    addNote(index, "⚠ 无法启动：" + action.target);
+
+            } else if (action.type === "kill") {
+                if (!NVG.SystemCall.command(Yui.actionCommand(action)))
+                    addNote(index, "⚠ 无法执行：taskkill " + action.target);
+
+            } else if (action.type === "find") {
+                runFind(action);
+            }
         } catch (e) {
             console.log("action failed:", e);
         }
         chatModel.setProperty(index, "actionState", "done");
+    }
+
+    function addNote(index, note) {
+        var item = chatModel.get(index);
+        chatModel.setProperty(index, "note", (item.note ? item.note + "\n" : "") + note);
+    }
+
+    // Label of a link / search / desktop action under a bubble.
+    function actionLabel(action) {
+        var prefixes = {
+            "open": "🧭 打开：",
+            "search": "🔍 搜索：",
+            "launch": "🚀 启动：",
+            "find": "🗂 查找：",
+            "kill": "⛔ 结束："
+        };
+        return action ? (prefixes[action.type] || "") + action.target : "";
+    }
+
+    // <<find:>>: Everything's es.exe writes up to 20 matching paths to a new file in the extension's
+    // storage folder; the file is read once it appears and Yui reports the results.
+    function runFind(action) {
+        var folder = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/");
+        var file = folder + "/find-" + Date.now() + ".txt";
+        if (!NVG.SystemCall.command(Yui.actionCommand(action, file))) {
+            appendMessage("ai", "呜……结衣没能启动文件检索 (T_T)", false, true);
+            return ;
+        }
+        var tries = 0;
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
+        timer.triggered.connect(function() {
+            tries++;
+            var results = Yui.parseSearchResults(readLocalFile(file));
+            if (results.length === 0 && tries < 12)
+                return ;
+
+            timer.stop();
+            timer.destroy();
+            if (results.length > 0)
+                appendMessage("ai", "检索完成！结衣找到了 " + results.length + " 个和「" + action.target + "」有关的结果：\n" + results.join("\n"), false, true);
+            else
+                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n如果还没安装 Everything 和它的命令行工具 es.exe，结衣就没办法在电脑里找文件哦。", false, true);
+        });
+        timer.start();
+    }
+
+    // Contents of a local text file ("" when missing).
+    function readLocalFile(path) {
+        try {
+            var request = new XMLHttpRequest();
+            request.open("GET", "file:///" + path.replace(/^\/+/, ""), false);
+            request.send(null);
+            return request.responseText || "";
+        } catch (e) {
+            return "";
+        }
     }
 
     // SAO Utils' built-in browser by default; the system browser when "External Browser" is on
@@ -1735,7 +1813,7 @@ T.Widget {
 
                                 x: 8
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: !extras.action ? "" : (extras.action.type === "search" ? "🔍 搜索：" : "🧭 打开：") + extras.action.target
+                                text: widget.actionLabel(extras.action)
                                 color: "#FFFFFF"
                                 font.pixelSize: 12
                                 elide: Text.ElideRight

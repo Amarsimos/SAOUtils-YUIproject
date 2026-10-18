@@ -57,7 +57,7 @@
     <message>
         <location filename="../qml/Console.qml" line="339"/>
         <source>No memories yet</source>
-        <translation type="unfinished">还没有记忆</translation>
+        <translation>还没有记忆</translation>
     </message>
     <message>
         <location filename="../qml/Console.qml" line="361"/>
@@ -509,68 +509,88 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="829"/>
+        <location filename="../qml/main-stand.qml" line="834"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="829"/>
+        <location filename="../qml/main-stand.qml" line="833"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1093"/>
+        <location filename="../qml/main-stand.qml" line="1171"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="832"/>
-        <location filename="../qml/main-stand.qml" line="1156"/>
+        <location filename="../qml/main-stand.qml" line="842"/>
+        <location filename="../qml/main-stand.qml" line="1234"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1749"/>
+        <location filename="../qml/main-stand.qml" line="835"/>
+        <source>Yui will start this program:</source>
+        <translation>结衣将为你启动这个程序：</translation>
+    </message>
+    <message>
+        <location filename="../qml/main-stand.qml" line="836"/>
+        <source>Yui will search your computer for:</source>
+        <translation>结衣将在电脑里搜索：</translation>
+    </message>
+    <message>
+        <location filename="../qml/main-stand.qml" line="837"/>
+        <source>Yui will close this program:</source>
+        <translation>结衣将关闭这个程序：</translation>
+    </message>
+    <message>
+        <location filename="../qml/main-stand.qml" line="842"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/main-stand.qml" line="1827"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1749"/>
+        <location filename="../qml/main-stand.qml" line="1827"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1749"/>
+        <location filename="../qml/main-stand.qml" line="1827"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1876"/>
+        <location filename="../qml/main-stand.qml" line="1954"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1902"/>
+        <location filename="../qml/main-stand.qml" line="1980"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1902"/>
+        <location filename="../qml/main-stand.qml" line="1980"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1919"/>
+        <location filename="../qml/main-stand.qml" line="1997"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1981"/>
+        <location filename="../qml/main-stand.qml" line="2059"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1986"/>
+        <location filename="../qml/main-stand.qml" line="2064"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>

@@ -11,8 +11,47 @@ var MAX_MEMORIES = 30;
 
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
+//   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>
 function tagPattern() {
-    return /<<\s*(emotion|memory|open|search)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+}
+
+// Processes <<kill:>> refuses to close (Immortal Object). TEMPORARY list, pending a decision:
+// core Windows processes and SAO Utils itself.
+var PROTECTED_PROCESSES = ["system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe", "lsass.exe", "svchost.exe", "dwm.exe", "explorer.exe", "fontdrvhost.exe", "registry", "sao utils.exe", "nervlaunch.exe", "nervservice.exe", "nervstartup.exe", "nervsteam.exe", "nervwebkit.exe"];
+
+// Process name for taskkill ("chrome" -> "chrome.exe"), or "" when it is not a plain name.
+function processName(value) {
+    var name = String(value).trim();
+    if (!/^[A-Za-z0-9 ._()\-]+$/.test(name))
+        return "";
+
+    return /\.exe$/i.test(name) ? name : name + ".exe";
+}
+
+function isProtectedProcess(name) {
+    return PROTECTED_PROCESSES.indexOf(String(name).toLowerCase()) !== -1;
+}
+
+// Command lines run with NVG.SystemCall.command(). find uses Everything's command line tool es.exe,
+// writing the results as UTF-8 text to resultFile; kill asks the program to close (no /F).
+function actionCommand(action, resultFile) {
+    if (action.type === "find")
+        return 'es.exe -n 20 -export-txt "' + resultFile + '" "' + action.target + '"';
+
+    if (action.type === "kill")
+        return 'taskkill /IM "' + action.target + '"';
+
+    return "";
+}
+
+// Lines of an es.exe -export-txt result file (BOM and blank lines removed).
+function parseSearchResults(text) {
+    return String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).map(function(line) {
+        return line.trim();
+    }).filter(function(line) {
+        return line.length > 0;
+    });
 }
 
 // Split a finished reply into the text to show and the tags it carried.
@@ -21,7 +60,9 @@ function parseReply(text) {
         "text": "",
         "emotion": "",
         "memories": [],
-        "action": null
+        "action": null,
+        // A <<kill:>> refused because the process is protected.
+        "blocked": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -49,6 +90,29 @@ function parseReply(text) {
                     "type": "search",
                     "target": value,
                     "url": "https://www.bing.com/search?q=" + encodeURIComponent(value)
+                };
+        } else if (kind === "launch") {
+            // A program name or path only: no quotes or line breaks.
+            if (!result.action && !/["\r\n]/.test(value))
+                result.action = {
+                    "type": "launch",
+                    "target": value
+                };
+        } else if (kind === "find") {
+            var query = value.replace(/"/g, "").trim();
+            if (!result.action && query)
+                result.action = {
+                    "type": "find",
+                    "target": query
+                };
+        } else if (kind === "kill") {
+            var name = processName(value);
+            if (name && isProtectedProcess(name))
+                result.blocked = name;
+            else if (!result.action && name)
+                result.action = {
+                    "type": "kill",
+                    "target": name
                 };
         }
         return "";
@@ -86,7 +150,7 @@ function mergeMemories(heart, memories) {
 
 // Extra system prompt instructions: how to use the control tags, and what Yui remembers.
 function featureInstructions(title, heart) {
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事（名字、喜好、生日等重要日子、正在努力的事情）时，在回复最后加上 <<memory:用一句话写下要记住的事>>。已经记住的不要重复记。", "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事（名字、喜好、生日等重要日子、正在努力的事情）时，在回复最后加上 <<memory:用一句话写下要记住的事>>。已经记住的不要重复记。", "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。", "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：启动程序用 <<launch:程序名或完整路径>>；在电脑里找文件用 <<find:文件名或关键词>>；关闭某个程序用 <<kill:进程名，如 chrome.exe>>。系统关键进程不能关闭。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
     if (heart && heart.length > 0) {
         lines.push("", "结衣之心里记着的关于" + title + "的事：");
         for (var i = 0; i < heart.length; i++)
