@@ -2757,46 +2757,154 @@ T.Widget {
             height: titleHeight + inputHeight + (fullHeight - titleHeight - inputHeight) * widget.chatReveal
             opacity: widget.chatPanelOpacity
 
-            Rectangle {
-                id: chatPanelBackground
-
-                anchors.fill: parent
-                radius: 2
-                color: "#F0D6D6D6"
-                border.color: "#FFFFFF"
-                border.width: 2
-            }
-
-            // Title bar.
-            Rectangle {
-                x: 2
-                y: 2
-                width: parent.width - 4
-                height: chatPanel.titleHeight - 2
-                color: "#F8F8F8"
+            // Background, drawn after the SAO panel image of SAO Utils' bangumi widget (Information
+            // panel, panel.9.png, measured pixel by pixel): a soft outer shadow, a gray edge with a white
+            // highlight inside, the white title bar over a dark line and an inner shadow into the gray
+            // message area, the gray darkening toward the input bar over a dark and a light line, and the
+            // white input bar. All of it is 80 % opaque, as the image; the text and messages are not.
+            Repeater {
+                // Outer shadow: 8 rings, black from 12 % next to the panel to 1 % outside.
+                model: [0.118, 0.09, 0.063, 0.047, 0.027, 0.016, 0.008, 0.004]
 
                 Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: 1
-                    color: "#C8C8C8"
+                    anchors.fill: parent
+                    anchors.margins: -(index + 1)
+                    radius: index + 1
+                    color: "transparent"
+                    border.color: Qt.rgba(0, 0, 0, modelData)
+                    border.width: 1
                 }
 
             }
 
-            // Input bar.
-            Rectangle {
-                x: 2
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 2
-                width: parent.width - 4
-                height: chatPanel.inputHeight - 2
-                color: "#F8F8F8"
+            Item {
+                id: chatPanelBackground
+
+                anchors.fill: parent
+                opacity: 0.8
+
+                // Gray edge, then a white highlight inside it.
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#DDDDDD"
+                    border.color: "#BBBBBB"
+                    border.width: 1
+                }
 
                 Rectangle {
-                    width: parent.width
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    color: "transparent"
+                    border.color: "#FFFFFF"
+                    border.width: 1
+                }
+
+                // Title bar.
+                Rectangle {
+                    id: titleBar
+
+                    x: 2
+                    y: 2
+                    width: parent.width - 4
+                    height: chatPanel.titleHeight - 3
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#F8F8F8"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#FCFCFC"
+                        }
+
+                    }
+                }
+
+                // Dark line under the title bar, then an inner shadow into the message area.
+                Rectangle {
+                    x: 2
+                    y: titleBar.y + titleBar.height
+                    width: parent.width - 4
                     height: 1
-                    color: "#C8C8C8"
+                    color: "#BCBCBC"
+                }
+
+                Rectangle {
+                    x: 2
+                    y: titleBar.y + titleBar.height + 1
+                    width: parent.width - 4
+                    height: Math.min(12, Math.max(0, inputBar.y - y - 2))
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#C3C3C3"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#DDDDDD"
+                        }
+
+                    }
+                }
+
+                // The message area darkening toward the input bar, then a dark and a light line.
+                Rectangle {
+                    x: 2
+                    y: inputBar.y - 2 - height
+                    width: parent.width - 4
+                    height: Math.min(12, Math.max(0, inputBar.y - 2 - (titleBar.y + titleBar.height + 1)))
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#DDDDDD"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#C8C8C8"
+                        }
+
+                    }
+                }
+
+                Rectangle {
+                    x: 2
+                    y: inputBar.y - 2
+                    width: parent.width - 4
+                    height: 1
+                    color: "#C0C0C0"
+                }
+
+                Rectangle {
+                    x: 2
+                    y: inputBar.y - 1
+                    width: parent.width - 4
+                    height: 1
+                    color: "#E3E3E3"
+                }
+
+                // Input bar.
+                Rectangle {
+                    id: inputBar
+
+                    x: 2
+                    y: parent.height - 2 - height
+                    width: parent.width - 4
+                    height: chatPanel.inputHeight - 4
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#F4F4F4"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#F8F8F8"
+                        }
+
+                    }
                 }
 
             }
