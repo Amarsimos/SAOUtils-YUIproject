@@ -45,18 +45,11 @@ ColumnLayout {
         }
     }
 
-    // Deleting asks first, in SAO Utils' message box.
+    // Deleting asks first, in SAO Utils' message box with the system alert sound.
     function remove(entry) {
-        NVG.SystemCall.playSound(NVG.SFX.NotifyAlert);
-        NVG.SystemCall.messageBox({
-            "title": qsTr("Yui's Heart"),
-            "text": qsTr("Delete this memory?") + "\n" + entry.text,
-            "modal": true
-        }).then(function(result) {
-            if (result !== false && result !== 0)
-                yui.deleteMemory(entry.id);
-
-        });
+        yui.askConfirm(qsTr("Yui's Heart"), qsTr("Delete this memory?") + "\n" + entry.text, function() {
+            yui.deleteMemory(entry.id);
+        }, true);
     }
 
     spacing: 8
