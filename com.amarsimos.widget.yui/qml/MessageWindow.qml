@@ -38,16 +38,20 @@ Item {
     readonly property color orange: "#F1AA03"
 
     // Opens like the mail box message panel: a thin line widens, then the body unfolds and the
-    // text fades in, with the message notification sound.
+    // text fades in, with the message notification sound. The window is hidden at once, and the
+    // animation starts on the next turn of the event loop: a message window pops up while the chat
+    // list is still creating and placing it, and an animation started right then was not seen.
     function popUp(sound) {
         windowScale.xScale = 0.1;
         windowScale.yScale = 0.05;
         frame.opacity = 0;
         messageText.opacity = 0;
-        if (sound)
-            NVG.SystemCall.playSound(NVG.SFX.NotifyMessage);
+        Qt.callLater(function() {
+            if (sound)
+                NVG.SystemCall.playSound(NVG.SFX.NotifyMessage);
 
-        popAnimation.restart();
+            popAnimation.restart();
+        });
     }
 
     // Wide enough for the text (up to maximumWidth) and always for the whole button bar, so the
