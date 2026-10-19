@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Chat in its own window, styled as an SAO message panel: opens and closes with SAO animations,
+  can be moved and resized, and is closed by clicking its title, Yui's image or with Esc.
+- Messages as SAO instant message windows; while Yui thinks, "YUI正在思考" with hints.
+- Yui's Heart Crystal: a collapsed form colored by CPU, GPU and memory load, with a speech bubble.
+- Desktop actions: Yui can start programs, find files (Everything) and close programs, always
+  after your confirmation. Protected system processes are never closed.
+- Yui's Heart window with three pages: Memories (add and edit), Recall (Auto Memory, heart core
+  size, how much is sent) and Local Memory (export, import, daily backups, chat log, forget all).
+- System Console (formerly Option): load monitor, desktop action permissions, test buttons and log.
+- New settings: reply length limit, search engine, bubble time and opacity, chat panel opacity,
+  sounds, load report interval and Spontaneous Talk.
+- ↺ next to each setting restores its default; Reset restores a whole window after confirming.
+
+### Changed
+
+- Settings take effect immediately (no Save button).
+- New defaults: transparent Field, Yui01 as the pixie, Source Han Sans for messages.
+- Setting names are in English in every language; descriptions are translated.
+- Confirmations that delete something use the system alert sound.
+- Your messages are titled Papa or Mama.
+- Seedling (the widget lab) is hidden for now.
+
+### Fixed
+
+- A frame of the old chat flashed when reopening it quickly.
+- Console windows appeared when a widget was added.
+- Values at the right edge of settings were cut off; settings no longer scroll sideways.
+
 ## [1.0.0] - 2026-10-15
 
 ### Added
