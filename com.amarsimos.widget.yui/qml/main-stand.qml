@@ -988,8 +988,9 @@ T.Widget {
     // After the first confirmed close of a program, ask once whether Yui may close it without asking
     // from now on: OK adds it to the whitelist; Cancel is remembered, so only the close itself is
     // confirmed next time. Both lists can be edited in the Option window.
-    // Bumped when Yui changes the whitelist, so the Option window shows it at once.
-    property int processListsRevision: 0
+    // Bumped when Yui changes a setting shown in the Option window (whitelist, es.exe path), so the
+    // window shows it at once.
+    property int settingsRevision: 0
 
     function askWhitelist(name) {
         if (Yui.processListHas(widget.settings.kill_whitelist, name) || Yui.processListHas(widget.settings.kill_asked, name))
@@ -999,7 +1000,7 @@ T.Widget {
         var remember = function(added) {
             var key = added ? "kill_whitelist" : "kill_asked";
             widget.settings[key] = Yui.processList((widget.settings[key] || []).concat([name]));
-            widget.processListsRevision++;
+            widget.settingsRevision++;
             diag("whitelist: " + name + (added ? " added" : " not added (will not ask again)"));
         };
         try {
@@ -1034,39 +1035,77 @@ T.Widget {
         return action ? (prefixes[action.type] || "") + action.target : "";
     }
 
-    // <<find:>>: Everything's es.exe writes up to 20 matching paths to a new file in the extension's
-    // storage folder; the file is read once it appears and Yui reports the results.
+    // <<find:>>: the package's scripts/find.bat runs Everything's es.exe (the Option path, or one it
+    // finds in PATH / the usual install folders), which writes up to 20 matching paths to a result
+    // file; the script then writes a status file with es.exe's exit code. Both files live in the
+    // package folder (SAO Utils lets a package read and write its own files) under a new name each
+    // time; the script deletes the earlier ones. Once the status file appears, Yui reports.
     function runFind(action) {
-        // The result file lives in the package folder: SAO Utils refused XMLHttpRequest reads of a
-        // file under Storages (status 0), while packages read and write their own files this way.
-        // Each search gets its own file: emptying a shared one with a PUT first left the results
-        // blank in SAO Utils (the clear landed after es.exe had written them).
-        var fileUrl = Qt.resolvedUrl("../find-" + Date.now() + ".txt");
-        var file = String(NVG.Url.toLocalFile(fileUrl)).replace(/\\/g, "/");
-        diag("es.exe path setting: " + (widget.settings.es_path ? "\"" + widget.settings.es_path + "\"" : "(empty, using es.exe from PATH)"));
-        var command = Yui.actionCommand(action, file, widget.settings.es_path);
-        // command() has been seen to return false although es.exe ran and wrote its results, so its
-        // return value is only logged; whether the search worked is decided by the result file.
+        var stamp = Date.now();
+        var resultUrl = Qt.resolvedUrl("../find-" + stamp + ".txt");
+        var statusUrl = Qt.resolvedUrl("../find-" + stamp + ".status");
+        var localFile = function(url) {
+            return String(NVG.Url.toLocalFile(url)).replace(/\//g, "\\");
+        };
+        var esSetting = String(widget.settings.es_path || "").replace(/"/g, "").trim();
+        diag("es.exe path setting: " + (esSetting ? "\"" + esSetting + "\"" : "(empty, find.bat looks in PATH and the usual install folders)"));
+        var command = Yui.actionCommand(action, localFile(resultUrl), esSetting, localFile(statusUrl), localFile(Qt.resolvedUrl("../scripts/find.bat")));
+        // command() has been seen to return false although the command ran, so its return value is
+        // only logged; what happened is read from the status file.
         var started = NVG.SystemCall.command(command);
-        diag("command(" + command + ") -> " + started + " (not used, waiting for the result file)");
+        diag("command(" + command + ") -> " + started + " (not used, waiting for the status file)");
         var tries = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
             tries++;
-            var content = readUrl(fileUrl);
-            var results = Yui.parseSearchResults(content);
-            diag("read result file (try " + tries + "/12): " + content.length + " chars, " + results.length + " results");
-            if (results.length === 0 && tries < 12)
+            var status = Yui.parseFindStatus(readUrl(statusUrl));
+            if (!status && tries < 20)
                 return ;
 
             timer.stop();
             timer.destroy();
-            if (results.length > 0)
-                appendMessage("ai", "检索完成！结衣找到了 " + results.length + " 个和「" + action.target + "」有关的结果：\n" + results.join("\n"), false, true);
-            else
-                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n可能是真的没有这个文件，也可能是 Everything 没有运行，或者 es.exe 的位置不对。请确认 Everything 正在运行，并在 Option 里填好 es.exe 的完整路径（或把它加入系统 PATH）。还没有的话，可以从 voidtools.com 下载 Everything 和 ES 命令行工具哦！", false, true);
+            reportFind(action, status, Yui.parseSearchResults(status ? readUrl(resultUrl) : ""), esSetting);
         });
         timer.start();
+    }
+
+    // Yui's message for a finished <<find:>>; a found es.exe is saved to the Option setting.
+    function reportFind(action, status, results, esSetting) {
+        diag("find status: " + JSON.stringify(status) + ", " + results.length + " results");
+        var download = "https://www.voidtools.com/downloads/";
+        var found = "";
+        if (status && status.es && !esSetting && status.code !== "missing") {
+            widget.settings.es_path = status.es;
+            widget.settingsRevision++;
+            found = "\n（结衣自动找到了 es.exe：" + status.es + "，已经帮你填进「Option」啦）";
+            diag("es.exe found and saved: " + status.es);
+        }
+        var text;
+        if (!status)
+            text = "数据检索失败……检索程序没有启动 (T_T)\n请打开「Option」看看日志，或者把日志发给开发者哦。";
+        else if (status.code === "missing")
+            text = (esSetting ? "数据检索失败……「Option」里填写的 es.exe 不存在：" + esSetting + "\n请确认路径是否正确哦。" : "数据检索失败……结衣找不到 Everything 的命令行工具 es.exe (T_T)\n请在「Option」里填写 es.exe 的完整路径，或者把它加入系统 PATH。") + "\n还没有安装的话，可以从这里下载 Everything 和 ES 命令行工具：\n" + download;
+        else if (status.code === "8")
+            text = "数据检索失败……Everything 好像没有在运行 (T_T)\n请先启动 Everything，再让结衣查找一次吧！";
+        else if (status.code !== "0")
+            text = "数据检索失败……es.exe 返回了错误代码 " + status.code + " (T_T)";
+        else if (results.length > 0)
+            text = "检索完成！结衣找到了 " + results.length + " 个和「" + action.target + "」有关的结果：\n" + results.join("\n");
+        else
+            text = "检索完成……但是没有找到和「" + action.target + "」有关的文件呢。换个关键词试试？";
+        appendMessage("ai", text + found, false, true);
+    }
+
+    // A link clicked in a chat message (see Yui.linkify): a path opens File Explorer, 「Option」 opens
+    // the Option window, a web link opens in the browser.
+    function openMessageLink(link) {
+        diag("link clicked: " + link);
+        if (link.indexOf("yui-path:") === 0)
+            showInExplorer(Yui.linkedPath(link));
+        else if (link === "yui-option:")
+            showDialog(widget.optionSettingsDialog, "optionSettingsDialogInstance");
+        else if (/^https?:\/\//i.test(link))
+            openLink(link);
     }
 
     // Contents of a package file ("" when missing). A changing query is added so a cached earlier
@@ -1996,8 +2035,8 @@ T.Widget {
                         x: 10
                         y: 10
                         width: parent.width - 20
-                        // Rich text of the message when it contains Windows paths, made clickable links.
-                        readonly property string linkedText: Yui.linkPaths(model.message, "#1565C0")
+                        // Rich text of the message when it contains links (paths, web links, 「Option」).
+                        readonly property string linkedText: Yui.linkify(model.message, "#1565C0")
 
                         text: linkedText || model.message
                         // Show replies verbatim: only the escaped, path-linked text is rich text.
@@ -2009,7 +2048,7 @@ T.Widget {
                         color: widget.styles.bubble_font_color || widget.defaultValues.bubble_font_color
                         font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         font.pixelSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
-                        onLinkActivated: widget.showInExplorer(Yui.linkedPath(link))
+                        onLinkActivated: widget.openMessageLink(link)
 
                         // Hand cursor over a path link; clicks still go to the text.
                         MouseArea {

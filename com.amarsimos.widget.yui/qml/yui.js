@@ -52,13 +52,14 @@ function processListHas(names, name) {
     return processList(names).indexOf(processName(name).toLowerCase()) !== -1;
 }
 
-// Command lines run with NVG.SystemCall.command(). find uses Everything's command line tool es.exe,
-// writing the results as UTF-8 text to resultFile; esPath is its full path (Option window), or empty
-// for es.exe found through PATH. kill asks the program to close (no /F).
-function actionCommand(action, resultFile, esPath) {
+// Command lines run with NVG.SystemCall.command(). kill asks the program to close (no /F). find runs
+// the package's scripts/find.bat (scriptFile): it uses esPath (Option window) or looks for es.exe in
+// PATH and the usual install folders, writes up to 20 results as UTF-8 text to resultFile and its exit
+// code and the es.exe it used to statusFile (see parseFindStatus).
+function actionCommand(action, resultFile, esPath, statusFile, scriptFile) {
     if (action.type === "find") {
         var es = String(esPath || "").replace(/"/g, "").trim();
-        return (es ? '"' + es + '"' : "es.exe") + ' -n 20 -export-txt "' + resultFile + '" "' + action.target + '"';
+        return 'cmd /c ""' + scriptFile + '" "' + es + '" "' + action.target + '" "' + resultFile + '" "' + statusFile + '""';
     }
 
     if (action.type === "kill")
@@ -67,36 +68,54 @@ function actionCommand(action, resultFile, esPath) {
     return "";
 }
 
-// A Windows path such as D:\Tools\a b.txt: a drive letter, then anything up to the end of the line,
-// a quote or bracket, or Chinese text / punctuation (so "文件在 D:\a.txt 里" links only the path).
-var PATH_PATTERN = /[A-Za-z]:[\\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*/g;
+// The status file of scripts/find.bat: {code: es.exe exit code as text, or "missing" when no es.exe
+// was found; es: the es.exe path used ("" when none)}, or null while it has not been written.
+function parseFindStatus(text) {
+    var code = /code=(\S+)/.exec(String(text || ""));
+    if (!code)
+        return null;
+
+    var es = /es="([^"]*)"/.exec(text);
+    return {
+        "code": code[1],
+        "es": es ? es[1] : ""
+    };
+}
+
+// What can be clicked in a chat message: web links, the word 「Option」 (opens the Option window) and
+// Windows paths such as D:\Tools\a b.txt — a drive letter, then anything up to the end of the line, a
+// quote or bracket, or Chinese text / punctuation (so "文件在 D:\a.txt 里" links only the path).
+var LINK_PATTERN = /(https?:\/\/[^\s"'<>「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]+)|(「Option」)|([A-Za-z]:[\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*)/g;
 
 function escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-// Rich text of a message with every Windows path made a "yui-path:" link, or "" when it has no path
-// (the message is then shown as plain text). Line breaks and spaces are kept as they are.
-function linkPaths(text, linkColor) {
+// Rich text of a message with its links (see LINK_PATTERN) made clickable — paths as "yui-path:",
+// 「Option」 as "yui-option:" — or "" when it has none (the message is then shown as plain text).
+// Line breaks and spaces are kept as they are.
+function linkify(text, linkColor) {
     text = String(text || "");
-    PATH_PATTERN.lastIndex = 0;
-    if (!PATH_PATTERN.test(text))
-        return "";
-
     var html = "";
     var last = 0;
+    var found = false;
     var match;
-    PATH_PATTERN.lastIndex = 0;
-    while ((match = PATH_PATTERN.exec(text)) !== null) {
-        // Trailing spaces and sentence punctuation are not part of the path.
-        var path = match[0].replace(/[\s.,;:!]+$/, "");
-        if (path.length < 4)
+    LINK_PATTERN.lastIndex = 0;
+    while ((match = LINK_PATTERN.exec(text)) !== null) {
+        // Trailing spaces and sentence punctuation are not part of a link.
+        var shown = match[2] ? match[0] : match[0].replace(/[\s.,;:!]+$/, "");
+        var href = match[1] ? shown : match[2] ? "yui-option:" : "yui-path:" + encodeURIComponent(shown);
+        if (match[3] && shown.length < 4)
             continue;
 
         html += escapeHtml(text.slice(last, match.index));
-        html += '<a href="yui-path:' + encodeURIComponent(path) + '" style="color:' + linkColor + '">' + escapeHtml(path) + "</a>";
-        last = match.index + path.length;
+        html += '<a href="' + escapeHtml(href) + '" style="color:' + linkColor + '">' + escapeHtml(shown) + "</a>";
+        last = match.index + shown.length;
+        found = true;
     }
+    if (!found)
+        return "";
+
     html += escapeHtml(text.slice(last));
     return '<span style="white-space:pre-wrap">' + html.replace(/\r?\n/g, "<br>") + "</span>";
 }

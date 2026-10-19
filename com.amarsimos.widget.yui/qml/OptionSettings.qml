@@ -49,14 +49,14 @@ NVG.Window {
                     Layout.fillWidth: true
                     selectByMouse: true
                     placeholderText: "D:\\Tools\\everything\\es.exe"
-                    text: optionWindow.targetWidget.settings.es_path || ""
+                    text: (optionWindow.targetWidget.settingsRevision, optionWindow.targetWidget.settings.es_path || "")
                     // Saved on every edit (also when the window is closed right after typing); empty
-                    // means es.exe is found through PATH. Surrounding quotes from "Copy as path" are dropped.
+                    // means es.exe is looked for in PATH and the usual install folders. Surrounding quotes from "Copy as path" are dropped.
                     onTextEdited: optionWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
                 }
 
                 SettingNote {
-                    text: qsTr("File search uses Everything's command line tool es.exe. Enter its full path here, or leave it empty when es.exe is in PATH. Everything itself must be running.")
+                    text: qsTr("File search uses Everything's command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.")
                 }
 
                 Heading {
@@ -74,7 +74,7 @@ NVG.Window {
                 ProcessListEditor {
                     Layout.fillWidth: true
                     // Re-read when Yui adds a program while this window is open.
-                    names: optionWindow.targetWidget.processListsRevision, optionWindow.targetWidget.settings.kill_whitelist || []
+                    names: optionWindow.targetWidget.settingsRevision, optionWindow.targetWidget.settings.kill_whitelist || []
                     emptyText: qsTr("No programs yet.")
                     // A removed program is not offered for the whitelist again; closing it is confirmed.
                     onEdited: {

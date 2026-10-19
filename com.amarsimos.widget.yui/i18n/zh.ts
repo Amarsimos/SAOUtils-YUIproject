@@ -323,8 +323,8 @@
     </message>
     <message>
         <location filename="../qml/OptionSettings.qml" line="59"/>
-        <source>File search uses Everything&apos;s command line tool es.exe. Enter its full path here, or leave it empty when es.exe is in PATH. Everything itself must be running.</source>
-        <translation>文件检索使用 Everything 的命令行工具 es.exe。在这里填写它的完整路径；如果 es.exe 已在系统 PATH 中可以留空。Everything 本身必须保持运行。</translation>
+        <source>File search uses Everything&apos;s command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.</source>
+        <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
     </message>
     <message>
         <location filename="../qml/OptionSettings.qml" line="63"/>
@@ -600,13 +600,13 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1447"/>
+        <location filename="../qml/main-stand.qml" line="1486"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="869"/>
-        <location filename="../qml/main-stand.qml" line="1511"/>
+        <location filename="../qml/main-stand.qml" line="1550"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -646,75 +646,75 @@
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1007"/>
+        <location filename="../qml/main-stand.qml" line="1008"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1008"/>
+        <location filename="../qml/main-stand.qml" line="1009"/>
         <source>Close %1 without asking from now on?
 You can change this in Option.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 Option 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1301"/>
+        <location filename="../qml/main-stand.qml" line="1340"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1337"/>
-        <location filename="../qml/main-stand.qml" line="1343"/>
+        <location filename="../qml/main-stand.qml" line="1376"/>
+        <location filename="../qml/main-stand.qml" line="1382"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2125"/>
+        <location filename="../qml/main-stand.qml" line="2164"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2125"/>
+        <location filename="../qml/main-stand.qml" line="2164"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2125"/>
+        <location filename="../qml/main-stand.qml" line="2164"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2252"/>
+        <location filename="../qml/main-stand.qml" line="2291"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2278"/>
+        <location filename="../qml/main-stand.qml" line="2317"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2278"/>
+        <location filename="../qml/main-stand.qml" line="2317"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2295"/>
+        <location filename="../qml/main-stand.qml" line="2334"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2357"/>
+        <location filename="../qml/main-stand.qml" line="2396"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2362"/>
+        <location filename="../qml/main-stand.qml" line="2401"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2367"/>
+        <location filename="../qml/main-stand.qml" line="2406"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>
