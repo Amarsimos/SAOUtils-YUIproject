@@ -24,6 +24,10 @@ Window {
 
     // popUp is about to start the open animation (next frame).
     property bool openPending: false
+    // Waiting to hide until a blank frame is on screen (see hideTimer).
+    property bool hidePending: false
+    // Frames put on screen since the window was made transparent; the first may still be an older one.
+    property int blankFrames: 0
     // Open (popUp) or closed (fold, the window is then hidden).
     property bool shown: false
 
@@ -38,7 +42,10 @@ Window {
     function popUp() {
         aniClose.stop();
         hideTimer.stop();
+        hideFallback.stop();
+        hidePending = false;
         warmUpTimer.stop();
+        contentItem.opacity = 1;
         yui.characterReveal = 0;
         yui.chatScaleX = 0.1;
         yui.chatPanelOpacity = 0;
@@ -315,17 +322,52 @@ Window {
 
     }
 
-    // Hides the window one frame after the close animation, once its last (transparent) frame has
-    // been drawn; hidden earlier, that last visible frame flashed when the window was shown again.
+    // After the close animation: the whole window is made transparent, and it is hidden only once
+    // that blank frame has been put on screen (frameSwapped). Windows keeps a hidden window's last
+    // frame and shows it again for a moment when the window comes back, so that frame must be blank;
+    // a fixed delay was not always enough when the chat was opened and closed quickly.
     Timer {
         id: hideTimer
 
         interval: 30
         onTriggered: {
-            view.shown = false;
-            view.visible = false;
-            view.folded();
+            view.contentItem.opacity = 0;
+            view.blankFrames = 0;
+            view.hidePending = true;
+            hideFallback.restart();
         }
+    }
+
+    // In case no frame is drawn (e.g. the window is covered), hide anyway.
+    Timer {
+        id: hideFallback
+
+        interval: 200
+        onTriggered: view.finishHide()
+    }
+
+    function finishHide() {
+        if (!hidePending)
+            return ;
+
+        hidePending = false;
+        hideFallback.stop();
+        shown = false;
+        visible = false;
+        folded();
+    }
+
+    // Two frames drawn since then (so the blank one is on screen): hide on the next turn of the event loop (frameSwapped comes from
+    // the render thread).
+    onFrameSwapped: {
+        if (!hidePending)
+            return ;
+
+        // A still window draws no more frames by itself: ask for one more.
+        if (++blankFrames >= 2)
+            Qt.callLater(finishHide);
+        else
+            Qt.callLater(view.update);
     }
 
     // A transparent window's very first showing can draw one frame before its transparency takes
