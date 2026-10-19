@@ -697,7 +697,7 @@ T.Widget {
             var action = "";
             if (!isError) {
                 // Apply and strip the control tags (expression, memories, navigation).
-                var reply = Yui.parseReply(text);
+                var reply = Yui.parseReply(text, widget.settings.kill_protected);
                 text = reply.text || "(・ω・)";
                 if (reply.emotion)
                     setEmotion(reply.emotion);
@@ -856,6 +856,12 @@ T.Widget {
             "find": qsTr("Yui will search your computer for:"),
             "kill": qsTr("Yui will close this program:")
         };
+        // Programs on the whitelist are closed without asking.
+        if (action.type === "kill" && Yui.processListHas(widget.settings.kill_whitelist, action.target)) {
+            diag("confirm: kill \"" + action.target + "\" is on the whitelist, closing without asking");
+            runAction(index);
+            return ;
+        }
         var question = (questions[action.type] || "") + "\n" + action.target;
         diag("confirm: " + action.type + " \"" + action.target + "\" -> messageBox");
         try {
@@ -898,7 +904,7 @@ T.Widget {
     // "blocked" note instead of asking.
     function testAction(tag) {
         diag("test " + tag);
-        var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag);
+        var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected);
         var index = chatModel.count;
         chatModel.append({
             "author": "ai",
@@ -968,6 +974,7 @@ T.Widget {
                 // so it is only logged.
                 var killed = NVG.SystemCall.command(killCommand);
                 diag("command(" + killCommand + ") -> " + killed + " (not used)");
+                askWhitelist(action.target);
 
             } else if (action.type === "find") {
                 runFind(action);
@@ -976,6 +983,38 @@ T.Widget {
             diag("action failed: " + e);
         }
         chatModel.setProperty(index, "actionState", "done");
+    }
+
+    // After the first confirmed close of a program, ask once whether Yui may close it without asking
+    // from now on: OK adds it to the whitelist; Cancel is remembered, so only the close itself is
+    // confirmed next time. Both lists can be edited in the Option window.
+    // Bumped when Yui changes the whitelist, so the Option window shows it at once.
+    property int processListsRevision: 0
+
+    function askWhitelist(name) {
+        if (Yui.processListHas(widget.settings.kill_whitelist, name) || Yui.processListHas(widget.settings.kill_asked, name))
+            return ;
+
+        diag("whitelist: asking about " + name);
+        var remember = function(added) {
+            var key = added ? "kill_whitelist" : "kill_asked";
+            widget.settings[key] = Yui.processList((widget.settings[key] || []).concat([name]));
+            widget.processListsRevision++;
+            diag("whitelist: " + name + (added ? " added" : " not added (will not ask again)"));
+        };
+        try {
+            NVG.SystemCall.messageBox({
+                "title": qsTr("Whitelist"),
+                "text": qsTr("Close %1 without asking from now on?\nYou can change this in Option.").arg(name),
+                "modal": true
+            }).then(function(result) {
+                remember(!(result === false || result === 0));
+            }, function() {
+                remember(false);
+            });
+        } catch (e) {
+            diag("whitelist: messageBox failed: " + e);
+        }
     }
 
     function addNote(index, note) {

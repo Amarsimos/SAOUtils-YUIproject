@@ -3,6 +3,7 @@ import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // "Option" window (next to Cardinal System and Equipment): tools that are not settings.
 // Diagnostics run each desktop action without the AI, through the same message, SAO confirmation
@@ -56,6 +57,48 @@ NVG.Window {
 
                 SettingNote {
                     text: qsTr("File search uses Everything's command line tool es.exe. Enter its full path here, or leave it empty when es.exe is in PATH. Everything itself must be running.")
+                }
+
+                Heading {
+                    text: qsTr("Close Programs")
+                }
+
+                Label {
+                    text: qsTr("Whitelist")
+                }
+
+                SettingNote {
+                    text: qsTr("Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.")
+                }
+
+                ProcessListEditor {
+                    Layout.fillWidth: true
+                    // Re-read when Yui adds a program while this window is open.
+                    names: optionWindow.targetWidget.processListsRevision, optionWindow.targetWidget.settings.kill_whitelist || []
+                    emptyText: qsTr("No programs yet.")
+                    // A removed program is not offered for the whitelist again; closing it is confirmed.
+                    onEdited: {
+                        var removed = Yui.processList(optionWindow.targetWidget.settings.kill_whitelist).filter(function(name) {
+                            return list.indexOf(name) === -1;
+                        });
+                        optionWindow.targetWidget.settings.kill_asked = Yui.processList((optionWindow.targetWidget.settings.kill_asked || []).concat(removed));
+                        optionWindow.targetWidget.settings.kill_whitelist = list;
+                    }
+                }
+
+                Label {
+                    text: qsTr("Immortal Objects")
+                }
+
+                SettingNote {
+                    text: qsTr("Yui never closes these programs. The locked system processes cannot be removed; you can protect more.")
+                }
+
+                ProcessListEditor {
+                    Layout.fillWidth: true
+                    fixedNames: Yui.PROTECTED_PROCESSES
+                    names: optionWindow.targetWidget.settings.kill_protected || []
+                    onEdited: optionWindow.targetWidget.settings.kill_protected = list
                 }
 
                 Heading {

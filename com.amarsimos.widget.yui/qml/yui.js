@@ -17,8 +17,8 @@ function tagPattern() {
     return /<<\s*(emotion|memory|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
-// Processes <<kill:>> refuses to close (Immortal Object). TEMPORARY list, pending a decision:
-// core Windows processes and SAO Utils itself.
+// Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
+// Utils itself. Users can protect more in the Option window, but cannot remove these.
 var PROTECTED_PROCESSES = ["system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe", "lsass.exe", "svchost.exe", "dwm.exe", "explorer.exe", "fontdrvhost.exe", "registry", "sao utils.exe", "nervlaunch.exe", "nervservice.exe", "nervstartup.exe", "nervsteam.exe", "nervwebkit.exe"];
 
 // Process name for taskkill ("chrome" -> "chrome.exe"), or "" when it is not a plain name.
@@ -30,8 +30,26 @@ function processName(value) {
     return /\.exe$/i.test(name) ? name : name + ".exe";
 }
 
-function isProtectedProcess(name) {
-    return PROTECTED_PROCESSES.indexOf(String(name).toLowerCase()) !== -1;
+// userProtected: extra names the user protected (Option window).
+function isProtectedProcess(name, userProtected) {
+    name = String(name).toLowerCase();
+    return PROTECTED_PROCESSES.indexOf(name) !== -1 || processListHas(userProtected, name);
+}
+
+// Lower-case process names of a user list (whitelist, extra protected processes) with "x" -> "x.exe",
+// invalid names and duplicates removed.
+function processList(names) {
+    var result = [];
+    (names || []).forEach(function(value) {
+        var name = processName(value).toLowerCase();
+        if (name && result.indexOf(name) === -1)
+            result.push(name);
+    });
+    return result;
+}
+
+function processListHas(names, name) {
+    return processList(names).indexOf(processName(name).toLowerCase()) !== -1;
 }
 
 // Command lines run with NVG.SystemCall.command(). find uses Everything's command line tool es.exe,
@@ -99,7 +117,8 @@ function parseSearchResults(text) {
 }
 
 // Split a finished reply into the text to show and the tags it carried.
-function parseReply(text) {
+// userProtected: extra protected process names (see isProtectedProcess).
+function parseReply(text, userProtected) {
     var result = {
         "text": "",
         "emotion": "",
@@ -151,7 +170,7 @@ function parseReply(text) {
                 };
         } else if (kind === "kill") {
             var name = processName(value);
-            if (name && isProtectedProcess(name))
+            if (name && isProtectedProcess(name, userProtected))
                 result.blocked = name;
             else if (!result.action && name)
                 result.action = {
