@@ -76,6 +76,33 @@ NVG.Window {
         };
     }
 
+    // Every change takes effect without a Save button: written shortly after the last change (so
+    // typing an access key or the personality is not written on every key) and when the window closes.
+    function applySettings() {
+        applyTimer.stop();
+        stashShownProvider();
+        targetWidget.settings.provider = targetWidget.providers[shownProvider].id;
+        targetWidget.settings.provider_settings = JSON.parse(JSON.stringify(providerSettings));
+        targetWidget.settings.system_prompt = systemPromptPreference.value;
+        targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
+        targetWidget.settings.greet_on_start = !!greetPreference.value;
+        targetWidget.settings.proactive_care = !!carePreference.value;
+        targetWidget.settings.status_reports = !!statusPreference.value;
+        targetWidget.settings.external_browser = !!externalBrowserPreference.value;
+        targetWidget.settings.sleep_minutes = sleepPreference.value;
+        targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
+        targetWidget.settings.max_history = historyPreference.value;
+        targetWidget.settings.max_tokens = maxTokensPreference.value;
+        targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
+        targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
+    }
+
+    function scheduleApply() {
+        if (!loading)
+            applyTimer.restart();
+
+    }
+
     function stashShownProvider() {
         if (shownProvider >= 0)
             providerSettings[targetWidget.providers[shownProvider].id] = shownSettings();
@@ -90,10 +117,21 @@ NVG.Window {
     width: minimumWidth
     height: 930
     transientParent: widget.NVG.View.window
+    onShownFetchedModelsChanged: scheduleApply()
     onClosing: {
+        if (applyTimer.running)
+            applySettings();
+
         // When the window is closed, destroy the object to free up resources.
         // A new one is created every time the settings action is triggered.
         destroy();
+    }
+
+    Timer {
+        id: applyTimer
+
+        interval: 600
+        onTriggered: applySettings()
     }
 
     Page {
@@ -143,6 +181,9 @@ NVG.Window {
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, historyPreference, maxTokensPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                            preference.valueChanged.connect(scheduleApply);
+                        });
                     }
 
                     // ---------------------------------------------------------------- Link Start
@@ -602,27 +643,9 @@ NVG.Window {
             // mail box composer); without this some came out in the theme's blue.
             Style.primary: coreSettings.Style.dialogColor
             text: qsTr("Cardinal System")
-            standardButtons: Dialog.Save | Dialog.Reset
-            onAccepted: {
-                stashShownProvider();
-                targetWidget.settings.provider = targetWidget.providers[shownProvider].id;
-                targetWidget.settings.provider_settings = JSON.parse(JSON.stringify(providerSettings));
-                targetWidget.settings.system_prompt = systemPromptPreference.value;
-                targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
-                targetWidget.settings.greet_on_start = !!greetPreference.value;
-                targetWidget.settings.proactive_care = !!carePreference.value;
-                targetWidget.settings.status_reports = !!statusPreference.value;
-                targetWidget.settings.external_browser = !!externalBrowserPreference.value;
-                targetWidget.settings.sleep_minutes = sleepPreference.value;
-                targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
-                targetWidget.settings.max_history = historyPreference.value;
-                targetWidget.settings.max_tokens = maxTokensPreference.value;
-                targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
-                targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
-                coreSettings.close();
-            }
+            standardButtons: Dialog.Reset
             // Reset (after confirming): everything but the connection (server, core, address, access
-            // key), shown here and kept once Save is pressed.
+            // key); it takes effect at once like any change.
             onReset: targetWidget.confirmReset(qsTr("Cardinal System"), function() {
                 systemPromptPreference.value = targetWidget.defaultSystemPrompt;
                 userTitlePreference.value = 0;

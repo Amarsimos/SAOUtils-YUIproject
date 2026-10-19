@@ -135,11 +135,23 @@ NVG.Window {
         ];
     }
 
+    // True while values are put into the preferences (not changes by the user).
+    property bool loading: true
+
     function loadStyles(styles) {
+        loading = true;
         var values = toPreferences(styles);
         entries().forEach(function(entry) {
             entry.preference.value = values[entry.key] !== undefined ? values[entry.key] : entry.defaultValue;
         });
+        loading = false;
+    }
+
+    // Changes take effect at once (no Save button), so the look can be tried out live.
+    function styleChanged() {
+        if (!loading)
+            saveStyles();
+
     }
 
     function saveStyles() {
@@ -151,9 +163,11 @@ NVG.Window {
     }
 
     function resetStyles() {
+        loading = true;
         entries().forEach(function(entry) {
             entry.preference.value = entry.defaultValue;
         });
+        loading = false;
     }
 
     title: qsTr("Equipment")
@@ -196,6 +210,9 @@ NVG.Window {
                     spacing: 10
                     Component.onCompleted: {
                         loadStyles(targetWidget.styles);
+                        entries().forEach(function(entry) {
+                            entry.preference.valueChanged.connect(styleChanged);
+                        });
                     }
 
                     // ---------------------------------------------------------------- Avatar
@@ -585,11 +602,7 @@ NVG.Window {
             // mail box composer); without this some came out in the theme's blue.
             Style.primary: styleSettingsWindow.Style.dialogColor
             text: qsTr("Equipment")
-            standardButtons: Dialog.Save | Dialog.Reset
-            onAccepted: {
-                saveStyles();
-                styleSettingsWindow.close();
-            }
+            standardButtons: Dialog.Reset
             onReset: targetWidget.confirmReset(qsTr("Equipment"), function() {
                 resetStyles();
                 // and saves the reset state right away
