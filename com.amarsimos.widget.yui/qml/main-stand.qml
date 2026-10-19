@@ -669,7 +669,7 @@ T.Widget {
     }
 
     // Show a "..." placeholder and replace it in place once the reply arrives.
-    function startReply(messages) {
+    function startReply(messages, notifyTitle) {
         var session = widget.chatSession;
         var index = chatModel.count;
         chatModel.append({
@@ -726,8 +726,12 @@ T.Widget {
             widget.busy = false;
             widget.currentRequest = null;
             scheduleSave();
-            if (!isError)
+            if (!isError) {
                 logMessage("ai", text);
+                if (notifyTitle)
+                    notify(notifyTitle, text);
+
+            }
 
             if (action)
                 Qt.callLater(confirmAction, index);
@@ -779,7 +783,8 @@ T.Widget {
 
     // Let Yui speak on her own (greetings, care): the instruction is sent as a hidden user turn
     // after the recent conversation. Returns false when she cannot speak right now.
-    function yuiSpeaks(instruction) {
+    // notifyTitle: also send the reply as a system notification with this title (care reminders).
+    function yuiSpeaks(instruction, notifyTitle) {
         if (widget.busy || !activeConfig().apiKey)
             return false;
 
@@ -792,7 +797,7 @@ T.Widget {
             "content": instruction
         });
         lastProactive = Date.now();
-        startReply(messages);
+        startReply(messages, notifyTitle);
         return true;
     }
 
@@ -902,15 +907,7 @@ T.Widget {
     // A refused <<kill:>> of a protected process: SAO Utils' system message box, titled after the
     // indestructible objects of SAO ("Immortal Object"), with only an OK button.
     function showImmortalObject(name) {
-        try {
-            NVG.SystemCall.messageBox({
-                "title": qsTr("Immortal Object"),
-                "text": qsTr("%1 is a protected system process. Yui cannot close it.").arg(name),
-                "modal": false
-            });
-        } catch (e) {
-            console.log("system message box unavailable:", e);
-        }
+        notify(qsTr("Immortal Object"), qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
     }
 
     function cancelAction(index) {
@@ -1210,6 +1207,28 @@ T.Widget {
     function statusWarning(text) {
         appendMessage("ai", text, false, true);
         setEmotion("surprised");
+        notify(qsTr("Navigation Report"), text);
+    }
+
+    // SAO Utils' global notification (NVG.Notification). Opening it brings the chat back.
+    // Returns the notification object (null when it could not be created).
+    function notify(title, message) {
+        var notification = notificationComponent.createObject(widget, {
+            "title": title,
+            "message": message
+        });
+        if (!notification)
+            return null;
+
+        notification.accepted.connect(function() {
+            setChatVisible(true);
+            notification.destroy();
+        });
+        notification.rejected.connect(function() {
+            notification.destroy();
+        });
+        notification.active = true;
+        return notification;
     }
 
     // MHCP001 care: remind the user to sleep late at night or to rest after a long session.
@@ -1223,13 +1242,13 @@ T.Widget {
         // The "night" a late hour belongs to, so the reminder is given once per night.
         var night = Qt.formatDate(new Date(now - 6 * 3600000), "yyyy-MM-dd");
         if (hour < 5 && widget.settings.last_night_care !== night) {
-            if (yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(new Date(now), "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话。）"))
+            if (yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(new Date(now), "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话。）", qsTr("Mental Health Counseling")))
                 widget.settings.last_night_care = night;
 
             return ;
         }
         if (now - sessionStart > 2 * 3600000 && now - (widget.settings.last_rest_care || 0) > 2 * 3600000) {
-            if (yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话。）"))
+            if (yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话。）", qsTr("Mental Health Counseling")))
                 widget.settings.last_rest_care = now;
 
         }
@@ -1414,6 +1433,15 @@ T.Widget {
                 wrapMode: Text.WrapAnywhere
             }
 
+        }
+
+    }
+
+    // Global notifications (see notify()).
+    Component {
+        id: notificationComponent
+
+        NVG.Notification {
         }
 
     }
