@@ -2956,9 +2956,13 @@ T.Widget {
 
             MouseArea {
                 anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                // A click on a sleeping Yui wakes her up; on an awake Yui it closes the chat (back to
+                // the collapsed form), like the message bar and Esc.
                 onClicked: {
-                    // A click on a sleeping Yui wakes her up.
-                    widget.wakeUp();
+                    if (!widget.wakeUp())
+                        widget.setChatVisible(false);
+
                 }
             }
 
