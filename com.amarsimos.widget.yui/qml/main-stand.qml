@@ -3008,10 +3008,17 @@ T.Widget {
                         anchors.leftMargin: 6
                         anchors.rightMargin: 6
                         clip: true
-                        // No scroll bar in the input box (it still scrolls with the wheel / cursor).
-                        ScrollBar.vertical: SaoScrollBar {
-                            onLight: true
+                        // No scroll bars in the input box (it still scrolls with the wheel / cursor): both
+                        // are plain bars that are never shown and take no room.
+                        ScrollBar.vertical: ScrollBar {
                             policy: ScrollBar.AlwaysOff
+                            visible: false
+                            width: 0
+                        }
+                        ScrollBar.horizontal: ScrollBar {
+                            policy: ScrollBar.AlwaysOff
+                            visible: false
+                            height: 0
                         }
 
                         TextArea {
