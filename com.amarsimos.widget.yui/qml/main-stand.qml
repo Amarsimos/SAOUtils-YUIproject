@@ -2940,8 +2940,15 @@ T.Widget {
             // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below); she also
             // fades in and out with the view (characterReveal).
             property real dim: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
+            // Like the navigation pixie: she floats gently up and down while awake (only upward, so the
+            // bottom of the image is never cut off), and grows in from 80 % as the view opens.
+            property real hover: 0
 
             opacity: dim * widget.characterReveal
+            scale: 0.8 + 0.2 * widget.characterReveal
+            transform: Translate {
+                y: characterImage.hover
+            }
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             height: parent.height
@@ -2953,6 +2960,26 @@ T.Widget {
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignHCenter
             verticalAlignment: Image.AlignVCenter
+
+            SequentialAnimation on hover {
+                running: widget.showChat && !widget.sleeping
+                loops: Animation.Infinite
+
+                NumberAnimation {
+                    from: 0
+                    to: -10
+                    duration: 1400
+                    easing.type: Easing.InOutSine
+                }
+
+                NumberAnimation {
+                    from: -10
+                    to: 0
+                    duration: 1400
+                    easing.type: Easing.InOutSine
+                }
+
+            }
 
             MouseArea {
                 anchors.fill: parent
