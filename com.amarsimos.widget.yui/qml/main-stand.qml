@@ -138,6 +138,14 @@ T.Widget {
     // shown otherwise.
     property bool showChat: false
     property var yuiView: null
+    // Driven by YuiView's open / close animation (as the mail box message panel): the character's
+    // fade, the chat panel's horizontal scale and fade, how far its message area is unfolded
+    // (0 = only the title and input bars, 1 = full height) and the messages' fade.
+    property real characterReveal: 1
+    property real chatScaleX: 1
+    property real chatPanelOpacity: 1
+    property real chatReveal: 1
+    property real messagesOpacity: 1
     // Set once the saved chat is shown; messages added afterwards pop up (MessageWindow.popUp).
     property bool chatReady: false
     // Messages from this index on were added after start-up and pop up when shown.
@@ -2568,8 +2576,11 @@ T.Widget {
 
                 return styles.character_image_path;
             }
-            // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below).
-            opacity: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
+            // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below); she also
+            // fades in and out with the view (characterReveal).
+            property real dim: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
+
+            opacity: dim * widget.characterReveal
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             height: parent.height
@@ -2590,7 +2601,7 @@ T.Widget {
                 }
             }
 
-            Behavior on opacity {
+            Behavior on dim {
                 NumberAnimation {
                     duration: 600
                 }
@@ -2726,48 +2737,86 @@ T.Widget {
 
         }
 
-        // SAO menu panel around the chat (as SAO Utils' SAO settings panel): light gray with a white edge,
-        // "Message" in the SAO UI font over a thin line, and a pointer at the middle of its left side,
-        // toward Yui.
+        // The chat panel, in the three parts of the SAO mail box message panel (panel.9.png): a white
+        // title bar ("Message"), the darker gray message area, a white input bar; a pointer at the middle
+        // of its left side points at Yui. It is centered vertically, and opening unfolds only the middle
+        // (chatReveal): the title and input bars keep their size and move apart. While opening it also
+        // widens from the middle (chatScaleX) and fades in (chatPanelOpacity).
         Item {
             id: chatPanel
 
             readonly property real pointer: 12
+            readonly property real titleHeight: 44
+            readonly property real inputHeight: inputArea.height + 16
+            readonly property real fullHeight: parent.height - 8
 
             anchors.left: characterImage.right
             anchors.leftMargin: 4 + pointer
             anchors.right: parent.right
             anchors.rightMargin: 6
-            anchors.top: parent.top
-            anchors.topMargin: 4
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 4
+            anchors.verticalCenter: parent.verticalCenter
+            height: titleHeight + inputHeight + (fullHeight - titleHeight - inputHeight) * widget.chatReveal
+            opacity: widget.chatPanelOpacity
 
             Rectangle {
                 id: chatPanelBackground
 
                 anchors.fill: parent
                 radius: 2
-                color: "#F0EAEAEA"
+                color: "#F0D6D6D6"
                 border.color: "#FFFFFF"
                 border.width: 2
+            }
+
+            // Title bar.
+            Rectangle {
+                x: 2
+                y: 2
+                width: parent.width - 4
+                height: chatPanel.titleHeight - 2
+                color: "#F8F8F8"
+
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: 1
+                    color: "#C8C8C8"
+                }
+
+            }
+
+            // Input bar.
+            Rectangle {
+                x: 2
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 2
+                width: parent.width - 4
+                height: chatPanel.inputHeight - 2
+                color: "#F8F8F8"
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#C8C8C8"
+                }
+
             }
 
             Text {
                 id: chatPanelTitle
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: 8
+                y: 9
                 text: "Message"
                 color: "#8C8C8C"
                 font.family: "SAO UI"
                 font.pixelSize: 20
             }
 
-            // Drag the title area to move Yui's view.
+            // Drag the title bar to move Yui's view.
             MouseArea {
                 width: parent.width - 34
-                height: 40
+                height: chatPanel.titleHeight
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 onPressed: {
                     if (widget.yuiView)
@@ -2790,7 +2839,7 @@ T.Widget {
             Text {
                 anchors.right: parent.right
                 anchors.rightMargin: 12
-                y: 10
+                y: 11
                 text: "✕"
                 color: panelCloseArea.containsMouse ? "#F59B00" : "#999999"
                 font.pixelSize: 15
@@ -2805,33 +2854,6 @@ T.Widget {
                     onClicked: setChatVisible(false)
                 }
 
-            }
-
-            // Thin line under the title, fading out at both ends.
-            Rectangle {
-                x: 14
-                y: chatPanelTitle.y + chatPanelTitle.height + 4
-                width: parent.width - 28
-                height: 1
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-
-                    GradientStop {
-                        position: 0
-                        color: "#00A0A0A0"
-                    }
-
-                    GradientStop {
-                        position: 0.5
-                        color: "#B0A0A0A0"
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: "#00A0A0A0"
-                    }
-
-                }
             }
 
             Shape {
@@ -2864,16 +2886,32 @@ T.Widget {
 
             }
 
+            transform: Scale {
+                origin.x: chatPanel.width / 2
+                origin.y: chatPanel.height / 2
+                xScale: widget.chatScaleX
+            }
+
         }
 
+        // The message list (in the panel's middle) and the input row (in its input bar), placed over the
+        // panel and scaled / faded with it.
         ColumnLayout {
             id: chatContainer
 
             anchors.fill: chatPanel
-            anchors.topMargin: 46
+            anchors.topMargin: chatPanel.titleHeight + 6
             anchors.leftMargin: 8
             anchors.rightMargin: 6
             anchors.bottomMargin: 8
+            spacing: 16
+            opacity: widget.chatPanelOpacity
+
+            transform: Scale {
+                origin.x: chatPanel.width / 2 - 8
+                origin.y: chatContainer.height / 2
+                xScale: widget.chatScaleX
+            }
 
             ListView {
                 id: chatView
@@ -2888,6 +2926,8 @@ T.Widget {
                 // height from their average, which keeps changing with long bubbles and makes the scroll
                 // bar jump (the chat holds few messages, so this is cheap).
                 cacheBuffer: 100000
+                // The messages fade in once the panel has unfolded.
+                opacity: widget.messagesOpacity
 
                 ScrollBar.vertical: SaoScrollBar {
                     id: chatScrollBar

@@ -19,9 +19,6 @@ Window {
     readonly property Item host: hostItem
     readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatPanelMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
-    // Height of the strip the panel unfolds from: a thin line in the very middle (the mail box panel
-    // starts from a 156 px strip, which looked too tall here).
-    readonly property real collapsedHeight: 2
     property point moveStart
     property point moveOrigin
 
@@ -34,17 +31,19 @@ Window {
     // The close animation has finished and the view is hidden.
     signal folded()
 
-    // Opens as the mail box message panel: widens from 10 % (200 ms) while fading in (250 ms), then
-    // the message sound and the height unfolds from a strip in the middle (250 ms). The character and
-    // chat stay visible and laid out at full size the whole time: the clip reveals them (they were
-    // first kept transparent until the end, so only a fade-in was seen).
+    // Opens as the mail box message panel (the widget's chat panel, see main-stand.qml chatPanel):
+    // the character fades in while the panel widens from 10 % (200 ms) and fades in (250 ms); then the
+    // message sound, the panel's middle message area unfolds (250 ms; its title and input bars keep
+    // their size and move apart) and the messages fade in (250 ms).
     function popUp() {
         aniClose.stop();
         hideTimer.stop();
         warmUpTimer.stop();
-        clipScale.xScale = 0.1;
-        panelClip.height = collapsedHeight;
-        panelClip.opacity = 0;
+        yui.characterReveal = 0;
+        yui.chatScaleX = 0.1;
+        yui.chatPanelOpacity = 0;
+        yui.chatReveal = 0;
+        yui.messagesOpacity = 0;
         shown = true;
         // As MessagePanel: the window is shown at the start of the animation (its content still
         // invisible), and the animation runs right after.
@@ -129,32 +128,16 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
     visible: false
 
-    // The panel clip: full width (scaled horizontally while opening / closing), its height unfolding
-    // from the middle, with the content kept in place inside it.
+    // The content (the animation acts on the widget's character and chat panel inside it).
     Item {
         id: panelClip
 
-        // Invisible until the open animation fades it in.
-        opacity: 0
-        y: Math.round((view.height - height) / 2)
-        width: view.width
-        height: view.height
-        clip: true
-
-        transform: Scale {
-            id: clipScale
-
-            origin.x: panelClip.width / 2
-            origin.y: panelClip.height / 2
-        }
+        anchors.fill: parent
 
         Item {
             id: inner
 
-            x: -panelClip.x
-            y: -panelClip.y
-            width: view.width
-            height: view.height
+            anchors.fill: parent
 
             Item {
                 id: hostItem
@@ -244,8 +227,16 @@ Window {
         id: aniOpen
 
         NumberAnimation {
-            target: clipScale
-            property: "xScale"
+            target: view.yui
+            property: "characterReveal"
+            from: 0
+            to: 1
+            duration: 450
+        }
+
+        NumberAnimation {
+            target: view.yui
+            property: "chatScaleX"
             from: 0.1
             to: 1
             duration: 200
@@ -254,8 +245,8 @@ Window {
 
         SequentialAnimation {
             NumberAnimation {
-                target: panelClip
-                property: "opacity"
+                target: view.yui
+                property: "chatPanelOpacity"
                 from: 0
                 to: 1
                 duration: 250
@@ -266,18 +257,20 @@ Window {
             }
 
             NumberAnimation {
-                target: panelClip
-                property: "height"
-                to: view.height
+                target: view.yui
+                property: "chatReveal"
+                from: 0
+                to: 1
                 duration: 250
                 easing.type: Easing.OutQuart
             }
 
-            // The clip follows the view's height again (for resizing).
-            ScriptAction {
-                script: panelClip.height = Qt.binding(function() {
-                    return view.height;
-                })
+            NumberAnimation {
+                target: view.yui
+                property: "messagesOpacity"
+                from: 0
+                to: 1
+                duration: 250
             }
 
         }
@@ -293,17 +286,23 @@ Window {
 
         ParallelAnimation {
             NumberAnimation {
-                target: clipScale
-                property: "xScale"
-                from: 1
+                target: view.yui
+                property: "chatScaleX"
                 to: 0.1
                 duration: 250
                 easing.type: Easing.OutQuart
             }
 
             NumberAnimation {
-                target: panelClip
-                property: "opacity"
+                target: view.yui
+                property: "chatPanelOpacity"
+                to: 0
+                duration: 250
+            }
+
+            NumberAnimation {
+                target: view.yui
+                property: "characterReveal"
                 to: 0
                 duration: 250
             }
