@@ -1,0 +1,299 @@
+import NERvGear 1.0 as NVG
+import QtQuick 2.12
+
+// One chat message as an SAO instant message window (after SAO Utils' SAO-style mail box panel):
+// a white title bar "Message · <sender>" in the SAO UI font, the text on a light gray body, and a
+// white button bar with the message's note and actions; buttons turn SAO orange when hovered.
+// New messages pop up like the mail box panel (popUp()).
+Item {
+    id: messageWindow
+
+    property string sender
+    property string text
+    // Rich text with clickable links (Yui.linkify), or "" to show text as plain text.
+    property string linkedText
+    property string note
+    // Label of a desktop action / link Yui offers ("" when none), and its state:
+    // "pending" (Confirm... button), "done" or "cancelled".
+    property string actionLabel
+    property string actionState
+    property bool canRegenerate: false
+    property string fontFamily
+    property int fontSize: 14
+    // Widest the window may get.
+    property real maximumWidth: 400
+
+    signal linkActivated(string link)
+    signal confirmRequested()
+    signal regenerateRequested()
+
+    readonly property bool hasFooter: note !== "" || actionLabel !== "" || canRegenerate
+    readonly property color orange: "#F1AA03"
+
+    // Opens like the mail box message panel: a thin line widens, then the body unfolds and the
+    // text fades in, with the message sound.
+    function popUp(sound) {
+        windowScale.xScale = 0.1;
+        windowScale.yScale = 0.05;
+        frame.opacity = 0;
+        messageText.opacity = 0;
+        if (sound)
+            NVG.SystemCall.playSound(NVG.SFX.PopupMessage);
+
+        popAnimation.restart();
+    }
+
+    width: Math.max(180, Math.min(maximumWidth, measure.implicitWidth + 28))
+    height: frame.height
+
+    // Unwrapped text, only to measure the natural width of the longest line.
+    Text {
+        id: measure
+
+        visible: false
+        text: messageWindow.text
+        textFormat: Text.PlainText
+        font: messageText.font
+    }
+
+    Rectangle {
+        id: frame
+
+        width: parent.width
+        height: header.height + body.height + footer.height
+        radius: 3
+        color: "#F8F8F8"
+        border.color: "#C8C8C8"
+        border.width: 1
+
+        // Title bar.
+        Rectangle {
+            id: header
+
+            x: 1
+            y: 1
+            width: parent.width - 2
+            height: 26
+            radius: 2
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "#FFFFFF"
+                }
+
+                GradientStop {
+                    position: 1
+                    color: "#EEEEEE"
+                }
+
+            }
+
+            Text {
+                anchors.centerIn: parent
+                width: parent.width - 16
+                horizontalAlignment: Text.AlignHCenter
+                text: "Message · " + messageWindow.sender
+                color: "#777777"
+                font.family: "SAO UI"
+                font.pixelSize: 15
+                elide: Text.ElideRight
+            }
+
+        }
+
+        // Body: the message text on light gray, between thin shadow lines.
+        Rectangle {
+            id: body
+
+            x: 1
+            y: header.y + header.height
+            width: parent.width - 2
+            height: messageText.implicitHeight + 20
+            color: "#E4E4E4"
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: "#CFCFCF"
+            }
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: "#D6D6D6"
+            }
+
+            TextEdit {
+                id: messageText
+
+                x: 12
+                y: 10
+                width: parent.width - 24
+                text: messageWindow.linkedText || messageWindow.text
+                // Shown verbatim: only the escaped, link-marked text is rich text.
+                textFormat: messageWindow.linkedText ? TextEdit.RichText : TextEdit.PlainText
+                wrapMode: TextEdit.Wrap
+                readOnly: true
+                selectByMouse: true
+                selectionColor: messageWindow.orange
+                color: "#3A3A3A"
+                font.family: messageWindow.fontFamily
+                font.pixelSize: messageWindow.fontSize
+                onLinkActivated: messageWindow.linkActivated(link)
+
+                // Hand cursor over a link; clicks still go to the text.
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    cursorShape: messageText.hoveredLink ? Qt.PointingHandCursor : Qt.IBeamCursor
+                }
+
+            }
+
+        }
+
+        // Button bar: the note on its own line, then the action label and the buttons on the right.
+        Item {
+            id: footer
+
+            x: 1
+            y: body.y + body.height
+            width: parent.width - 2
+            height: messageWindow.hasFooter ? footerColumn.height + 12 : 6
+
+            Column {
+                id: footerColumn
+
+                x: 8
+                y: 6
+                width: parent.width - 16
+                spacing: 5
+                visible: messageWindow.hasFooter
+
+                Text {
+                    visible: messageWindow.note !== ""
+                    width: parent.width
+                    text: messageWindow.note
+                    color: "#888888"
+                    font.pixelSize: 11
+                    wrapMode: Text.Wrap
+                }
+
+                Item {
+                    visible: messageWindow.actionLabel !== "" || messageWindow.canRegenerate
+                    width: parent.width
+                    height: 24
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - buttons.width - 8
+                        text: messageWindow.actionLabel
+                        color: "#666666"
+                        font.pixelSize: 12
+                        elide: Text.ElideRight
+                    }
+
+                    Row {
+                        id: buttons
+
+                        anchors.right: parent.right
+                        spacing: 6
+
+                        Repeater {
+                            // [label, kind]: "confirm" and "regenerate" are buttons, "status" is not.
+                            model: (messageWindow.actionLabel === "" ? [] : [messageWindow.actionState === "pending" ? [qsTr("Confirm..."), "confirm"] : [messageWindow.actionState === "done" ? qsTr("Done ✓") : qsTr("Cancelled"), "status"]]).concat(messageWindow.canRegenerate ? [["↻ " + qsTr("Regenerate"), "regenerate"]] : [])
+
+                            Rectangle {
+                                readonly property bool isButton: modelData[1] !== "status"
+
+                                width: buttonText.implicitWidth + 18
+                                height: 24
+                                radius: 2
+                                color: !isButton ? "transparent" : (buttonArea.pressed ? messageWindow.orange : (buttonArea.containsMouse ? "#CCF1AA03" : "#FFFFFF"))
+                                border.color: isButton ? "#D0D0D0" : "transparent"
+
+                                Text {
+                                    id: buttonText
+
+                                    anchors.centerIn: parent
+                                    text: modelData[0]
+                                    color: parent.isButton && buttonArea.containsMouse ? "#FFFFFF" : "#BB333333"
+                                    font.pixelSize: 12
+                                }
+
+                                MouseArea {
+                                    id: buttonArea
+
+                                    anchors.fill: parent
+                                    enabled: parent.isButton
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (modelData[1] === "confirm")
+                                            messageWindow.confirmRequested();
+                                        else
+                                            messageWindow.regenerateRequested();
+                                    }
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        transform: Scale {
+            id: windowScale
+
+            origin.x: frame.width / 2
+            origin.y: frame.height / 2
+        }
+
+    }
+
+    SequentialAnimation {
+        id: popAnimation
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: windowScale
+                property: "xScale"
+                to: 1
+                duration: 200
+                easing.type: Easing.OutQuart
+            }
+
+            NumberAnimation {
+                target: frame
+                property: "opacity"
+                to: 1
+                duration: 200
+            }
+
+        }
+
+        NumberAnimation {
+            target: windowScale
+            property: "yScale"
+            to: 1
+            duration: 250
+            easing.type: Easing.OutQuart
+        }
+
+        NumberAnimation {
+            target: messageText
+            property: "opacity"
+            to: 1
+            duration: 200
+        }
+
+    }
+
+}

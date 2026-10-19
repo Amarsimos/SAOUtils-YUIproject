@@ -128,6 +128,8 @@ T.Widget {
     // Messages before this index are not sent as history (e.g. written before the API was configured).
     property int historyStart: 0
     property bool showChat: true
+    // Set once the saved chat is shown; messages added afterwards pop up (MessageWindow.popUp).
+    property bool chatReady: false
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
@@ -2159,6 +2161,9 @@ T.Widget {
             welcomeBack();
         else
             getInitialMessage();
+        Qt.callLater(function() {
+            widget.chatReady = true;
+        });
         // The Widget Lab item shown in Yui, if it was on.
         if (widget.settings.lab_in_yui && widget.settings.lab_editor_code)
             loadIntoYui(widget.settings.lab_editor_code);
@@ -2651,241 +2656,44 @@ T.Widget {
                 id: chatScrollBar
             }
 
+            // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
+            // user's on the right. Messages added after start-up pop up (Yui's with the message sound).
             delegate: Item {
                 id: messageItem
 
-                // AI bubbles get a comic-style tail at the bottom-left, pointing at the character.
-                readonly property bool hasTail: model.author !== "user"
-                readonly property int messageIndex: index
-                readonly property string actionState: model.actionState
-                readonly property real tailSize: 10
+                readonly property bool fromUser: model.author === "user"
+                readonly property var action: model.action ? JSON.parse(model.action) : null
 
                 width: chatView.width
-                height: bubble.height + (hasTail ? tailSize * 0.6 : 0) + (extras.visible ? extras.height + 4 : 0)
+                height: messageWindow.height
 
-                // Unwrapped text, used only to measure the natural width of the longest line.
-                Text {
-                    id: measure
+                MessageWindow {
+                    id: messageWindow
 
-                    visible: false
-                    text: model.message
-                    textFormat: Text.PlainText
-                    font: messageText.font
-                }
-
-                Rectangle {
-                    id: bubble
-
-                    anchors.right: model.author === "user" ? parent.right : undefined
-                    anchors.left: model.author === "user" ? undefined : parent.left
-                    anchors.leftMargin: messageItem.hasTail ? messageItem.tailSize : 0
-                    // Keep user bubbles clear of the scroll bar.
+                    anchors.left: messageItem.fromUser ? undefined : parent.left
+                    anchors.right: messageItem.fromUser ? parent.right : undefined
+                    // Keep the user's windows clear of the scroll bar.
                     anchors.rightMargin: 16
-                    color: model.author === "user" ? (widget.styles.user_bubble_color || widget.defaultValues.user_bubble_color) : (widget.styles.ai_bubble_color || widget.defaultValues.ai_bubble_color)
-                    border.color: "#FFFFFF"
-                    border.width: 1
-                    radius: 8
-                    // Leave room on the right for the regenerate button.
-                    width: Math.min(measure.implicitWidth + 2, chatView.width - messageItem.tailSize - 64) + 20
-                    height: messageText.implicitHeight + 20
-
-                    TextEdit {
-                        id: messageText
-
-                        x: 10
-                        y: 10
-                        width: parent.width - 20
-                        // Rich text of the message when it contains links (paths, web links, 「Option」).
-                        readonly property string linkedText: Yui.linkify(model.message, "#1565C0")
-
-                        text: linkedText || model.message
-                        // Show replies verbatim: only the escaped, path-linked text is rich text.
-                        textFormat: linkedText ? TextEdit.RichText : TextEdit.PlainText
-                        // Wrap at word boundaries, but also break long URLs / JSON that have none.
-                        wrapMode: TextEdit.Wrap
-                        readOnly: true
-                        selectByMouse: true
-                        color: widget.styles.bubble_font_color || widget.defaultValues.bubble_font_color
-                        font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
-                        font.pixelSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
-                        onLinkActivated: widget.openMessageLink(link)
-
-                        // Hand cursor over a path link; clicks still go to the text.
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.NoButton
-                            cursorShape: messageText.hoveredLink ? Qt.PointingHandCursor : Qt.IBeamCursor
-                        }
-
-                    }
-
+                    maximumWidth: chatView.width - 40
+                    sender: messageItem.fromUser ? widget.userTitle() : "Yui"
+                    text: model.message
+                    linkedText: Yui.linkify(model.message, "#1565C0")
+                    note: model.note
+                    actionLabel: widget.actionLabel(messageItem.action)
+                    actionState: model.actionState
+                    canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
+                    fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
+                    fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
+                    onLinkActivated: widget.openMessageLink(link)
+                    onConfirmRequested: widget.confirmAction(index)
+                    onRegenerateRequested: widget.regenerateReply()
                 }
 
-                // Drawn over the bubble's bottom-left corner: the fill hides the corner's border and
-                // only the two outer edges of the tail are stroked, so it joins the bubble seamlessly.
-                Shape {
-                    id: tail
-
-                    readonly property real size: messageItem.tailSize
-
-                    visible: messageItem.hasTail
-                    x: bubble.x - size
-                    y: bubble.y + bubble.height - size * 1.5
-                    width: size * 3
-                    height: size * 2.1
-                    layer.enabled: visible
-                    layer.samples: 4
-
-                    ShapePath {
-                        fillColor: bubble.color
-                        strokeColor: bubble.border.color
-                        strokeWidth: bubble.border.width
-                        joinStyle: ShapePath.RoundJoin
-                        // From the bubble's left edge, out to the tip, back to its bottom edge.
-                        startX: tail.size + 0.5
-                        startY: 0
-                        PathQuad {
-                            x: 0
-                            y: tail.size * 2.05
-                            controlX: tail.size * 0.9
-                            controlY: tail.size * 1.4
-                        }
-
-                        PathQuad {
-                            x: tail.size * 2.9
-                            y: tail.size * 1.5 - 0.5
-                            controlX: tail.size * 1.4
-                            controlY: tail.size * 1.85
-                        }
-
-                    }
+                Component.onCompleted: {
+                    if (widget.chatReady && index === chatModel.count - 1)
+                        messageWindow.popUp(!messageItem.fromUser);
 
                 }
-
-                // Under an AI bubble: what Yui put into Yui's Heart, and a link / search she offers to open.
-                Column {
-                    id: extras
-
-                    readonly property var action: model.action ? JSON.parse(model.action) : null
-
-                    visible: model.note !== "" || action !== null
-                    x: bubble.x + 4
-                    y: bubble.y + bubble.height + messageItem.tailSize * 0.6 + 4
-                    width: bubble.width
-                    spacing: 4
-
-                    Rectangle {
-                        visible: model.note !== ""
-                        width: Math.min(noteText.implicitWidth + 16, extras.width)
-                        height: noteText.implicitHeight + 6
-                        radius: 11
-                        color: "#99000000"
-
-                        Text {
-                            id: noteText
-
-                            x: 8
-                            y: 3
-                            width: parent.width - 16
-                            text: model.note
-                            color: "#FFFFFF"
-                            font.pixelSize: 11
-                            wrapMode: Text.Wrap
-                        }
-
-                    }
-
-                    Row {
-                        visible: extras.action !== null
-                        spacing: 6
-
-                        Rectangle {
-                            width: actionText.width + 16
-                            height: 22
-                            radius: 11
-                            color: "#99000000"
-
-                            Text {
-                                id: actionText
-
-                                x: 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: widget.actionLabel(extras.action)
-                                color: "#FFFFFF"
-                                font.pixelSize: 12
-                                elide: Text.ElideRight
-                                width: Math.min(implicitWidth, chatView.width - 170)
-                            }
-
-                        }
-
-                        Repeater {
-                            // While pending: reopen the confirmation dialog. Afterwards: the outcome.
-                            model: extras.action ? [messageItem.actionState === "pending" ? qsTr("Confirm...") : (messageItem.actionState === "done" ? qsTr("Done ✓") : qsTr("Cancelled"))] : []
-
-                            Rectangle {
-                                readonly property bool isButton: messageItem.actionState === "pending"
-
-                                width: label.implicitWidth + 16
-                                height: 22
-                                radius: 11
-                                color: !isButton ? "#99000000" : (actionArea.containsMouse ? "#FFFFFFFF" : "#CCFFFFFF")
-
-                                Text {
-                                    id: label
-
-                                    anchors.centerIn: parent
-                                    text: modelData
-                                    color: parent.isButton ? "#333333" : "#DDDDDD"
-                                    font.pixelSize: 12
-                                }
-
-                                MouseArea {
-                                    id: actionArea
-
-                                    anchors.fill: parent
-                                    enabled: parent.isButton
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: widget.confirmAction(messageItem.messageIndex)
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-                // Regenerate the last reply.
-                Rectangle {
-                    visible: messageItem.hasTail && !model.local && index === chatModel.count - 1 && !widget.busy
-                    x: bubble.x + bubble.width + 6
-                    y: bubble.y + bubble.height - height
-                    width: 24
-                    height: 24
-                    radius: 12
-                    color: regenerateArea.containsMouse ? "#FFFFFFFF" : "#CCFFFFFF"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "↻"
-                        color: "#555555"
-                        font.pixelSize: 15
-                    }
-
-                    MouseArea {
-                        id: regenerateArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: widget.regenerateReply()
-                    }
-
-                }
-
             }
 
             // Stay at the bottom when new content arrives, unless the user scrolled up to read.
