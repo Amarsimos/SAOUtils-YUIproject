@@ -88,6 +88,9 @@ T.Widget {
     // How many messages are kept in settings.chat_history across restarts.
     // Yui's Heart window: chat messages shown again after a restart, Auto Memory (Yui writes her
     // memories herself), the heart core's size and how many daily backups are kept.
+    // Seedling is set aside for now: not in Yui's menu, and its item is not shown in Yui at start.
+    // Seedling widgets already saved to "My Widgets" still work and keep their own menu.
+    readonly property bool seedlingEnabled: false
     readonly property int maxSavedMessages: widget.settings.saved_messages > 0 ? widget.settings.saved_messages : 50
     readonly property bool autoMemory: widget.settings.auto_memory !== false
     readonly property int heartCoreCapacity: widget.settings.heart_core_capacity > 0 ? widget.settings.heart_core_capacity : Yui.MAX_CORE
@@ -1993,8 +1996,24 @@ T.Widget {
             widget.settings.heart_backup_day = day;
             widget.settings.heart_backup_path = path;
             widget.settingsRevision++;
+            removeOldBackups();
         });
     }
+
+    // Deletes the daily backups beyond backupDays (heart-backup-<n>.json with n > backupDays, up to
+    // the largest setting, 30), e.g. after Backup Days was lowered.
+    function removeOldBackups() {
+        if (backupDays >= 30)
+            return ;
+
+        heartFolders().forEach(function(folder) {
+            var command = 'cmd /c for /l %i in (' + (backupDays + 1) + ',1,30) do @del /q "' + folder.replace(/\//g, "\\") + '\\heart-backup-%i.json" 2>nul';
+            NVG.SystemCall.command(command);
+            diag("command(" + command + ")");
+        });
+    }
+
+    onBackupDaysChanged: removeOldBackups()
 
     // System Console "Import": adds the memories of an exported file (and its chat history, if it has
     // one) to Yui's Heart; nothing is replaced. Returns a message for the user.
@@ -2560,7 +2579,7 @@ T.Widget {
             widget.chatReady = true;
         });
         // The Seedling item shown in Yui, if it was on.
-        if (widget.settings.seedling_in_yui && widget.settings.seedling_editor_code)
+        if (seedlingEnabled && widget.settings.seedling_in_yui && widget.settings.seedling_editor_code)
             loadIntoYui(widget.settings.seedling_editor_code);
 
     }
@@ -3619,11 +3638,7 @@ T.Widget {
             onTriggered: showDialog(widget.yuisHeartDialog, "yuisHeartDialogInstance")
         }
 
-        Action {
-            text: qsTr("Seedling") + "..."
-            onTriggered: showDialog(widget.seedlingDialog, "seedlingDialogInstance")
-        }
-
+        // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.
         Action {
             text: qsTr("System Console") + "..."
             onTriggered: showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance")
