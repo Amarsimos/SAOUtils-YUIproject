@@ -19,8 +19,9 @@ Window {
     readonly property Item host: hostItem
     readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatPanelMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
-    // Height of the strip the panel unfolds from (MessagePanel's style.collapse).
-    readonly property real collapsedHeight: Math.min(156, height)
+    // Height of the strip the panel unfolds from: a thin line in the very middle (the mail box panel
+    // starts from a 156 px strip, which looked too tall here).
+    readonly property real collapsedHeight: 2
     property point moveStart
     property point moveOrigin
 
