@@ -170,6 +170,10 @@ T.Widget {
     // True while the view with the character and the chat (YuiView) is open; the collapsed form is
     // shown otherwise.
     property bool showChat: false
+    // 1 while the collapsed form (pixie, crystal or avatar) is shown, 0 while the view is open. It
+    // shrinks and fades out as the view opens, and comes back only once the view has gone.
+    property real collapsedReveal: 1
+    readonly property bool collapsedShown: !showChat || collapsedReveal > 0
     property var yuiView: null
 
     TextMetrics {
@@ -2434,6 +2438,8 @@ T.Widget {
         var corner = widget.mapToGlobal(0, 0);
         yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
         showChat = true;
+        collapsedIn.stop();
+        collapsedOut.restart();
         yuiView.popUp();
         chatView.stickToBottom = true;
     }
@@ -2442,8 +2448,30 @@ T.Widget {
     function closeView() {
         if (yuiView && yuiView.shown)
             yuiView.fold();
-        else
+        else {
             showChat = false;
+            collapsedReveal = 1;
+        }
+    }
+
+    NumberAnimation {
+        id: collapsedOut
+
+        target: widget
+        property: "collapsedReveal"
+        to: 0
+        duration: 250
+        easing.type: Easing.InCubic
+    }
+
+    NumberAnimation {
+        id: collapsedIn
+
+        target: widget
+        property: "collapsedReveal"
+        to: 1
+        duration: 400
+        easing.type: Easing.OutCubic
     }
 
     // The widget frame fits the collapsed form.
@@ -2479,6 +2507,8 @@ T.Widget {
         });
         yuiView.folded.connect(function() {
             showChat = false;
+            collapsedOut.stop();
+            collapsedIn.restart();
         });
     }
 
@@ -2698,12 +2728,13 @@ T.Widget {
         property real hover: 0
 
         configuration: widget.styles.pixie_image_path
-        visible: !showChat && widget.collapsedForm === "pixie"
+        visible: widget.collapsedShown && widget.collapsedForm === "pixie"
+        scale: 0.8 + 0.2 * widget.collapsedReveal
         anchors.fill: parent
         anchors.topMargin: 6
         anchors.bottomMargin: 6
         fillMode: Image.PreserveAspectFit
-        opacity: widget.sleeping ? 0.6 : 1
+        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal
 
         SequentialAnimation on hover {
             running: pixieImage.visible && !widget.sleeping
@@ -2744,8 +2775,10 @@ T.Widget {
     YuiCrystal {
         id: crystalForm
 
-        visible: !showChat && widget.collapsedForm === "crystal"
+        visible: widget.collapsedShown && widget.collapsedForm === "crystal"
         anchors.fill: parent
+        opacity: widget.collapsedReveal
+        scale: 0.8 + 0.2 * widget.collapsedReveal
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
 
@@ -3591,8 +3624,9 @@ T.Widget {
         id: avatarImage
 
         configuration: characterImage.configuration
-        visible: !showChat && widget.collapsedForm === "avatar"
-        opacity: characterImage.opacity
+        visible: widget.collapsedShown && widget.collapsedForm === "avatar"
+        opacity: characterImage.opacity * widget.collapsedReveal
+        scale: 0.8 + 0.2 * widget.collapsedReveal
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
 
