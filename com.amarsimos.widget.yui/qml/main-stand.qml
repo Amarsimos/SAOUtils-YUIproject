@@ -1033,6 +1033,15 @@ T.Widget {
         }
     }
 
+    // Opens File Explorer at a path from a chat message, with the file (or folder) selected.
+    function showInExplorer(path) {
+        if (!path)
+            return ;
+
+        var started = NVG.SystemCall.execute("explorer.exe", "/select,\"" + path + "\"");
+        diag("execute(explorer.exe /select,\"" + path + "\") -> " + started);
+    }
+
     // SAO Utils' built-in browser by default; the system browser when "External Browser" is on
     // (same choice and calls as SAO Utils' own web widgets). When the built-in browser fails, the
     // system browser is used instead and false is returned.
@@ -1934,9 +1943,12 @@ T.Widget {
                         x: 10
                         y: 10
                         width: parent.width - 20
-                        text: model.message
-                        // Show replies verbatim: never interpret them as rich text.
-                        textFormat: TextEdit.PlainText
+                        // Rich text of the message when it contains Windows paths, made clickable links.
+                        readonly property string linkedText: Yui.linkPaths(model.message, "#1565C0")
+
+                        text: linkedText || model.message
+                        // Show replies verbatim: only the escaped, path-linked text is rich text.
+                        textFormat: linkedText ? TextEdit.RichText : TextEdit.PlainText
                         // Wrap at word boundaries, but also break long URLs / JSON that have none.
                         wrapMode: TextEdit.Wrap
                         readOnly: true
@@ -1944,6 +1956,15 @@ T.Widget {
                         color: widget.styles.bubble_font_color || widget.defaultValues.bubble_font_color
                         font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         font.pixelSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
+                        onLinkActivated: widget.showInExplorer(Yui.linkedPath(link))
+
+                        // Hand cursor over a path link; clicks still go to the text.
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.NoButton
+                            cursorShape: messageText.hoveredLink ? Qt.PointingHandCursor : Qt.IBeamCursor
+                        }
+
                     }
 
                 }

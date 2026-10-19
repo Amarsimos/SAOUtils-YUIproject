@@ -49,6 +49,46 @@ function actionCommand(action, resultFile, esPath) {
     return "";
 }
 
+// A Windows path such as D:\Tools\a b.txt: a drive letter, then anything up to the end of the line,
+// a quote or bracket, or Chinese text / punctuation (so "文件在 D:\a.txt 里" links only the path).
+var PATH_PATTERN = /[A-Za-z]:[\\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*/g;
+
+function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Rich text of a message with every Windows path made a "yui-path:" link, or "" when it has no path
+// (the message is then shown as plain text). Line breaks and spaces are kept as they are.
+function linkPaths(text, linkColor) {
+    text = String(text || "");
+    PATH_PATTERN.lastIndex = 0;
+    if (!PATH_PATTERN.test(text))
+        return "";
+
+    var html = "";
+    var last = 0;
+    var match;
+    PATH_PATTERN.lastIndex = 0;
+    while ((match = PATH_PATTERN.exec(text)) !== null) {
+        // Trailing spaces and sentence punctuation are not part of the path.
+        var path = match[0].replace(/[\s.,;:!]+$/, "");
+        if (path.length < 4)
+            continue;
+
+        html += escapeHtml(text.slice(last, match.index));
+        html += '<a href="yui-path:' + encodeURIComponent(path) + '" style="color:' + linkColor + '">' + escapeHtml(path) + "</a>";
+        last = match.index + path.length;
+    }
+    html += escapeHtml(text.slice(last));
+    return '<span style="white-space:pre-wrap">' + html.replace(/\r?\n/g, "<br>") + "</span>";
+}
+
+// The Windows path of a "yui-path:" link ("" for any other link).
+function linkedPath(link) {
+    link = String(link || "");
+    return link.indexOf("yui-path:") === 0 ? decodeURIComponent(link.slice(9)).replace(/\//g, "\\") : "";
+}
+
 // Lines of an es.exe -export-txt result file (BOM and blank lines removed).
 function parseSearchResults(text) {
     return String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).map(function(line) {
