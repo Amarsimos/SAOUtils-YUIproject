@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
 
 // The console: opened over the chat area with the ⬡ button. A column of hexagon buttons on the left
-// selects a page: Talk (back to the chat), Cardinal (system load), Memory (Yui's Heart), Option.
+// selects a page: Talk (back to the chat), Cardinal (system load), Memory (Yui's Heart).
 // TEMPORARY layout (pending decision): button position, how much of the chat it covers, page list.
 Item {
     id: console_
@@ -78,9 +78,6 @@ Item {
                 }, {
                     "id": "memory",
                     "label": qsTr("Memory")
-                }, {
-                    "id": "option",
-                    "label": qsTr("Option")
                 }]
 
                 Item {
@@ -339,111 +336,6 @@ Item {
                     text: qsTr("No memories yet")
                     color: "#99FFFFFF"
                     font.pixelSize: 12
-                }
-
-            }
-
-            // Option: quick settings.
-            Column {
-                visible: console_.page === "option"
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 10
-
-                Text {
-                    text: "⚙ " + qsTr("Option")
-                    color: "#FFFFFF"
-                    font.pixelSize: 13
-                    font.bold: true
-                }
-
-                Text {
-                    text: qsTr("Collapsed Form")
-                    color: "#DDFFFFFF"
-                    font.pixelSize: 12
-                }
-
-                Row {
-                    spacing: 8
-
-                    Repeater {
-                        model: [{
-                            "id": "pixie",
-                            "label": qsTr("Navigation Pixie")
-                        }, {
-                            "id": "crystal",
-                            "label": qsTr("Yui's Heart Crystal")
-                        }]
-
-                        Button {
-                            text: modelData.label
-                            highlighted: (console_.yui.styles.collapsed_form || "pixie") === modelData.id
-                            onClicked: console_.yui.setCollapsedForm(modelData.id)
-                        }
-
-                    }
-
-                }
-
-                Button {
-                    text: qsTr("Reset Log")
-                    onClicked: {
-                        console_.yui.clearChat();
-                        console_.closeRequested();
-                    }
-                }
-
-                // Diagnostics: try each desktop action with its confirmation box.
-                Text {
-                    text: qsTr("Diagnostics")
-                    color: "#DDFFFFFF"
-                    font.pixelSize: 12
-                }
-
-                Flow {
-                    width: parent.width
-                    spacing: 6
-
-                    Repeater {
-                        model: [{
-                            "label": qsTr("Launch Notepad"),
-                            "tag": "<<launch:notepad>>"
-                        }, {
-                            "label": qsTr("Close Notepad"),
-                            "tag": "<<kill:notepad.exe>>"
-                        }, {
-                            "label": qsTr("Find File"),
-                            "tag": "<<find:notepad.exe>>"
-                        }, {
-                            "label": qsTr("Open Link"),
-                            "tag": "<<open:https://www.bilibili.com>>"
-                        }, {
-                            "label": qsTr("Protected Process"),
-                            "tag": "<<kill:explorer.exe>>"
-                        }]
-
-                        Button {
-                            text: modelData.label
-                            onClicked: console_.yui.testAction(modelData.tag)
-                        }
-
-                    }
-
-                }
-
-                Row {
-                    spacing: 8
-
-                    Button {
-                        text: qsTr("Cardinal System") + "..."
-                        onClicked: console_.yui.showDialog(console_.yui.coreSettingsDialog, "coreSettingsDialogInstance")
-                    }
-
-                    Button {
-                        text: qsTr("Equipment") + "..."
-                        onClicked: console_.yui.showDialog(console_.yui.styleSettingsDialog, "styleSettingsDialogInstance")
-                    }
-
                 }
 
             }

@@ -14,6 +14,8 @@ T.Widget {
     property Component coreSettingsDialog: Qt.createComponent("CoreSettings.qml")
     property Component styleSettingsDialog: Qt.createComponent("StyleSettings.qml")
     property var styleSettingsDialogInstance: null
+    property Component optionSettingsDialog: Qt.createComponent("OptionSettings.qml")
+    property var optionSettingsDialogInstance: null
     property var coreSettingsDialogInstance: null
     // Shared with CoreSettings.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
@@ -879,7 +881,7 @@ T.Widget {
         actionDialog.open();
     }
 
-    // Diagnostics (console > Option): run a desktop action without the AI, through the same
+    // Diagnostics (Option window, OptionSettings.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
     function testAction(tag) {
@@ -1147,12 +1149,6 @@ T.Widget {
         }
     }
 
-    // Switch the collapsed form ("pixie" / "crystal") from the console.
-    function setCollapsedForm(form) {
-        var styles = JSON.parse(JSON.stringify(widget.settings.styles || defaultValues));
-        styles.collapsed_form = form;
-        widget.settings.styles = styles;
-    }
 
     function readData(source) {
         if (!source)
@@ -2257,6 +2253,11 @@ T.Widget {
         Action {
             text: qsTr("Equipment") + "..."
             onTriggered: showDialog(widget.styleSettingsDialog, "styleSettingsDialogInstance")
+        }
+
+        Action {
+            text: qsTr("Option") + "..."
+            onTriggered: showDialog(widget.optionSettingsDialog, "optionSettingsDialogInstance")
         }
 
     }
