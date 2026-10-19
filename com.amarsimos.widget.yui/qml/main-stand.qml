@@ -2738,20 +2738,19 @@ T.Widget {
         }
 
         // The chat panel, in the three parts of the SAO mail box message panel (panel.9.png): a white
-        // title bar ("Message"), the darker gray message area, a white input bar; a pointer at the middle
-        // of its left side points at Yui. It is centered vertically, and opening unfolds only the middle
+        // title bar ("Message"), the darker gray message area, a white input bar. It is centered
+        // vertically, and opening unfolds only the middle
         // (chatReveal): the title and input bars keep their size and move apart. While opening it also
         // widens from the middle (chatScaleX) and fades in (chatPanelOpacity).
         Item {
             id: chatPanel
 
-            readonly property real pointer: 12
             readonly property real titleHeight: 44
             readonly property real inputHeight: inputArea.height + 16
             readonly property real fullHeight: parent.height - 8
 
             anchors.left: characterImage.right
-            anchors.leftMargin: 4 + pointer
+            anchors.leftMargin: 8
             anchors.right: parent.right
             anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
@@ -2854,36 +2853,6 @@ T.Widget {
                     }
                     dragging = false;
                 }
-            }
-
-            Shape {
-                x: -chatPanel.pointer + 2
-                y: Math.round(parent.height / 2 - chatPanel.pointer)
-                width: chatPanel.pointer
-                height: chatPanel.pointer * 2
-                layer.enabled: true
-                layer.samples: 4
-
-                ShapePath {
-                    fillColor: chatPanelBackground.color
-                    strokeColor: chatPanelBackground.border.color
-                    strokeWidth: 2
-                    joinStyle: ShapePath.MiterJoin
-                    startX: chatPanel.pointer
-                    startY: 0
-
-                    PathLine {
-                        x: 0
-                        y: chatPanel.pointer
-                    }
-
-                    PathLine {
-                        x: chatPanel.pointer
-                        y: chatPanel.pointer * 2
-                    }
-
-                }
-
             }
 
             transform: Scale {
