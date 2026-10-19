@@ -2572,7 +2572,13 @@ T.Widget {
         NVG.BackgroundSource {
             id: backgroundImage
 
-            anchors.fill: parent
+            // As tall as the chat panel's message area (between its title and input bars), across the
+            // whole width; it unfolds with that area. Filling the whole view, it showed through the
+            // translucent panel above and below that area as separate dark bands.
+            anchors.left: parent.left
+            anchors.right: parent.right
+            y: chatPanel.y + chatPanel.titleHeight
+            height: Math.max(0, chatPanel.height - chatPanel.titleHeight - chatPanel.inputHeight)
             z: -1
             configuration: widget.styles.background_image_path
         }
