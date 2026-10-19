@@ -315,11 +315,16 @@ NVG.Window {
                         }, {
                             "label": qsTr("Protected Process"),
                             "tag": "<<kill:explorer.exe>>"
+                        }, {
+                            "label": qsTr("Yui Speaks"),
+                            "tag": ""
                         }]
 
+                        // "Yui Speaks" makes her say something by herself now (an API request); while
+                        // she is a crystal, it appears in the bubble.
                         Button {
                             text: modelData.label
-                            onClicked: optionWindow.targetWidget.testAction(modelData.tag)
+                            onClicked: modelData.tag ? optionWindow.targetWidget.testAction(modelData.tag) : optionWindow.targetWidget.idleChat()
                         }
 
                     }

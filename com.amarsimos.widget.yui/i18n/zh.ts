@@ -374,7 +374,7 @@
     <name>OptionSettings</name>
     <message>
         <location filename="../qml/OptionSettings.qml" line="16"/>
-        <location filename="../qml/OptionSettings.qml" line="411"/>
+        <location filename="../qml/OptionSettings.qml" line="416"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>
@@ -554,22 +554,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="335"/>
-        <source>Log</source>
+        <location filename="../qml/OptionSettings.qml" line="319"/>
+        <source>Yui Speaks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/OptionSettings.qml" line="340"/>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/OptionSettings.qml" line="345"/>
         <source>Copy Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="350"/>
+        <location filename="../qml/OptionSettings.qml" line="355"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="399"/>
+        <location filename="../qml/OptionSettings.qml" line="404"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -762,13 +767,13 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1900"/>
+        <location filename="../qml/main-stand.qml" line="1907"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="884"/>
-        <location filename="../qml/main-stand.qml" line="1965"/>
+        <location filename="../qml/main-stand.qml" line="1972"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -840,58 +845,58 @@ You can change this in Option.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1790"/>
-        <location filename="../qml/main-stand.qml" line="1796"/>
+        <location filename="../qml/main-stand.qml" line="1797"/>
+        <location filename="../qml/main-stand.qml" line="1803"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2585"/>
+        <location filename="../qml/main-stand.qml" line="2592"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2585"/>
+        <location filename="../qml/main-stand.qml" line="2592"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2585"/>
+        <location filename="../qml/main-stand.qml" line="2592"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2712"/>
+        <location filename="../qml/main-stand.qml" line="2719"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2738"/>
+        <location filename="../qml/main-stand.qml" line="2745"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2738"/>
+        <location filename="../qml/main-stand.qml" line="2745"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2755"/>
+        <location filename="../qml/main-stand.qml" line="2762"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2817"/>
+        <location filename="../qml/main-stand.qml" line="2824"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2822"/>
+        <location filename="../qml/main-stand.qml" line="2829"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2827"/>
+        <location filename="../qml/main-stand.qml" line="2834"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>

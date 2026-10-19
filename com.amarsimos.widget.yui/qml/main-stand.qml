@@ -1774,8 +1774,15 @@ T.Widget {
         if (minutes <= 0 || !crystalForm.visible || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
             return ;
 
+        idleChat();
+    }
+
+    // Yui says something by herself (idle chatter). Also the Option window's "Yui Speaks" test, which
+    // ignores the timing; its reply shows in the crystal's bubble when she is a crystal.
+    function idleChat() {
         var title = userTitle();
-        yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
+        var started = yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
+        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)") + (crystalForm.visible ? "" : ", crystal not shown: the reply goes to the chat only"));
     }
 
     function checkCare(now) {
