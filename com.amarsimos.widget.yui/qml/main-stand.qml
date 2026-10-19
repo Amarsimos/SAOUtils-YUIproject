@@ -2438,19 +2438,24 @@ T.Widget {
         var corner = widget.mapToGlobal(0, 0);
         yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
         showChat = true;
+        // Like closing in reverse: the collapsed form goes first, and the view pops up as it is
+        // almost gone (popUpTimer).
         collapsedIn.stop();
         collapsedOut.restart();
-        yuiView.popUp();
+        popUpTimer.restart();
         chatView.stickToBottom = true;
     }
 
     // Folds the view away; the collapsed form comes back once it is gone (onFolded in createView).
     function closeView() {
-        if (yuiView && yuiView.shown)
+        if (yuiView && yuiView.shown) {
             yuiView.fold();
-        else {
+        } else {
+            // Closed again before the view popped up.
+            popUpTimer.stop();
+            collapsedOut.stop();
             showChat = false;
-            collapsedReveal = 1;
+            collapsedIn.restart();
         }
     }
 
@@ -2460,8 +2465,19 @@ T.Widget {
         target: widget
         property: "collapsedReveal"
         to: 0
-        duration: 250
-        easing.type: Easing.InCubic
+        duration: 300
+        easing.type: Easing.InOutQuad
+    }
+
+    Timer {
+        id: popUpTimer
+
+        interval: 220
+        onTriggered: {
+            if (showChat && yuiView)
+                yuiView.popUp();
+
+        }
     }
 
     NumberAnimation {
@@ -2507,6 +2523,7 @@ T.Widget {
         });
         yuiView.folded.connect(function() {
             showChat = false;
+            popUpTimer.stop();
             collapsedOut.stop();
             collapsedIn.restart();
         });
