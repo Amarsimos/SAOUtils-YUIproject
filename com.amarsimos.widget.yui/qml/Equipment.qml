@@ -60,11 +60,15 @@ NVG.Window {
             anchors.margins: 16
             anchors.topMargin: 0
             clip: true
+            // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll bar
+            // (which is drawn over the page and covered the values at the right edge).
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            contentWidth: availableWidth
 
             ColumnLayout {
                 id: preferenceLayout
 
-                width: scrollView.width
+                width: scrollView.availableWidth - scrollView.ScrollBar.vertical.width - 4
 
                 P.PreferenceGroup {
                     id: rootPreference

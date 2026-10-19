@@ -33,9 +33,13 @@ NVG.Window {
             anchors.margins: 16
             anchors.topMargin: 0
             clip: true
+            // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll bar
+            // (which is drawn over the page and covered the values at the right edge).
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            contentWidth: availableWidth
 
             ColumnLayout {
-                width: scrollView.width
+                width: scrollView.availableWidth - scrollView.ScrollBar.vertical.width - 4
                 spacing: 10
 
                 Heading {
@@ -63,12 +67,12 @@ NVG.Window {
                     }
 
                     Label {
-                        Layout.preferredWidth: 120
+                        Layout.preferredWidth: 140
                         text: qsTr("Yellow")
                     }
 
                     Label {
-                        Layout.preferredWidth: 120
+                        Layout.preferredWidth: 140
                         text: qsTr("Red")
                     }
 
@@ -119,7 +123,7 @@ NVG.Window {
                         SpinBox {
                             id: yellowBox
 
-                            Layout.preferredWidth: 120
+                            Layout.preferredWidth: 140
                             from: 1
                             to: 99
                             editable: true
@@ -129,7 +133,7 @@ NVG.Window {
                         SpinBox {
                             id: redBox
 
-                            Layout.preferredWidth: 120
+                            Layout.preferredWidth: 140
                             from: 2
                             to: 100
                             editable: true
@@ -149,7 +153,7 @@ NVG.Window {
                     }
 
                     SpinBox {
-                        Layout.preferredWidth: 120
+                        Layout.preferredWidth: 140
                         from: 1
                         to: 24
                         editable: true
@@ -371,6 +375,8 @@ NVG.Window {
                         anchors.fill: parent
                         anchors.margins: 6
                         clip: true
+                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                        contentWidth: availableWidth
                         ScrollBar.vertical: SaoScrollBar {
                         }
 

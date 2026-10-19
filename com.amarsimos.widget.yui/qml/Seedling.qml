@@ -114,12 +114,15 @@ NVG.Window {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 260
                 clip: true
+                // Long lines wrap: no horizontal scroll bar.
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                contentWidth: availableWidth
 
                 TextArea {
                     id: editor
 
                     selectByMouse: true
-                    wrapMode: TextArea.NoWrap
+                    wrapMode: TextArea.Wrap
                     font.family: "Consolas"
                     font.pixelSize: 12
                     placeholderText: "import QtQuick 2.12\n\nRectangle { width: 100; height: 100; color: \"orange\" }"

@@ -108,11 +108,15 @@ NVG.Window {
             anchors.margins: 16
             anchors.topMargin: 0
             clip: true
+            // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll bar
+            // (which is drawn over the page and covered the values at the right edge).
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            contentWidth: availableWidth
 
             ColumnLayout {
                 id: preferenceLayout
 
-                width: scrollView.width
+                width: scrollView.availableWidth - scrollView.ScrollBar.vertical.width - 4
 
                 P.PreferenceGroup {
                     id: rootPreference
@@ -292,11 +296,11 @@ NVG.Window {
                         from: 2
                         to: 60
                         stepSize: 2
-                        displayValue: qsTr("%1 messages").arg(value)
+                        displayValue: value
                     }
 
                     SettingNote {
-                        text: qsTr("How many of the latest messages are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
+                        text: qsTr("How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
                     }
 
                     P.SliderPreference {
@@ -307,11 +311,11 @@ NVG.Window {
                         from: 0
                         to: 8192
                         stepSize: 256
-                        displayValue: value === 0 ? qsTr("No Limit") : qsTr("%1 tokens").arg(value)
+                        displayValue: value === 0 ? "∞" : value
                     }
 
                     SettingNote {
-                        text: qsTr("The longest reply Yui may give, which also caps its cost. Set it to No Limit if the server rejects the max_tokens parameter (Claude always gets 1024 then).")
+                        text: qsTr("The longest reply Yui may give, which also caps its cost. In tokens; set it to ∞ (no limit) if the server rejects the max_tokens parameter (Claude always gets 1024 then).")
                     }
 
                     // ---------------------------------------------------------------- MHCP001 personality
@@ -433,7 +437,7 @@ NVG.Window {
                         from: 0
                         to: 120
                         stepSize: 5
-                        displayValue: value === 0 ? qsTr("Always Active") : qsTr("%1 min").arg(value)
+                        displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
                     }
 
                     SettingNote {

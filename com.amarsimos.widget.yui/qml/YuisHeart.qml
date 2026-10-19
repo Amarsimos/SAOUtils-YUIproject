@@ -44,7 +44,7 @@ NVG.Window {
                 }
 
                 SpinBox {
-                    Layout.preferredWidth: 120
+                    Layout.preferredWidth: 140
                     from: 0
                     to: 20
                     editable: true
