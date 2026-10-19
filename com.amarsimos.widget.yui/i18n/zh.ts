@@ -315,7 +315,7 @@
     <name>Equipment</name>
     <message>
         <location filename="../qml/Equipment.qml" line="40"/>
-        <location filename="../qml/Equipment.qml" line="225"/>
+        <location filename="../qml/Equipment.qml" line="279"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
@@ -357,8 +357,8 @@
     </message>
     <message>
         <location filename="../qml/Equipment.qml" line="122"/>
-        <location filename="../qml/Equipment.qml" line="149"/>
-        <location filename="../qml/Equipment.qml" line="168"/>
+        <location filename="../qml/Equipment.qml" line="203"/>
+        <location filename="../qml/Equipment.qml" line="222"/>
         <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
@@ -369,91 +369,147 @@
     </message>
     <message>
         <location filename="../qml/Equipment.qml" line="132"/>
+        <source>Chat Panel Opacity</source>
+        <translation>聊天面板不透明度</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="137"/>
+        <location filename="../qml/Equipment.qml" line="162"/>
+        <source>%1 %</source>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="142"/>
+        <source>Crystal Bubble</source>
+        <translation>水晶气泡</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="147"/>
+        <source>Bubble Duration</source>
+        <translation>气泡停留时间</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="152"/>
+        <source>%1 s</source>
+        <translation>%1 秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="157"/>
+        <source>Bubble Opacity</source>
+        <translation>气泡不透明度</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="167"/>
+        <source>Sound</source>
+        <translation>音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="172"/>
+        <source>Message Sounds</source>
+        <translation>消息音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="173"/>
+        <source>The sound of Yui&apos;s messages in the chat and in the crystal&apos;s bubble.</source>
+        <translation>聊天和水晶气泡中结衣消息的提示音。</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="179"/>
+        <source>Interface Sounds</source>
+        <translation>界面音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="180"/>
+        <source>The sounds of the chat panel opening and closing.</source>
+        <translation>聊天界面打开和关闭时的音效。</translation>
+    </message>
+    <message>
+        <location filename="../qml/Equipment.qml" line="186"/>
         <source>Forms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="137"/>
+        <location filename="../qml/Equipment.qml" line="191"/>
         <source>Collapsed Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="138"/>
+        <location filename="../qml/Equipment.qml" line="192"/>
         <source>Navigation Pixie</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="138"/>
+        <location filename="../qml/Equipment.qml" line="192"/>
         <source>Yui&apos;s Heart Crystal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="144"/>
+        <location filename="../qml/Equipment.qml" line="198"/>
         <source>Crystal Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="153"/>
+        <location filename="../qml/Equipment.qml" line="207"/>
         <source>What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.</source>
         <translation>隐藏消息窗口时结衣变成的形态。水晶会随 CPU 负荷发出绿、黄、红光；妖精形态需要设置 Navigation Pixie Form 图片，否则显示 Avatar。</translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="158"/>
+        <location filename="../qml/Equipment.qml" line="212"/>
         <source>Navigation Pixie Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="163"/>
+        <location filename="../qml/Equipment.qml" line="217"/>
         <source>Pixie Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="172"/>
+        <location filename="../qml/Equipment.qml" line="226"/>
         <source>When set, Yui turns into a small pixie while the message window is hidden. Pixie Size is its height.</source>
         <translation>设置后，隐藏消息窗口时结衣会变成小妖精形态。Pixie Size 是它的高度。</translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="177"/>
+        <location filename="../qml/Equipment.qml" line="231"/>
         <source>Standby Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="181"/>
+        <location filename="../qml/Equipment.qml" line="235"/>
         <source>Shown while Yui is asleep. Without it, the avatar is dimmed instead.</source>
         <translation>结衣睡着时显示。不设置时会把 Avatar 变暗。</translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="186"/>
+        <location filename="../qml/Equipment.qml" line="240"/>
         <source>Emotion Display</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="190"/>
+        <location filename="../qml/Equipment.qml" line="244"/>
         <source>Yui changes her expression with the mood of each reply. Empty slots use the avatar.</source>
         <translation>结衣会随每条回复的心情切换表情。没有设置的表情使用 Avatar。</translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="195"/>
+        <location filename="../qml/Equipment.qml" line="249"/>
         <source>Happy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="200"/>
+        <location filename="../qml/Equipment.qml" line="254"/>
         <source>Sad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="205"/>
+        <location filename="../qml/Equipment.qml" line="259"/>
         <source>Surprised</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="210"/>
+        <location filename="../qml/Equipment.qml" line="264"/>
         <source>Angry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/Equipment.qml" line="215"/>
+        <location filename="../qml/Equipment.qml" line="269"/>
         <source>Shy</source>
         <translation type="unfinished"></translation>
     </message>
@@ -946,158 +1002,158 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="1010"/>
+        <location filename="../qml/main-stand.qml" line="1022"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1009"/>
+        <location filename="../qml/main-stand.qml" line="1021"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2359"/>
+        <location filename="../qml/main-stand.qml" line="2380"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1025"/>
-        <location filename="../qml/main-stand.qml" line="2452"/>
+        <location filename="../qml/main-stand.qml" line="1037"/>
+        <location filename="../qml/main-stand.qml" line="2473"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1011"/>
+        <location filename="../qml/main-stand.qml" line="1023"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1012"/>
+        <location filename="../qml/main-stand.qml" line="1024"/>
         <source>Yui will search your computer for:</source>
         <translation>结衣将在电脑里搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1013"/>
+        <location filename="../qml/main-stand.qml" line="1025"/>
         <source>Yui will close this program:</source>
         <translation>结衣将关闭这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1025"/>
+        <location filename="../qml/main-stand.qml" line="1037"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1063"/>
+        <location filename="../qml/main-stand.qml" line="1075"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1101"/>
+        <location filename="../qml/main-stand.qml" line="1113"/>
         <source>Immortal Object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1101"/>
+        <location filename="../qml/main-stand.qml" line="1113"/>
         <source>%1 is a protected system process. Yui cannot close it.</source>
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1163"/>
+        <location filename="../qml/main-stand.qml" line="1175"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1164"/>
+        <location filename="../qml/main-stand.qml" line="1176"/>
         <source>Close %1 without asking from now on?
 You can change this in System Console.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1757"/>
+        <location filename="../qml/main-stand.qml" line="1769"/>
         <source>Line %1, column %2: %3</source>
         <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1881"/>
+        <location filename="../qml/main-stand.qml" line="1893"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1884"/>
+        <location filename="../qml/main-stand.qml" line="1896"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1900"/>
+        <location filename="../qml/main-stand.qml" line="1912"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2025"/>
-        <location filename="../qml/main-stand.qml" line="2197"/>
+        <location filename="../qml/main-stand.qml" line="2037"/>
+        <location filename="../qml/main-stand.qml" line="2218"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3480"/>
+        <location filename="../qml/main-stand.qml" line="3502"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2197"/>
-        <location filename="../qml/main-stand.qml" line="2219"/>
-        <location filename="../qml/main-stand.qml" line="2225"/>
+        <location filename="../qml/main-stand.qml" line="2218"/>
+        <location filename="../qml/main-stand.qml" line="2240"/>
+        <location filename="../qml/main-stand.qml" line="2246"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3300"/>
+        <location filename="../qml/main-stand.qml" line="3322"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="171"/>
-        <location filename="../qml/main-stand.qml" line="3329"/>
+        <location filename="../qml/main-stand.qml" line="3351"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="164"/>
-        <location filename="../qml/main-stand.qml" line="3329"/>
+        <location filename="../qml/main-stand.qml" line="3351"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2068"/>
-        <location filename="../qml/main-stand.qml" line="2359"/>
+        <location filename="../qml/main-stand.qml" line="2089"/>
+        <location filename="../qml/main-stand.qml" line="2380"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3346"/>
+        <location filename="../qml/main-stand.qml" line="3368"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3460"/>
+        <location filename="../qml/main-stand.qml" line="3482"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3465"/>
+        <location filename="../qml/main-stand.qml" line="3487"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3470"/>
+        <location filename="../qml/main-stand.qml" line="3492"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3388"/>
-        <location filename="../qml/main-stand.qml" line="3450"/>
-        <location filename="../qml/main-stand.qml" line="3475"/>
+        <location filename="../qml/main-stand.qml" line="3410"/>
+        <location filename="../qml/main-stand.qml" line="3472"/>
+        <location filename="../qml/main-stand.qml" line="3497"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>

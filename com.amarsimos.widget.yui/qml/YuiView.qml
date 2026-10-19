@@ -253,7 +253,7 @@ Window {
             }
 
             ScriptAction {
-                script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
+                script: if (yui.interfaceSounds) NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
             }
 
             NumberAnimation {
@@ -281,7 +281,7 @@ Window {
         id: aniClose
 
         ScriptAction {
-            script: NVG.SystemCall.playSound(NVG.SFX.DismissMessage)
+            script: if (yui.interfaceSounds) NVG.SystemCall.playSound(NVG.SFX.DismissMessage)
         }
 
         ParallelAnimation {

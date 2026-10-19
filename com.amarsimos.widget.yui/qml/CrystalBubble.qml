@@ -18,11 +18,12 @@ NVG.View {
     property color accent: "#2CE67C"
     // True when the bubble sits below the crystal (no room above it).
     property bool below: false
-    readonly property int stayTime: 8000
+    // Time on screen and opacity (Equipment, set by the widget), and whether it pops up with a sound.
+    property int stayTime: 8000
     readonly property int tailSize: 10
     readonly property color edgeColor: "#99888888"
-    // The bubble is shown slightly see-through.
-    readonly property real shownOpacity: 0.8
+    property real shownOpacity: 0.8
+    property bool sound: true
     // Opacity of the texts, faded out first when the bubble closes.
     property real textOpacity: 1
 
@@ -303,7 +304,7 @@ NVG.View {
         }
 
         ScriptAction {
-            script: NVG.SystemCall.playSound(NVG.SFX.NotifySystem)
+            script: if (bubble.sound) NVG.SystemCall.playSound(NVG.SFX.NotifySystem)
         }
 
         NumberAnimation {

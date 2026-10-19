@@ -202,8 +202,20 @@ T.Widget {
         "bubble_font_size": 14,
         "pixie_size": 160,
         "collapsed_form": "pixie",
-        "crystal_size": 120
+        "crystal_size": 120,
+        "bubble_seconds": 8,
+        "bubble_opacity": 80,
+        "chat_opacity": 80,
+        "sound_messages": true,
+        "sound_interface": true
     }
+    // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
+    // sounds of Yui's messages and of the chat panel opening and closing.
+    readonly property int bubbleSeconds: styles.bubble_seconds > 0 ? styles.bubble_seconds : defaultValues.bubble_seconds
+    readonly property real bubbleOpacity: (styles.bubble_opacity > 0 ? styles.bubble_opacity : defaultValues.bubble_opacity) / 100
+    readonly property real chatOpacity: (styles.chat_opacity > 0 ? styles.chat_opacity : defaultValues.chat_opacity) / 100
+    readonly property bool messageSounds: styles.sound_messages !== false
+    readonly property bool interfaceSounds: styles.sound_interface !== false
 
     // Merge saved values (sourceObj) over the defaults (targetObj). Objects are merged field by field
     // only when both sides are objects: a saved object replaces a default of another type, e.g. the
@@ -2047,6 +2059,15 @@ T.Widget {
                 return ;
             }
             crystalBubble = component.createObject(widget);
+            crystalBubble.stayTime = Qt.binding(function() {
+                return widget.bubbleSeconds * 1000;
+            });
+            crystalBubble.shownOpacity = Qt.binding(function() {
+                return widget.bubbleOpacity;
+            });
+            crystalBubble.sound = Qt.binding(function() {
+                return widget.messageSounds;
+            });
         }
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
         crystalBubble.show(title, text, levelColors[crystalLevel], crystalScreenRect());
@@ -2906,7 +2927,8 @@ T.Widget {
             // panel, panel.9.png, measured pixel by pixel): a soft outer shadow, a gray edge with a white
             // highlight inside, the white title bar over a dark line and an inner shadow into the gray
             // message area, the gray darkening toward the input bar over a dark and a light line, and the
-            // white input bar. All of it is 80 % opaque, as the image; the text and messages are not.
+            // white input bar. All of it is 80 % opaque (chatOpacity, Equipment), as the image; the text
+            // and messages are not.
             // Outer shadow: a smooth 8 px glow, black from about 12 % next to the panel to nothing
             // (separate rings showed visible steps).
             RectangularGlow {
@@ -2921,7 +2943,7 @@ T.Widget {
                 id: chatPanelBackground
 
                 anchors.fill: parent
-                opacity: 0.8
+                opacity: widget.chatOpacity
                 // Drawn as one layer and then made 80 % opaque: without it each part got the opacity on
                 // its own, so the inner shadows lying over the gray showed through twice and ended in
                 // visible lines about 12 px inside the title and input bars.
@@ -3201,14 +3223,14 @@ T.Widget {
 
                     onPendingChanged: {
                         if (!pending && widget.chatReady)
-                            messageWindow.popUp(!messageItem.fromUser);
+                            messageWindow.popUp(!messageItem.fromUser && widget.messageSounds);
 
                     }
                     // Every message added after start-up pops up (several can be added at once, e.g.
                     // the user's message and Yui's "..."); the user's without a sound.
                     Component.onCompleted: {
                         if (widget.chatReady && index >= widget.firstNewMessage && !pending)
-                            messageWindow.popUp(!messageItem.fromUser);
+                            messageWindow.popUp(!messageItem.fromUser && widget.messageSounds);
 
                     }
                 }

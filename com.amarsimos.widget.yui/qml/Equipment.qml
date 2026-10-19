@@ -127,6 +127,60 @@ NVG.Window {
                         text: qsTr("Font and size of the text in the message windows.")
                     }
 
+                    P.SliderPreference {
+                        name: "chat_opacity"
+                        label: qsTr("Chat Panel Opacity")
+                        from: 30
+                        to: 100
+                        stepSize: 5
+                        defaultValue: targetWidget.defaultValues.chat_opacity
+                        displayValue: qsTr("%1 %").arg(value)
+                    }
+
+                    // ---------------------------------------------------------------- Crystal bubble
+                    Heading {
+                        text: qsTr("Crystal Bubble")
+                    }
+
+                    P.SliderPreference {
+                        name: "bubble_seconds"
+                        label: qsTr("Bubble Duration")
+                        from: 3
+                        to: 30
+                        stepSize: 1
+                        defaultValue: targetWidget.defaultValues.bubble_seconds
+                        displayValue: qsTr("%1 s").arg(value)
+                    }
+
+                    P.SliderPreference {
+                        name: "bubble_opacity"
+                        label: qsTr("Bubble Opacity")
+                        from: 30
+                        to: 100
+                        stepSize: 5
+                        defaultValue: targetWidget.defaultValues.bubble_opacity
+                        displayValue: qsTr("%1 %").arg(value)
+                    }
+
+                    // ---------------------------------------------------------------- Sound
+                    Heading {
+                        text: qsTr("Sound")
+                    }
+
+                    P.SwitchPreference {
+                        name: "sound_messages"
+                        label: qsTr("Message Sounds")
+                        message: qsTr("The sound of Yui's messages in the chat and in the crystal's bubble.")
+                        defaultValue: true
+                    }
+
+                    P.SwitchPreference {
+                        name: "sound_interface"
+                        label: qsTr("Interface Sounds")
+                        message: qsTr("The sounds of the chat panel opening and closing.")
+                        defaultValue: true
+                    }
+
                     // ---------------------------------------------------------------- Forms
                     Heading {
                         text: qsTr("Forms")
