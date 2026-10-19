@@ -69,8 +69,8 @@ T.Widget {
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButton.implicitWidth + clearButton.implicitWidth + 2 * inputArea.spacing
-    // The chat column in the view is never narrower than this (three times the input row's minimum).
-    readonly property real chatPanelMinimumWidth: chatMinimumWidth * 3
+    // The chat column in the view is never narrower than this (2.25 times the input row's minimum).
+    readonly property real chatPanelMinimumWidth: chatMinimumWidth * 2.25
     // Minimum size of the character image area: characterMinimumWidth x minimumFrameHeight.
     readonly property real characterMinimumWidth: 300
     readonly property real minimumFrameHeight: 400
@@ -892,17 +892,39 @@ T.Widget {
         var call = Yui.systemCall(text, userTitle());
         if (call) {
             appendMessage("user", text, false, true);
-            appendMessage("ai", call.reply, false, true);
-            if (call.effect)
-                elementEffect.play(call.effect.color, call.effect.burst);
+            afterUserMessage(function() {
+                appendMessage("ai", call.reply, false, true);
+                if (call.effect)
+                    elementEffect.play(call.effect.color, call.effect.burst);
 
-            setEmotion(call.effect ? "surprised" : "normal");
+                setEmotion(call.effect ? "surprised" : "normal");
+            });
             return true;
         }
         widget.settings.last_active = Date.now();
         appendMessage("user", text, false);
-        startReply(buildHistory());
+        var history = buildHistory();
+        afterUserMessage(function() {
+            startReply(history);
+        });
         return true;
+    }
+
+    // Runs next once the user's message has finished popping up (MessageWindow.popUp, 650 ms), so
+    // Yui's "..." only appears after it. Yui counts as busy meanwhile (no second message).
+    function afterUserMessage(next) {
+        var session = widget.chatSession;
+        widget.busy = true;
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 700 }", widget);
+        timer.triggered.connect(function() {
+            timer.destroy();
+            widget.busy = false;
+            // The chat was cleared meanwhile.
+            if (session === widget.chatSession)
+                next();
+
+        });
+        timer.start();
     }
 
     // Show an expression for a while, then return to the normal one.

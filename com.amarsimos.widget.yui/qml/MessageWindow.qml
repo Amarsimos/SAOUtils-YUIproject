@@ -3,7 +3,7 @@ import QtQuick 2.12
 import QtQuick.Shapes 1.12
 
 // One chat message as an SAO instant message window (after SAO Utils' SAO-style mail box panel):
-// a white title bar "Message · <sender>" in the SAO UI font, the text on a light gray body, and a
+// a white title bar with the sender's name in the SAO UI font, the text on a light gray body, and a
 // white button bar with the message's note and actions; buttons turn SAO orange when hovered.
 // New messages pop up like the mail box panel (popUp()).
 Item {
@@ -33,6 +33,8 @@ Item {
     signal regenerateRequested()
 
     readonly property bool hasFooter: note !== "" || actionLabel !== "" || canRegenerate
+    // Width the button bar needs: the action label (up to 220 px) and the buttons, with margins.
+    readonly property real footerWidth: actionLabel === "" && !canRegenerate ? 0 : Math.min(actionMeasure.implicitWidth, 220) + buttons.width + 32
     readonly property color orange: "#F1AA03"
 
     // Opens like the mail box message panel: a thin line widens, then the body unfolds and the
@@ -48,8 +50,19 @@ Item {
         popAnimation.restart();
     }
 
-    width: Math.max(180, Math.min(maximumWidth, measure.implicitWidth + 28))
+    // Wide enough for the text (up to maximumWidth) and always for the whole button bar, so the
+    // action and its buttons are never cut off under a short message.
+    width: Math.max(180, footerWidth, Math.min(maximumWidth, measure.implicitWidth + 28))
     height: frame.height
+
+    // The action label's natural width (for footerWidth).
+    Text {
+        id: actionMeasure
+
+        visible: false
+        text: messageWindow.actionLabel
+        font.pixelSize: 12
+    }
 
     // Unwrapped text, only to measure the natural width of the longest line.
     Text {
@@ -97,7 +110,7 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width - 16
                 horizontalAlignment: Text.AlignHCenter
-                text: "Message · " + messageWindow.sender
+                text: messageWindow.sender
                 color: "#777777"
                 font.family: "SAO UI"
                 font.pixelSize: 15
