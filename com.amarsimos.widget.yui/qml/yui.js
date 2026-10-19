@@ -191,22 +191,22 @@ function linkedPath(link) {
 }
 
 // Widget type of this package (package.json: com.amarsimos.widget.yui, /widget/mhcp-yui), as SAO Utils
-// names it. A Seedling widget saved to "My Widgets" is this widget with lab_widget and lab_code in its
+// names it. A Seedling widget saved to "My Widgets" is this widget with seedling_widget and seedling_code in its
 // settings.
 var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
 
 // The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Seedling widget, in
 // the format SAO Utils saves them: preset.json, and settings.xml with each value as JSON text.
-// The code is stored URL-encoded (lab_code_uri): SAO Utils' settings reader lost the line breaks
+// The code is stored URL-encoded (seedling_code_uri): SAO Utils' settings reader lost the line breaks
 // of a plain JSON string, joining the code into one line. now: ISO date. Returns {preset, settings}.
 function seedlingPresetFiles(title, code, width, height, now) {
     var values = {
         // Marks a saved Seedling widget: only then does the widget start in seedling widget mode.
-        "lab_widget": true,
-        "lab_title": String(title),
-        "lab_code_uri": encodeURIComponent(String(code)),
-        "lab_width": Math.round(width),
-        "lab_height": Math.round(height)
+        "seedling_widget": true,
+        "seedling_title": String(title),
+        "seedling_code_uri": encodeURIComponent(String(code)),
+        "seedling_width": Math.round(width),
+        "seedling_height": Math.round(height)
     };
     var lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<map>"];
     for (var key in values)
@@ -224,15 +224,35 @@ function seedlingPresetFiles(title, code, width, height, now) {
     };
 }
 
-// The QML of a saved Seedling widget's settings (lab_code_uri, or lab_code from before it was encoded).
+// Seedling's settings were called lab_* before it got its name (Widget Lab). Moves each one to its
+// seedling_* name (a value already there wins) and removes the old key; returns whether any moved.
+// Also used for widgets placed from "My Widgets" presets saved before the rename.
+var SEEDLING_KEYS = ["code", "code_uri", "editor_code", "height", "in_yui", "sized", "slot_x", "slot_y", "title", "widget", "width"];
+
+function migrateSeedlingKeys(settings) {
+    var moved = false;
+    SEEDLING_KEYS.forEach(function(key) {
+        if (settings["lab_" + key] === undefined)
+            return ;
+
+        if (settings["seedling_" + key] === undefined)
+            settings["seedling_" + key] = settings["lab_" + key];
+
+        delete settings["lab_" + key];
+        moved = true;
+    });
+    return moved;
+}
+
+// The QML of a saved Seedling widget's settings (seedling_code_uri, or seedling_code from before it was encoded).
 function seedlingCode(settings) {
     if (!settings)
         return "";
 
-    if (settings.lab_code_uri)
-        return decodeURIComponent(settings.lab_code_uri);
+    if (settings.seedling_code_uri)
+        return decodeURIComponent(settings.seedling_code_uri);
 
-    return String(settings.lab_code || "");
+    return String(settings.seedling_code || "");
 }
 
 // Lines of an es.exe -export-txt result file (BOM and blank lines removed).

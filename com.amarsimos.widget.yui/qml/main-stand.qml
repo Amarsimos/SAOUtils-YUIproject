@@ -1655,7 +1655,7 @@ T.Widget {
 
     // ---------------------------------------------------------------- Seedling widgets in "My Widgets"
     // Seedling "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
-    // saves them; see Yui.seedlingPresetFiles) whose widget is this widget type with lab_widget / lab_code in its
+    // saves them; see Yui.seedlingPresetFiles) whose widget is this widget type with seedling_widget / seedling_code in its
     // settings, so it opens in seedling widget mode. The folder is made with mkdir (files cannot create
     // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
     // preview.png. onDone(folder) with the folder's Windows path, or "" when it failed.
@@ -1745,7 +1745,7 @@ T.Widget {
         yuiSeedlingItem = null;
     }
 
-    // Seedling widget mode: this widget was created from a saved Seedling widget (lab_widget and lab_code in
+    // Seedling widget mode: this widget was created from a saved Seedling widget (seedling_widget and seedling_code in
     // its settings).
     // Yui is not started; the widget only shows the code.
     property bool seedlingMode: false
@@ -1769,9 +1769,9 @@ T.Widget {
             seedlingObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Seedling widget error" }', widget, "SeedlingWidgetError");
         }
         // The saved size once, as for Yui's first start; afterwards SAO Utils restores the frame.
-        if (!widget.settings.lab_sized) {
-            widget.settings.lab_sized = true;
-            applyFrameSize(widget.settings.lab_width || seedlingObject.width || 200, widget.settings.lab_height || seedlingObject.height || 120);
+        if (!widget.settings.seedling_sized) {
+            widget.settings.seedling_sized = true;
+            applyFrameSize(widget.settings.seedling_width || seedlingObject.width || 200, widget.settings.seedling_height || seedlingObject.height || 120);
         } else {
             widget.implicitWidth = 20;
             widget.implicitHeight = 20;
@@ -2330,7 +2330,7 @@ T.Widget {
         });
     }
 
-    title: seedlingMode ? (widget.settings.lab_title || qsTr("Seedling Widget")) : qsTr("MHCP-YUI")
+    title: seedlingMode ? (widget.settings.seedling_title || qsTr("Seedling Widget")) : qsTr("MHCP-YUI")
     solid: true
     resizable: !applyingFrameSize
     // Implicit size acts as the minimum frame size (see applyFrameSize); set from code only.
@@ -2338,21 +2338,24 @@ T.Widget {
     implicitHeight: 400
     visible: true
     Component.onCompleted: {
-        // A saved Seedling widget (from "My Widgets") carries lab_widget; only then is lab_code shown.
-        if ((widget.settings.lab_widget === true || widget.settings.lab_widget === "true") && Yui.seedlingCode(widget.settings)) {
+        if (Yui.migrateSeedlingKeys(widget.settings))
+            console.log("migrated: lab_* settings renamed to seedling_*");
+
+        // A saved Seedling widget (from "My Widgets") carries seedling_widget; only then is seedling_code shown.
+        if ((widget.settings.seedling_widget === true || widget.settings.seedling_widget === "true") && Yui.seedlingCode(widget.settings)) {
             startSeedlingWidget();
             return ;
         }
         // Repair: an earlier version kept the Seedling editor text in Yui's own settings as
-        // lab_code, which turned Yui into a seedling widget. Keep the text as editor text and clear the rest.
-        if (widget.settings.lab_code !== undefined) {
-            if (!widget.settings.lab_editor_code)
-                widget.settings.lab_editor_code = widget.settings.lab_code;
+        // seedling_code, which turned Yui into a seedling widget. Keep the text as editor text and clear the rest.
+        if (widget.settings.seedling_code !== undefined) {
+            if (!widget.settings.seedling_editor_code)
+                widget.settings.seedling_editor_code = widget.settings.seedling_code;
 
-            ["lab_code", "lab_title", "lab_width", "lab_height", "lab_sized"].forEach(function(key) {
+            ["seedling_code", "seedling_title", "seedling_width", "seedling_height", "seedling_sized"].forEach(function(key) {
                 delete widget.settings[key];
             });
-            console.log("repaired: Seedling editor text moved out of lab_code");
+            console.log("repaired: Seedling editor text moved out of seedling_code");
         }
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;
@@ -2384,8 +2387,8 @@ T.Widget {
             widget.chatReady = true;
         });
         // The Seedling item shown in Yui, if it was on.
-        if (widget.settings.lab_in_yui && widget.settings.lab_editor_code)
-            loadIntoYui(widget.settings.lab_editor_code);
+        if (widget.settings.seedling_in_yui && widget.settings.seedling_editor_code)
+            loadIntoYui(widget.settings.seedling_editor_code);
 
     }
 
@@ -3335,9 +3338,9 @@ T.Widget {
             id: seedlingSlot
 
             z: 30
-            visible: (widget.settingsRevision, !seedlingMode && showChat && !!widget.yuiSeedlingItem && widget.settings.lab_in_yui === true)
-            x: Math.max(0, Math.min(expandedLayer.width - width, widget.settings.lab_slot_x !== undefined ? widget.settings.lab_slot_x : 16))
-            y: Math.max(14, Math.min(expandedLayer.height - height, widget.settings.lab_slot_y !== undefined ? widget.settings.lab_slot_y : 30))
+            visible: (widget.settingsRevision, !seedlingMode && showChat && !!widget.yuiSeedlingItem && widget.settings.seedling_in_yui === true)
+            x: Math.max(0, Math.min(expandedLayer.width - width, widget.settings.seedling_slot_x !== undefined ? widget.settings.seedling_slot_x : 16))
+            y: Math.max(14, Math.min(expandedLayer.height - height, widget.settings.seedling_slot_y !== undefined ? widget.settings.seedling_slot_y : 30))
             width: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.width : 0
             height: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.height : 0
 
@@ -3379,8 +3382,8 @@ T.Widget {
                         seedlingSlot.y = Math.max(14, Math.min(expandedLayer.height - seedlingSlot.height, origin.y + now.y - start.y));
                     }
                     onReleased: {
-                        widget.settings.lab_slot_x = Math.round(seedlingSlot.x);
-                        widget.settings.lab_slot_y = Math.round(seedlingSlot.y);
+                        widget.settings.seedling_slot_x = Math.round(seedlingSlot.x);
+                        widget.settings.seedling_slot_y = Math.round(seedlingSlot.y);
                     }
                 }
 

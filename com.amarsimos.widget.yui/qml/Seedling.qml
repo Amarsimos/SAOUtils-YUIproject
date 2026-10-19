@@ -123,10 +123,10 @@ NVG.Window {
                     font.family: "Consolas"
                     font.pixelSize: 12
                     placeholderText: "import QtQuick 2.12\n\nRectangle { width: 100; height: 100; color: \"orange\" }"
-                    text: seedlingWindow.targetWidget.settings.lab_editor_code || ""
+                    text: seedlingWindow.targetWidget.settings.seedling_editor_code || ""
                     // Kept between openings (and shown in Yui after a restart when that is on).
                     onTextChanged: {
-                        seedlingWindow.targetWidget.settings.lab_editor_code = text;
+                        seedlingWindow.targetWidget.settings.seedling_editor_code = text;
                         if (showInYui.checked)
                             liveTimer.restart();
 
@@ -146,9 +146,9 @@ NVG.Window {
                 id: showInYui
 
                 text: qsTr("Show in Yui (live)")
-                checked: seedlingWindow.targetWidget.settings.lab_in_yui === true
+                checked: seedlingWindow.targetWidget.settings.seedling_in_yui === true
                 onToggled: {
-                    seedlingWindow.targetWidget.settings.lab_in_yui = checked;
+                    seedlingWindow.targetWidget.settings.seedling_in_yui = checked;
                     seedlingWindow.targetWidget.settingsRevision++;
                     if (checked)
                         seedlingWindow.loadLive();
