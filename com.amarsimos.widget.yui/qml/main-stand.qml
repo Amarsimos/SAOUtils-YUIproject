@@ -16,6 +16,8 @@ T.Widget {
     property var styleSettingsDialogInstance: null
     property Component optionSettingsDialog: Qt.createComponent("OptionSettings.qml")
     property var optionSettingsDialogInstance: null
+    property Component heartSettingsDialog: Qt.createComponent("HeartSettings.qml")
+    property var heartSettingsDialogInstance: null
     property var coreSettingsDialogInstance: null
     // Shared with CoreSettings.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
@@ -122,8 +124,6 @@ T.Widget {
     // Messages before this index are not sent as history (e.g. written before the API was configured).
     property int historyStart: 0
     property bool showChat: true
-    // The console (Console.qml) opened over the chat area.
-    property bool consoleOpen: false
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
@@ -932,7 +932,6 @@ T.Widget {
             "actionState": reply.action ? "pending" : ""
         });
         chatView.stickToBottom = true;
-        widget.consoleOpen = false;
         if (reply.action)
             Qt.callLater(confirmAction, index);
         else if (reply.blocked)
@@ -2786,51 +2785,6 @@ T.Widget {
 
     }
 
-
-    // Console opened over the chat list (TEMPORARY layout, pending decision: it covers the message
-    // list but not the input row; the toggle button sits at the top-right corner of the chat area).
-    Console {
-        id: consolePanel
-
-        z: 20
-        visible: showChat && widget.consoleOpen
-        x: chatContainer.x
-        y: chatContainer.y + chatView.y
-        width: chatContainer.width
-        height: chatView.height
-        yui: widget
-        onCloseRequested: widget.consoleOpen = false
-    }
-
-    Rectangle {
-        z: 21
-        visible: showChat
-        x: chatContainer.x + chatContainer.width - width - 2
-        y: chatContainer.y + 2
-        width: 26
-        height: 26
-        radius: 13
-        color: widget.consoleOpen ? "#F59B00" : (consoleToggleArea.containsMouse ? "#FFFFFFFF" : "#CCFFFFFF")
-        border.color: "#55000000"
-
-        Text {
-            anchors.centerIn: parent
-            text: "⬡"
-            color: widget.consoleOpen ? "#FFFFFF" : "#555555"
-            font.pixelSize: 15
-        }
-
-        MouseArea {
-            id: consoleToggleArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: widget.consoleOpen = !widget.consoleOpen
-        }
-
-    }
-
     menu: Menu {
         Action {
             text: qsTr("Cardinal System") + "..."
@@ -2840,6 +2794,11 @@ T.Widget {
         Action {
             text: qsTr("Equipment") + "..."
             onTriggered: showDialog(widget.styleSettingsDialog, "styleSettingsDialogInstance")
+        }
+
+        Action {
+            text: qsTr("Yui's Heart") + "..."
+            onTriggered: showDialog(widget.heartSettingsDialog, "heartSettingsDialogInstance")
         }
 
         Action {

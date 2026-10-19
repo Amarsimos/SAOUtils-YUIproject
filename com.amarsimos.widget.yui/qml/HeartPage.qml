@@ -4,7 +4,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// Yui's Heart page of the console: the heart core (sent with every request) and the memory
+// Yui's Heart (HeartSettings.qml window): the heart core (sent with every request) and the memory
 // fragments (recalled when they match the conversation). Every memory can be edited, deleted,
 // pinned (core only: never moved out of a full core) and moved between core and fragments.
 ColumnLayout {
@@ -49,9 +49,8 @@ ColumnLayout {
 
     spacing: 8
 
-    Text {
+    Label {
         text: "♥ " + qsTr("Yui's Heart") + "  (" + yui.heartCache.length + ")"
-        color: "#FFFFFF"
         font.pixelSize: 13
         font.bold: true
     }
@@ -63,11 +62,11 @@ ColumnLayout {
         onTextChanged: page.filter = text.trim().toLowerCase()
     }
 
-    Text {
+    Label {
         visible: page.message !== ""
         Layout.fillWidth: true
         text: page.message
-        color: "#FFCC00"
+        color: "#D48800"
         font.pixelSize: 12
         wrapMode: Text.Wrap
     }
@@ -134,11 +133,10 @@ ColumnLayout {
                 font.bold: true
             }
 
-            Text {
+            Label {
                 visible: !row.memory.header && !row.editing
                 width: parent.width
                 text: (row.memory.pinned ? "📌 " : "") + (row.memory.text || "")
-                color: "#DDFFFFFF"
                 font.pixelSize: 12
                 wrapMode: Text.Wrap
             }
@@ -160,9 +158,10 @@ ColumnLayout {
                 Repeater {
                     model: row.editing ? [[qsTr("Save"), "save"], [qsTr("Cancel"), "cancel"]] : [[qsTr("Edit"), "edit"]].concat(row.isCore ? [[row.memory.pinned ? qsTr("Unpin") : qsTr("Pin"), "pin"], [qsTr("To Fragments"), "fragment"]] : [[qsTr("To Core"), "core"]], [[qsTr("Delete"), "delete"]])
 
-                    Text {
+                    Label {
                         text: modelData[0]
-                        color: buttonMouse.containsMouse ? "#F59B00" : "#99FFFFFF"
+                        color: buttonMouse.containsMouse ? "#F59B00" : palette.windowText
+                        opacity: buttonMouse.containsMouse ? 1 : 0.6
                         font.pixelSize: 11
 
                         MouseArea {
@@ -185,10 +184,10 @@ ColumnLayout {
 
     }
 
-    Text {
+    Label {
         visible: yui.heartCache.length === 0
         text: qsTr("No memories yet")
-        color: "#99FFFFFF"
+        opacity: 0.6
         font.pixelSize: 12
     }
 
