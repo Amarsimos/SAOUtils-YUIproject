@@ -841,8 +841,16 @@ T.Widget {
                 Qt.callLater(confirmAction, index);
 
         }, null, function(partial) {
-            if (session === widget.chatSession)
-                chatModel.setProperty(index, "message", Yui.displayText(partial) || "...");
+            if (session !== widget.chatSession)
+                return ;
+
+            // A streamed reply pops up with its first text (pending false); later chunks only update it.
+            var shown = Yui.displayText(partial);
+            if (shown)
+                chatModel.set(index, {
+                    "message": shown,
+                    "pending": false
+                });
 
         });
         // The request may have finished synchronously (e.g. API not configured).

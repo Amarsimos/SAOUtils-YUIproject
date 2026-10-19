@@ -36,12 +36,18 @@ Item {
     // Width the button bar needs: the action label (up to 220 px) and the buttons, with margins.
     readonly property real footerWidth: actionLabel === "" && !canRegenerate ? 0 : Math.min(actionMeasure.implicitWidth, 220) + buttons.width + 32
     readonly property color orange: "#F1AA03"
+    // A message window pops up once; later calls (e.g. a streamed reply finishing) are ignored.
+    property bool poppedUp: false
 
     // Opens like the mail box message panel: a thin line widens, then the body unfolds and the
     // text fades in, with the message notification sound. The window is hidden at once, and the
     // animation starts on the next turn of the event loop: a message window pops up while the chat
     // list is still creating and placing it, and an animation started right then was not seen.
     function popUp(sound) {
+        if (poppedUp)
+            return ;
+
+        poppedUp = true;
         windowScale.xScale = 0.1;
         windowScale.yScale = 0.05;
         frame.opacity = 0;
