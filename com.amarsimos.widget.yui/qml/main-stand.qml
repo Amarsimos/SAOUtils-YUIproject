@@ -3434,7 +3434,8 @@ T.Widget {
                         // the original chat column (chatMinimumWidth).
                         maximumWidth: Math.min(chatView.width - 48, Math.max(260, widget.chatMinimumWidth))
                         tailSide: messageItem.fromUser ? "right" : "left"
-                        sender: messageItem.fromUser ? widget.userTitle() : "Yui"
+                        // Names in the title bars are English, like "Yui": "Papa" or "Mama".
+                        sender: messageItem.fromUser ? (widget.settings.user_title === "mama" ? "Mama" : "Papa") : "Yui"
                         text: model.message
                         linkedText: Yui.linkify(model.message, "#1565C0")
                         note: model.note
