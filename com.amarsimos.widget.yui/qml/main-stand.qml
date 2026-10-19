@@ -5,6 +5,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
+import QtGraphicalEffects 1.0
 import QtQuick.LocalStorage 2.12
 import "yui.js" as Yui
 
@@ -68,7 +69,9 @@ T.Widget {
     readonly property int maxHistory: 20
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
-    readonly property real chatMinimumWidth: inputMinimumWidth + sendButton.implicitWidth + clearButton.implicitWidth + 2 * inputArea.spacing
+    readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
+    // The send button's fixed width: its longer label ("Send" / "Cancel") plus its padding.
+    readonly property real sendButtonWidth: Math.ceil(Math.max(sendLabelMetrics.width, cancelLabelMetrics.width) + sendButton.leftPadding + sendButton.rightPadding)
     // The chat column in the view is never narrower than this (2.25 times the input row's minimum).
     readonly property real chatPanelMinimumWidth: chatMinimumWidth * 2.25
     // Minimum size of the character image area: characterMinimumWidth x minimumFrameHeight.
@@ -138,6 +141,20 @@ T.Widget {
     // shown otherwise.
     property bool showChat: false
     property var yuiView: null
+
+    TextMetrics {
+        id: sendLabelMetrics
+
+        font: sendButton.font
+        text: qsTr("Send")
+    }
+
+    TextMetrics {
+        id: cancelLabelMetrics
+
+        font: sendButton.font
+        text: qsTr("Cancel")
+    }
     // Driven by YuiView's open / close animation (as the mail box message panel): the character's
     // fade, the chat panel's horizontal scale and fade, how far its message area is unfolded
     // (0 = only the title and input bars, 1 = full height) and the messages' fade.
@@ -2762,19 +2779,14 @@ T.Widget {
             // highlight inside, the white title bar over a dark line and an inner shadow into the gray
             // message area, the gray darkening toward the input bar over a dark and a light line, and the
             // white input bar. All of it is 80 % opaque, as the image; the text and messages are not.
-            Repeater {
-                // Outer shadow: 8 rings, black from 12 % next to the panel to 1 % outside.
-                model: [0.118, 0.09, 0.063, 0.047, 0.027, 0.016, 0.008, 0.004]
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: -(index + 1)
-                    radius: index + 1
-                    color: "transparent"
-                    border.color: Qt.rgba(0, 0, 0, modelData)
-                    border.width: 1
-                }
-
+            // Outer shadow: a smooth 8 px glow, black from about 12 % next to the panel to nothing
+            // (separate rings showed visible steps).
+            RectangularGlow {
+                anchors.fill: parent
+                glowRadius: 8
+                spread: 0
+                cornerRadius: 8
+                color: "#1E000000"
             }
 
             Item {
@@ -3172,9 +3184,12 @@ T.Widget {
                 Button {
                     id: sendButton
 
-                    // Buttons keep their natural width (it depends on the style SAO Utils applies);
-                    // the text field is what shrinks when space runs out.
-                    Layout.minimumWidth: implicitWidth
+                    // As wide as its longer label ("Send" / "Cancel"): its width used to change with
+                    // the label when a reply started, and with it the chat's minimum width, which
+                    // shifted the character and the chat panel. The text field is what shrinks when
+                    // space runs out.
+                    Layout.minimumWidth: widget.sendButtonWidth
+                    Layout.preferredWidth: widget.sendButtonWidth
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignBottom
                     // Turns into a stop button while a reply is being generated.
