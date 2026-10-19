@@ -247,7 +247,7 @@ NVG.View {
     }
 
     // Pop-up as in SAO Utils' GGO mail box menu (com.gpbeta.mail-box, MessagePanelMenuGGO.qml):
-    // rises 100 px into place while fading in, with the menu sound...
+    // rises 100 px into place while fading in, with the message sound (as the mail box message panel)...
     ParallelAnimation {
         id: aniIn
 
@@ -270,7 +270,7 @@ NVG.View {
         }
 
         ScriptAction {
-            script: NVG.SystemCall.playSound(NVG.SFX.PopupMenu)
+            script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
         }
 
         NumberAnimation {
