@@ -1546,8 +1546,14 @@ T.Widget {
 
     // Memory fragments recalled for a message; their use is recorded (recently used ones win ties
     // and are the last to leave the core).
+    // How many fragments are recalled per request (Yui's Heart window; 0 = none).
+    readonly property int recallCount: widget.settings.recall_count !== undefined ? widget.settings.recall_count : Yui.RECALL_COUNT
+
     function recall(query) {
-        var fragments = Yui.recallFragments(heartCache, query, Yui.RECALL_COUNT);
+        if (recallCount <= 0)
+            return [];
+
+        var fragments = Yui.recallFragments(heartCache, query, recallCount);
         if (fragments.length === 0)
             return [];
 

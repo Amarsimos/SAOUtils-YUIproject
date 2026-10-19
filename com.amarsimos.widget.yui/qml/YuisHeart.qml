@@ -4,7 +4,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
-// "Yui's Heart" window (next to Cardinal System, Equipment and Option): her memories, to view and
+// "Yui's Heart" window (next to Cardinal System, Equipment and System Console): her memories, to view and
 // edit (YuisHeartPage.qml), and to export, import and back up.
 NVG.Window {
     id: heartWindow
@@ -33,6 +33,29 @@ NVG.Window {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 yui: heartWindow.targetWidget
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Recalled Memories")
+                }
+
+                SpinBox {
+                    Layout.preferredWidth: 120
+                    from: 0
+                    to: 20
+                    editable: true
+                    value: heartWindow.targetWidget.recallCount
+                    onValueModified: heartWindow.targetWidget.settings.recall_count = value
+                }
+
+            }
+
+            SettingNote {
+                text: qsTr("How many memories related to the current topic are sent with each request (the heart core is always sent). Fewer use fewer tokens.")
             }
 
             Heading {
