@@ -393,6 +393,44 @@ Item {
                     }
                 }
 
+                // Diagnostics: try each desktop action with its confirmation box.
+                Text {
+                    text: qsTr("Diagnostics")
+                    color: "#DDFFFFFF"
+                    font.pixelSize: 12
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: 6
+
+                    Repeater {
+                        model: [{
+                            "label": qsTr("Launch Notepad"),
+                            "tag": "<<launch:notepad>>"
+                        }, {
+                            "label": qsTr("Close Notepad"),
+                            "tag": "<<kill:notepad.exe>>"
+                        }, {
+                            "label": qsTr("Find File"),
+                            "tag": "<<find:notepad.exe>>"
+                        }, {
+                            "label": qsTr("Open Link"),
+                            "tag": "<<open:https://www.bilibili.com>>"
+                        }, {
+                            "label": qsTr("Protected Process"),
+                            "tag": "<<kill:explorer.exe>>"
+                        }]
+
+                        Button {
+                            text: modelData.label
+                            onClicked: console_.yui.testAction(modelData.tag)
+                        }
+
+                    }
+
+                }
+
                 Row {
                     spacing: 8
 

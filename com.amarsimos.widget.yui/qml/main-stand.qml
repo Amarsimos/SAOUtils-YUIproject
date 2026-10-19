@@ -872,6 +872,29 @@ T.Widget {
         actionDialog.open();
     }
 
+    // Diagnostics (console > Option): run a desktop action without the AI, through the same
+    // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
+    // "blocked" note instead of asking.
+    function testAction(tag) {
+        var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag);
+        var index = chatModel.count;
+        chatModel.append({
+            "author": "ai",
+            "message": reply.text,
+            "pending": false,
+            "isError": true,
+            "local": true,
+            "note": reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
+            "action": reply.action ? JSON.stringify(reply.action) : "",
+            "actionState": reply.action ? "pending" : ""
+        });
+        chatView.stickToBottom = true;
+        widget.consoleOpen = false;
+        if (reply.action)
+            Qt.callLater(confirmAction, index);
+
+    }
+
     function cancelAction(index) {
         chatModel.setProperty(index, "actionState", "cancelled");
     }
