@@ -22,6 +22,11 @@ Item {
     // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
     // strip under the title bar.
     property bool thinking: false
+    // After 5 s of thinking, a line about what Yui is doing fades in under it, a different one every 5 s.
+    readonly property var thinkingHints: ["正在检索 ALfheim 数据库……", "正在连接 Cardinal System……", "哔——正在和服务器通信中……", "正在整理语言中…… (｡･ω･｡)", "数据量有点大，再等结衣一下下～", "正在翻阅结衣之心里的记忆……"]
+    property string thinkingHint: ""
+
+    onThinkingChanged: thinkingHint = ""
     property string fontFamily
     property int fontSize: 14
     // Widest the window may get.
@@ -65,7 +70,7 @@ Item {
 
     // Wide enough for the text (up to maximumWidth) and always for the whole button bar, so the
     // action and its buttons are never cut off under a short message.
-    width: Math.max(180, footerWidth, Math.min(maximumWidth, measure.implicitWidth + 28))
+    width: Math.max(180, thinking ? 240 : 0, footerWidth, Math.min(maximumWidth, measure.implicitWidth + 28))
     height: frame.height
 
     // The action label's natural width (for footerWidth).
@@ -171,14 +176,14 @@ Item {
             x: 1
             y: header.y + header.height
             width: parent.width - 2
-            height: (messageWindow.thinking ? thinkingRow.height : messageText.implicitHeight) + 20
+            height: (messageWindow.thinking ? thinkingColumn.height : messageText.implicitHeight) + 20
             color: "#E4E4E4"
             clip: true
 
             // A streamed reply grows smoothly as its text arrives (only once the window has popped up,
             // so its first layout is not animated).
             Behavior on height {
-                enabled: messageWindow.poppedUp
+                enabled: messageWindow.poppedUp || messageWindow.thinking
 
                 NumberAnimation {
                     duration: 100
@@ -200,66 +205,110 @@ Item {
                 color: "#D6D6D6"
             }
 
-            Row {
-                id: thinkingRow
+            Timer {
+                interval: 5000
+                repeat: true
+                running: messageWindow.thinking
+                onTriggered: {
+                    var hints = messageWindow.thinkingHints.filter(function(hint) {
+                        return hint !== messageWindow.thinkingHint;
+                    });
+                    messageWindow.thinkingHint = hints[Math.floor(Math.random() * hints.length)];
+                }
+            }
+
+            Item {
+                id: thinkingColumn
 
                 x: 12
                 y: 10
+                width: parent.width - 24
+                height: thinkingRow.height + (hintText.visible ? hintText.height + 4 : 0)
                 visible: messageWindow.thinking
 
-                Text {
-                    text: "YUI正在思考"
-                    color: "#3A3A3A"
-                    font.family: messageWindow.fontFamily
-                    font.pixelSize: messageWindow.fontSize
-                }
+                Row {
+                    id: thinkingRow
 
-                // Three dots hopping one after another.
-                Repeater {
-                    model: 3
+                    Text {
+                        text: "YUI正在思考"
+                        color: "#3A3A3A"
+                        font.family: messageWindow.fontFamily
+                        font.pixelSize: messageWindow.fontSize
+                    }
 
-                    Item {
-                        width: dot.implicitWidth
-                        height: dot.implicitHeight
+                    // Three dots hopping one after another.
+                    Repeater {
+                        model: 3
 
-                        Text {
-                            id: dot
+                        Item {
+                            width: dot.implicitWidth
+                            height: dot.implicitHeight
 
-                            text: "."
-                            color: "#3A3A3A"
-                            font.family: messageWindow.fontFamily
-                            font.pixelSize: messageWindow.fontSize
+                            Text {
+                                id: dot
 
-                            SequentialAnimation on y {
-                                running: messageWindow.thinking
-                                loops: Animation.Infinite
+                                text: "."
+                                color: "#3A3A3A"
+                                font.family: messageWindow.fontFamily
+                                font.pixelSize: messageWindow.fontSize
 
-                                PauseAnimation {
-                                    duration: index * 150
-                                }
+                                SequentialAnimation on y {
+                                    running: messageWindow.thinking
+                                    loops: Animation.Infinite
 
-                                NumberAnimation {
-                                    from: 0
-                                    to: -4
-                                    duration: 180
-                                    easing.type: Easing.OutQuad
-                                }
+                                    PauseAnimation {
+                                        duration: index * 150
+                                    }
 
-                                NumberAnimation {
-                                    from: -4
-                                    to: 0
-                                    duration: 180
-                                    easing.type: Easing.InQuad
-                                }
+                                    NumberAnimation {
+                                        from: 0
+                                        to: -4
+                                        duration: 180
+                                        easing.type: Easing.OutQuad
+                                    }
 
-                                PauseAnimation {
-                                    duration: 660 - index * 150
+                                    NumberAnimation {
+                                        from: -4
+                                        to: 0
+                                        duration: 180
+                                        easing.type: Easing.InQuad
+                                    }
+
+                                    PauseAnimation {
+                                        duration: 660 - index * 150
+                                    }
+
                                 }
 
                             }
 
                         }
 
+                    }
+
+                }
+
+                Text {
+                    id: hintText
+
+                    y: thinkingRow.height + 4
+                    visible: messageWindow.thinkingHint !== ""
+                    width: parent.width
+                    text: messageWindow.thinkingHint
+                    color: "#888888"
+                    font.family: messageWindow.fontFamily
+                    font.pixelSize: 12
+                    wrapMode: Text.Wrap
+                    onTextChanged: if (text) hintFade.restart()
+
+                    NumberAnimation {
+                        id: hintFade
+
+                        target: hintText
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 400
                     }
 
                 }
