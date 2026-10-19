@@ -1733,10 +1733,29 @@ T.Widget {
             }
             crystalBubble = component.createObject(widget);
         }
-        var corner = crystalForm.mapToGlobal(0, 0);
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
-        crystalBubble.show(title, text, levelColors[crystalLevel], Qt.rect(corner.x, corner.y, crystalForm.width, crystalForm.height));
+        crystalBubble.show(title, text, levelColors[crystalLevel], crystalScreenRect());
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
+    }
+
+    // The crystal on screen, including its floating up and down.
+    function crystalScreenRect() {
+        var corner = crystalForm.mapToGlobal(0, crystalForm.hover);
+        return Qt.rect(corner.x, corner.y, crystalForm.width, crystalForm.height);
+    }
+
+    // While the bubble is shown it follows the crystal: its floating, and the widget being moved.
+    // It closes when the crystal goes away (the chat is opened).
+    Timer {
+        interval: 16
+        repeat: true
+        running: !!widget.crystalBubble && widget.crystalBubble.visible
+        onTriggered: {
+            if (crystalForm.visible)
+                widget.crystalBubble.follow(widget.crystalScreenRect());
+            else
+                widget.crystalBubble.hide();
+        }
     }
 
     // SAO Utils' global notification (NVG.Notification). Opening it brings the chat back.
