@@ -280,6 +280,9 @@ NVG.Window {
         }
 
         header: TitleBar {
+            // Every settings window has the same light title bar (as SAO Utils' own dialogs, e.g. the
+            // mail box composer); without this some came out in the theme's blue.
+            Style.primary: styleSettingsWindow.Style.dialogColor
             text: qsTr("Equipment")
             standardButtons: Dialog.Save | Dialog.Reset
             onAccepted: {

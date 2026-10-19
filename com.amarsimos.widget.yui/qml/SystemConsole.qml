@@ -454,6 +454,9 @@ NVG.Window {
         // Reset: the thresholds, the report interval and the action switches. The es.exe path and the
         // two process lists are the user's own entries and stay.
         header: TitleBar {
+            // Every settings window has the same light title bar (as SAO Utils' own dialogs, e.g. the
+            // mail box composer); without this some came out in the theme's blue.
+            Style.primary: consoleWindow.Style.dialogColor
             text: qsTr("System Console")
             standardButtons: Dialog.Reset
             onReset: consoleWindow.targetWidget.confirmReset(qsTr("System Console"), function() {
