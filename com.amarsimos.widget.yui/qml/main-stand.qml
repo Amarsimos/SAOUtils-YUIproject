@@ -2119,7 +2119,7 @@ T.Widget {
     // The next reply is a made-up streamed one (Test Streaming): no API request, no tokens.
     property bool testStreaming: false
 
-    // Diagnostics: Yui "thinks" for 3 s, then a sample reply streams in a few characters at a time.
+    // Diagnostics: Yui "thinks" for 8 s (long enough for a thinking hint), then a sample reply streams in a few characters at a time.
     function testStreamReply() {
         if (busy) {
             diag("test streaming: Yui is busy with a reply");
@@ -2138,7 +2138,7 @@ T.Widget {
 嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
         var shown = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
-        timer.interval = 3000;
+        timer.interval = 8000;
         timer.triggered.connect(function() {
             timer.interval = 60;
             shown = Math.min(full.length, shown + 2);
