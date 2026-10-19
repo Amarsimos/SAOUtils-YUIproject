@@ -112,8 +112,19 @@ T.Widget {
     readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
     readonly property color crystalColor: levelColors[crystalLevel]
     // The crystal turning red is reported in its bubble (and the chat).
+    // The crystal turning red is reported in its bubble (and the chat), counting as the report of the
+    // loads that are red, so the regular load reports do not repeat it within the hour.
     onCrystalLevelChanged: {
-        if (crystalLevel === 2 && crystalForm.visible && featureEnabled("status_reports"))
+        if (crystalLevel !== 2 || !crystalForm.visible || !featureEnabled("status_reports"))
+            return ;
+
+        var now = Date.now();
+        var due = loadMetrics.filter(function(metric) {
+            return loadLevelOf(metric) === 2;
+        }).filter(function(metric) {
+            return loadWarningDue(metric, now);
+        });
+        if (due.length > 0)
             statusWarning("警告！系统负荷过高：" + crystalStatus + "……" + userTitle() + "，要不要看看是什么程序在占用呢？(・_・;)");
 
     }
@@ -131,10 +142,10 @@ T.Widget {
     property QtObject gpuLoad
     property QtObject ramUsage
     property int batteryWarnedAt: 101
-    property int highCpuChecks: 0
-    property int highRamChecks: 0
-    property double lastCpuWarning: 0
-    property double lastRamWarning: 0
+    // Load reports: per metric, how many checks in a row were at the red threshold, and when it was
+    // last reported (once an hour at most).
+    property var highLoadChecks: ({})
+    property var lastLoadWarnings: ({})
     // Messages before this index are not sent as history (e.g. written before the API was configured).
     property int historyStart: 0
     // True while the view with the character and the chat (YuiView) is open; the collapsed form is
@@ -183,14 +194,11 @@ T.Widget {
     readonly property var defaultValues: {
         "character_image_path": Qt.resolvedUrl("../Images/Yui01.png"),
         "background_image_path": Qt.resolvedUrl("../Images/scrim-dark-40.png"),
-        "user_bubble_color": "#2196f3",
-        "ai_bubble_color": "#f8bbd0",
         "bubble_font_family": "Microsoft YaHei",
         "bubble_font_size": 14,
         "pixie_size": 160,
         "collapsed_form": "pixie",
-        "crystal_size": 120,
-        "bubble_font_color": "#000000"
+        "crystal_size": 120
     }
 
     // Merge saved values (sourceObj) over the defaults (targetObj). Objects are merged field by field
@@ -1925,18 +1933,50 @@ T.Widget {
                 }
             }
         }
-        var cpu = readData(cpuLoad);
-        highCpuChecks = !isNaN(cpu) && cpu >= 90 ? highCpuChecks + 1 : 0;
-        if (highCpuChecks >= 4 && now - lastCpuWarning > 3600000) {
-            lastCpuWarning = now;
-            statusWarning("哔——！检测到 CPU 负载持续在 " + Math.round(cpu) + "% 以上……" + title + "，电脑好像很辛苦，要不要看看是什么程序在占用呢？(・_・;)");
-        }
-        var ram = readData(ramUsage);
-        highRamChecks = !isNaN(ram) && ram >= 90 ? highRamChecks + 1 : 0;
-        if (highRamChecks >= 2 && now - lastRamWarning > 3600000) {
-            lastRamWarning = now;
-            statusWarning("警告！内存使用率已经达到 " + Math.round(ram) + "% 了！" + title + "，关掉一些不用的程序会比较好哦 (｀・ω・´)");
-        }
+        // CPU, GPU and memory, with the crystal's red thresholds (Option window): reported once a load
+        // stays at or above it for these many checks (one every 30 s).
+        var sources = {
+            "cpu": cpuLoad,
+            "gpu": gpuLoad,
+            "ram": ramUsage
+        };
+        var checksNeeded = {
+            "cpu": 4,
+            "gpu": 4,
+            "ram": 2
+        };
+        var checks = highLoadChecks;
+        loadMetrics.forEach(function(metric) {
+            var value = readData(sources[metric]);
+            var red = Yui.loadThresholds(widget.settings.load_thresholds, metric)[1];
+            checks[metric] = !isNaN(value) && value >= red ? (checks[metric] || 0) + 1 : 0;
+            if (checks[metric] >= checksNeeded[metric] && loadWarningDue(metric, now))
+                statusWarning(loadWarningText(metric, value, title));
+
+        });
+        highLoadChecks = checks;
+    }
+
+    // Whether a load may be reported now (once an hour per metric); marks it reported.
+    function loadWarningDue(metric, now) {
+        var last = lastLoadWarnings;
+        if (now - (last[metric] || 0) <= 3600000)
+            return false;
+
+        last[metric] = now;
+        lastLoadWarnings = last;
+        return true;
+    }
+
+    function loadWarningText(metric, value, title) {
+        var percent = Math.round(value) + "%";
+        if (metric === "cpu")
+            return "哔——！检测到 CPU 负载持续在 " + percent + " 以上……" + title + "，电脑好像很辛苦，要不要看看是什么程序在占用呢？(・_・;)";
+
+        if (metric === "gpu")
+            return "哔——！显卡负载一直在 " + percent + " 左右……" + title + "，是在玩游戏还是在渲染呢？注意别让电脑太热哦 (・_・;)";
+
+        return "警告！内存使用率已经达到 " + percent + " 了！" + title + "，关掉一些不用的程序会比较好哦 (｀・ω・´)";
     }
 
     function statusWarning(text) {
@@ -1949,7 +1989,7 @@ T.Widget {
     // reply, titled or not); otherwise, when it has a title (care, status reports), as a notification.
     function announce(title, text) {
         if (crystalForm.visible)
-            showBubble(title || "MHCP001 · Yui", text);
+            showBubble("Yui", text);
         else if (title)
             notify(title, text);
     }
@@ -2071,7 +2111,7 @@ T.Widget {
         var title = userTitle();
         var samples = [["", title + "～结衣在这里哦！(｡･ω･｡)"], ["", "嗯……" + title + "已经对着屏幕好久了呢。结衣刚才在想，等这件事忙完，要不要一起去看看窗外的风景？外面的天空说不定很漂亮哦！不过在那之前，先喝一口水吧～这句话故意写得很长，用来测试气泡最多显示六行时的省略效果。"], [qsTr("Navigation Report"), "警告！系统负荷过高：GPU 98%……" + title + "，要不要看看是什么程序在占用呢？(・_・;)"], [qsTr("Mental Health Counseling"), "已经连续使用电脑 2 小时了哦，" + title + "，休息一下眼睛吧 (´・ω・`)"]];
         var sample = samples[testBubbleCount++ % samples.length];
-        showBubble(sample[0] || "MHCP001 · Yui", sample[1]);
+        showBubble("Yui", sample[1]);
     }
 
     // Yui says something by herself (idle chatter); its reply shows in the crystal's bubble when she

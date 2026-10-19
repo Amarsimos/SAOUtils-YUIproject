@@ -13,7 +13,7 @@ NVG.View {
 
     // Crystal rectangle in screen coordinates; the bubble points at it.
     property rect target
-    property string heading: "MHCP001 · Yui"
+    property string heading: "Yui"
     property string text
     property color accent: "#2CE67C"
     // True when the bubble sits below the crystal (no room above it).

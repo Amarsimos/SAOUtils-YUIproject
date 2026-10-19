@@ -105,22 +105,6 @@ NVG.Window {
                         text: qsTr("Message Window")
                     }
 
-                    P.ColorPreference {
-                        name: "user_bubble_color"
-                        label: qsTr("Player Message Color")
-                        defaultValue: targetWidget.defaultValues.user_bubble_color
-                    }
-
-                    P.ColorPreference {
-                        name: "ai_bubble_color"
-                        label: qsTr("Yui Message Color")
-                        defaultValue: targetWidget.defaultValues.ai_bubble_color
-                    }
-
-                    SettingNote {
-                        text: qsTr("Bubble colors of your messages and of Yui's replies.")
-                    }
-
                     P.SelectPreference {
                         name: "bubble_font_family"
                         label: qsTr("Message Font")
@@ -138,14 +122,9 @@ NVG.Window {
                         displayValue: qsTr("%1 px").arg(value)
                     }
 
-                    P.ColorPreference {
-                        name: "bubble_font_color"
-                        label: qsTr("Message Color")
-                        defaultValue: targetWidget.defaultValues.bubble_font_color
-                    }
-
+                    // Message windows have the SAO colors; only the text's font and size are settings.
                     SettingNote {
-                        text: qsTr("Font, size and color of the text in the bubbles.")
+                        text: qsTr("Font and size of the text in the message windows.")
                     }
 
                     // ---------------------------------------------------------------- Forms
