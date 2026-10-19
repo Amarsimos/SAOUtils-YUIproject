@@ -77,7 +77,7 @@ NVG.Window {
             spacing: 8
 
             SettingNote {
-                text: qsTr("Type or paste QML for a widget, then Render it here or Pop Out to put it on the desktop (drag its top bar to move it). Lab widgets are not saved: they close with SAO Utils.")
+                text: qsTr("Type or paste QML for a widget, then Render it here, Pop Out a quick test copy onto the desktop (drag its top bar to move it; it closes with SAO Utils), or name it and Save to My Widgets to keep it as a real widget.")
             }
 
             Flow {
@@ -146,6 +146,40 @@ NVG.Window {
                     text: qsTr("Close All (%1)").arg(labWindow.targetWidget.labWidgets.length)
                     enabled: labWindow.targetWidget.labWidgets.length > 0
                     onClicked: labWindow.targetWidget.closeLabWidgets()
+                }
+
+            }
+
+            // Save as a real widget in Widget Gallery → My Widgets (renders first; the rendered widget
+            // becomes the preview picture).
+            RowLayout {
+                Layout.fillWidth: true
+
+                TextField {
+                    id: widgetName
+
+                    Layout.fillWidth: true
+                    selectByMouse: true
+                    placeholderText: qsTr("Widget name")
+                }
+
+                Button {
+                    text: qsTr("Save to My Widgets")
+                    enabled: widgetName.text.trim() !== ""
+                    onClicked: {
+                        var rendered = labWindow.render();
+                        if (!rendered)
+                            return ;
+
+                        enabled = false;
+                        result.text = qsTr("Saving...");
+                        result.color = "#888888";
+                        labWindow.targetWidget.saveLabPreset(widgetName.text.trim(), editor.text, rendered, function(folder) {
+                            enabled = true;
+                            result.text = folder ? qsTr("Saved to My Widgets: %1\nOpen Widget Gallery → My Widgets to place it (reopen the gallery if it is not listed yet).").arg(folder) : qsTr("Could not save the widget. See the log in Option.");
+                            result.color = folder ? "#2C9E5C" : "#D0302A";
+                        });
+                    }
                 }
 
             }

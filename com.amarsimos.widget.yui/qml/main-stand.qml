@@ -1174,6 +1174,9 @@ T.Widget {
 
     // Periodic checks (every 30 s): falling asleep, system status reports and proactive care.
     function tick() {
+        if (labMode)
+            return ;
+
         var now = Date.now();
         var sleepMinutes = widget.settings.sleep_minutes !== undefined ? widget.settings.sleep_minutes : 20;
         if (!sleeping && sleepMinutes > 0 && !widget.busy && now - lastActivity > sleepMinutes * 60000)
@@ -1495,34 +1498,134 @@ T.Widget {
                 return ;
             }
             var path = folders[i] + "/" + name;
-            var put = new XMLHttpRequest();
-            put.onreadystatechange = function() {
-                if (put.readyState !== XMLHttpRequest.DONE)
-                    return ;
-
-                var ok = false;
-                try {
-                    var get = new XMLHttpRequest();
-                    get.open("GET", fileUrl(path) + "?t=" + Date.now(), false);
-                    get.send(null);
-                    ok = get.responseText === text;
-                } catch (e) {
-                }
-                diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
+            writeFileChecked(path, text, function(ok) {
                 if (ok)
                     onDone(path.replace(/\//g, "\\"));
                 else
                     tryFolder(i + 1);
-            };
-            try {
-                put.open("PUT", fileUrl(path));
-                put.send(text);
-            } catch (e) {
-                diag("write " + path + " failed: " + e);
-                tryFolder(i + 1);
-            }
+            });
         };
         tryFolder(0);
+    }
+
+    // Writes text to a local path ("/" separators), then reads it back once the write has finished
+    // (a file PUT completes later even when sent synchronously). onDone(ok).
+    function writeFileChecked(path, text, onDone) {
+        var put = new XMLHttpRequest();
+        put.onreadystatechange = function() {
+            if (put.readyState !== XMLHttpRequest.DONE)
+                return ;
+
+            var ok = false;
+            try {
+                var get = new XMLHttpRequest();
+                get.open("GET", fileUrl(path) + "?t=" + Date.now(), false);
+                get.send(null);
+                ok = get.responseText === text;
+            } catch (e) {
+            }
+            diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
+            onDone(ok);
+        };
+        try {
+            put.open("PUT", fileUrl(path));
+            put.send(text);
+        } catch (e) {
+            diag("write " + path + " failed: " + e);
+            onDone(false);
+        }
+    }
+
+    // ---------------------------------------------------------------- Lab widgets in "My Widgets"
+    // Widget Lab "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
+    // saves them; see Yui.labPresetFiles) whose widget is this widget type with lab_code in its
+    // settings, so it opens in lab widget mode. The folder is made with mkdir (files cannot create
+    // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
+    // preview.png. onDone(folder) with the folder's Windows path, or "" when it failed.
+    function saveLabPreset(title, code, preview, onDone) {
+        var root = String(NVG.Utils.storagePath("system")).replace(/\\/g, "/").replace(/\/+$/, "") + "/widget-preset";
+        var folder = root + "/custom-" + Date.now().toString(16);
+        var windowsFolder = folder.replace(/\//g, "\\");
+        var files = Yui.labPresetFiles(title, code, preview.width, preview.height, new Date().toISOString());
+        var command = 'cmd /c mkdir "' + windowsFolder + '"';
+        diag("save lab widget: command(" + command + ") -> " + NVG.SystemCall.command(command) + " (not used)");
+        // mkdir runs on its own: try the first file a few times until the folder is there.
+        var tries = 0;
+        var writeAll = function() {
+            writeFileChecked(folder + "/preset.json", files.preset, function(ok) {
+                if (!ok) {
+                    if (++tries < 10)
+                        delayTimer.start(writeAll);
+                    else
+                        onDone("");
+                    return ;
+                }
+                writeFileChecked(folder + "/settings.xml", files.settings, function(ok) {
+                    if (!ok) {
+                        onDone("");
+                        return ;
+                    }
+                    preview.grabToImage(function(result) {
+                        var saved = result.saveToFile(folder + "/preview.png");
+                        diag("save lab widget: preview.png -> " + saved);
+                        onDone(windowsFolder);
+                    });
+                });
+            });
+        };
+        delayTimer.start(writeAll);
+    }
+
+    // Runs a function once after 300 ms (used while waiting for mkdir).
+    QtObject {
+        id: delayTimer
+
+        property var pending: null
+        property Timer timer: Timer {
+            interval: 300
+            onTriggered: {
+                var run = delayTimer.pending;
+                delayTimer.pending = null;
+                if (run)
+                    run();
+
+            }
+        }
+
+        function start(run) {
+            pending = run;
+            timer.restart();
+        }
+
+    }
+
+    // Lab widget mode: this widget was created from a saved Lab widget (lab_code in its settings).
+    // Yui is not started; the widget only shows the code.
+    property bool labMode: false
+    property var labObject: null
+
+    function startLabWidget() {
+        labMode = true;
+        // Hide everything of Yui (the lab content is added afterwards).
+        for (var i = 0; i < widget.children.length; i++)
+            widget.children[i].visible = false;
+        try {
+            labObject = Qt.createQmlObject(widget.settings.lab_code, widget, "LabWidget");
+        } catch (e) {
+            var errors = (e.qmlErrors || []).map(function(error) {
+                return error.lineNumber + ":" + error.columnNumber + " " + error.message;
+            });
+            console.log("lab widget failed:", errors.join("; ") || e);
+            labObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Lab widget error" }', widget, "LabWidgetError");
+        }
+        // The saved size once, as for Yui's first start; afterwards SAO Utils restores the frame.
+        if (!widget.settings.lab_sized) {
+            widget.settings.lab_sized = true;
+            applyFrameSize(widget.settings.lab_width || labObject.width || 200, widget.settings.lab_height || labObject.height || 120);
+        } else {
+            widget.implicitWidth = 20;
+            widget.implicitHeight = 20;
+        }
     }
 
     // The heart as a file; withMessages adds the complete chat history (private conversations).
@@ -1941,6 +2044,11 @@ T.Widget {
     }
 
     function releaseMinimumSize() {
+        if (labMode) {
+            widget.implicitWidth = 20;
+            widget.implicitHeight = 20;
+            return ;
+        }
         if (!showChat && collapsedForm !== "avatar") {
             // The pixie and the crystal can be made quite small.
             widget.implicitWidth = 40;
@@ -1970,7 +2078,7 @@ T.Widget {
         });
     }
 
-    title: qsTr("MHCP-YUI")
+    title: labMode ? (widget.settings.lab_title || qsTr("Lab Widget")) : qsTr("MHCP-YUI")
     solid: true
     resizable: !applyingFrameSize
     // Implicit size acts as the minimum frame size (see applyFrameSize); set from code only.
@@ -1978,6 +2086,10 @@ T.Widget {
     implicitHeight: 400
     visible: true
     Component.onCompleted: {
+        if (widget.settings.lab_code) {
+            startLabWidget();
+            return ;
+        }
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;
         widget.settings.initialized = true;
@@ -2860,7 +2972,22 @@ T.Widget {
 
     }
 
-    menu: Menu {
+    menu: labMode ? labMenu : yuiMenu
+
+    // A lab widget's menu: only the Widget Lab.
+    Menu {
+        id: labMenu
+
+        Action {
+            text: qsTr("Widget Lab") + "..."
+            onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
+        }
+
+    }
+
+    Menu {
+        id: yuiMenu
+
         Action {
             text: qsTr("Cardinal System") + "..."
             onTriggered: showDialog(widget.coreSettingsDialog, "coreSettingsDialogInstance")

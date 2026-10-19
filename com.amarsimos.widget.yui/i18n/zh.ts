@@ -787,14 +787,41 @@
     </message>
     <message>
         <location filename="../qml/WidgetLab.qml" line="56"/>
-        <location filename="../qml/WidgetLab.qml" line="203"/>
+        <location filename="../qml/WidgetLab.qml" line="237"/>
         <source>Widget Lab</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/WidgetLab.qml" line="80"/>
-        <source>Type or paste QML for a widget, then Render it here or Pop Out to put it on the desktop (drag its top bar to move it). Lab widgets are not saved: they close with SAO Utils.</source>
-        <translation>输入或粘贴挂件的 QML 代码，点 Render 在这里预览，或点 Pop Out 放到桌面上（拖动顶部的细条可以移动）。实验挂件不会保存，关闭 SAO Utils 后就会消失。</translation>
+        <source>Type or paste QML for a widget, then Render it here, Pop Out a quick test copy onto the desktop (drag its top bar to move it; it closes with SAO Utils), or name it and Save to My Widgets to keep it as a real widget.</source>
+        <translation>输入或粘贴挂件的 QML 代码：点 Render 在这里预览；点 Pop Out 在桌面上放一个临时测试副本（拖动顶部细条移动，关闭 SAO Utils 后消失）；或者起个名字，点 Save to My Widgets 保存为真正的挂件。</translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetLab.qml" line="163"/>
+        <source>Widget name</source>
+        <translation>挂件名称</translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetLab.qml" line="167"/>
+        <source>Save to My Widgets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetLab.qml" line="175"/>
+        <source>Saving...</source>
+        <translation>正在保存……</translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetLab.qml" line="179"/>
+        <source>Saved to My Widgets: %1
+Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not listed yet).</source>
+        <translation>已保存到「我的挂件」：%1
+打开挂件库 → 我的挂件即可放到桌面（如果还没出现，请重新打开挂件库）。</translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetLab.qml" line="179"/>
+        <source>Could not save the widget. See the log in Option.</source>
+        <translation>挂件保存失败，请查看 Option 中的日志。</translation>
     </message>
     <message>
         <location filename="../qml/WidgetLab.qml" line="88"/>
@@ -830,13 +857,13 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1973"/>
+        <location filename="../qml/main-stand.qml" line="2081"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="888"/>
-        <location filename="../qml/main-stand.qml" line="2038"/>
+        <location filename="../qml/main-stand.qml" line="2150"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -888,95 +915,97 @@ You can change this in Option.</source>
 可以在 Option 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1602"/>
+        <location filename="../qml/main-stand.qml" line="1705"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1605"/>
+        <location filename="../qml/main-stand.qml" line="1708"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1621"/>
+        <location filename="../qml/main-stand.qml" line="1724"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1714"/>
-        <location filename="../qml/main-stand.qml" line="1841"/>
+        <location filename="../qml/main-stand.qml" line="1817"/>
+        <location filename="../qml/main-stand.qml" line="1944"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1757"/>
+        <location filename="../qml/main-stand.qml" line="1860"/>
+        <location filename="../qml/main-stand.qml" line="2081"/>
         <source>Lab Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1841"/>
-        <location filename="../qml/main-stand.qml" line="1863"/>
-        <location filename="../qml/main-stand.qml" line="1869"/>
+        <location filename="../qml/main-stand.qml" line="1944"/>
+        <location filename="../qml/main-stand.qml" line="1966"/>
+        <location filename="../qml/main-stand.qml" line="1972"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2663"/>
+        <location filename="../qml/main-stand.qml" line="2775"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2663"/>
+        <location filename="../qml/main-stand.qml" line="2775"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2663"/>
+        <location filename="../qml/main-stand.qml" line="2775"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2805"/>
+        <location filename="../qml/main-stand.qml" line="2917"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2831"/>
+        <location filename="../qml/main-stand.qml" line="2943"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2831"/>
+        <location filename="../qml/main-stand.qml" line="2943"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2848"/>
+        <location filename="../qml/main-stand.qml" line="2960"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2865"/>
+        <location filename="../qml/main-stand.qml" line="2992"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2870"/>
+        <location filename="../qml/main-stand.qml" line="2997"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2875"/>
+        <location filename="../qml/main-stand.qml" line="3002"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2880"/>
+        <location filename="../qml/main-stand.qml" line="2982"/>
+        <location filename="../qml/main-stand.qml" line="3007"/>
         <source>Widget Lab</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2885"/>
+        <location filename="../qml/main-stand.qml" line="3012"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>

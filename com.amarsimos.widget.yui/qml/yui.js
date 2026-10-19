@@ -190,6 +190,36 @@ function linkedPath(link) {
     return link.indexOf("yui-path:") === 0 ? decodeURIComponent(link.slice(9)).replace(/\//g, "\\") : "";
 }
 
+// Widget type of this package (package.json: com.amarsimos.widget.yui, /widget/mhcp-yui), as SAO Utils
+// names it. A Lab widget saved to "My Widgets" is this widget with lab_code in its settings.
+var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
+
+// The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Lab widget, in
+// the format SAO Utils saves them: preset.json, and settings.xml with each value as JSON text.
+// now: ISO date. Returns {preset, settings}.
+function labPresetFiles(title, code, width, height, now) {
+    var values = {
+        "lab_title": String(title),
+        "lab_code": String(code),
+        "lab_width": Math.round(width),
+        "lab_height": Math.round(height)
+    };
+    var lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<map>"];
+    for (var key in values)
+        lines.push('    <value name="' + key + '">' + escapeHtml(JSON.stringify(values[key])) + "</value>");
+    lines.push("</map>", "");
+    return {
+        "preset": JSON.stringify({
+            "create": now,
+            "source": WIDGET_SOURCE,
+            "title": String(title),
+            "settings": "settings.xml",
+            "edit": now
+        }, null, 2),
+        "settings": lines.join("\n")
+    };
+}
+
 // Lines of an es.exe -export-txt result file (BOM and blank lines removed).
 function parseSearchResults(text) {
     return String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).map(function(line) {
