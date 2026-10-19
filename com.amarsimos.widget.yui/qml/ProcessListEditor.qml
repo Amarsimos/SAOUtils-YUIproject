@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// An editable list of process names (Option window): each name is a chip with a remove button,
+// An editable list of process names (System Console): each name is a chip with a remove button,
 // and new names are typed below. fixedNames are shown first, locked (no remove button).
 ColumnLayout {
     id: editor

@@ -5,15 +5,16 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// "Option" window (next to Cardinal System and Equipment): tools that are not settings.
-// Diagnostics run each desktop action without the AI, through the same message, SAO confirmation
-// box and execution as a real one.
+// "System Console" window (after the GM console Yui uses in Aincrad): the Cardinal System Monitor
+// (loads and the crystal's thresholds), Object Control Authority (what Yui may do on the desktop) and
+// the System Log. Test Call runs each desktop action without the AI, through the same message, SAO
+// confirmation box and execution as a real one.
 NVG.Window {
     id: consoleWindow
 
     property var targetWidget
 
-    title: qsTr("Option")
+    title: qsTr("System Console")
     visible: true
     minimumWidth: 420
     minimumHeight: 320
@@ -38,28 +39,6 @@ NVG.Window {
                 spacing: 10
 
                 Heading {
-                    text: qsTr("Everything")
-                }
-
-                Label {
-                    text: qsTr("es.exe Path")
-                }
-
-                TextField {
-                    Layout.fillWidth: true
-                    selectByMouse: true
-                    placeholderText: "D:\\Tools\\everything\\es.exe"
-                    text: (consoleWindow.targetWidget.settingsRevision, consoleWindow.targetWidget.settings.es_path || "")
-                    // Saved on every edit (also when the window is closed right after typing); empty
-                    // means es.exe is looked for in PATH and the usual install folders. Surrounding quotes from "Copy as path" are dropped.
-                    onTextEdited: consoleWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
-                }
-
-                SettingNote {
-                    text: qsTr("File search uses Everything's command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.")
-                }
-
-                Heading {
                     text: qsTr("Cardinal System Monitor")
                 }
 
@@ -68,7 +47,7 @@ NVG.Window {
                     yui: consoleWindow.targetWidget
                 }
 
-                Heading {
+                Label {
                     text: qsTr("Yui's Heart Crystal")
                 }
 
@@ -161,30 +140,6 @@ NVG.Window {
 
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("Idle Chatter (minutes, 0 = off)")
-                    }
-
-                    SpinBox {
-                        Layout.preferredWidth: 120
-                        from: 0
-                        to: 240
-                        stepSize: 5
-                        editable: true
-                        value: consoleWindow.targetWidget.settings.idle_chat_minutes !== undefined ? consoleWindow.targetWidget.settings.idle_chat_minutes : 15
-                        onValueModified: consoleWindow.targetWidget.settings.idle_chat_minutes = value
-                    }
-
-                }
-
-                SettingNote {
-                    text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).")
-                }
-
                 Button {
                     text: qsTr("Restore Defaults")
                     onClicked: {
@@ -196,11 +151,34 @@ NVG.Window {
                 }
 
                 Heading {
-                    text: qsTr("Close Programs")
+                    text: qsTr("Object Control Authority")
                 }
 
                 Label {
-                    text: qsTr("Whitelist")
+                    text: qsTr("Object Search")
+                }
+
+                Label {
+                    text: qsTr("es.exe Path")
+                    color: "#888888"
+                }
+
+                TextField {
+                    Layout.fillWidth: true
+                    selectByMouse: true
+                    placeholderText: "D:\\Tools\\everything\\es.exe"
+                    text: (consoleWindow.targetWidget.settingsRevision, consoleWindow.targetWidget.settings.es_path || "")
+                    // Saved on every edit (also when the window is closed right after typing); empty
+                    // means es.exe is looked for in PATH and the usual install folders. Surrounding quotes from "Copy as path" are dropped.
+                    onTextEdited: consoleWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
+                }
+
+                SettingNote {
+                    text: qsTr("File search uses Everything's command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.")
+                }
+
+                Label {
+                    text: qsTr("Delete Authority")
                 }
 
                 SettingNote {
@@ -238,7 +216,11 @@ NVG.Window {
                 }
 
                 Heading {
-                    text: qsTr("Diagnostics")
+                    text: qsTr("System Log")
+                }
+
+                Label {
+                    text: qsTr("Test Call")
                 }
 
                 SettingNote {
@@ -291,7 +273,6 @@ NVG.Window {
                     Label {
                         Layout.fillWidth: true
                         text: qsTr("Log")
-                        font.bold: true
                     }
 
                     Button {
@@ -366,7 +347,7 @@ NVG.Window {
         }
 
         header: TitleBar {
-            text: qsTr("Option")
+            text: qsTr("System Console")
         }
 
     }

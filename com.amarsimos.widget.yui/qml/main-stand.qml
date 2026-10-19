@@ -103,7 +103,7 @@ T.Widget {
 
     }
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
-    // editable in Option), sampled once a second while the crystal is shown. loadStates holds each
+    // editable in System Console), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
     readonly property var loadMetrics: ["cpu", "gpu", "ram"]
     readonly property var levelColors: ["#2CE67C", "#FFCC00", "#FF3B30"]
@@ -181,7 +181,7 @@ T.Widget {
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
-    // Diagnostics log shown live in the Option window (newest last, at most 200 lines).
+    // Diagnostics log shown live in the System Console (newest last, at most 200 lines).
     property var diagLog: []
     property var heartCache: []
     property bool applyingFrameSize: false
@@ -1035,7 +1035,7 @@ T.Widget {
         diagLog = diagLog.concat([line]).slice(-200);
     }
 
-    // Diagnostics (Option window, SystemConsole.qml): run a desktop action without the AI, through the same
+    // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
     function testAction(tag) {
@@ -1122,8 +1122,8 @@ T.Widget {
 
     // After the first confirmed close of a program, ask once whether Yui may close it without asking
     // from now on: OK adds it to the whitelist; Cancel is remembered, so only the close itself is
-    // confirmed next time. Both lists can be edited in the Option window.
-    // Bumped when Yui changes a setting shown in the Option window (whitelist, es.exe path), so the
+    // confirmed next time. Both lists can be edited in the System Console.
+    // Bumped when Yui changes a setting shown in the System Console (whitelist, es.exe path), so the
     // window shows it at once.
     property int settingsRevision: 0
 
@@ -1141,7 +1141,7 @@ T.Widget {
         try {
             NVG.SystemCall.messageBox({
                 "title": qsTr("Whitelist"),
-                "text": qsTr("Close %1 without asking from now on?\nYou can change this in Option.").arg(name),
+                "text": qsTr("Close %1 without asking from now on?\nYou can change this in System Console.").arg(name),
                 "modal": true
             }).then(function(result) {
                 remember(!(result === false || result === 0));
@@ -1212,14 +1212,14 @@ T.Widget {
         if (status && status.es && !esSetting && status.code !== "missing") {
             widget.settings.es_path = status.es;
             widget.settingsRevision++;
-            found = "\n（结衣自动找到了 es.exe：" + status.es + "，已经帮你填进「Option」啦）";
+            found = "\n（结衣自动找到了 es.exe：" + status.es + "，已经帮你填进「System Console」啦）";
             diag("es.exe found and saved: " + status.es);
         }
         var text;
         if (!status)
-            text = "数据检索失败……检索程序没有启动 (T_T)\n请打开「Option」看看日志，或者把日志发给开发者哦。";
+            text = "数据检索失败……检索程序没有启动 (T_T)\n请打开「System Console」看看日志，或者把日志发给开发者哦。";
         else if (status.code === "missing")
-            text = (esSetting ? "数据检索失败……「Option」里填写的 es.exe 不存在：" + esSetting + "\n请确认路径是否正确哦。" : "数据检索失败……结衣找不到 Everything 的命令行工具 es.exe (T_T)\n请在「Option」里填写 es.exe 的完整路径，或者把它加入系统 PATH。") + "\n还没有安装的话，可以从这里下载 Everything 和 ES 命令行工具：\n" + download;
+            text = (esSetting ? "数据检索失败……「System Console」里填写的 es.exe 不存在：" + esSetting + "\n请确认路径是否正确哦。" : "数据检索失败……结衣找不到 Everything 的命令行工具 es.exe (T_T)\n请在「System Console」里填写 es.exe 的完整路径，或者把它加入系统 PATH。") + "\n还没有安装的话，可以从这里下载 Everything 和 ES 命令行工具：\n" + download;
         else if (status.code === "8")
             text = "数据检索失败……Everything 好像没有在运行 (T_T)\n请先启动 Everything，再让结衣查找一次吧！";
         else if (status.code !== "0")
@@ -1231,8 +1231,8 @@ T.Widget {
         appendMessage("ai", text + found, false, true);
     }
 
-    // A link clicked in a chat message (see Yui.linkify): a path opens File Explorer, 「Option」 opens
-    // the Option window, a web link opens in the browser.
+    // A link clicked in a chat message (see Yui.linkify): a path opens File Explorer, 「System Console」 opens
+    // the System Console, a web link opens in the browser.
     function openMessageLink(link) {
         diag("link clicked: " + link);
         if (link.indexOf("yui-path:") === 0)
@@ -1805,7 +1805,7 @@ T.Widget {
         return JSON.stringify(document, null, 2);
     }
 
-    // Option window "Export": writes 结衣之心-<date>.json and shows it in File Explorer.
+    // System Console "Export": writes 结衣之心-<date>.json and shows it in File Explorer.
     // onDone(path), optional: the path written, or "" when it failed.
     function exportHeart(withMessages, onDone) {
         writeHeartFile("结衣之心-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".json", heartDocument(withMessages), function(path) {
@@ -1835,7 +1835,7 @@ T.Widget {
         });
     }
 
-    // Option window "Import": adds the memories of an exported file (and its chat history, if it has
+    // System Console "Import": adds the memories of an exported file (and its chat history, if it has
     // one) to Yui's Heart; nothing is replaced. Returns a message for the user.
     function importHeart(url) {
         var text = "";
@@ -1947,7 +1947,7 @@ T.Widget {
                 }
             }
         }
-        // CPU, GPU and memory, with the crystal's red thresholds (Option window): reported once a load
+        // CPU, GPU and memory, with the crystal's red thresholds (System Console): reported once a load
         // stays at or above it for these many checks (one every 30 s).
         var sources = {
             "cpu": cpuLoad,
@@ -2039,7 +2039,7 @@ T.Widget {
         var offset = 30 * (seedlingWidgets.length % 8);
         var view = component.createObject(widget, {
             "code": code,
-            "label": qsTr("Lab Widget") + " " + (seedlingWidgets.length + 1),
+            "label": qsTr("Seedling Widget") + " " + (seedlingWidgets.length + 1),
             "x": corner.x + 40 + offset,
             "y": corner.y + 40 + offset
         });
@@ -2113,7 +2113,7 @@ T.Widget {
         idleChat();
     }
 
-    // Option window "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
+    // System Console "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
     // click shows the next sample (short, long, a status report), so the layout can be checked.
     property int testBubbleCount: 0
     // The next reply is a made-up streamed one (Test Streaming): no API request, no tokens.
@@ -2330,7 +2330,7 @@ T.Widget {
         });
     }
 
-    title: seedlingMode ? (widget.settings.lab_title || qsTr("Lab Widget")) : qsTr("MHCP-YUI")
+    title: seedlingMode ? (widget.settings.lab_title || qsTr("Seedling Widget")) : qsTr("MHCP-YUI")
     solid: true
     resizable: !applyingFrameSize
     // Implicit size acts as the minimum frame size (see applyFrameSize); set from code only.
@@ -3448,7 +3448,7 @@ T.Widget {
         }
 
         Action {
-            text: qsTr("Option") + "..."
+            text: qsTr("System Console") + "..."
             onTriggered: showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance")
         }
 

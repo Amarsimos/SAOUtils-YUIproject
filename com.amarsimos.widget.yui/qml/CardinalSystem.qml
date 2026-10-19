@@ -133,6 +133,7 @@ NVG.Window {
                         statusPreference.value = settings.status_reports !== false;
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
+                        idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
                         loading = false;
                     }
 
@@ -384,6 +385,21 @@ NVG.Window {
                         text: qsTr("Yui goes to sleep after this long without interaction; click her to wake her up.")
                     }
 
+                    P.SliderPreference {
+                        id: idleChatPreference
+
+                        name: "idle_chat_minutes"
+                        label: qsTr("Spontaneous Talk")
+                        from: 0
+                        to: 240
+                        stepSize: 5
+                        displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                    }
+
+                    SettingNote {
+                        text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).")
+                    }
+
                 }
 
             }
@@ -404,6 +420,7 @@ NVG.Window {
                 targetWidget.settings.status_reports = !!statusPreference.value;
                 targetWidget.settings.external_browser = !!externalBrowserPreference.value;
                 targetWidget.settings.sleep_minutes = sleepPreference.value;
+                targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
                 coreSettings.close();
             }
             onReset: {

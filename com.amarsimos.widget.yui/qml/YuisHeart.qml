@@ -36,7 +36,7 @@ NVG.Window {
             }
 
             Heading {
-                text: qsTr("Export and Backup")
+                text: qsTr("Local Memory")
             }
 
             SettingNote {
@@ -53,7 +53,7 @@ NVG.Window {
                 Button {
                     text: qsTr("Export")
                     onClicked: heartWindow.targetWidget.exportHeart(withMessages.checked, function(path) {
-                        heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in Option.");
+                        heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
                     })
                 }
 
@@ -63,7 +63,7 @@ NVG.Window {
                         var component = Qt.createComponent("YuisHeartImportDialog.qml");
                         if (component.status !== Component.Ready) {
                             heartWindow.targetWidget.diag("import dialog unavailable: " + component.errorString());
-                            heartMessage.text = qsTr("The file picker is not available. See the log in Option.");
+                            heartMessage.text = qsTr("The file picker is not available. See the log in System Console.");
                             return ;
                         }
                         var dialog = component.createObject(heartWindow);

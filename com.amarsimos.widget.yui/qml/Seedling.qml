@@ -213,7 +213,7 @@ NVG.Window {
                         result.color = "#888888";
                         seedlingWindow.targetWidget.saveSeedlingPreset(widgetName.text.trim(), editor.text, rendered, function(folder) {
                             enabled = true;
-                            result.text = folder ? qsTr("Saved to My Widgets: %1\nOpen Widget Gallery → My Widgets to place it (reopen the gallery if it is not listed yet).").arg(folder) : qsTr("Could not save the widget. See the log in Option.");
+                            result.text = folder ? qsTr("Saved to My Widgets: %1\nOpen Widget Gallery → My Widgets to place it (reopen the gallery if it is not listed yet).").arg(folder) : qsTr("Could not save the widget. See the log in System Console.");
                             result.color = folder ? "#2C9E5C" : "#D0302A";
                         });
                     }

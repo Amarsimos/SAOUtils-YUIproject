@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// Cardinal System monitor (Option window): CPU, GPU, memory and battery as HP bars, colored with the
+// Cardinal System monitor (System Console): CPU, GPU, memory and battery as HP bars, colored with the
 // crystal's thresholds (as measured, without the crystal's 5 s hold). For the battery, low values are
 // the dangerous ones: yellow from 30 %, red from 10 % left. Refreshed every 2 s while shown.
 ColumnLayout {
