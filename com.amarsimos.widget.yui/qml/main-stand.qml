@@ -2625,16 +2625,113 @@ T.Widget {
 
     }
 
+    // SAO menu panel around the chat (as SAO Utils' SAO settings panel): light gray with a white edge,
+    // "Message" in the SAO UI font over a thin line, and a pointer at the middle of its left side,
+    // toward Yui.
+    Item {
+        id: chatPanel
+
+        readonly property real pointer: 12
+
+        anchors.left: characterImage.right
+        anchors.leftMargin: 4 + pointer
+        anchors.right: parent.right
+        anchors.rightMargin: 6
+        anchors.top: parent.top
+        anchors.topMargin: 4
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 4
+        visible: opacity > 0
+        opacity: showChat ? 1 : 0
+
+        Rectangle {
+            id: chatPanelBackground
+
+            anchors.fill: parent
+            radius: 2
+            color: "#F0EAEAEA"
+            border.color: "#FFFFFF"
+            border.width: 2
+        }
+
+        Text {
+            id: chatPanelTitle
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: 8
+            text: "Message"
+            color: "#8C8C8C"
+            font.family: "SAO UI"
+            font.pixelSize: 20
+        }
+
+        // Thin line under the title, fading out at both ends.
+        Rectangle {
+            x: 14
+            y: chatPanelTitle.y + chatPanelTitle.height + 4
+            width: parent.width - 28
+            height: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+
+                GradientStop {
+                    position: 0
+                    color: "#00A0A0A0"
+                }
+
+                GradientStop {
+                    position: 0.5
+                    color: "#B0A0A0A0"
+                }
+
+                GradientStop {
+                    position: 1
+                    color: "#00A0A0A0"
+                }
+
+            }
+        }
+
+        Shape {
+            x: -chatPanel.pointer + 2
+            y: Math.round(parent.height / 2 - chatPanel.pointer)
+            width: chatPanel.pointer
+            height: chatPanel.pointer * 2
+            layer.enabled: true
+            layer.samples: 4
+
+            ShapePath {
+                fillColor: chatPanelBackground.color
+                strokeColor: chatPanelBackground.border.color
+                strokeWidth: 2
+                joinStyle: ShapePath.MiterJoin
+                startX: chatPanel.pointer
+                startY: 0
+
+                PathLine {
+                    x: 0
+                    y: chatPanel.pointer
+                }
+
+                PathLine {
+                    x: chatPanel.pointer
+                    y: chatPanel.pointer * 2
+                }
+
+            }
+
+        }
+
+    }
+
     ColumnLayout {
         id: chatContainer
 
-        anchors.left: characterImage.right
-        anchors.leftMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 6
+        anchors.fill: chatPanel
+        anchors.topMargin: 46
+        anchors.leftMargin: 8
+        anchors.rightMargin: 6
+        anchors.bottomMargin: 8
         visible: opacity > 0
         opacity: showChat ? 1 : 0
 
@@ -2654,6 +2751,8 @@ T.Widget {
 
             ScrollBar.vertical: SaoScrollBar {
                 id: chatScrollBar
+
+                onLight: true
             }
 
             // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
@@ -2672,9 +2771,11 @@ T.Widget {
 
                     anchors.left: messageItem.fromUser ? undefined : parent.left
                     anchors.right: messageItem.fromUser ? parent.right : undefined
-                    // Keep the user's windows clear of the scroll bar.
-                    anchors.rightMargin: 16
-                    maximumWidth: chatView.width - 40
+                    // Room for the pointers; the user's windows also stay clear of the scroll bar.
+                    anchors.leftMargin: tailSize
+                    anchors.rightMargin: 16 + tailSize
+                    maximumWidth: chatView.width - 48
+                    tailSide: messageItem.fromUser ? "right" : "left"
                     sender: messageItem.fromUser ? widget.userTitle() : "Yui"
                     text: model.message
                     linkedText: Yui.linkify(model.message, "#1565C0")

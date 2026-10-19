@@ -1,5 +1,6 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
+import QtQuick.Shapes 1.12
 
 // One chat message as an SAO instant message window (after SAO Utils' SAO-style mail box panel):
 // a white title bar "Message · <sender>" in the SAO UI font, the text on a light gray body, and a
@@ -22,6 +23,10 @@ Item {
     property int fontSize: 14
     // Widest the window may get.
     property real maximumWidth: 400
+    // Side of the pointer toward the speaker: "left" (Yui), "right" (user) or "" (none). It sticks out
+    // tailSize px beyond the window.
+    property string tailSide: ""
+    readonly property real tailSize: 8
 
     signal linkActivated(string link)
     signal confirmRequested()
@@ -243,6 +248,45 @@ Item {
 
                     }
 
+                }
+
+            }
+
+        }
+
+        // Pointer at the middle of the left (Yui) or right (user) side, toward the speaker. Drawn in
+        // the body's gray over the frame's edge so it joins seamlessly; only its two outer edges are
+        // stroked.
+        Shape {
+            id: tail
+
+            readonly property real size: messageWindow.tailSize
+            readonly property bool onRight: messageWindow.tailSide === "right"
+
+            visible: messageWindow.tailSide !== ""
+            x: onRight ? frame.width - 1 : -size + 1
+            y: Math.round(frame.height / 2 - size)
+            width: size
+            height: size * 2
+            layer.enabled: visible
+            layer.samples: 4
+
+            ShapePath {
+                fillColor: body.color
+                strokeColor: frame.border.color
+                strokeWidth: 1
+                joinStyle: ShapePath.MiterJoin
+                startX: tail.onRight ? 0 : tail.size
+                startY: 0
+
+                PathLine {
+                    x: tail.onRight ? tail.size : 0
+                    y: tail.size
+                }
+
+                PathLine {
+                    x: tail.onRight ? 0 : tail.size
+                    y: tail.size * 2
                 }
 
             }
