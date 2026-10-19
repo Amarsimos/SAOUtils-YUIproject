@@ -1610,13 +1610,16 @@ T.Widget {
         // Hide everything of Yui (the lab content is added afterwards).
         for (var i = 0; i < widget.children.length; i++)
             widget.children[i].visible = false;
+        var code = Yui.labCode(widget.settings);
         try {
-            labObject = Qt.createQmlObject(widget.settings.lab_code, widget, "LabWidget");
+            labObject = Qt.createQmlObject(code, widget, "LabWidget");
         } catch (e) {
             var errors = (e.qmlErrors || []).map(function(error) {
                 return error.lineNumber + ":" + error.columnNumber + " " + error.message;
             });
             console.log("lab widget failed:", errors.join("; ") || e);
+            // How the code arrived (line breaks shown as \n), to see what the settings reader did.
+            console.log("lab widget code starts:", JSON.stringify(code.slice(0, 120)));
             labObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Lab widget error" }', widget, "LabWidgetError");
         }
         // The saved size once, as for Yui's first start; afterwards SAO Utils restores the frame.
@@ -2088,7 +2091,7 @@ T.Widget {
     visible: true
     Component.onCompleted: {
         // A saved Lab widget (from "My Widgets") carries lab_widget; only then is lab_code shown.
-        if (widget.settings.lab_widget === true && widget.settings.lab_code) {
+        if ((widget.settings.lab_widget === true || widget.settings.lab_widget === "true") && Yui.labCode(widget.settings)) {
             startLabWidget();
             return ;
         }

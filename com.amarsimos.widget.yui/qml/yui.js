@@ -197,13 +197,14 @@ var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
 
 // The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Lab widget, in
 // the format SAO Utils saves them: preset.json, and settings.xml with each value as JSON text.
-// now: ISO date. Returns {preset, settings}.
+// The code is stored URL-encoded (lab_code_uri): SAO Utils' settings reader lost the line breaks
+// of a plain JSON string, joining the code into one line. now: ISO date. Returns {preset, settings}.
 function labPresetFiles(title, code, width, height, now) {
     var values = {
         // Marks a saved Lab widget: only then does the widget start in lab widget mode.
         "lab_widget": true,
         "lab_title": String(title),
-        "lab_code": String(code),
+        "lab_code_uri": encodeURIComponent(String(code)),
         "lab_width": Math.round(width),
         "lab_height": Math.round(height)
     };
@@ -221,6 +222,17 @@ function labPresetFiles(title, code, width, height, now) {
         }, null, 2),
         "settings": lines.join("\n")
     };
+}
+
+// The QML of a saved Lab widget's settings (lab_code_uri, or lab_code from before it was encoded).
+function labCode(settings) {
+    if (!settings)
+        return "";
+
+    if (settings.lab_code_uri)
+        return decodeURIComponent(settings.lab_code_uri);
+
+    return String(settings.lab_code || "");
 }
 
 // Lines of an es.exe -export-txt result file (BOM and blank lines removed).
