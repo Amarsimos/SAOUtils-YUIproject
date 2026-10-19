@@ -35,10 +35,13 @@ function isProtectedProcess(name) {
 }
 
 // Command lines run with NVG.SystemCall.command(). find uses Everything's command line tool es.exe,
-// writing the results as UTF-8 text to resultFile; kill asks the program to close (no /F).
-function actionCommand(action, resultFile) {
-    if (action.type === "find")
-        return 'es.exe -n 20 -export-txt "' + resultFile + '" "' + action.target + '"';
+// writing the results as UTF-8 text to resultFile; esPath is its full path (Option window), or empty
+// for es.exe found through PATH. kill asks the program to close (no /F).
+function actionCommand(action, resultFile, esPath) {
+    if (action.type === "find") {
+        var es = String(esPath || "").replace(/"/g, "").trim();
+        return (es ? '"' + es + '"' : "es.exe") + ' -n 20 -export-txt "' + resultFile + '" "' + action.target + '"';
+    }
 
     if (action.type === "kill")
         return 'taskkill /IM "' + action.target + '"';

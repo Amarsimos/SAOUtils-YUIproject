@@ -112,6 +112,8 @@ T.Widget {
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table so bindings and requests do not query the database.
     property var database: null
+    // Diagnostics log shown live in the Option window (newest last, at most 200 lines).
+    property var diagLog: []
     property var heartCache: []
     property bool applyingFrameSize: false
     // Width of the character image at the current widget height, without any constraint.
@@ -855,6 +857,7 @@ T.Widget {
             "kill": qsTr("Yui will close this program:")
         };
         var question = (questions[action.type] || "") + "\n" + action.target;
+        diag("confirm: " + action.type + " \"" + action.target + "\" -> messageBox");
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": action.type === "kill" ? qsTr("Warning") : qsTr("Navigation"),
@@ -864,27 +867,37 @@ T.Widget {
             if (answer && typeof answer.then === "function") {
                 // OK resolves; Cancel may reject or resolve with a false / Rejected (0) result.
                 answer.then(function(result) {
+                    diag("messageBox resolved, result=" + JSON.stringify(result));
                     if (result === false || result === 0)
                         cancelAction(index);
                     else
                         runAction(index);
-                }, function() {
+                }, function(reason) {
+                    diag("messageBox rejected (" + reason + ")");
                     cancelAction(index);
                 });
                 return ;
             }
+            diag("messageBox returned no Promise (" + answer + "), using the fallback dialog");
         } catch (e) {
-            console.log("system message box unavailable, using a dialog:", e);
+            diag("messageBox failed: " + e + ", using the fallback dialog");
         }
         actionDialog.messageIndex = index;
         actionDialog.text = question;
         actionDialog.open();
     }
 
+    function diag(message) {
+        var line = Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + message;
+        console.log("[diag]", message);
+        diagLog = diagLog.concat([line]).slice(-200);
+    }
+
     // Diagnostics (Option window, OptionSettings.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
     function testAction(tag) {
+        diag("test " + tag);
         var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag);
         var index = chatModel.count;
         chatModel.append({
@@ -909,10 +922,12 @@ T.Widget {
     // A refused <<kill:>> of a protected process: SAO Utils' system message box, titled after the
     // indestructible objects of SAO ("Immortal Object"), with only an OK button.
     function showImmortalObject(name) {
+        diag("blocked: " + name + " is protected (no confirmation)");
         notify(qsTr("Immortal Object"), qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
     }
 
     function cancelAction(index) {
+        diag("cancelled");
         chatModel.setProperty(index, "actionState", "cancelled");
     }
 
@@ -922,22 +937,29 @@ T.Widget {
         try {
             var action = JSON.parse(item.action);
             if (action.type === "open" || action.type === "search") {
-                if (/^https?:\/\//i.test(action.url) && !openLink(action.url))
+                var opened = /^https?:\/\//i.test(action.url) && openLink(action.url);
+                diag("openLink(" + action.url + ") -> " + (opened ? "ok" : "failed, system browser used"));
+                if (!opened)
                     addNote(index, "⚠ 内置浏览器打开失败，已改用系统浏览器");
 
             } else if (action.type === "launch") {
-                if (!NVG.SystemCall.execute(action.target))
+                var launched = NVG.SystemCall.execute(action.target);
+                diag("execute(\"" + action.target + "\") -> " + launched);
+                if (!launched)
                     addNote(index, "⚠ 无法启动：" + action.target);
 
             } else if (action.type === "kill") {
-                if (!NVG.SystemCall.command(Yui.actionCommand(action)))
+                var killCommand = Yui.actionCommand(action);
+                var killed = NVG.SystemCall.command(killCommand);
+                diag("command(" + killCommand + ") -> " + killed);
+                if (!killed)
                     addNote(index, "⚠ 无法执行：taskkill " + action.target);
 
             } else if (action.type === "find") {
                 runFind(action);
             }
         } catch (e) {
-            console.log("action failed:", e);
+            diag("action failed: " + e);
         }
         chatModel.setProperty(index, "actionState", "done");
     }
@@ -964,17 +986,22 @@ T.Widget {
     function runFind(action) {
         var folder = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/");
         var file = folder + "/find-" + Date.now() + ".txt";
-        if (!NVG.SystemCall.command(Yui.actionCommand(action, file))) {
+        var command = Yui.actionCommand(action, file, widget.settings.es_path);
+        var started = NVG.SystemCall.command(command);
+        diag("command(" + command + ") -> " + started);
+        if (!started) {
             // command() fails when es.exe cannot be started, which nearly always means it is missing.
             appendMessage("ai", "呜……结衣没能启动文件检索 (T_T)
-电脑里好像没有 Everything 的命令行工具 es.exe。请先安装 Everything（voidtools.com），再下载 ES 命令行工具，把 es.exe 放到 Everything 的安装目录并加入系统 PATH，结衣就能帮你找文件啦！", false, true);
+结衣找不到 Everything 的命令行工具 es.exe。请在 Option 里填写 es.exe 的完整路径（或把它加入系统 PATH），并确认 Everything 正在运行。还没有的话，可以从 voidtools.com 下载 Everything 和 ES 命令行工具哦！", false, true);
             return ;
         }
         var tries = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
             tries++;
-            var results = Yui.parseSearchResults(readLocalFile(file));
+            var content = readLocalFile(file);
+            var results = Yui.parseSearchResults(content);
+            diag("read result file (try " + tries + "/12): " + content.length + " chars, " + results.length + " results");
             if (results.length === 0 && tries < 12)
                 return ;
 
@@ -983,7 +1010,7 @@ T.Widget {
             if (results.length > 0)
                 appendMessage("ai", "检索完成！结衣找到了 " + results.length + " 个和「" + action.target + "」有关的结果：\n" + results.join("\n"), false, true);
             else
-                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n如果还没安装 Everything 和它的命令行工具 es.exe，结衣就没办法在电脑里找文件哦。", false, true);
+                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n请确认 Everything 正在运行，并在 Option 里填好 es.exe 的位置（或把它加入系统 PATH）。", false, true);
         });
         timer.start();
     }
@@ -1224,6 +1251,7 @@ T.Widget {
             notification.destroy();
         });
         notification.active = true;
+        diag("notification: " + title);
         return notification;
     }
 

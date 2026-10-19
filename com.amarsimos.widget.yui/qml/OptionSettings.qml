@@ -16,8 +16,8 @@ NVG.Window {
     visible: true
     minimumWidth: 420
     minimumHeight: 320
-    width: 480
-    height: 420
+    width: 520
+    height: 720
     transientParent: widget.NVG.View.window
     onClosing: destroy()
 
@@ -35,6 +35,27 @@ NVG.Window {
             ColumnLayout {
                 width: scrollView.width
                 spacing: 10
+
+                Heading {
+                    text: qsTr("Everything")
+                }
+
+                Label {
+                    text: qsTr("es.exe Path")
+                }
+
+                TextField {
+                    Layout.fillWidth: true
+                    selectByMouse: true
+                    placeholderText: "D:\\Tools\\everything\\es.exe"
+                    text: optionWindow.targetWidget.settings.es_path || ""
+                    // Saved as soon as it is edited; empty means es.exe is found through PATH.
+                    onEditingFinished: optionWindow.targetWidget.settings.es_path = text.trim()
+                }
+
+                SettingNote {
+                    text: qsTr("File search uses Everything's command line tool es.exe. Enter its full path here, or leave it empty when es.exe is in PATH. Everything itself must be running.")
+                }
 
                 Heading {
                     text: qsTr("Diagnostics")
@@ -71,6 +92,62 @@ NVG.Window {
                             onClicked: optionWindow.targetWidget.testAction(modelData.tag)
                         }
 
+                    }
+
+                }
+
+                // Live log of the desktop actions: confirmations, commands and their results.
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Log")
+                        font.bold: true
+                    }
+
+                    Button {
+                        text: qsTr("Clear Log")
+                        onClicked: optionWindow.targetWidget.diagLog = []
+                    }
+
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    color: "#1A1D24"
+                    radius: 4
+
+                    ListView {
+                        id: logView
+
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        clip: true
+                        model: optionWindow.targetWidget.diagLog
+                        onCountChanged: Qt.callLater(positionViewAtEnd)
+
+                        delegate: Text {
+                            width: logView.width
+                            text: modelData
+                            color: "#DDFFFFFF"
+                            font.family: "Consolas"
+                            font.pixelSize: 11
+                            wrapMode: Text.WrapAnywhere
+                        }
+
+                        ScrollBar.vertical: SaoScrollBar {
+                        }
+
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: logView.count === 0
+                        text: qsTr("Run a test to see its steps here.")
+                        color: "#88FFFFFF"
+                        font.pixelSize: 11
                     }
 
                 }
