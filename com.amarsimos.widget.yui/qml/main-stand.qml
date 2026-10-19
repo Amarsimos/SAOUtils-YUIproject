@@ -1069,17 +1069,10 @@ T.Widget {
         }
         var question = (questions[action.type] || "") + "\n" + action.target;
         diag("confirm: " + action.type + " \"" + action.target + "\" -> messageBox");
-        // Closing a program asks with the system alert sound.
-        if (action.type === "kill" && alertConfirm(qsTr("Warning"), question, function() {
-            runAction(index);
-        }, function() {
-            cancelAction(index);
-        }))
-            return ;
-
         try {
+            // Closing a program is titled "Alert": SAO Utils then plays the system alert sound.
             var answer = NVG.SystemCall.messageBox({
-                "title": action.type === "kill" ? qsTr("Warning") : qsTr("Navigation"),
+                "title": action.type === "kill" ? "Alert" : qsTr("Navigation"),
                 "text": question,
                 "modal": true
             });
@@ -1112,16 +1105,13 @@ T.Widget {
         askConfirm(qsTr("Warning"), qsTr("Restore all settings of %1 to their defaults?").arg(windowTitle), onYes);
     }
 
-    // SAO Utils' message box with OK / Cancel; onYes runs after OK (right away without a message box).
-    // alert (confirmations that delete something): the same box with the system alert sound instead
-    // of its own (alertConfirm); onNo runs after Cancel.
+    // SAO Utils' message box with OK / Cancel; onYes runs after OK (right away without a message box),
+    // onNo after Cancel. alert (confirmations that delete something): titled "Alert", for which SAO
+    // Utils plays the system alert sound instead of the message sound (as when asking to exit).
     function askConfirm(title, text, onYes, alert, onNo) {
-        if (alert && alertConfirm(title, text, onYes, onNo))
-            return ;
-
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": title,
+                "title": alert ? "Alert" : title,
                 "text": text,
                 "modal": true
             });
@@ -1142,49 +1132,6 @@ T.Widget {
             diag("confirm: messageBox failed: " + e);
         }
         onYes();
-    }
-
-    // The SAO theme's message box itself (its ThemeDialog.qml, the dialog messageBox() shows), popped
-    // up with popupDialog() and the system alert sound: messageBox() always plays its own sound.
-    // Returns false when that dialog is not available (then the plain message box is used).
-    function alertConfirm(title, text, onYes, onNo) {
-        var component = Qt.createComponent(Qt.resolvedUrl("../../com.gpbeta.theme.sao/qml/ThemeDialog.qml"));
-        if (component.status !== Component.Ready) {
-            diag("alert dialog unavailable: " + component.errorString());
-            return false;
-        }
-        var dialog = component.createObject(widget, {
-            "title": title,
-            "text": text,
-            "modal": true
-        });
-        if (!dialog)
-            return false;
-
-        var answered = false;
-        dialog.accepted.connect(function() {
-            answered = true;
-            onYes();
-        });
-        dialog.rejected.connect(function() {
-            answered = true;
-            if (onNo)
-                onNo();
-
-        });
-        dialog.closed.connect(function() {
-            if (!answered && onNo)
-                onNo();
-
-            dialog.destroy();
-        });
-        NVG.SystemCall.playSound(NVG.SFX.NotifyAlert);
-        if (!NVG.SystemCall.popupDialog(dialog)) {
-            diag("alert dialog: popupDialog failed");
-            dialog.destroy();
-            return false;
-        }
-        return true;
     }
 
     function diag(message) {
