@@ -95,7 +95,7 @@ NVG.Window {
             {
                 "key": "pixie_image_path",
                 "preference": pixieImagePreference,
-                "defaultValue": ""
+                "defaultValue": targetWidget.defaultValues.pixie_image_path
             },
             {
                 "key": "pixie_size",
@@ -501,11 +501,23 @@ NVG.Window {
                         text: qsTr("What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.")
                     }
 
-                    P.ImagePreference {
-                        id: pixieImagePreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "pixie_image_path"
-                        label: qsTr("Navigation Pixie Form")
+                        P.ImagePreference {
+                            id: pixieImagePreference
+
+                            Layout.fillWidth: true
+                            name: "pixie_image_path"
+                            label: qsTr("Navigation Pixie Form")
+                            defaultValue: targetWidget.defaultValues.pixie_image_path
+                        }
+
+                        ResetButton {
+                            changed: JSON.stringify(pixieImagePreference.value) !== JSON.stringify(targetWidget.defaultValues.pixie_image_path)
+                            onClicked: pixieImagePreference.value = targetWidget.defaultValues.pixie_image_path
+                        }
+
                     }
 
                     RowLayout {

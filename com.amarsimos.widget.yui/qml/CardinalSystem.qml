@@ -324,7 +324,7 @@ NVG.Window {
                         readOnly: true
                         hint: qsTr("Press Link Start! to test the connection.")
                         wrapMode: Text.Wrap
-                        font.family: "Microsoft YaHei"
+                        font.family: targetWidget.defaultValues.bubble_font_family
                         Layout.fillWidth: true
                         Layout.minimumHeight: 20
                     }

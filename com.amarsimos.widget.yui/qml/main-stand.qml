@@ -197,8 +197,11 @@ T.Widget {
     readonly property var styles: widget.settings.styles || defaultValues
     readonly property var defaultValues: {
         "character_image_path": Qt.resolvedUrl("../Images/Yui01.png"),
-        "background_image_path": Qt.resolvedUrl("../Images/scrim-dark-40.png"),
-        "bubble_font_family": "Microsoft YaHei",
+        // No Field by default (transparent); the pixie is Yui's own image; 思源黑体 (Source Han Sans,
+        // shipped in SAO Utils' Fonts folder).
+        "background_image_path": "",
+        "pixie_image_path": Qt.resolvedUrl("../Images/Yui01.png"),
+        "bubble_font_family": "Source Han Sans SC",
         "bubble_font_size": 14,
         "pixie_size": 160,
         "collapsed_form": "pixie",
@@ -243,7 +246,7 @@ T.Widget {
         if (typeof value === "number" && fonts[value])
             return fonts[value];
 
-        return "Microsoft YaHei";
+        return defaultValues.bubble_font_family;
     }
 
     function providerIndexOf(id) {
