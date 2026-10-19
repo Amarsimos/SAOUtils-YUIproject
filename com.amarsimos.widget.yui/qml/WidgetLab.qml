@@ -116,9 +116,9 @@ NVG.Window {
                     font.family: "Consolas"
                     font.pixelSize: 12
                     placeholderText: "import QtQuick 2.12\n\nRectangle { width: 100; height: 100; color: \"orange\" }"
-                    text: labWindow.targetWidget.settings.lab_code || ""
+                    text: labWindow.targetWidget.settings.lab_editor_code || ""
                     // The editor text is the only thing kept between openings.
-                    onTextChanged: labWindow.targetWidget.settings.lab_code = text
+                    onTextChanged: labWindow.targetWidget.settings.lab_editor_code = text
                     background: Rectangle {
                         color: "#F7F7F7"
                         border.color: "#CCCCCC"

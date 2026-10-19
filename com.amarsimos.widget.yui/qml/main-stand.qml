@@ -1538,7 +1538,7 @@ T.Widget {
 
     // ---------------------------------------------------------------- Lab widgets in "My Widgets"
     // Widget Lab "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
-    // saves them; see Yui.labPresetFiles) whose widget is this widget type with lab_code in its
+    // saves them; see Yui.labPresetFiles) whose widget is this widget type with lab_widget / lab_code in its
     // settings, so it opens in lab widget mode. The folder is made with mkdir (files cannot create
     // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
     // preview.png. onDone(folder) with the folder's Windows path, or "" when it failed.
@@ -1599,7 +1599,8 @@ T.Widget {
 
     }
 
-    // Lab widget mode: this widget was created from a saved Lab widget (lab_code in its settings).
+    // Lab widget mode: this widget was created from a saved Lab widget (lab_widget and lab_code in
+    // its settings).
     // Yui is not started; the widget only shows the code.
     property bool labMode: false
     property var labObject: null
@@ -2086,9 +2087,21 @@ T.Widget {
     implicitHeight: 400
     visible: true
     Component.onCompleted: {
-        if (widget.settings.lab_code) {
+        // A saved Lab widget (from "My Widgets") carries lab_widget; only then is lab_code shown.
+        if (widget.settings.lab_widget === true && widget.settings.lab_code) {
             startLabWidget();
             return ;
+        }
+        // Repair: an earlier version kept the Widget Lab editor text in Yui's own settings as
+        // lab_code, which turned Yui into a lab widget. Keep the text as editor text and clear the rest.
+        if (widget.settings.lab_code !== undefined) {
+            if (!widget.settings.lab_editor_code)
+                widget.settings.lab_editor_code = widget.settings.lab_code;
+
+            ["lab_code", "lab_title", "lab_width", "lab_height", "lab_sized"].forEach(function(key) {
+                delete widget.settings[key];
+            });
+            console.log("repaired: Widget Lab editor text moved out of lab_code");
         }
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;

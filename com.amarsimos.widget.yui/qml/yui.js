@@ -191,7 +191,8 @@ function linkedPath(link) {
 }
 
 // Widget type of this package (package.json: com.amarsimos.widget.yui, /widget/mhcp-yui), as SAO Utils
-// names it. A Lab widget saved to "My Widgets" is this widget with lab_code in its settings.
+// names it. A Lab widget saved to "My Widgets" is this widget with lab_widget and lab_code in its
+// settings.
 var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
 
 // The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Lab widget, in
@@ -199,6 +200,8 @@ var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
 // now: ISO date. Returns {preset, settings}.
 function labPresetFiles(title, code, width, height, now) {
     var values = {
+        // Marks a saved Lab widget: only then does the widget start in lab widget mode.
+        "lab_widget": true,
         "lab_title": String(title),
         "lab_code": String(code),
         "lab_width": Math.round(width),
