@@ -49,8 +49,9 @@ NVG.Window {
                     selectByMouse: true
                     placeholderText: "D:\\Tools\\everything\\es.exe"
                     text: optionWindow.targetWidget.settings.es_path || ""
-                    // Saved as soon as it is edited; empty means es.exe is found through PATH.
-                    onEditingFinished: optionWindow.targetWidget.settings.es_path = text.trim()
+                    // Saved on every edit (also when the window is closed right after typing); empty
+                    // means es.exe is found through PATH. Surrounding quotes from "Copy as path" are dropped.
+                    onTextEdited: optionWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
                 }
 
                 SettingNote {

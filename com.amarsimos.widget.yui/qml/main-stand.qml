@@ -986,6 +986,7 @@ T.Widget {
     function runFind(action) {
         var folder = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/");
         var file = folder + "/find-" + Date.now() + ".txt";
+        diag("es.exe path setting: " + (widget.settings.es_path ? "\"" + widget.settings.es_path + "\"" : "(empty, using es.exe from PATH)"));
         var command = Yui.actionCommand(action, file, widget.settings.es_path);
         var started = NVG.SystemCall.command(command);
         diag("command(" + command + ") -> " + started);
