@@ -4,8 +4,9 @@ import QtQuick.Window 2.12
 
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
-// its expanded layer into host. A bar at the top (shown while hovered) moves the view, the grip
-// at the bottom-right resizes it; the geometry is remembered in the widget's settings.
+// its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
+// moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
+// It opens and closes like SAO Utils' SAO theme panels (com.gpbeta.theme.sao PanelView.qml).
 NVG.View {
     id: view
 
@@ -13,36 +14,54 @@ NVG.View {
     property var yui
     // Where the widget's expanded layer goes.
     readonly property Item host: hostItem
-    readonly property int barHeight: 16
     readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
+    // Height the panel first opens to before unfolding fully (PanelView's collapsedHeight).
+    readonly property real collapsedHeight: Math.round(height * 0.66)
+    property point moveStart
+    property point moveOrigin
 
     signal closeRequested()
-    // The fold animation has finished and the view is hidden.
+    // The close animation has finished and the view is hidden.
     signal folded()
 
-    // Shows the view with the panel expand animation.
+    // Opens: the clip grows from 80 x 80 at the right edge to the full width and collapsedHeight
+    // (400 ms) while the view fades in (500 ms) with the panel sound, then unfolds to the full height
+    // (250 ms); the character and chat fade in at the end. The content stays where it is while the
+    // clip reveals it (no scaling).
     function popUp() {
-        aniFold.stop();
-        // The clip follows the view again after a fold set it.
-        panelClip.width = Qt.binding(function() {
-            return view.width;
-        });
-        panelClip.height = Qt.binding(function() {
-            return view.height;
-        });
+        aniClose.stop();
+        panelClip.width = 80;
+        panelClip.height = 80;
+        hostItem.opacity = 0;
+        opacity = 0;
         visible = true;
         requestActivate();
-        aniExpand.restart();
+        aniOpen.restart();
     }
 
-    // Hides the view with the fold animation (then folded()).
+    // Closes: fades out (250 ms), then folded().
     function fold() {
-        if (!visible || aniFold.running)
+        if (!visible || aniClose.running)
             return ;
 
-        aniExpand.stop();
-        aniFold.start();
+        aniOpen.stop();
+        aniClose.start();
+    }
+
+    // Moving by the chat panel's title: global mouse positions.
+    function beginMove(point) {
+        moveStart = point;
+        moveOrigin = Qt.point(x, y);
+    }
+
+    function moveTo(point) {
+        x = Math.round(moveOrigin.x + point.x - moveStart.x);
+        y = Math.round(moveOrigin.y + point.y - moveStart.y);
+    }
+
+    function endMove() {
+        saveGeometry();
     }
 
     // Remembers the geometry (after moving / resizing).
@@ -93,23 +112,26 @@ NVG.View {
     acceptFocus: true
     acceptInput: true
     solid: true
+    // Starts transparent and is only shown by popUp, so nothing flashes before the open animation.
+    opacity: 0
     visible: false
 
-    // Panel expand (as SAO Utils' SAO theme panels, com.gpbeta.theme.sao PanelView.qml): the clip
-    // grows from 80 x 80 at the view's center to the full size while the content stays laid out at
-    // full size inside it; then the content fades in.
+    // The panel clip (as PanelView: anchored to the right edge, growing up from collapsedHeight while
+    // it is lower than that, then down), with the content kept in place inside it.
     Item {
         id: panelClip
 
-        anchors.centerIn: parent
-        width: parent.width
-        height: parent.height
+        x: view.width - width
+        y: Math.max(view.collapsedHeight - height, 0)
+        width: view.width
+        height: view.height
         clip: true
 
         Item {
             id: inner
 
-            anchors.centerIn: parent
+            x: -panelClip.x
+            y: -panelClip.y
             width: view.width
             height: view.height
 
@@ -117,13 +139,10 @@ NVG.View {
                 id: hostItem
 
                 anchors.fill: parent
-                anchors.topMargin: view.barHeight
             }
 
             // Any mouse movement over the view counts as the user being around.
             HoverHandler {
-                id: viewHover
-
                 onHoveredChanged: {
                     if (hovered)
                         view.yui.noteActivity();
@@ -131,82 +150,17 @@ NVG.View {
                 }
             }
 
-            // Move bar with the close button.
-            Rectangle {
-                width: parent.width
-                height: view.barHeight
-                radius: 4
-                color: "#CC1A1D24"
-                opacity: viewHover.hovered || moveArea.pressed ? 1 : 0.35
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 150
-                    }
-
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: 8
-                    text: "MHCP001 · Yui"
-                    color: "#DDFFFFFF"
-                    font.pixelSize: 10
-                }
-
-                MouseArea {
-                    id: moveArea
-
-                    property point start
-                    property point origin
-
-                    anchors.fill: parent
-                    anchors.rightMargin: 24
-                    cursorShape: Qt.SizeAllCursor
-                    onPressed: {
-                        start = mapToGlobal(mouse.x, mouse.y);
-                        origin = Qt.point(view.x, view.y);
-                    }
-                    onPositionChanged: {
-                        var now = mapToGlobal(mouse.x, mouse.y);
-                        view.x = Math.round(origin.x + now.x - start.x);
-                        view.y = Math.round(origin.y + now.y - start.y);
-                    }
-                    onReleased: view.saveGeometry()
-                }
-
-                Text {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 7
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "✕"
-                    color: closeArea.containsMouse ? "#F59B00" : "#DDFFFFFF"
-                    font.pixelSize: 11
-
-                    MouseArea {
-                        id: closeArea
-
-                        anchors.fill: parent
-                        anchors.margins: -5
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: view.closeRequested()
-                    }
-
-                }
-
-            }
-
-            // Resize grip (bottom-right corner).
+            // Resize grip (bottom-right corner); only a drag with the button held resizes.
             Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                width: 16
-                height: 16
+                width: 18
+                height: 18
                 z: 100
 
                 Text {
                     anchors.right: parent.right
+                    anchors.rightMargin: 2
                     anchors.bottom: parent.bottom
                     text: "◢"
                     color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#88888888"
@@ -227,6 +181,9 @@ NVG.View {
                         origin = Qt.size(view.width, view.height);
                     }
                     onPositionChanged: {
+                        if (!pressed)
+                            return ;
+
                         var now = mapToGlobal(mouse.x, mouse.y);
                         view.width = Math.round(Math.max(view.minimumViewWidth, origin.width + now.x - start.x));
                         view.height = Math.round(Math.max(view.minimumViewHeight, origin.height + now.y - start.y));
@@ -240,65 +197,79 @@ NVG.View {
 
     }
 
-    ParallelAnimation {
-        id: aniExpand
-
-        ScriptAction {
-            script: NVG.SystemCall.playSound(NVG.SFX.PopupPanel)
-        }
-
-        NumberAnimation {
-            target: panelClip
-            properties: "width,height"
-            from: 80
-            duration: 400
-            easing.type: Easing.OutQuart
-        }
-
-        NumberAnimation {
-            target: panelClip
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: 500
-        }
-
-        SequentialAnimation {
-            PauseAnimation {
-                duration: 300
-            }
-
-            NumberAnimation {
-                target: hostItem
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 250
-            }
-
-        }
-
-    }
-
     SequentialAnimation {
-        id: aniFold
+        id: aniOpen
 
         ParallelAnimation {
+            ScriptAction {
+                script: NVG.SystemCall.playSound(NVG.SFX.PopupPanel)
+            }
+
             NumberAnimation {
                 target: panelClip
-                properties: "width,height"
-                to: 80
-                duration: 250
+                property: "width"
+                from: 80
+                to: view.width
+                duration: 400
                 easing.type: Easing.OutQuart
             }
 
             NumberAnimation {
                 target: panelClip
-                property: "opacity"
-                to: 0
-                duration: 250
+                property: "height"
+                from: 80
+                to: view.collapsedHeight
+                duration: 400
+                easing.type: Easing.OutQuart
             }
 
+            NumberAnimation {
+                target: view
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 500
+            }
+
+        }
+
+        NumberAnimation {
+            target: panelClip
+            property: "height"
+            to: view.height
+            duration: 250
+            easing.type: Easing.OutQuart
+        }
+
+        NumberAnimation {
+            target: hostItem
+            property: "opacity"
+            to: 1
+            duration: 250
+        }
+
+        // The clip follows the view's size again (for resizing).
+        ScriptAction {
+            script: {
+                panelClip.width = Qt.binding(function() {
+                    return view.width;
+                });
+                panelClip.height = Qt.binding(function() {
+                    return view.height;
+                });
+            }
+        }
+
+    }
+
+    SequentialAnimation {
+        id: aniClose
+
+        NumberAnimation {
+            target: view
+            property: "opacity"
+            to: 0
+            duration: 250
         }
 
         ScriptAction {

@@ -2703,6 +2703,49 @@ T.Widget {
                 font.pixelSize: 20
             }
 
+            // Drag the title area to move Yui's view.
+            MouseArea {
+                width: parent.width - 34
+                height: 40
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                onPressed: {
+                    if (widget.yuiView)
+                        widget.yuiView.beginMove(mapToGlobal(mouse.x, mouse.y));
+
+                }
+                onPositionChanged: {
+                    if (pressed && widget.yuiView)
+                        widget.yuiView.moveTo(mapToGlobal(mouse.x, mouse.y));
+
+                }
+                onReleased: {
+                    if (widget.yuiView)
+                        widget.yuiView.endMove();
+
+                }
+            }
+
+            // Close (also Esc).
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 12
+                y: 10
+                text: "✕"
+                color: panelCloseArea.containsMouse ? "#F59B00" : "#999999"
+                font.pixelSize: 15
+
+                MouseArea {
+                    id: panelCloseArea
+
+                    anchors.fill: parent
+                    anchors.margins: -6
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: setChatVisible(false)
+                }
+
+            }
+
             // Thin line under the title, fading out at both ends.
             Rectangle {
                 x: 14

@@ -4,9 +4,8 @@ import QtQuick.Shapes 1.12
 // Fills Qt.application.screens (the monitors), used to keep the bubble on the crystal's screen.
 import QtQuick.Window 2.12
 
-// What Yui says while she is a crystal (Yui's Heart): a small SAO message window next to the crystal,
-// in its own view so it is not clipped by the small widget, with a comic-style tail pointing at the
-// crystal. Its title bar takes the crystal's status color; it pops up like SAO Utils' GGO mail box
+// What Yui says while she is a crystal (Yui's Heart): a small SAO instant message window next to the
+// crystal, in its own view so it is not clipped by the small widget, pointing at the crystal. Its title bar takes the crystal's status color; it pops up like SAO Utils' GGO mail box
 // menu. It never takes focus; it stays stayTime ms (paused while hovered) and a click closes it.
 // Created once and reused; call show().
 NVG.View {
@@ -20,7 +19,7 @@ NVG.View {
     // True when the bubble sits below the crystal (no room above it).
     property bool below: false
     readonly property int stayTime: 8000
-    readonly property int tailSize: 18
+    readonly property int tailSize: 10
     readonly property color edgeColor: "#99888888"
     // Opacity of the texts, faded out first when the bubble closes.
     property real textOpacity: 1
@@ -115,16 +114,17 @@ NVG.View {
         anchors.fill: parent
         opacity: 0
 
-        // SAO message window: light translucent panel under a title bar.
+        // SAO instant message window (as the chat's MessageWindow.qml): a white title bar in the SAO UI
+        // font, a thin strip in the crystal's status color, the text on light gray, a white bottom edge.
         Rectangle {
             id: panel
 
             y: bubble.below ? bubble.tailSize : 0
             width: parent.width
-            height: header.height + body.implicitHeight + 20
-            radius: 4
-            color: "#F2F4F4F4"
-            border.color: bubble.edgeColor
+            height: header.height + statusStrip.height + body.height + 6
+            radius: 3
+            color: "#F8F8F8"
+            border.color: "#C8C8C8"
             border.width: 1
 
             Rectangle {
@@ -134,58 +134,86 @@ NVG.View {
                 y: 1
                 width: parent.width - 2
                 height: 24
-                radius: 3
-                color: bubble.accent
+                radius: 2
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#FFFFFF"
+                    }
 
-                // Square off the bottom corners of the title bar.
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: parent.radius
-                    color: parent.color
+                    GradientStop {
+                        position: 1
+                        color: "#EEEEEE"
+                    }
+
                 }
 
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: 10
-                    width: parent.width - 20
+                    anchors.centerIn: parent
+                    width: parent.width - 16
+                    horizontalAlignment: Text.AlignHCenter
                     text: bubble.heading
                     opacity: bubble.textOpacity
-                    color: "#FFFFFF"
-                    font.pixelSize: 12
-                    font.bold: true
+                    color: "#777777"
+                    font.family: "SAO UI"
+                    font.pixelSize: 15
                     elide: Text.ElideRight
                 }
 
             }
 
-            Text {
+            Rectangle {
+                id: statusStrip
+
+                x: 1
+                y: header.y + header.height
+                width: parent.width - 2
+                height: 2
+                color: bubble.accent
+            }
+
+            Rectangle {
                 id: body
 
-                x: 12
-                y: header.height + 10
-                width: parent.width - 24
-                text: bubble.text
-                opacity: bubble.textOpacity
-                color: "#333333"
-                font.pixelSize: 13
-                wrapMode: Text.Wrap
-                maximumLineCount: 6
-                elide: Text.ElideRight
-                textFormat: Text.PlainText
+                x: 1
+                y: statusStrip.y + statusStrip.height
+                width: parent.width - 2
+                height: bodyText.implicitHeight + 18
+                color: "#E4E4E4"
+
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: 1
+                    color: "#D6D6D6"
+                }
+
+                Text {
+                    id: bodyText
+
+                    x: 11
+                    y: 9
+                    width: parent.width - 22
+                    text: bubble.text
+                    opacity: bubble.textOpacity
+                    color: "#3A3A3A"
+                    font.pixelSize: 13
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 6
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                }
+
             }
 
         }
 
-        // Comic-style tail: two curved sides from the panel edge to a point aimed at the crystal,
-        // leaning toward it. Drawn over the panel's edge so it joins the panel seamlessly; mirrored
-        // when the bubble is below the crystal (then it starts from the title bar).
+        // SAO pointer: a straight triangle from the panel's edge to the crystal (as the message
+        // windows' pointers), over the edge so it joins the panel; at the top when the bubble is below.
         Shape {
             id: tail
 
-            // Tip: straight toward the crystal's center; base: up to 14 px back toward the middle.
-            readonly property real tipX: Math.max(10, Math.min(bubble.width - 10, bubble.target.x + bubble.target.width / 2 - bubble.x))
-            readonly property real baseX: Math.max(16, Math.min(bubble.width - 16, tipX + Math.max(-14, Math.min(14, bubble.width / 2 - tipX))))
+            readonly property real tipX: Math.max(12, Math.min(bubble.width - 12, bubble.target.x + bubble.target.width / 2 - bubble.x))
             readonly property real h: bubble.tailSize
 
             y: bubble.below ? 0 : panel.height - 1
@@ -195,26 +223,21 @@ NVG.View {
             layer.samples: 4
 
             ShapePath {
-                fillColor: bubble.below ? bubble.accent : panel.color
-                strokeColor: bubble.below ? "transparent" : bubble.edgeColor
+                fillColor: panel.color
+                strokeColor: panel.border.color
                 strokeWidth: 1
-                joinStyle: ShapePath.RoundJoin
-                // From the panel edge (left of the base) out to the tip and back (right of the base).
-                startX: tail.baseX - 9
+                joinStyle: ShapePath.MiterJoin
+                startX: tail.tipX - tail.h
                 startY: bubble.below ? tail.h + 1 : 0
 
-                PathQuad {
+                PathLine {
                     x: tail.tipX
                     y: bubble.below ? 0 : tail.h
-                    controlX: tail.baseX - 3
-                    controlY: bubble.below ? tail.h * 0.4 : tail.h * 0.6
                 }
 
-                PathQuad {
-                    x: tail.baseX + 9
+                PathLine {
+                    x: tail.tipX + tail.h
                     y: bubble.below ? tail.h + 1 : 0
-                    controlX: tail.baseX + 5
-                    controlY: bubble.below ? tail.h * 0.6 : tail.h * 0.4
                 }
 
             }
