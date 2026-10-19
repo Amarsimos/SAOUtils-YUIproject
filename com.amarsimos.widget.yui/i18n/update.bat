@@ -12,6 +12,6 @@ call :lang zh zh_CN
 goto :eof
 
 :lang
-lupdate qml\main-stand.qml qml\CoreSettings.qml qml\StyleSettings.qml qml\SettingNote.qml qml\OptionSettings.qml qml\ProcessListEditor.qml qml\HeartPage.qml qml\HeartImportDialog.qml qml\HeartSettings.qml qml\LoadBars.qml -source-language en -target-language %2 -no-obsolete -ts i18n\%1.ts
+lupdate qml\main-stand.qml qml\CoreSettings.qml qml\StyleSettings.qml qml\SettingNote.qml qml\OptionSettings.qml qml\ProcessListEditor.qml qml\HeartPage.qml qml\HeartImportDialog.qml qml\HeartSettings.qml qml\LoadBars.qml qml\WidgetLab.qml qml\LabWidget.qml -source-language en -target-language %2 -no-obsolete -ts i18n\%1.ts
 lrelease i18n\%1.ts -qm Locales\%1.qm
 goto :eof

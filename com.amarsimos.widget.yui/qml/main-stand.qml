@@ -18,6 +18,10 @@ T.Widget {
     property var optionSettingsDialogInstance: null
     property Component heartSettingsDialog: Qt.createComponent("HeartSettings.qml")
     property var heartSettingsDialogInstance: null
+    property Component widgetLabDialog: Qt.createComponent("WidgetLab.qml")
+    property var widgetLabDialogInstance: null
+    // Widgets popped out of the Widget Lab (LabWidget.qml views), not saved.
+    property var labWidgets: []
     property var coreSettingsDialogInstance: null
     // Shared with CoreSettings.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
@@ -1738,6 +1742,38 @@ T.Widget {
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
+    // Widget Lab "Pop Out": the QML as a LabWidget view on the desktop, next to this widget (each one a
+    // little further down and right, so they do not cover each other).
+    function popOutLabWidget(code) {
+        var component = Qt.createComponent("LabWidget.qml");
+        if (component.status !== Component.Ready) {
+            diag("widget lab: pop out unavailable: " + component.errorString());
+            return null;
+        }
+        var corner = widget.mapToGlobal(0, 0);
+        var offset = 30 * (labWidgets.length % 8);
+        var view = component.createObject(widget, {
+            "code": code,
+            "title": qsTr("Lab Widget") + " " + (labWidgets.length + 1),
+            "x": corner.x + 40 + offset,
+            "y": corner.y + 40 + offset
+        });
+        labWidgets = labWidgets.concat([view]);
+        view.closed.connect(function() {
+            labWidgets = labWidgets.filter(function(other) {
+                return other !== view;
+            });
+        });
+        diag("widget lab: popped out at " + Math.round(view.x) + "," + Math.round(view.y));
+        return view;
+    }
+
+    function closeLabWidgets() {
+        labWidgets.slice().forEach(function(view) {
+            view.close();
+        });
+    }
+
     // The crystal on screen, including its floating up and down.
     function crystalScreenRect() {
         var corner = crystalForm.mapToGlobal(0, crystalForm.hover);
@@ -2838,6 +2874,11 @@ T.Widget {
         Action {
             text: qsTr("Yui's Heart") + "..."
             onTriggered: showDialog(widget.heartSettingsDialog, "heartSettingsDialogInstance")
+        }
+
+        Action {
+            text: qsTr("Widget Lab") + "..."
+            onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
         }
 
         Action {
