@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
+import "yui.js" as Yui
 
 // The console: opened over the chat area with the ⬡ button. A column of hexagon buttons on the left
 // selects a page: Talk (back to the chat), Cardinal (system load), Memory (Yui's Heart).
@@ -31,11 +32,14 @@ Item {
         battery = !isNaN(flags) && flags < 128 ? yui.readData(yui.batteryLevel) : NaN;
     }
 
-    // HP-bar colors: green, yellow from 70 %, red from 90 % (same as the crystal). For the battery,
-    // low values are the dangerous ones.
-    function levelColor(value, lowIsBad) {
-        var danger = lowIsBad ? 100 - value : value;
-        return danger >= yui.crystalRedAt ? "#FF3B30" : (danger >= yui.crystalYellowAt ? "#FFCC00" : "#2CE67C");
+    // HP-bar colors with the crystal's thresholds for CPU, GPU and memory (shown as measured, without
+    // the crystal's hold). For the battery, low values are the dangerous ones: yellow from 30 %, red
+    // from 10 % left.
+    function levelColor(value, metric) {
+        if (metric === "battery")
+            return yui.levelColors[Yui.loadLevel(100 - value, [70, 90], 0)];
+
+        return yui.levelColors[Yui.loadLevel(value, Yui.loadThresholds(yui.settings.load_thresholds, metric), 0)];
     }
 
     Timer {
@@ -257,7 +261,6 @@ Item {
 
                     Column {
                         readonly property real value: console_[modelData.key]
-                        readonly property bool lowIsBad: modelData.key === "battery"
 
                         width: parent.width
                         spacing: 3
@@ -278,7 +281,7 @@ Item {
                                 width: isNaN(value) ? 0 : parent.width * Math.max(0, Math.min(100, value)) / 100
                                 height: parent.height
                                 radius: 3
-                                color: console_.levelColor(value, lowIsBad)
+                                color: console_.levelColor(value, modelData.key)
 
                                 Behavior on width {
                                     NumberAnimation {

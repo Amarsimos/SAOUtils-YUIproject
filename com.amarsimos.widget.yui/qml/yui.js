@@ -10,6 +10,59 @@ var EMOTIONS = ["normal", "happy", "sad", "surprised", "angry", "shy"];
 // decision on how memories are retrieved (all of them are sent with every request for now).
 var MAX_MEMORIES = 100;
 
+// Load levels of the crystal and the Cardinal bars: 0 green (normal), 1 yellow (notice), 2 red (high).
+// Default [yellow, red] thresholds in percent; GPU is higher because games and video keep it busy,
+// memory lower because a full memory slows the whole computer. Editable in the Option window.
+var LOAD_THRESHOLDS = {
+    "cpu": [70, 90],
+    "gpu": [85, 97],
+    "ram": [75, 90]
+};
+// A level changes only after the new one held for LOAD_HOLD samples (one per second), and drops only
+// once the value is LOAD_HYSTERESIS points below the threshold that raised it, so short peaks and
+// values hovering at a threshold do not make the crystal flicker.
+var LOAD_HOLD = 5;
+var LOAD_HYSTERESIS = 5;
+
+// [yellow, red] thresholds of a metric: the user's (settings.load_thresholds) when valid, else the default.
+function loadThresholds(custom, metric) {
+    var pair = custom && custom[metric];
+    if (pair && pair.length === 2 && pair[0] > 0 && pair[1] > pair[0] && pair[1] <= 100)
+        return [Number(pair[0]), Number(pair[1])];
+
+    return LOAD_THRESHOLDS[metric].slice();
+}
+
+// Level of a value right now; current: the level shown so far (for the hysteresis).
+function loadLevel(value, pair, current) {
+    if (!(value >= 0))
+        return 0;
+
+    var level = value >= pair[1] ? 2 : value >= pair[0] ? 1 : 0;
+    // Stay at the current (higher) level until the value is clearly below its threshold.
+    if (level < (current || 0) && value >= pair[current - 1] - LOAD_HYSTERESIS)
+        return current;
+
+    return level;
+}
+
+// One sample of a metric: state {level, candidate, count} -> the next state. The shown level follows
+// a new one once it held for LOAD_HOLD samples in a row.
+function loadStep(state, value, pair) {
+    state = state || {
+        "level": 0,
+        "candidate": 0,
+        "count": 0
+    };
+    var level = loadLevel(value, pair, state.level);
+    var count = level === state.candidate ? state.count + 1 : 1;
+    return {
+        "level": level !== state.level && count >= LOAD_HOLD ? level : state.level,
+        "candidate": level,
+        "count": count
+    };
+}
+
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
 //   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>

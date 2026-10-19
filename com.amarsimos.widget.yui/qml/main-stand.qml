@@ -86,12 +86,21 @@ T.Widget {
     // Form shown while the chat is hidden: "crystal" (Yui's Heart), "pixie" (when a pixie image is
     // set) or "avatar" (the character image itself).
     readonly property string collapsedForm: styles.collapsed_form === "crystal" ? "crystal" : (pixieMode ? "pixie" : "avatar")
-    // CPU load in percent (NaN until read), shown by the crystal's color.
-    property real cpuPercent: NaN
-    // TEMPORARY thresholds for the crystal colors (pending decision): below 70 % green, below 90 % yellow.
-    readonly property real crystalYellowAt: 70
-    readonly property real crystalRedAt: 90
-    readonly property color crystalColor: !(cpuPercent >= crystalYellowAt) ? "#2CE67C" : (cpuPercent < crystalRedAt ? "#FFCC00" : "#FF3B30")
+    // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
+    // editable in Option), sampled once a second while the crystal is shown. loadStates holds each
+    // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
+    readonly property var loadMetrics: ["cpu", "gpu", "ram"]
+    readonly property var levelColors: ["#2CE67C", "#FFCC00", "#FF3B30"]
+    property var loadStates: ({})
+    property var loadValues: ({})
+    readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
+    readonly property color crystalColor: levelColors[crystalLevel]
+    // What raised the color, e.g. "GPU 98%" (shown when hovering the crystal).
+    readonly property string crystalStatus: loadMetrics.filter(function(metric) {
+        return loadLevelOf(metric) > 0;
+    }).map(function(metric) {
+        return metric.toUpperCase() + " " + Math.round(loadValues[metric]) + "%";
+    }).join("  ")
     // System status sources (same data sources as SAO Utils' HP bar widgets).
     property QtObject acStatus
     property QtObject batteryStatus
@@ -1284,6 +1293,28 @@ T.Widget {
     }
 
 
+    function loadLevelOf(metric) {
+        var state = loadStates[metric];
+        return state ? state.level : 0;
+    }
+
+    // One crystal sample of CPU, GPU and memory load (see loadStates).
+    function sampleLoad() {
+        var sources = {
+            "cpu": cpuLoad,
+            "gpu": gpuLoad,
+            "ram": ramUsage
+        };
+        var states = {};
+        var values = {};
+        loadMetrics.forEach(function(metric) {
+            values[metric] = readData(sources[metric]);
+            states[metric] = Yui.loadStep(loadStates[metric], values[metric], Yui.loadThresholds(widget.settings.load_thresholds, metric));
+        });
+        loadValues = values;
+        loadStates = states;
+    }
+
     function readData(source) {
         if (!source)
             return NaN;
@@ -1730,7 +1761,7 @@ T.Widget {
 
     }
 
-    // Yui's Heart crystal: the other collapsed form, colored by CPU load.
+    // Yui's Heart crystal: the other collapsed form, colored by CPU / GPU / memory load.
     YuiCrystal {
         id: crystalForm
 
@@ -1740,7 +1771,13 @@ T.Widget {
         sleeping: widget.sleeping
 
         MouseArea {
+            id: crystalMouse
+
             anchors.fill: parent
+            hoverEnabled: true
+            // Hovering a yellow / red crystal tells which load raised it.
+            ToolTip.visible: containsMouse && widget.crystalStatus !== ""
+            ToolTip.text: widget.crystalStatus
             onClicked: {
                 if (!widget.wakeUp())
                     setChatVisible(true);
@@ -1752,11 +1789,11 @@ T.Widget {
 
     // Keeps the crystal color current while it is shown.
     Timer {
-        interval: 5000
+        interval: 1000
         running: crystalForm.visible
         repeat: true
         triggeredOnStart: true
-        onTriggered: widget.cpuPercent = widget.readData(widget.cpuLoad)
+        onTriggered: widget.sampleLoad()
     }
 
     // "Zzz" floating up from a sleeping Yui.

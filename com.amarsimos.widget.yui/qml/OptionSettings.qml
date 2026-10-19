@@ -60,6 +60,109 @@ NVG.Window {
                 }
 
                 Heading {
+                    text: qsTr("Yui's Heart Crystal")
+                }
+
+                SettingNote {
+                    text: qsTr("The crystal turns yellow or red when a load stays at or above these values (in %) for 5 seconds, and back once it drops 5 points below them. It shows the worst of the three.")
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    Label {
+                        Layout.preferredWidth: 120
+                        text: qsTr("Yellow")
+                    }
+
+                    Label {
+                        Layout.preferredWidth: 120
+                        text: qsTr("Red")
+                    }
+
+                }
+
+                Repeater {
+                    id: thresholdRows
+
+                    model: [{
+                        "metric": "cpu",
+                        "label": qsTr("Computing Load (CPU)")
+                    }, {
+                        "metric": "gpu",
+                        "label": qsTr("Visual Engine (GPU)")
+                    }, {
+                        "metric": "ram",
+                        "label": qsTr("Memory Capacity (RAM)")
+                    }]
+
+                    RowLayout {
+                        id: thresholdRow
+
+                        // Saves both values; red always stays above yellow.
+                        function save() {
+                            if (redBox.value <= yellowBox.value)
+                                redBox.value = Math.min(100, yellowBox.value + 1);
+
+                            var all = JSON.parse(JSON.stringify(optionWindow.targetWidget.settings.load_thresholds || {}));
+                            all[modelData.metric] = [yellowBox.value, redBox.value];
+                            optionWindow.targetWidget.settings.load_thresholds = all;
+                        }
+
+                        // Shows the saved values (or the defaults).
+                        function load() {
+                            var pair = Yui.loadThresholds(optionWindow.targetWidget.settings.load_thresholds, modelData.metric);
+                            yellowBox.value = pair[0];
+                            redBox.value = pair[1];
+                        }
+
+                        Layout.fillWidth: true
+                        Component.onCompleted: load()
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: modelData.label
+                        }
+
+                        SpinBox {
+                            id: yellowBox
+
+                            Layout.preferredWidth: 120
+                            from: 1
+                            to: 99
+                            editable: true
+                            onValueModified: thresholdRow.save()
+                        }
+
+                        SpinBox {
+                            id: redBox
+
+                            Layout.preferredWidth: 120
+                            from: 2
+                            to: 100
+                            editable: true
+                            onValueModified: thresholdRow.save()
+                        }
+
+                    }
+
+                }
+
+                Button {
+                    text: qsTr("Restore Defaults")
+                    onClicked: {
+                        optionWindow.targetWidget.settings.load_thresholds = {};
+                        for (var i = 0; i < thresholdRows.count; i++)
+                            thresholdRows.itemAt(i).load();
+
+                    }
+                }
+
+                Heading {
                     text: qsTr("Close Programs")
                 }
 
