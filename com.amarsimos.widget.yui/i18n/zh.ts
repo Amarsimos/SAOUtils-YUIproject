@@ -132,37 +132,37 @@
     <message>
         <location filename="../qml/CardinalSystem.qml" line="291"/>
         <source>Conversation Memory</source>
-        <translation type="unfinished"></translation>
+        <translation>对话记忆</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="295"/>
         <source>%1 messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 条</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="299"/>
         <source>How many of the latest messages are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.</source>
-        <translation type="unfinished"></translation>
+        <translation>每次请求附带最近多少条消息。越少越省 token，越多结衣越记得前面聊过的内容。</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="306"/>
         <source>Reply Length Limit</source>
-        <translation type="unfinished"></translation>
+        <translation>回复长度上限</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="310"/>
         <source>No Limit</source>
-        <translation type="unfinished"></translation>
+        <translation>不限制</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="310"/>
         <source>%1 tokens</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 token</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="314"/>
         <source>The longest reply Yui may give, which also caps its cost. Set it to No Limit if the server rejects the max_tokens parameter (Claude always gets 1024 then).</source>
-        <translation type="unfinished"></translation>
+        <translation>结衣单次回复的最大长度，也就限制了每次的费用。如果服务器不接受 max_tokens 参数，请设为不限制（此时 Claude 仍按 1024 发送）。</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="319"/>
@@ -252,27 +252,27 @@
     <message>
         <location filename="../qml/CardinalSystem.qml" line="413"/>
         <source>Search Engine</source>
-        <translation type="unfinished"></translation>
+        <translation>搜索引擎</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="414"/>
         <source>Baidu</source>
-        <translation type="unfinished"></translation>
+        <translation>百度</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="414"/>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>自定义</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="421"/>
         <source>Custom Search Address</source>
-        <translation type="unfinished"></translation>
+        <translation>自定义搜索地址</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="425"/>
         <source>%s is replaced by the search words.</source>
-        <translation type="unfinished"></translation>
+        <translation>%s 会被替换为搜索词。</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="432"/>
