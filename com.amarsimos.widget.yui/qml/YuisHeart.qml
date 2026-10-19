@@ -273,7 +273,7 @@ NVG.Window {
                                 onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete the whole chat history kept in the recollection log? This cannot be undone."), function() {
                                     heartWindow.targetWidget.clearMessageLog();
                                     heartWindow.refreshLogSize();
-                                })
+                                }, true)
                             }
 
                         }
@@ -294,8 +294,8 @@ NVG.Window {
                                     heartWindow.targetWidget.forgetEverything(function(text) {
                                         heartMessage.text = text;
                                     });
-                                });
-                            })
+                                }, true);
+                            }, true)
                         }
 
                         SettingNote {

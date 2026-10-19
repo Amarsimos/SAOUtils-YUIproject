@@ -1069,6 +1069,10 @@ T.Widget {
         }
         var question = (questions[action.type] || "") + "\n" + action.target;
         diag("confirm: " + action.type + " \"" + action.target + "\" -> messageBox");
+        // Closing a program asks with the system alert sound.
+        if (action.type === "kill")
+            NVG.SystemCall.playSound(NVG.SFX.NotifyAlert);
+
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": action.type === "kill" ? qsTr("Warning") : qsTr("Navigation"),
@@ -1105,7 +1109,11 @@ T.Widget {
     }
 
     // SAO Utils' message box with OK / Cancel; onYes runs after OK (right away without a message box).
-    function askConfirm(title, text, onYes) {
+    // alert: plays the system alert sound with it (confirmations that delete something).
+    function askConfirm(title, text, onYes, alert) {
+        if (alert)
+            NVG.SystemCall.playSound(NVG.SFX.NotifyAlert);
+
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": title,

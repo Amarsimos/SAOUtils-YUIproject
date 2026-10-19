@@ -47,6 +47,7 @@ ColumnLayout {
 
     // Deleting asks first, in SAO Utils' message box.
     function remove(entry) {
+        NVG.SystemCall.playSound(NVG.SFX.NotifyAlert);
         NVG.SystemCall.messageBox({
             "title": qsTr("Yui's Heart"),
             "text": qsTr("Delete this memory?") + "\n" + entry.text,
