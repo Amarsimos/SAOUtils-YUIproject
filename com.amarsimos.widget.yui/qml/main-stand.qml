@@ -2058,16 +2058,16 @@ T.Widget {
         var corner = widget.mapToGlobal(0, 0);
         yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
         showChat = true;
-        yuiView.visible = true;
-        yuiView.requestActivate();
+        yuiView.popUp();
         chatView.stickToBottom = true;
     }
 
+    // Folds the view away; the collapsed form comes back once it is gone (onFolded in createView).
     function closeView() {
-        showChat = false;
-        if (yuiView)
-            yuiView.visible = false;
-
+        if (yuiView && yuiView.visible)
+            yuiView.fold();
+        else
+            showChat = false;
     }
 
     // The widget frame fits the collapsed form.
@@ -2100,6 +2100,9 @@ T.Widget {
         expandedLayer.anchors.fill = yuiView.host;
         yuiView.closeRequested.connect(function() {
             setChatVisible(false);
+        });
+        yuiView.folded.connect(function() {
+            showChat = false;
         });
     }
 

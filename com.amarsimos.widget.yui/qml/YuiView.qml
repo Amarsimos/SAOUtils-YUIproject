@@ -18,6 +18,32 @@ NVG.View {
     readonly property int minimumViewHeight: 320
 
     signal closeRequested()
+    // The fold animation has finished and the view is hidden.
+    signal folded()
+
+    // Shows the view with the panel expand animation.
+    function popUp() {
+        aniFold.stop();
+        // The clip follows the view again after a fold set it.
+        panelClip.width = Qt.binding(function() {
+            return view.width;
+        });
+        panelClip.height = Qt.binding(function() {
+            return view.height;
+        });
+        visible = true;
+        requestActivate();
+        aniExpand.restart();
+    }
+
+    // Hides the view with the fold animation (then folded()).
+    function fold() {
+        if (!visible || aniFold.running)
+            return ;
+
+        aniExpand.stop();
+        aniFold.start();
+    }
 
     // Remembers the geometry (after moving / resizing).
     function saveGeometry() {
@@ -69,125 +95,217 @@ NVG.View {
     solid: true
     visible: false
 
+    // Panel expand (as SAO Utils' SAO theme panels, com.gpbeta.theme.sao PanelView.qml): the clip
+    // grows from 80 x 80 at the view's center to the full size while the content stays laid out at
+    // full size inside it; then the content fades in.
     Item {
-        id: hostItem
+        id: panelClip
 
-        anchors.fill: parent
-        anchors.topMargin: view.barHeight
-    }
-
-    // Any mouse movement over the view counts as the user being around.
-    HoverHandler {
-        id: viewHover
-
-        onHoveredChanged: {
-            if (hovered)
-                view.yui.noteActivity();
-
-        }
-    }
-
-    // Move bar with the close button.
-    Rectangle {
+        anchors.centerIn: parent
         width: parent.width
-        height: view.barHeight
-        radius: 4
-        color: "#CC1A1D24"
-        opacity: viewHover.hovered || moveArea.pressed ? 1 : 0.35
+        height: parent.height
+        clip: true
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 150
-            }
+        Item {
+            id: inner
 
-        }
+            anchors.centerIn: parent
+            width: view.width
+            height: view.height
 
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            x: 8
-            text: "MHCP001 · Yui"
-            color: "#DDFFFFFF"
-            font.pixelSize: 10
-        }
-
-        MouseArea {
-            id: moveArea
-
-            property point start
-            property point origin
-
-            anchors.fill: parent
-            anchors.rightMargin: 24
-            cursorShape: Qt.SizeAllCursor
-            onPressed: {
-                start = mapToGlobal(mouse.x, mouse.y);
-                origin = Qt.point(view.x, view.y);
-            }
-            onPositionChanged: {
-                var now = mapToGlobal(mouse.x, mouse.y);
-                view.x = Math.round(origin.x + now.x - start.x);
-                view.y = Math.round(origin.y + now.y - start.y);
-            }
-            onReleased: view.saveGeometry()
-        }
-
-        Text {
-            anchors.right: parent.right
-            anchors.rightMargin: 7
-            anchors.verticalCenter: parent.verticalCenter
-            text: "✕"
-            color: closeArea.containsMouse ? "#F59B00" : "#DDFFFFFF"
-            font.pixelSize: 11
-
-            MouseArea {
-                id: closeArea
+            Item {
+                id: hostItem
 
                 anchors.fill: parent
-                anchors.margins: -5
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: view.closeRequested()
+                anchors.topMargin: view.barHeight
+            }
+
+            // Any mouse movement over the view counts as the user being around.
+            HoverHandler {
+                id: viewHover
+
+                onHoveredChanged: {
+                    if (hovered)
+                        view.yui.noteActivity();
+
+                }
+            }
+
+            // Move bar with the close button.
+            Rectangle {
+                width: parent.width
+                height: view.barHeight
+                radius: 4
+                color: "#CC1A1D24"
+                opacity: viewHover.hovered || moveArea.pressed ? 1 : 0.35
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: 8
+                    text: "MHCP001 · Yui"
+                    color: "#DDFFFFFF"
+                    font.pixelSize: 10
+                }
+
+                MouseArea {
+                    id: moveArea
+
+                    property point start
+                    property point origin
+
+                    anchors.fill: parent
+                    anchors.rightMargin: 24
+                    cursorShape: Qt.SizeAllCursor
+                    onPressed: {
+                        start = mapToGlobal(mouse.x, mouse.y);
+                        origin = Qt.point(view.x, view.y);
+                    }
+                    onPositionChanged: {
+                        var now = mapToGlobal(mouse.x, mouse.y);
+                        view.x = Math.round(origin.x + now.x - start.x);
+                        view.y = Math.round(origin.y + now.y - start.y);
+                    }
+                    onReleased: view.saveGeometry()
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 7
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "✕"
+                    color: closeArea.containsMouse ? "#F59B00" : "#DDFFFFFF"
+                    font.pixelSize: 11
+
+                    MouseArea {
+                        id: closeArea
+
+                        anchors.fill: parent
+                        anchors.margins: -5
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: view.closeRequested()
+                    }
+
+                }
+
+            }
+
+            // Resize grip (bottom-right corner).
+            Item {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                width: 16
+                height: 16
+                z: 100
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    text: "◢"
+                    color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#88888888"
+                    font.pixelSize: 12
+                }
+
+                MouseArea {
+                    id: resizeArea
+
+                    property point start
+                    property size origin
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.SizeFDiagCursor
+                    onPressed: {
+                        start = mapToGlobal(mouse.x, mouse.y);
+                        origin = Qt.size(view.width, view.height);
+                    }
+                    onPositionChanged: {
+                        var now = mapToGlobal(mouse.x, mouse.y);
+                        view.width = Math.round(Math.max(view.minimumViewWidth, origin.width + now.x - start.x));
+                        view.height = Math.round(Math.max(view.minimumViewHeight, origin.height + now.y - start.y));
+                    }
+                    onReleased: view.saveGeometry()
+                }
+
             }
 
         }
 
     }
 
-    // Resize grip (bottom-right corner).
-    Item {
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        width: 16
-        height: 16
-        z: 100
+    ParallelAnimation {
+        id: aniExpand
 
-        Text {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            text: "◢"
-            color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#88888888"
-            font.pixelSize: 12
+        ScriptAction {
+            script: NVG.SystemCall.playSound(NVG.SFX.PopupPanel)
         }
 
-        MouseArea {
-            id: resizeArea
+        NumberAnimation {
+            target: panelClip
+            properties: "width,height"
+            from: 80
+            duration: 400
+            easing.type: Easing.OutQuart
+        }
 
-            property point start
-            property size origin
+        NumberAnimation {
+            target: panelClip
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: 500
+        }
 
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.SizeFDiagCursor
-            onPressed: {
-                start = mapToGlobal(mouse.x, mouse.y);
-                origin = Qt.size(view.width, view.height);
+        SequentialAnimation {
+            PauseAnimation {
+                duration: 300
             }
-            onPositionChanged: {
-                var now = mapToGlobal(mouse.x, mouse.y);
-                view.width = Math.round(Math.max(view.minimumViewWidth, origin.width + now.x - start.x));
-                view.height = Math.round(Math.max(view.minimumViewHeight, origin.height + now.y - start.y));
+
+            NumberAnimation {
+                target: hostItem
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 250
             }
-            onReleased: view.saveGeometry()
+
+        }
+
+    }
+
+    SequentialAnimation {
+        id: aniFold
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: panelClip
+                properties: "width,height"
+                to: 80
+                duration: 250
+                easing.type: Easing.OutQuart
+            }
+
+            NumberAnimation {
+                target: panelClip
+                property: "opacity"
+                to: 0
+                duration: 250
+            }
+
+        }
+
+        ScriptAction {
+            script: {
+                view.visible = false;
+                view.folded();
+            }
         }
 
     }
