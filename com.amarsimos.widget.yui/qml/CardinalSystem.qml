@@ -288,30 +288,54 @@ NVG.Window {
                         Layout.minimumHeight: 20
                     }
 
-                    P.SliderPreference {
-                        id: historyPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "max_history"
-                        label: qsTr("Conversation Memory")
-                        from: 2
-                        to: 60
-                        stepSize: 2
-                        displayValue: value
+                        P.SliderPreference {
+                            id: historyPreference
+
+                            Layout.fillWidth: true
+
+                            name: "max_history"
+                            label: qsTr("Conversation Memory")
+                            from: 2
+                            to: 60
+                            stepSize: 2
+                            displayValue: value
+                        }
+
+                        ResetButton {
+                            changed: historyPreference.value !== 20
+                            onClicked: historyPreference.value = 20
+                        }
+
                     }
 
                     SettingNote {
                         text: qsTr("How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
                     }
 
-                    P.SliderPreference {
-                        id: maxTokensPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "max_tokens"
-                        label: qsTr("Reply Length Limit")
-                        from: 0
-                        to: 8192
-                        stepSize: 256
-                        displayValue: value === 0 ? "∞" : value
+                        P.SliderPreference {
+                            id: maxTokensPreference
+
+                            Layout.fillWidth: true
+
+                            name: "max_tokens"
+                            label: qsTr("Reply Length Limit")
+                            from: 0
+                            to: 8192
+                            stepSize: 256
+                            displayValue: value === 0 ? "∞" : value
+                        }
+
+                        ResetButton {
+                            changed: maxTokensPreference.value !== 1024
+                            onClicked: maxTokensPreference.value = 1024
+                        }
+
                     }
 
                     SettingNote {
@@ -323,32 +347,56 @@ NVG.Window {
                         text: qsTr("MHCP001 Personality")
                     }
 
-                    P.SelectPreference {
-                        id: userTitlePreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        readonly property var ids: ["papa", "mama"]
+                        P.SelectPreference {
+                            id: userTitlePreference
 
-                        name: "user_title"
-                        label: qsTr("Registered Parent")
-                        model: [qsTr("Papa (Kirito)"), qsTr("Mama (Asuna)")]
+                            Layout.fillWidth: true
+
+                            readonly property var ids: ["papa", "mama"]
+
+                            name: "user_title"
+                            label: qsTr("Registered Parent")
+                            model: [qsTr("Papa (Kirito)"), qsTr("Mama (Asuna)")]
+                        }
+
+                        ResetButton {
+                            changed: userTitlePreference.value !== 0
+                            onClicked: userTitlePreference.value = 0
+                        }
+
                     }
 
                     SettingNote {
                         text: qsTr("How Yui calls you. Replaces {{user_title}} in the personality data.")
                     }
 
-                    P.TextAreaPreference {
-                        id: systemPromptPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        // No label: the "MHCP001 Personality" heading above already names it.
-                        name: "system_prompt"
-                        message:qsTr("The system prompt that defines Yui's personality. {{user_title}} is replaced with the registered parent.")
-                        // The box grows with its text up to maximumHeight; make it 0.75x the default.
-                        Component.onCompleted: {
-                            if (isFinite(maximumHeight) && maximumHeight > 0)
-                                maximumHeight = maximumHeight * 0.75;
+                        P.TextAreaPreference {
+                            id: systemPromptPreference
 
+                            Layout.fillWidth: true
+
+                            // No label: the "MHCP001 Personality" heading above already names it.
+                            name: "system_prompt"
+                            message:qsTr("The system prompt that defines Yui's personality. {{user_title}} is replaced with the registered parent.")
+                            // The box grows with its text up to maximumHeight; make it 0.75x the default.
+                            Component.onCompleted: {
+                                if (isFinite(maximumHeight) && maximumHeight > 0)
+                                    maximumHeight = maximumHeight * 0.75;
+
+                            }
                         }
+
+                        ResetButton {
+                            changed: systemPromptPreference.value !== targetWidget.defaultSystemPrompt
+                            onClicked: systemPromptPreference.value = targetWidget.defaultSystemPrompt
+                        }
+
                     }
 
                     RowLayout {
@@ -376,46 +424,106 @@ NVG.Window {
                         text: qsTr("Pixie Functions")
                     }
 
-                    P.SwitchPreference {
-                        id: greetPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "greet_on_start"
-                        label: qsTr("Login Greeting")
-                        message: qsTr("Yui welcomes you back when you return after a while.")
+                        P.SwitchPreference {
+                            id: greetPreference
+
+                            Layout.fillWidth: true
+
+                            name: "greet_on_start"
+                            label: qsTr("Login Greeting")
+                            message: qsTr("Yui welcomes you back when you return after a while.")
+                        }
+
+                        ResetButton {
+                            changed: !!greetPreference.value !== true
+                            onClicked: greetPreference.value = true
+                        }
+
                     }
 
-                    P.SwitchPreference {
-                        id: carePreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "proactive_care"
-                        label: qsTr("Mental Health Counseling")
-                        message: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                        P.SwitchPreference {
+                            id: carePreference
+
+                            Layout.fillWidth: true
+
+                            name: "proactive_care"
+                            label: qsTr("Mental Health Counseling")
+                            message: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                        }
+
+                        ResetButton {
+                            changed: !!carePreference.value !== true
+                            onClicked: carePreference.value = true
+                        }
+
                     }
 
-                    P.SwitchPreference {
-                        id: statusPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "status_reports"
-                        label: qsTr("Navigation Reports")
-                        message: qsTr("Yui warns you about low battery and high CPU or memory usage.")
+                        P.SwitchPreference {
+                            id: statusPreference
+
+                            Layout.fillWidth: true
+
+                            name: "status_reports"
+                            label: qsTr("Navigation Reports")
+                            message: qsTr("Yui warns you about low battery and high CPU or memory usage.")
+                        }
+
+                        ResetButton {
+                            changed: !!statusPreference.value !== true
+                            onClicked: statusPreference.value = true
+                        }
+
                     }
 
-                    P.SwitchPreference {
-                        id: externalBrowserPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "external_browser"
-                        label: qsTr("External Browser")
-                        message: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
+                        P.SwitchPreference {
+                            id: externalBrowserPreference
+
+                            Layout.fillWidth: true
+
+                            name: "external_browser"
+                            label: qsTr("External Browser")
+                            message: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
+                        }
+
+                        ResetButton {
+                            changed: !!externalBrowserPreference.value !== false
+                            onClicked: externalBrowserPreference.value = false
+                        }
+
                     }
 
-                    P.SelectPreference {
-                        id: searchPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
+                        P.SelectPreference {
+                            id: searchPreference
 
-                        name: "search_engine"
-                        label: qsTr("Search Engine")
-                        model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
+                            Layout.fillWidth: true
+
+                            readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
+
+                            name: "search_engine"
+                            label: qsTr("Search Engine")
+                            model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
+                        }
+
+                        ResetButton {
+                            changed: searchPreference.value !== 0
+                            onClicked: searchPreference.value = 0
+                        }
+
                     }
 
                     P.TextFieldPreference {
@@ -429,30 +537,54 @@ NVG.Window {
                         message: qsTr("%s is replaced by the search words.")
                     }
 
-                    P.SliderPreference {
-                        id: sleepPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "sleep_minutes"
-                        label: qsTr("Standby Mode")
-                        from: 0
-                        to: 120
-                        stepSize: 5
-                        displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        P.SliderPreference {
+                            id: sleepPreference
+
+                            Layout.fillWidth: true
+
+                            name: "sleep_minutes"
+                            label: qsTr("Standby Mode")
+                            from: 0
+                            to: 120
+                            stepSize: 5
+                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        }
+
+                        ResetButton {
+                            changed: sleepPreference.value !== 20
+                            onClicked: sleepPreference.value = 20
+                        }
+
                     }
 
                     SettingNote {
                         text: qsTr("Yui goes to sleep after this long without interaction; click her to wake her up.")
                     }
 
-                    P.SliderPreference {
-                        id: idleChatPreference
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                        name: "idle_chat_minutes"
-                        label: qsTr("Spontaneous Talk")
-                        from: 0
-                        to: 240
-                        stepSize: 5
-                        displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        P.SliderPreference {
+                            id: idleChatPreference
+
+                            Layout.fillWidth: true
+
+                            name: "idle_chat_minutes"
+                            label: qsTr("Spontaneous Talk")
+                            from: 0
+                            to: 240
+                            stepSize: 5
+                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        }
+
+                        ResetButton {
+                            changed: idleChatPreference.value !== 15
+                            onClicked: idleChatPreference.value = 15
+                        }
+
                     }
 
                     SettingNote {

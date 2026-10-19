@@ -54,6 +54,14 @@ NVG.Window {
                     onValueModified: heartWindow.targetWidget.settings.recall_count = value
                 }
 
+                ResetButton {
+                    changed: recallBox.value !== 5
+                    onClicked: {
+                        recallBox.value = 5;
+                        heartWindow.targetWidget.settings.recall_count = 5;
+                    }
+                }
+
             }
 
             SettingNote {
