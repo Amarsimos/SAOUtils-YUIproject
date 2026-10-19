@@ -138,6 +138,19 @@ Item {
             width: parent.width - 2
             height: messageText.implicitHeight + 20
             color: "#E4E4E4"
+            clip: true
+
+            // A streamed reply grows smoothly as its text arrives (only once the window has popped up,
+            // so its first layout is not animated).
+            Behavior on height {
+                enabled: messageWindow.poppedUp
+
+                NumberAnimation {
+                    duration: 100
+                    easing.type: Easing.OutQuad
+                }
+
+            }
 
             Rectangle {
                 width: parent.width
