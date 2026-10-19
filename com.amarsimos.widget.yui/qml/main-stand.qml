@@ -986,10 +986,10 @@ T.Widget {
     function runFind(action) {
         // The result file lives in the package folder: SAO Utils refused XMLHttpRequest reads of a
         // file under Storages (status 0), while packages read and write their own files this way.
-        // It is emptied first so an earlier search's results are never read again.
-        var fileUrl = Qt.resolvedUrl("../find-result.txt");
+        // Each search gets its own file: emptying a shared one with a PUT first left the results
+        // blank in SAO Utils (the clear landed after es.exe had written them).
+        var fileUrl = Qt.resolvedUrl("../find-" + Date.now() + ".txt");
         var file = String(NVG.Url.toLocalFile(fileUrl)).replace(/\\/g, "/");
-        writeUrl(fileUrl, "");
         diag("es.exe path setting: " + (widget.settings.es_path ? "\"" + widget.settings.es_path + "\"" : "(empty, using es.exe from PATH)"));
         var command = Yui.actionCommand(action, file, widget.settings.es_path);
         // command() has been seen to return false although es.exe ran and wrote its results, so its
@@ -1030,18 +1030,6 @@ T.Widget {
         } catch (e) {
             diag("GET " + target + " failed: " + e);
             return "";
-        }
-    }
-
-    // Overwrites a package file with the given text; the result is logged.
-    function writeUrl(url, text) {
-        try {
-            var request = new XMLHttpRequest();
-            request.open("PUT", url, false);
-            request.send(text);
-            diag("PUT " + url + " -> status " + request.status);
-        } catch (e) {
-            diag("PUT " + url + " failed: " + e);
         }
     }
 
