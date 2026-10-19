@@ -71,8 +71,11 @@ NVG.View {
     }
 
     color: "transparent"
+    // Never steals focus, but takes mouse input (with acceptInput false SAO Utils lets clicks pass
+    // through the view, as with its own Immortal Object warning) over its whole rectangle.
     acceptFocus: false
-    acceptInput: false
+    acceptInput: true
+    solid: true
     width: 300
     height: panel.height + tailSize
     visible: false
@@ -197,13 +200,17 @@ NVG.View {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onContainsMouseChanged: {
+                console.log("[bubble] hovered:", containsMouse);
                 if (containsMouse)
                     stayTimer.stop();
                 else if (bubble.visible && !aniOut.running)
                     stayTimer.restart();
             }
             // A click closes the bubble (the crystal itself opens the chat).
-            onClicked: bubble.hide()
+            onClicked: {
+                console.log("[bubble] clicked, closing");
+                bubble.hide();
+            }
         }
 
         transform: Scale {
