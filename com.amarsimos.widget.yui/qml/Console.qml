@@ -323,7 +323,8 @@ Item {
 
                     delegate: Text {
                         width: ListView.view.width
-                        text: "· " + modelData
+                        // ◆ heart core, · memory fragment.
+                        text: (modelData.kind === "core" ? "◆ " : "· ") + modelData.text
                         color: "#DDFFFFFF"
                         font.pixelSize: 12
                         wrapMode: Text.Wrap

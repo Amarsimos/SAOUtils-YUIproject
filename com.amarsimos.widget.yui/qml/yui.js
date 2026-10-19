@@ -6,9 +6,20 @@
 // Expressions the AI may choose with <<emotion:...>>; "normal" uses the main character image.
 var EMOTIONS = ["normal", "happy", "sad", "surprised", "angry", "shy"];
 
-// At most this many entries are kept in Yui's Heart (long-term memory). TEMPORARY value, pending a
-// decision on how memories are retrieved (all of them are sent with every request for now).
-var MAX_MEMORIES = 100;
+// Yui's Heart (結衣の心), the long-term memory, named after the crystal Kirito saved Yui's core
+// program in. Each entry is {id, text, kind, created, updated, lastUsed, uses, pinned}:
+//   kind "core"      the heart core: who the user is, how to call them, important promises. At most
+//                    MAX_CORE, all sent with every request (kept first and unchanged, so providers
+//                    can cache that part of the prompt).
+//   kind "fragment"  everything else, unlimited; only the RECALL_COUNT fragments that share the most
+//                    keywords with the user's message are sent.
+// The complete chat history is kept separately and never sent.
+var MAX_CORE = 20;
+var RECALL_COUNT = 5;
+// Two memories at least this similar (see memorySimilarity) are the same memory: the newer text
+// replaces the older one instead of being added. Kept high, since short memories that differ in one
+// word ("喜欢猫" / "喜欢狗") already share most keywords; real changes go through <<forget:>>.
+var SAME_MEMORY = 0.8;
 
 // Load levels of the crystal and the Cardinal bars: 0 green (normal), 1 yellow (notice), 2 red (high).
 // Default [yellow, red] thresholds in percent; GPU is higher because games and video keep it busy,
@@ -67,7 +78,7 @@ function loadStep(state, value, pair) {
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
 //   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>
 function tagPattern() {
-    return /<<\s*(emotion|memory|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -194,7 +205,10 @@ function parseReply(text, userProtected) {
     var result = {
         "text": "",
         "emotion": "",
+        // <<memory:>> fragments, <<core:>> heart core entries, <<forget:>> memories to remove.
         "memories": [],
+        "cores": [],
+        "forgets": [],
         "action": null,
         // A <<kill:>> refused because the process is protected.
         "blocked": ""
@@ -211,6 +225,10 @@ function parseReply(text, userProtected) {
                 result.emotion = emotion;
         } else if (kind === "memory") {
             result.memories.push(value);
+        } else if (kind === "core") {
+            result.cores.push(value);
+        } else if (kind === "forget") {
+            result.forgets.push(value);
         } else if (kind === "open") {
             // Only plain web links: never local files or other schemes.
             if (!result.action && /^https?:\/\/[^\s"'<>]+$/i.test(value))
@@ -266,32 +284,182 @@ function displayText(partial) {
     return text.replace(tagPattern(), "").trim();
 }
 
-// Add new memories to Yui's Heart, skipping ones already there; the oldest are dropped first.
-function mergeMemories(heart, memories) {
-    var result = (heart || []).slice();
-    for (var i = 0; i < memories.length; i++) {
-        var memory = memories[i];
-        var known = result.some(function(old) {
-            return old === memory || old.indexOf(memory) !== -1 || memory.indexOf(old) !== -1;
+// Keywords of a text for recall and dedupe: Latin words and numbers whole, Chinese / Japanese runs
+// as overlapping two-character pieces ("喜欢猫" -> 喜欢, 欢猫), so no word list is needed.
+function memoryKeywords(text) {
+    var keywords = [];
+    (String(text || "").toLowerCase().match(/[a-z0-9]+|[\u3040-\u30ff\u3400-\u9fff]+/g) || []).forEach(function(run) {
+        var pieces = [];
+        if (/^[a-z0-9]/.test(run))
+            pieces = [run];
+        else if (run.length === 1)
+            pieces = [run];
+        else
+            for (var i = 0; i + 1 < run.length; i++)
+                pieces.push(run.substr(i, 2));
+        pieces.forEach(function(piece) {
+            if (keywords.indexOf(piece) === -1)
+                keywords.push(piece);
         });
-        if (!known)
-            result.push(memory);
-
-    }
-    while (result.length > MAX_MEMORIES)
-        result.shift();
-    return result;
+    });
+    return keywords;
 }
 
-// Extra system prompt instructions: how to use the control tags, and what Yui remembers.
-function featureInstructions(title, heart) {
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事（名字、喜好、生日等重要日子、正在努力的事情）时，在回复最后加上 <<memory:用一句话写下要记住的事>>。已经记住的不要重复记。", "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。", "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：启动程序用 <<launch:程序名或完整路径>>；在电脑里找文件用 <<find:文件名或关键词>>；关闭某个程序用 <<kill:进程名，如 chrome.exe>>。系统关键进程不能关闭。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
-    if (heart && heart.length > 0) {
-        lines.push("", "结衣之心里记着的关于" + title + "的事：");
-        for (var i = 0; i < heart.length; i++)
-            lines.push("- " + heart[i]);
+// 0..1: shared keywords over all keywords of both texts (1 when one text contains the other).
+function memorySimilarity(a, b) {
+    a = String(a || "").trim();
+    b = String(b || "").trim();
+    if (!a || !b)
+        return 0;
+
+    if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1)
+        return 1;
+
+    var ka = memoryKeywords(a);
+    var kb = memoryKeywords(b);
+    var shared = ka.filter(function(k) {
+        return kb.indexOf(k) !== -1;
+    }).length;
+    var all = ka.length + kb.length - shared;
+    return all > 0 ? shared / all : 0;
+}
+
+function copyEntries(entries) {
+    return (entries || []).map(function(entry) {
+        var copy = {};
+        for (var key in entry)
+            copy[key] = entry[key];
+        return copy;
+    });
+}
+
+// Yui's Heart after writing one memory (pure: returns new entries; new ones have no id). A memory
+// like an existing one replaces its text (and a core write promotes it); otherwise it is added.
+// When the core is over MAX_CORE, the least recently used unpinned core entries become fragments.
+function rememberMemory(entries, text, kind, now) {
+    entries = copyEntries(entries);
+    text = String(text || "").trim();
+    if (!text)
+        return entries;
+
+    kind = kind === "core" ? "core" : "fragment";
+    var best = null;
+    var bestScore = 0;
+    entries.forEach(function(entry) {
+        var score = memorySimilarity(entry.text, text);
+        if (score > bestScore) {
+            best = entry;
+            bestScore = score;
+        }
+    });
+    var written;
+    if (best && bestScore >= SAME_MEMORY) {
+        best.text = text;
+        best.updated = now;
+        best.lastUsed = now;
+        if (kind === "core")
+            best.kind = "core";
+
+        written = best;
+    } else {
+        written = {
+            "id": null,
+            "text": text,
+            "kind": kind,
+            "created": now,
+            "updated": now,
+            "lastUsed": now,
+            "uses": 0,
+            "pinned": false
+        };
+        entries.push(written);
+    }
+    var core = entries.filter(function(entry) {
+        return entry.kind === "core" && !entry.pinned && entry !== written;
+    }).sort(function(x, y) {
+        return (x.lastUsed || 0) - (y.lastUsed || 0);
+    });
+    var over = entries.filter(function(entry) {
+        return entry.kind === "core";
+    }).length - MAX_CORE;
+    for (var i = 0; i < over && i < core.length; i++)
+        core[i].kind = "fragment";
+    return entries;
+}
+
+// Yui's Heart without the memories <<forget:>> names (pure). Returns the removed entries too.
+function forgetMemory(entries, text) {
+    var kept = [];
+    var removed = [];
+    copyEntries(entries).forEach(function(entry) {
+        if (memorySimilarity(entry.text, text) >= 0.5)
+            removed.push(entry);
+        else
+            kept.push(entry);
+    });
+    return {
+        "entries": kept,
+        "removed": removed
+    };
+}
+
+// Heart core entries in a stable order (oldest first), so this part of the prompt rarely changes.
+function coreMemories(entries) {
+    return (entries || []).filter(function(entry) {
+        return entry.kind === "core";
+    }).sort(function(x, y) {
+        return (x.created || 0) - (y.created || 0) || (x.id || 0) - (y.id || 0);
+    });
+}
+
+// Up to count fragments sharing the most keywords with the query (recently used first on ties);
+// none when nothing matches.
+function recallFragments(entries, query, count) {
+    var keywords = memoryKeywords(query);
+    if (keywords.length === 0)
+        return [];
+
+    return (entries || []).filter(function(entry) {
+        return entry.kind !== "core";
+    }).map(function(entry) {
+        var own = memoryKeywords(entry.text);
+        var shared = own.filter(function(k) {
+            return keywords.indexOf(k) !== -1;
+        }).length;
+        return {
+            "entry": entry,
+            "score": shared === 0 ? 0 : shared / Math.sqrt(own.length)
+        };
+    }).filter(function(item) {
+        return item.score > 0;
+    }).sort(function(x, y) {
+        return y.score - x.score || (y.entry.lastUsed || 0) - (x.entry.lastUsed || 0);
+    }).slice(0, count || RECALL_COUNT).map(function(item) {
+        return item.entry;
+    });
+}
+
+// Extra system prompt instructions: how to use the control tags, and the heart core. Nothing in it
+// changes from request to request unless the core does (see recallContext for the rest).
+function featureInstructions(title, core) {
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。", "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：启动程序用 <<launch:程序名或完整路径>>；在电脑里找文件用 <<find:文件名或关键词>>；关闭某个程序用 <<kill:进程名，如 chrome.exe>>。系统关键进程不能关闭。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    if (core && core.length > 0) {
+        lines.push("", "结衣之心·心核（关于" + title + "最重要的事）：");
+        core.forEach(function(entry) {
+            lines.push("- " + entry.text);
+        });
     }
     return lines.join("\n");
+}
+
+// Memory fragments recalled for this request (placed after the parts that stay the same).
+function recallContext(title, fragments) {
+    if (!fragments || fragments.length === 0)
+        return "";
+
+    return "\n\n结衣之心中和现在的话题有关的回忆（关于" + title + "）：\n" + fragments.map(function(entry) {
+        return "- " + entry.text;
+    }).join("\n");
 }
 
 // "3 小时 20 分钟"-style duration.

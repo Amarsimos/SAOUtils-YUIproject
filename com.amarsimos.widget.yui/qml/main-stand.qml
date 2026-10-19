@@ -119,7 +119,7 @@ T.Widget {
     // The console (Console.qml) opened over the chat area.
     property bool consoleOpen: false
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
-    // memories table so bindings and requests do not query the database.
+    // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
     // Diagnostics log shown live in the Option window (newest last, at most 200 lines).
     property var diagLog: []
@@ -285,9 +285,11 @@ T.Widget {
         return true;
     }
 
-    // Everything appended to the system prompt: time, feature instructions and Yui's Heart.
-    function systemExtras(title) {
-        return timeContext() + Yui.featureInstructions(title, heartEntries());
+    // Everything appended to the system prompt. What stays the same between requests comes first, so
+    // providers that cache the start of a prompt can reuse it: feature instructions and the heart core,
+    // then the time and the memory fragments recalled for query (the user's latest message).
+    function systemExtras(title, query) {
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache)) + timeContext() + Yui.recallContext(title, recall(query));
     }
 
     // Appended to the system prompt on every request, so Yui knows the current date and time.
@@ -355,7 +357,10 @@ T.Widget {
         config = config || activeConfig();
         var format = config.provider.format;
         var systemPrompt = config.systemPrompt !== undefined ? config.systemPrompt : widget.settings.system_prompt;
-        systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle());
+        var lastUser = messages.filter(function(m) {
+            return m.role === "user";
+        }).pop();
+        systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle(), lastUser ? lastUser.content : "");
         if (!config.apiKey || !config.endpoint || !config.model) {
             onFinished("警告！连接数据缺失……结衣找不到通往网络的路了 (T_T)\n请在「Cardinal System」里检查 Access Key、Server Address 和 Core Program 有没有填好哦～", true, true);
             return {
@@ -711,10 +716,7 @@ T.Widget {
                 if (reply.emotion)
                     setEmotion(reply.emotion);
 
-                if (reply.memories.length > 0) {
-                    addMemories(reply.memories);
-                    note = "💗 结衣之心：" + reply.memories.join("；");
-                }
+                note = applyMemoryTags(reply);
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
@@ -1175,9 +1177,9 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Yui's Heart (SQLite)
-    // Tables (TEMPORARY design, pending a decision):
-    //   memories(id, text, created)            long-term memories, oldest first
-    //   messages(id, author, message, created) every finished chat message (complete history)
+    // Tables:
+    //   memories(id, text, kind, created, updated, last_used, uses, pinned)  Yui's Heart (see yui.js)
+    //   messages(id, author, message, created)  every finished chat message (complete history, never sent)
     function openDatabase() {
         try {
             database = LocalStorage.openDatabaseSync("MHCP001-Yui", "1.0", "MHCP001 Yui's Heart", 5000000);
@@ -1185,6 +1187,26 @@ T.Widget {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS memories(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, created INTEGER)");
                 tx.executeSql("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, message TEXT, created INTEGER)");
             });
+            // Columns added with the heart core (1.1): every older memory was sent with every request,
+            // so the oldest MAX_CORE become the core and the rest fragments.
+            // (PRAGMA is not allowed in a read-only transaction.)
+            var columns = [];
+            database.transaction(function(tx) {
+                var rows = tx.executeSql("PRAGMA table_info(memories)").rows;
+                for (var i = 0; i < rows.length; i++)
+                    columns.push(rows.item(i).name);
+            });
+            if (columns.indexOf("kind") === -1)
+                database.transaction(function(tx) {
+                tx.executeSql("ALTER TABLE memories ADD COLUMN kind TEXT NOT NULL DEFAULT 'fragment'");
+                tx.executeSql("ALTER TABLE memories ADD COLUMN updated INTEGER");
+                tx.executeSql("ALTER TABLE memories ADD COLUMN last_used INTEGER");
+                tx.executeSql("ALTER TABLE memories ADD COLUMN uses INTEGER NOT NULL DEFAULT 0");
+                tx.executeSql("ALTER TABLE memories ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0");
+                tx.executeSql("UPDATE memories SET updated = created, last_used = created");
+                tx.executeSql("UPDATE memories SET kind = 'core' WHERE id IN (SELECT id FROM memories ORDER BY id LIMIT ?)", [Yui.MAX_CORE]);
+            });
+
             // First start with the database: move the memories kept in settings (1.0.0) into it.
             // settings.yui_heart is left in place as a backup.
             var count = 0;
@@ -1199,81 +1221,198 @@ T.Widget {
         } catch (e) {
             console.log("Yui's Heart database unavailable, using settings:", e);
             database = null;
-            heartCache = widget.settings.yui_heart || [];
+            heartCache = Yui.copyEntries(widget.settings.yui_heart_entries || []);
         }
     }
 
     function loadHeart() {
         var entries = [];
         database.readTransaction(function(tx) {
-            var rows = tx.executeSql("SELECT text FROM memories ORDER BY id").rows;
-            for (var i = 0; i < rows.length; i++)
-                entries.push(rows.item(i).text);
+            var rows = tx.executeSql("SELECT * FROM memories ORDER BY id").rows;
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows.item(i);
+                entries.push({
+                    "id": row.id,
+                    "text": row.text,
+                    "kind": row.kind,
+                    "created": row.created,
+                    "updated": row.updated,
+                    "lastUsed": row.last_used,
+                    "uses": row.uses,
+                    "pinned": !!row.pinned
+                });
+            }
         });
         heartCache = entries;
     }
 
-    // Yui's Heart entries (long-term memories), oldest first.
+    // Store a changed Yui's Heart: entries without an id are added, changed ones updated, missing
+    // ones deleted. Without the database the entries are kept in settings.
+    function saveHeart(entries) {
+        if (!database) {
+            widget.settings.yui_heart_entries = Yui.copyEntries(entries);
+            heartCache = Yui.copyEntries(entries);
+            return ;
+        }
+        var kept = {};
+        var before = {};
+        entries.forEach(function(entry) {
+            if (entry.id)
+                kept[entry.id] = true;
+
+        });
+        heartCache.forEach(function(entry) {
+            before[entry.id] = JSON.stringify(entry);
+        });
+        database.transaction(function(tx) {
+            heartCache.forEach(function(old) {
+                if (!kept[old.id])
+                    tx.executeSql("DELETE FROM memories WHERE id = ?", [old.id]);
+
+            });
+            entries.forEach(function(entry) {
+                var values = [entry.text, entry.kind, entry.created || Date.now(), entry.updated || entry.created || Date.now(), entry.lastUsed || entry.created || Date.now(), entry.uses || 0, entry.pinned ? 1 : 0];
+                if (entry.id && before[entry.id] === JSON.stringify(entry))
+                    return ;
+
+                if (entry.id)
+                    tx.executeSql("UPDATE memories SET text = ?, kind = ?, created = ?, updated = ?, last_used = ?, uses = ?, pinned = ? WHERE id = ?", values.concat([entry.id]));
+                else
+                    tx.executeSql("INSERT INTO memories(text, kind, created, updated, last_used, uses, pinned) VALUES(?, ?, ?, ?, ?, ?, ?)", values);
+            });
+        });
+        loadHeart();
+    }
+
+    // Yui's Heart texts, core first (Cardinal System editor).
     function heartEntries() {
-        return heartCache;
+        return Yui.coreMemories(heartCache).concat(heartCache.filter(function(entry) {
+            return entry.kind !== "core";
+        })).map(function(entry) {
+            return entry.text;
+        });
     }
 
-    // Replace all memories (Cardinal System editor).
-    function setHeartEntries(entries) {
-        if (!database) {
-            widget.settings.yui_heart = entries;
-            heartCache = entries;
-            return ;
-        }
-        var now = Date.now();
-        database.transaction(function(tx) {
-            tx.executeSql("DELETE FROM memories");
-            for (var i = 0; i < entries.length; i++)
-                tx.executeSql("INSERT INTO memories(text, created) VALUES(?, ?)", [entries[i], now]);
+    // Replace all memories by these texts (Cardinal System editor): texts already remembered keep
+    // their kind and history, new ones are added as fragments.
+    function setHeartEntries(texts) {
+        var entries = [];
+        texts.forEach(function(text) {
+            text = String(text).trim();
+            if (!text)
+                return ;
+
+            var old = heartCache.filter(function(entry) {
+                return entry.text === text;
+            })[0];
+            entries.push(old ? Yui.copyEntries([old])[0] : {
+                "id": null,
+                "text": text,
+                "kind": "fragment",
+                "created": Date.now(),
+                "uses": 0,
+                "pinned": false
+            });
         });
-        loadHeart();
+        saveHeart(entries);
     }
 
-    // Add memories Yui saved with <<memory:...>> (duplicates skipped, oldest dropped beyond the limit).
-    function addMemories(memories) {
-        var merged = Yui.mergeMemories(heartCache, memories);
-        if (!database) {
-            widget.settings.yui_heart = merged;
-            heartCache = merged;
-            return ;
-        }
-        var now = Date.now();
-        database.transaction(function(tx) {
-            for (var i = 0; i < merged.length; i++) {
-                if (heartCache.indexOf(merged[i]) === -1)
-                    tx.executeSql("INSERT INTO memories(text, created) VALUES(?, ?)", [merged[i], now]);
+    // Apply the memory tags of a reply (<<core:>>, <<memory:>>, <<forget:>>); returns the note shown
+    // under the bubble ("" when there were none).
+    function applyMemoryTags(reply) {
+        if (reply.cores.length + reply.memories.length + reply.forgets.length === 0)
+            return "";
 
-            }
-            for (var j = 0; j < heartCache.length; j++) {
-                if (merged.indexOf(heartCache[j]) === -1)
-                    tx.executeSql("DELETE FROM memories WHERE text = ?", [heartCache[j]]);
-
-            }
+        var entries = heartCache;
+        var forgotten = [];
+        reply.forgets.forEach(function(text) {
+            var result = Yui.forgetMemory(entries, text);
+            entries = result.entries;
+            forgotten = forgotten.concat(result.removed.map(function(entry) {
+                return entry.text;
+            }));
         });
-        loadHeart();
+        var now = Date.now();
+        reply.cores.forEach(function(text) {
+            entries = Yui.rememberMemory(entries, text, "core", now);
+        });
+        reply.memories.forEach(function(text) {
+            entries = Yui.rememberMemory(entries, text, "fragment", now);
+        });
+        saveHeart(entries);
+        var notes = [];
+        if (reply.cores.length > 0)
+            notes.push("💗 结衣之心·心核：" + reply.cores.join("；"));
+
+        if (reply.memories.length > 0)
+            notes.push("💗 结衣之心：" + reply.memories.join("；"));
+
+        if (forgotten.length > 0)
+            notes.push("💭 已忘记：" + forgotten.join("；"));
+
+        return notes.join("\n");
+    }
+
+    // Memory fragments recalled for a message; their use is recorded (recently used ones win ties
+    // and are the last to leave the core).
+    function recall(query) {
+        var fragments = Yui.recallFragments(heartCache, query, Yui.RECALL_COUNT);
+        if (fragments.length === 0)
+            return [];
+
+        var now = Date.now();
+        var used = {};
+        fragments.forEach(function(entry) {
+            used[entry.id] = true;
+        });
+        var entries = Yui.copyEntries(heartCache).map(function(entry) {
+            if (used[entry.id]) {
+                entry.lastUsed = now;
+                entry.uses = (entry.uses || 0) + 1;
+            }
+            return entry;
+        });
+        if (database) {
+            try {
+                database.transaction(function(tx) {
+                    fragments.forEach(function(entry) {
+                        tx.executeSql("UPDATE memories SET last_used = ?, uses = uses + 1 WHERE id = ?", [now, entry.id]);
+                    });
+                });
+                heartCache = entries;
+            } catch (e) {
+                console.log("could not record recalled memories:", e);
+            }
+        } else {
+            saveHeart(entries);
+        }
+        diag("recall: " + fragments.length + " fragment(s) for \"" + String(query).slice(0, 30) + "\"");
+        return fragments;
     }
 
     // SAO Utils exports / imports widget data (e.g. "My Widgets"); the settings travel on their own,
     // Yui's Heart lives in the database, so it is carried here.
     function exportData() {
         return {
-            "yui_heart": heartEntries()
+            "yui_heart": heartEntries(),
+            "yui_heart_entries": Yui.copyEntries(heartCache)
         };
     }
 
     function importData(data) {
-        if (!data || !Array.isArray(data.yui_heart))
+        if (!data)
             return ;
 
         if (!database)
             openDatabase();
 
-        setHeartEntries(data.yui_heart.map(function(entry) {
+        if (Array.isArray(data.yui_heart_entries))
+            saveHeart(Yui.copyEntries(data.yui_heart_entries).map(function(entry) {
+            entry.id = null;
+            return entry;
+        }));
+        else if (Array.isArray(data.yui_heart))
+            setHeartEntries(data.yui_heart.map(function(entry) {
             return String(entry);
         }));
     }
