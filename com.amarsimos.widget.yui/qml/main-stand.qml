@@ -984,8 +984,12 @@ T.Widget {
     // <<find:>>: Everything's es.exe writes up to 20 matching paths to a new file in the extension's
     // storage folder; the file is read once it appears and Yui reports the results.
     function runFind(action) {
-        var folder = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/");
-        var file = folder + "/find-" + Date.now() + ".txt";
+        // The result file lives in the package folder: SAO Utils refused XMLHttpRequest reads of a
+        // file under Storages (status 0), while packages read and write their own files this way.
+        // It is emptied first so an earlier search's results are never read again.
+        var fileUrl = Qt.resolvedUrl("../find-result.txt");
+        var file = String(NVG.Url.toLocalFile(fileUrl)).replace(/\\/g, "/");
+        writeUrl(fileUrl, "");
         diag("es.exe path setting: " + (widget.settings.es_path ? "\"" + widget.settings.es_path + "\"" : "(empty, using es.exe from PATH)"));
         var command = Yui.actionCommand(action, file, widget.settings.es_path);
         // command() has been seen to return false although es.exe ran and wrote its results, so its
@@ -996,7 +1000,7 @@ T.Widget {
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
             tries++;
-            var content = readLocalFile(file);
+            var content = readUrl(fileUrl);
             var results = Yui.parseSearchResults(content);
             diag("read result file (try " + tries + "/12): " + content.length + " chars, " + results.length + " results");
             if (results.length === 0 && tries < 12)
@@ -1012,21 +1016,32 @@ T.Widget {
         timer.start();
     }
 
-    // Contents of a local text file ("" when missing). The path is URL-encoded (it may contain
-    // spaces, e.g. "SAO Utils 2") and a changing query is added so a cached earlier read (made
-    // before es.exe wrote the file) is never returned again. Each read is logged with its status.
-    function readLocalFile(path) {
-        var url = "file:///" + encodeURI(path.replace(/^\/+/, "")) + "?t=" + Date.now();
+    // Contents of a package file ("" when missing). A changing query is added so a cached earlier
+    // read (made before es.exe wrote the file) is never returned again. Each read is logged.
+    function readUrl(url) {
+        var target = url + "?t=" + Date.now();
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", url, false);
+            request.open("GET", target, false);
             request.send(null);
             var text = request.responseText || "";
-            diag("GET " + url + " -> status " + request.status + ", " + text.length + " chars");
+            diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
             return text;
         } catch (e) {
-            diag("GET " + url + " failed: " + e);
+            diag("GET " + target + " failed: " + e);
             return "";
+        }
+    }
+
+    // Overwrites a package file with the given text; the result is logged.
+    function writeUrl(url, text) {
+        try {
+            var request = new XMLHttpRequest();
+            request.open("PUT", url, false);
+            request.send(text);
+            diag("PUT " + url + " -> status " + request.status);
+        } catch (e) {
+            diag("PUT " + url + " failed: " + e);
         }
     }
 
