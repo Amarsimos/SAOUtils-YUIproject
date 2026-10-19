@@ -191,17 +191,17 @@ function linkedPath(link) {
 }
 
 // Widget type of this package (package.json: com.amarsimos.widget.yui, /widget/mhcp-yui), as SAO Utils
-// names it. A Lab widget saved to "My Widgets" is this widget with lab_widget and lab_code in its
+// names it. A Seedling widget saved to "My Widgets" is this widget with lab_widget and lab_code in its
 // settings.
 var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
 
-// The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Lab widget, in
+// The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Seedling widget, in
 // the format SAO Utils saves them: preset.json, and settings.xml with each value as JSON text.
 // The code is stored URL-encoded (lab_code_uri): SAO Utils' settings reader lost the line breaks
 // of a plain JSON string, joining the code into one line. now: ISO date. Returns {preset, settings}.
-function labPresetFiles(title, code, width, height, now) {
+function seedlingPresetFiles(title, code, width, height, now) {
     var values = {
-        // Marks a saved Lab widget: only then does the widget start in lab widget mode.
+        // Marks a saved Seedling widget: only then does the widget start in seedling widget mode.
         "lab_widget": true,
         "lab_title": String(title),
         "lab_code_uri": encodeURIComponent(String(code)),
@@ -224,8 +224,8 @@ function labPresetFiles(title, code, width, height, now) {
     };
 }
 
-// The QML of a saved Lab widget's settings (lab_code_uri, or lab_code from before it was encoded).
-function labCode(settings) {
+// The QML of a saved Seedling widget's settings (lab_code_uri, or lab_code from before it was encoded).
+function seedlingCode(settings) {
     if (!settings)
         return "";
 

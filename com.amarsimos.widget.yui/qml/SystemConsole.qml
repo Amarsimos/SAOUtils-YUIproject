@@ -9,7 +9,7 @@ import "yui.js" as Yui
 // Diagnostics run each desktop action without the AI, through the same message, SAO confirmation
 // box and execution as a real one.
 NVG.Window {
-    id: optionWindow
+    id: consoleWindow
 
     property var targetWidget
 
@@ -49,10 +49,10 @@ NVG.Window {
                     Layout.fillWidth: true
                     selectByMouse: true
                     placeholderText: "D:\\Tools\\everything\\es.exe"
-                    text: (optionWindow.targetWidget.settingsRevision, optionWindow.targetWidget.settings.es_path || "")
+                    text: (consoleWindow.targetWidget.settingsRevision, consoleWindow.targetWidget.settings.es_path || "")
                     // Saved on every edit (also when the window is closed right after typing); empty
                     // means es.exe is looked for in PATH and the usual install folders. Surrounding quotes from "Copy as path" are dropped.
-                    onTextEdited: optionWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
+                    onTextEdited: consoleWindow.targetWidget.settings.es_path = text.replace(/"/g, "").trim()
                 }
 
                 SettingNote {
@@ -65,7 +65,7 @@ NVG.Window {
 
                 LoadBars {
                     Layout.fillWidth: true
-                    yui: optionWindow.targetWidget
+                    yui: consoleWindow.targetWidget
                 }
 
                 Heading {
@@ -117,14 +117,14 @@ NVG.Window {
                             if (redBox.value <= yellowBox.value)
                                 redBox.value = Math.min(100, yellowBox.value + 1);
 
-                            var all = JSON.parse(JSON.stringify(optionWindow.targetWidget.settings.load_thresholds || {}));
+                            var all = JSON.parse(JSON.stringify(consoleWindow.targetWidget.settings.load_thresholds || {}));
                             all[modelData.metric] = [yellowBox.value, redBox.value];
-                            optionWindow.targetWidget.settings.load_thresholds = all;
+                            consoleWindow.targetWidget.settings.load_thresholds = all;
                         }
 
                         // Shows the saved values (or the defaults).
                         function load() {
-                            var pair = Yui.loadThresholds(optionWindow.targetWidget.settings.load_thresholds, modelData.metric);
+                            var pair = Yui.loadThresholds(consoleWindow.targetWidget.settings.load_thresholds, modelData.metric);
                             yellowBox.value = pair[0];
                             redBox.value = pair[1];
                         }
@@ -175,8 +175,8 @@ NVG.Window {
                         to: 240
                         stepSize: 5
                         editable: true
-                        value: optionWindow.targetWidget.settings.idle_chat_minutes !== undefined ? optionWindow.targetWidget.settings.idle_chat_minutes : 15
-                        onValueModified: optionWindow.targetWidget.settings.idle_chat_minutes = value
+                        value: consoleWindow.targetWidget.settings.idle_chat_minutes !== undefined ? consoleWindow.targetWidget.settings.idle_chat_minutes : 15
+                        onValueModified: consoleWindow.targetWidget.settings.idle_chat_minutes = value
                     }
 
                 }
@@ -188,7 +188,7 @@ NVG.Window {
                 Button {
                     text: qsTr("Restore Defaults")
                     onClicked: {
-                        optionWindow.targetWidget.settings.load_thresholds = {};
+                        consoleWindow.targetWidget.settings.load_thresholds = {};
                         for (var i = 0; i < thresholdRows.count; i++)
                             thresholdRows.itemAt(i).load();
 
@@ -210,15 +210,15 @@ NVG.Window {
                 ProcessListEditor {
                     Layout.fillWidth: true
                     // Re-read when Yui adds a program while this window is open.
-                    names: optionWindow.targetWidget.settingsRevision, optionWindow.targetWidget.settings.kill_whitelist || []
+                    names: consoleWindow.targetWidget.settingsRevision, consoleWindow.targetWidget.settings.kill_whitelist || []
                     emptyText: qsTr("No programs yet.")
                     // A removed program is not offered for the whitelist again; closing it is confirmed.
                     onEdited: {
-                        var removed = Yui.processList(optionWindow.targetWidget.settings.kill_whitelist).filter(function(name) {
+                        var removed = Yui.processList(consoleWindow.targetWidget.settings.kill_whitelist).filter(function(name) {
                             return list.indexOf(name) === -1;
                         });
-                        optionWindow.targetWidget.settings.kill_asked = Yui.processList((optionWindow.targetWidget.settings.kill_asked || []).concat(removed));
-                        optionWindow.targetWidget.settings.kill_whitelist = list;
+                        consoleWindow.targetWidget.settings.kill_asked = Yui.processList((consoleWindow.targetWidget.settings.kill_asked || []).concat(removed));
+                        consoleWindow.targetWidget.settings.kill_whitelist = list;
                     }
                 }
 
@@ -233,8 +233,8 @@ NVG.Window {
                 ProcessListEditor {
                     Layout.fillWidth: true
                     fixedNames: Yui.PROTECTED_PROCESSES
-                    names: optionWindow.targetWidget.settings.kill_protected || []
-                    onEdited: optionWindow.targetWidget.settings.kill_protected = list
+                    names: consoleWindow.targetWidget.settings.kill_protected || []
+                    onEdited: consoleWindow.targetWidget.settings.kill_protected = list
                 }
 
                 Heading {
@@ -277,7 +277,7 @@ NVG.Window {
                         // made-up streamed reply in the chat (neither makes an API request).
                         Button {
                             text: modelData.label
-                            onClicked: modelData.tag === "stream" ? optionWindow.targetWidget.testStreamReply() : modelData.tag ? optionWindow.targetWidget.testAction(modelData.tag) : optionWindow.targetWidget.testBubble()
+                            onClicked: modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                         }
 
                     }
@@ -296,7 +296,7 @@ NVG.Window {
 
                     Button {
                         text: qsTr("Copy Log")
-                        enabled: optionWindow.targetWidget.diagLog.length > 0
+                        enabled: consoleWindow.targetWidget.diagLog.length > 0
                         onClicked: {
                             logText.selectAll();
                             logText.copy();
@@ -306,7 +306,7 @@ NVG.Window {
 
                     Button {
                         text: qsTr("Clear Log")
-                        onClicked: optionWindow.targetWidget.diagLog = []
+                        onClicked: consoleWindow.targetWidget.diagLog = []
                     }
 
                 }
@@ -333,7 +333,7 @@ NVG.Window {
                             readOnly: true
                             selectByMouse: true
                             wrapMode: TextArea.WrapAnywhere
-                            text: optionWindow.targetWidget.diagLog.join("\n")
+                            text: consoleWindow.targetWidget.diagLog.join("\n")
                             color: "#DDFFFFFF"
                             selectionColor: "#F59B00"
                             selectedTextColor: "#FFFFFF"
@@ -353,7 +353,7 @@ NVG.Window {
 
                     Text {
                         anchors.centerIn: parent
-                        visible: optionWindow.targetWidget.diagLog.length === 0
+                        visible: consoleWindow.targetWidget.diagLog.length === 0
                         text: qsTr("Run a test to see its steps here.")
                         color: "#88FFFFFF"
                         font.pixelSize: 11

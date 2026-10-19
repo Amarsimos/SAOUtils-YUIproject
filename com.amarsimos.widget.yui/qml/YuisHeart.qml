@@ -5,7 +5,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 // "Yui's Heart" window (next to Cardinal System, Equipment and Option): her memories, to view and
-// edit (HeartPage.qml), and to export, import and back up.
+// edit (YuisHeartPage.qml), and to export, import and back up.
 NVG.Window {
     id: heartWindow
 
@@ -29,7 +29,7 @@ NVG.Window {
             anchors.topMargin: 0
             spacing: 10
 
-            HeartPage {
+            YuisHeartPage {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 yui: heartWindow.targetWidget
@@ -60,7 +60,7 @@ NVG.Window {
                 Button {
                     text: qsTr("Import")
                     onClicked: {
-                        var component = Qt.createComponent("HeartImportDialog.qml");
+                        var component = Qt.createComponent("YuisHeartImportDialog.qml");
                         if (component.status !== Component.Ready) {
                             heartWindow.targetWidget.diag("import dialog unavailable: " + component.errorString());
                             heartMessage.text = qsTr("The file picker is not available. See the log in Option.");

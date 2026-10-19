@@ -12,19 +12,19 @@ import "yui.js" as Yui
 T.Widget {
     id: widget
 
-    property Component coreSettingsDialog: Qt.createComponent("CoreSettings.qml")
-    property Component styleSettingsDialog: Qt.createComponent("StyleSettings.qml")
-    property var styleSettingsDialogInstance: null
-    property Component optionSettingsDialog: Qt.createComponent("OptionSettings.qml")
-    property var optionSettingsDialogInstance: null
-    property Component heartSettingsDialog: Qt.createComponent("HeartSettings.qml")
-    property var heartSettingsDialogInstance: null
-    property Component widgetLabDialog: Qt.createComponent("WidgetLab.qml")
-    property var widgetLabDialogInstance: null
-    // Widgets popped out of the Seedling (LabWidget.qml views), not saved.
-    property var labWidgets: []
-    property var coreSettingsDialogInstance: null
-    // Shared with CoreSettings.qml. settings.provider stores a provider id and
+    property Component cardinalSystemDialog: Qt.createComponent("CardinalSystem.qml")
+    property Component equipmentDialog: Qt.createComponent("Equipment.qml")
+    property var equipmentDialogInstance: null
+    property Component systemConsoleDialog: Qt.createComponent("SystemConsole.qml")
+    property var systemConsoleDialogInstance: null
+    property Component yuisHeartDialog: Qt.createComponent("YuisHeart.qml")
+    property var yuisHeartDialogInstance: null
+    property Component seedlingDialog: Qt.createComponent("Seedling.qml")
+    property var seedlingDialogInstance: null
+    // Widgets popped out of the Seedling (SeedlingWidget.qml views), not saved.
+    property var seedlingWidgets: []
+    property var cardinalSystemDialogInstance: null
+    // Shared with CardinalSystem.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
     // format: "openai" (Chat Completions), "gemini" (generateContent), "anthropic" (Messages)
     readonly property var providers: [{
@@ -98,7 +98,7 @@ T.Widget {
     // set) or "avatar" (the character image itself).
     readonly property string collapsedForm: styles.collapsed_form === "crystal" ? "crystal" : (pixieMode ? "pixie" : "avatar")
     onCollapsedFormChanged: {
-        if (widget.settings.initialized && !labMode)
+        if (widget.settings.initialized && !seedlingMode)
             Qt.callLater(applyCollapsedSize);
 
     }
@@ -301,7 +301,7 @@ T.Widget {
         return widget.settings.user_title === "mama" ? "妈妈" : "爸爸";
     }
 
-    // A feature switch from the Cardinal System dialog (CoreSettings.qml); all are on unless turned off.
+    // A feature switch from the Cardinal System dialog (CardinalSystem.qml); all are on unless turned off.
     function featureEnabled(name) {
         return widget.settings[name] !== false;
     }
@@ -1035,7 +1035,7 @@ T.Widget {
         diagLog = diagLog.concat([line]).slice(-200);
     }
 
-    // Diagnostics (Option window, OptionSettings.qml): run a desktop action without the AI, through the same
+    // Diagnostics (Option window, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
     function testAction(tag) {
@@ -1238,7 +1238,7 @@ T.Widget {
         if (link.indexOf("yui-path:") === 0)
             showInExplorer(Yui.linkedPath(link));
         else if (link === "yui-option:")
-            showDialog(widget.optionSettingsDialog, "optionSettingsDialogInstance");
+            showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance");
         else if (/^https?:\/\//i.test(link))
             openLink(link);
     }
@@ -1291,7 +1291,7 @@ T.Widget {
 
     // Periodic checks (every 30 s): falling asleep, system status reports and proactive care.
     function tick() {
-        if (labMode)
+        if (seedlingMode)
             return ;
 
         var now = Date.now();
@@ -1445,7 +1445,7 @@ T.Widget {
         saveHeart(entries);
     }
 
-    // Edits from the Yui's Heart page (HeartPage.qml) on the memory with this id. changes may set
+    // Edits from the Yui's Heart page (YuisHeartPage.qml) on the memory with this id. changes may set
     // text, kind ("core" / "fragment") and pinned. Returns false when it would overfill the core.
     function changeMemory(id, changes) {
         var entries = Yui.copyEntries(heartCache);
@@ -1653,19 +1653,19 @@ T.Widget {
         }
     }
 
-    // ---------------------------------------------------------------- Lab widgets in "My Widgets"
+    // ---------------------------------------------------------------- Seedling widgets in "My Widgets"
     // Seedling "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
-    // saves them; see Yui.labPresetFiles) whose widget is this widget type with lab_widget / lab_code in its
-    // settings, so it opens in lab widget mode. The folder is made with mkdir (files cannot create
+    // saves them; see Yui.seedlingPresetFiles) whose widget is this widget type with lab_widget / lab_code in its
+    // settings, so it opens in seedling widget mode. The folder is made with mkdir (files cannot create
     // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
     // preview.png. onDone(folder) with the folder's Windows path, or "" when it failed.
-    function saveLabPreset(title, code, preview, onDone) {
+    function saveSeedlingPreset(title, code, preview, onDone) {
         var root = String(NVG.Utils.storagePath("system")).replace(/\\/g, "/").replace(/\/+$/, "") + "/widget-preset";
         var folder = root + "/custom-" + Date.now().toString(16);
         var windowsFolder = folder.replace(/\//g, "\\");
-        var files = Yui.labPresetFiles(title, code, preview.width, preview.height, new Date().toISOString());
+        var files = Yui.seedlingPresetFiles(title, code, preview.width, preview.height, new Date().toISOString());
         var command = 'cmd /c mkdir "' + windowsFolder + '"';
-        diag("save lab widget: command(" + command + ") -> " + NVG.SystemCall.command(command) + " (not used)");
+        diag("save seedling widget: command(" + command + ") -> " + NVG.SystemCall.command(command) + " (not used)");
         // mkdir runs on its own: try the first file a few times until the folder is there.
         var tries = 0;
         var writeAll = function() {
@@ -1684,7 +1684,7 @@ T.Widget {
                     }
                     preview.grabToImage(function(result) {
                         var saved = result.saveToFile(folder + "/preview.png");
-                        diag("save lab widget: preview.png -> " + saved);
+                        diag("save seedling widget: preview.png -> " + saved);
                         onDone(windowsFolder);
                     });
                 });
@@ -1717,61 +1717,61 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Seedling item in Yui
-    // Seedling "Show in Yui (live)": the code becomes an Item inside this widget (labSlot), reloaded
+    // Seedling "Show in Yui (live)": the code becomes an Item inside this widget (seedlingSlot), reloaded
     // whenever the code changes. Returns "" when it loaded, or the compile errors ("line:column
     // message" lines); on errors the last working item stays.
-    property var yuiLabItem: null
+    property var yuiSeedlingItem: null
 
     function loadIntoYui(code) {
         var created;
         try {
-            created = Qt.createQmlObject(code, labSlot, "WidgetLab");
+            created = Qt.createQmlObject(code, seedlingSlot, "Seedling");
         } catch (e) {
             return (e.qmlErrors || []).map(function(error) {
                 return qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message);
             }).join("\n") || String(e);
         }
-        if (yuiLabItem)
-            yuiLabItem.destroy();
+        if (yuiSeedlingItem)
+            yuiSeedlingItem.destroy();
 
-        yuiLabItem = created;
+        yuiSeedlingItem = created;
         return "";
     }
 
-    function clearYuiLab() {
-        if (yuiLabItem)
-            yuiLabItem.destroy();
+    function clearYuiSeedling() {
+        if (yuiSeedlingItem)
+            yuiSeedlingItem.destroy();
 
-        yuiLabItem = null;
+        yuiSeedlingItem = null;
     }
 
-    // Lab widget mode: this widget was created from a saved Lab widget (lab_widget and lab_code in
+    // Seedling widget mode: this widget was created from a saved Seedling widget (lab_widget and lab_code in
     // its settings).
     // Yui is not started; the widget only shows the code.
-    property bool labMode: false
-    property var labObject: null
+    property bool seedlingMode: false
+    property var seedlingObject: null
 
-    function startLabWidget() {
-        labMode = true;
+    function startSeedlingWidget() {
+        seedlingMode = true;
         // Hide everything of Yui (the lab content is added afterwards).
         for (var i = 0; i < widget.children.length; i++)
             widget.children[i].visible = false;
-        var code = Yui.labCode(widget.settings);
+        var code = Yui.seedlingCode(widget.settings);
         try {
-            labObject = Qt.createQmlObject(code, widget, "LabWidget");
+            seedlingObject = Qt.createQmlObject(code, widget, "SeedlingWidget");
         } catch (e) {
             var errors = (e.qmlErrors || []).map(function(error) {
                 return error.lineNumber + ":" + error.columnNumber + " " + error.message;
             });
-            console.log("lab widget failed:", errors.join("; ") || e);
+            console.log("seedling widget failed:", errors.join("; ") || e);
             // How the code arrived (line breaks shown as \n), to see what the settings reader did.
-            console.log("lab widget code starts:", JSON.stringify(code.slice(0, 120)));
-            labObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Lab widget error" }', widget, "LabWidgetError");
+            console.log("seedling widget code starts:", JSON.stringify(code.slice(0, 120)));
+            seedlingObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Seedling widget error" }', widget, "SeedlingWidgetError");
         }
         // The saved size once, as for Yui's first start; afterwards SAO Utils restores the frame.
         if (!widget.settings.lab_sized) {
             widget.settings.lab_sized = true;
-            applyFrameSize(widget.settings.lab_width || labObject.width || 200, widget.settings.lab_height || labObject.height || 120);
+            applyFrameSize(widget.settings.lab_width || seedlingObject.width || 200, widget.settings.lab_height || seedlingObject.height || 120);
         } else {
             widget.implicitWidth = 20;
             widget.implicitHeight = 20;
@@ -2027,34 +2027,34 @@ T.Widget {
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
-    // Seedling "Pop Out": the QML as a LabWidget view on the desktop, next to this widget (each one a
+    // Seedling "Pop Out": the QML as a SeedlingWidget view on the desktop, next to this widget (each one a
     // little further down and right, so they do not cover each other).
-    function popOutLabWidget(code) {
-        var component = Qt.createComponent("LabWidget.qml");
+    function popOutSeedling(code) {
+        var component = Qt.createComponent("SeedlingWidget.qml");
         if (component.status !== Component.Ready) {
-            diag("widget lab: pop out unavailable: " + component.errorString());
+            diag("seedling: pop out unavailable: " + component.errorString());
             return null;
         }
         var corner = widget.mapToGlobal(0, 0);
-        var offset = 30 * (labWidgets.length % 8);
+        var offset = 30 * (seedlingWidgets.length % 8);
         var view = component.createObject(widget, {
             "code": code,
-            "label": qsTr("Lab Widget") + " " + (labWidgets.length + 1),
+            "label": qsTr("Lab Widget") + " " + (seedlingWidgets.length + 1),
             "x": corner.x + 40 + offset,
             "y": corner.y + 40 + offset
         });
-        labWidgets = labWidgets.concat([view]);
+        seedlingWidgets = seedlingWidgets.concat([view]);
         view.removed.connect(function() {
-            labWidgets = labWidgets.filter(function(other) {
+            seedlingWidgets = seedlingWidgets.filter(function(other) {
                 return other !== view;
             });
         });
-        diag("widget lab: popped out at " + Math.round(view.x) + "," + Math.round(view.y));
+        diag("seedling: popped out at " + Math.round(view.x) + "," + Math.round(view.y));
         return view;
     }
 
-    function closeLabWidgets() {
-        labWidgets.slice().forEach(function(view) {
+    function closeSeedlings() {
+        seedlingWidgets.slice().forEach(function(view) {
             view.remove();
         });
     }
@@ -2306,9 +2306,9 @@ T.Widget {
     }
 
     function releaseMinimumSize() {
-        // The widget only shows a collapsed form (or a lab widget): it can be made quite small.
-        widget.implicitWidth = labMode ? 20 : 40;
-        widget.implicitHeight = labMode ? 20 : 60;
+        // The widget only shows a collapsed form (or a seedling widget): it can be made quite small.
+        widget.implicitWidth = seedlingMode ? 20 : 40;
+        widget.implicitHeight = seedlingMode ? 20 : 60;
     }
 
     function showDialog(component, instanceProperty) {
@@ -2330,7 +2330,7 @@ T.Widget {
         });
     }
 
-    title: labMode ? (widget.settings.lab_title || qsTr("Lab Widget")) : qsTr("MHCP-YUI")
+    title: seedlingMode ? (widget.settings.lab_title || qsTr("Lab Widget")) : qsTr("MHCP-YUI")
     solid: true
     resizable: !applyingFrameSize
     // Implicit size acts as the minimum frame size (see applyFrameSize); set from code only.
@@ -2338,13 +2338,13 @@ T.Widget {
     implicitHeight: 400
     visible: true
     Component.onCompleted: {
-        // A saved Lab widget (from "My Widgets") carries lab_widget; only then is lab_code shown.
-        if ((widget.settings.lab_widget === true || widget.settings.lab_widget === "true") && Yui.labCode(widget.settings)) {
-            startLabWidget();
+        // A saved Seedling widget (from "My Widgets") carries lab_widget; only then is lab_code shown.
+        if ((widget.settings.lab_widget === true || widget.settings.lab_widget === "true") && Yui.seedlingCode(widget.settings)) {
+            startSeedlingWidget();
             return ;
         }
         // Repair: an earlier version kept the Seedling editor text in Yui's own settings as
-        // lab_code, which turned Yui into a lab widget. Keep the text as editor text and clear the rest.
+        // lab_code, which turned Yui into a seedling widget. Keep the text as editor text and clear the rest.
         if (widget.settings.lab_code !== undefined) {
             if (!widget.settings.lab_editor_code)
                 widget.settings.lab_editor_code = widget.settings.lab_code;
@@ -2666,7 +2666,7 @@ T.Widget {
         id: expandedLayer
 
         anchors.fill: parent
-        visible: !labMode
+        visible: !seedlingMode
 
         NVG.BackgroundSource {
             id: backgroundImage
@@ -3332,17 +3332,17 @@ T.Widget {
         // Where the Seedling item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
         // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
         Item {
-            id: labSlot
+            id: seedlingSlot
 
             z: 30
-            visible: (widget.settingsRevision, !labMode && showChat && !!widget.yuiLabItem && widget.settings.lab_in_yui === true)
+            visible: (widget.settingsRevision, !seedlingMode && showChat && !!widget.yuiSeedlingItem && widget.settings.lab_in_yui === true)
             x: Math.max(0, Math.min(expandedLayer.width - width, widget.settings.lab_slot_x !== undefined ? widget.settings.lab_slot_x : 16))
             y: Math.max(14, Math.min(expandedLayer.height - height, widget.settings.lab_slot_y !== undefined ? widget.settings.lab_slot_y : 30))
-            width: widget.yuiLabItem ? widget.yuiLabItem.width : 0
-            height: widget.yuiLabItem ? widget.yuiLabItem.height : 0
+            width: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.width : 0
+            height: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.height : 0
 
             HoverHandler {
-                id: labSlotHover
+                id: seedlingSlotHover
             }
 
             Rectangle {
@@ -3352,7 +3352,7 @@ T.Widget {
                 height: 14
                 radius: 4
                 color: "#CC1A1D24"
-                opacity: labSlotHover.hovered || labSlotDrag.pressed ? 1 : 0
+                opacity: seedlingSlotHover.hovered || seedlingSlotDrag.pressed ? 1 : 0
 
                 Text {
                     anchors.centerIn: parent
@@ -3362,7 +3362,7 @@ T.Widget {
                 }
 
                 MouseArea {
-                    id: labSlotDrag
+                    id: seedlingSlotDrag
 
                     property point start
                     property point origin
@@ -3371,16 +3371,16 @@ T.Widget {
                     cursorShape: Qt.SizeAllCursor
                     onPressed: {
                         start = mapToItem(expandedLayer, mouse.x, mouse.y);
-                        origin = Qt.point(labSlot.x, labSlot.y);
+                        origin = Qt.point(seedlingSlot.x, seedlingSlot.y);
                     }
                     onPositionChanged: {
                         var now = mapToItem(expandedLayer, mouse.x, mouse.y);
-                        labSlot.x = Math.max(0, Math.min(expandedLayer.width - labSlot.width, origin.x + now.x - start.x));
-                        labSlot.y = Math.max(14, Math.min(expandedLayer.height - labSlot.height, origin.y + now.y - start.y));
+                        seedlingSlot.x = Math.max(0, Math.min(expandedLayer.width - seedlingSlot.width, origin.x + now.x - start.x));
+                        seedlingSlot.y = Math.max(14, Math.min(expandedLayer.height - seedlingSlot.height, origin.y + now.y - start.y));
                     }
                     onReleased: {
-                        widget.settings.lab_slot_x = Math.round(labSlot.x);
-                        widget.settings.lab_slot_y = Math.round(labSlot.y);
+                        widget.settings.lab_slot_x = Math.round(seedlingSlot.x);
+                        widget.settings.lab_slot_y = Math.round(seedlingSlot.y);
                     }
                 }
 
@@ -3411,15 +3411,15 @@ T.Widget {
 
     }
 
-    menu: labMode ? labMenu : yuiMenu
+    menu: seedlingMode ? seedlingMenu : yuiMenu
 
-    // A lab widget's menu: only the Seedling.
+    // A seedling widget's menu: only the Seedling.
     Menu {
-        id: labMenu
+        id: seedlingMenu
 
         Action {
             text: qsTr("Seedling") + "..."
-            onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
+            onTriggered: showDialog(widget.seedlingDialog, "seedlingDialogInstance")
         }
 
     }
@@ -3429,27 +3429,27 @@ T.Widget {
 
         Action {
             text: qsTr("Cardinal System") + "..."
-            onTriggered: showDialog(widget.coreSettingsDialog, "coreSettingsDialogInstance")
+            onTriggered: showDialog(widget.cardinalSystemDialog, "cardinalSystemDialogInstance")
         }
 
         Action {
             text: qsTr("Equipment") + "..."
-            onTriggered: showDialog(widget.styleSettingsDialog, "styleSettingsDialogInstance")
+            onTriggered: showDialog(widget.equipmentDialog, "equipmentDialogInstance")
         }
 
         Action {
             text: qsTr("Yui's Heart") + "..."
-            onTriggered: showDialog(widget.heartSettingsDialog, "heartSettingsDialogInstance")
+            onTriggered: showDialog(widget.yuisHeartDialog, "yuisHeartDialogInstance")
         }
 
         Action {
             text: qsTr("Seedling") + "..."
-            onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
+            onTriggered: showDialog(widget.seedlingDialog, "seedlingDialogInstance")
         }
 
         Action {
             text: qsTr("Option") + "..."
-            onTriggered: showDialog(widget.optionSettingsDialog, "optionSettingsDialogInstance")
+            onTriggered: showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance")
         }
 
     }

@@ -4,7 +4,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// Yui's Heart (HeartSettings.qml window): the heart core (sent with every request) and the memory
+// Yui's Heart (YuisHeart.qml window): the heart core (sent with every request) and the memory
 // fragments (recalled when they match the conversation). Every memory can be edited, deleted,
 // pinned (core only: never moved out of a full core) and moved between core and fragments.
 ColumnLayout {
