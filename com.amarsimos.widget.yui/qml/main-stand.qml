@@ -140,6 +140,8 @@ T.Widget {
     property var yuiView: null
     // Set once the saved chat is shown; messages added afterwards pop up (MessageWindow.popUp).
     property bool chatReady: false
+    // Messages from this index on were added after start-up and pop up when shown.
+    property int firstNewMessage: 0
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
@@ -2235,6 +2237,7 @@ T.Widget {
         else
             getInitialMessage();
         Qt.callLater(function() {
+            widget.firstNewMessage = chatModel.count;
             widget.chatReady = true;
         });
         // The Widget Lab item shown in Yui, if it was on.
@@ -2911,17 +2914,20 @@ T.Widget {
                     }
 
                     // "..." (a reply on its way) is not a message: it shows without popping up; the window pops
-                    // up with the message sound once the text arrives. The user's own messages pop up the same way.
+                    // up with the message sound once the text arrives. The user's own messages pop up the same
+                    // way, without the sound.
                     readonly property bool pending: model.pending
 
                     onPendingChanged: {
                         if (!pending && widget.chatReady)
-                            messageWindow.popUp(true);
+                            messageWindow.popUp(!messageItem.fromUser);
 
                     }
+                    // Every message added after start-up pops up (several can be added at once, e.g.
+                    // the user's message and Yui's "..."); the user's without a sound.
                     Component.onCompleted: {
-                        if (widget.chatReady && index === chatModel.count - 1 && !pending)
-                            messageWindow.popUp(true);
+                        if (widget.chatReady && index >= widget.firstNewMessage && !pending)
+                            messageWindow.popUp(!messageItem.fromUser);
 
                     }
                 }

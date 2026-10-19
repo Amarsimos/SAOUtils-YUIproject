@@ -1,5 +1,6 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
+import QtQuick.Shapes 1.12
 import QtQuick.Window 2.12
 
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
@@ -128,8 +129,8 @@ NVG.View {
 
     }
     color: "transparent"
-    // A normal window (not kept on top): raised when clicked, covered by others otherwise.
-    z: NVG.WindowCompositor.DefaultZ
+    // Always on top of every other window.
+    z: NVG.WindowCompositor.TopMostZ
     acceptFocus: shown
     acceptInput: shown
     solid: shown
@@ -177,29 +178,41 @@ NVG.View {
                 }
             }
 
-            // Resize grip (bottom-right corner): three diagonal SAO lines, orange while hovered; only a
-            // drag with the button held resizes.
+            // Resize grip: a triangle filling the bottom-right corner, orange while hovered; only a drag
+            // with the button held resizes.
             Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                width: 20
-                height: 20
+                width: 18
+                height: 18
                 z: 100
 
-                Repeater {
-                    model: 3
+                Shape {
+                    anchors.fill: parent
+                    layer.enabled: true
+                    layer.samples: 4
 
-                    Rectangle {
-                        readonly property real length: 6 + index * 5
+                    ShapePath {
+                        fillColor: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#99707070"
+                        strokeColor: "transparent"
+                        startX: 18
+                        startY: 0
 
-                        x: parent.width - 4 - length / Math.SQRT2 - 1
-                        y: parent.height - 4 - length / Math.SQRT2 + 1
-                        width: length
-                        height: 2
-                        radius: 1
-                        rotation: -45
-                        transformOrigin: Item.Left
-                        color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#B0707070"
+                        PathLine {
+                            x: 18
+                            y: 18
+                        }
+
+                        PathLine {
+                            x: 0
+                            y: 18
+                        }
+
+                        PathLine {
+                            x: 18
+                            y: 0
+                        }
+
                     }
 
                 }
