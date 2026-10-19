@@ -36,14 +36,14 @@ Item {
     readonly property color orange: "#F1AA03"
 
     // Opens like the mail box message panel: a thin line widens, then the body unfolds and the
-    // text fades in, with the message sound.
+    // text fades in, with the message notification sound.
     function popUp(sound) {
         windowScale.xScale = 0.1;
         windowScale.yScale = 0.05;
         frame.opacity = 0;
         messageText.opacity = 0;
         if (sound)
-            NVG.SystemCall.playSound(NVG.SFX.PopupMessage);
+            NVG.SystemCall.playSound(NVG.SFX.NotifyMessage);
 
         popAnimation.restart();
     }

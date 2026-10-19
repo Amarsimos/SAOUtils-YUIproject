@@ -14,12 +14,15 @@ NVG.View {
     property var yui
     // Where the widget's expanded layer goes.
     readonly property Item host: hostItem
-    readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatMinimumWidth + 40)
+    readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatPanelMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
     // Height of the strip the panel unfolds from (MessagePanel's style.collapse).
     readonly property real collapsedHeight: Math.min(156, height)
     property point moveStart
     property point moveOrigin
+
+    // popUp is waiting for the window to be on screen before animating.
+    property bool openPending: false
 
     signal closeRequested()
     // The close animation has finished and the view is hidden.
@@ -36,7 +39,13 @@ NVG.View {
         opacity = 0;
         visible = true;
         requestActivate();
-        aniOpen.restart();
+        // The window only appears on screen some time after it is made visible (more so the first
+        // time); started right away, the animation was over by then and only a fade-in was seen.
+        // So it starts once the window is exposed, after one more frame.
+        openPending = true;
+        if (exposed)
+            startTimer.restart();
+
     }
 
     // Closes as the message panel: the close sound, narrows back to 10 % while fading out (250 ms),
@@ -45,6 +54,7 @@ NVG.View {
         if (!visible || aniClose.running)
             return ;
 
+        openPending = false;
         aniOpen.stop();
         aniClose.start();
     }
@@ -108,6 +118,11 @@ NVG.View {
         y = Math.round(Math.max(top, Math.min(bottom - height, y)));
     }
 
+    onExposedChanged: {
+        if (exposed && openPending)
+            startTimer.restart();
+
+    }
     color: "transparent"
     acceptFocus: true
     acceptInput: true
@@ -156,21 +171,31 @@ NVG.View {
                 }
             }
 
-            // Resize grip (bottom-right corner); only a drag with the button held resizes.
+            // Resize grip (bottom-right corner): three diagonal SAO lines, orange while hovered; only a
+            // drag with the button held resizes.
             Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                width: 18
-                height: 18
+                width: 30
+                height: 30
                 z: 100
 
-                Text {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 2
-                    anchors.bottom: parent.bottom
-                    text: "◢"
-                    color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#88888888"
-                    font.pixelSize: 12
+                Repeater {
+                    model: 3
+
+                    Rectangle {
+                        readonly property real length: 10 + index * 7
+
+                        x: parent.width - 4 - length / Math.SQRT2 - 1
+                        y: parent.height - 4 - length / Math.SQRT2 + 1
+                        width: length
+                        height: 2
+                        radius: 1
+                        rotation: -45
+                        transformOrigin: Item.Left
+                        color: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#B0707070"
+                    }
+
                 }
 
                 MouseArea {
@@ -288,6 +313,19 @@ NVG.View {
             }
         }
 
+    }
+
+    Timer {
+        id: startTimer
+
+        interval: 30
+        onTriggered: {
+            if (!view.openPending)
+                return ;
+
+            view.openPending = false;
+            aniOpen.restart();
+        }
     }
 
     Shortcut {

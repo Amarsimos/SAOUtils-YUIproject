@@ -69,6 +69,8 @@ T.Widget {
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButton.implicitWidth + clearButton.implicitWidth + 2 * inputArea.spacing
+    // The chat column in the view is never narrower than this (three times the input row's minimum).
+    readonly property real chatPanelMinimumWidth: chatMinimumWidth * 3
     // Minimum size of the character image area: characterMinimumWidth x minimumFrameHeight.
     readonly property real characterMinimumWidth: 300
     readonly property real minimumFrameHeight: 400
@@ -646,11 +648,16 @@ T.Widget {
     // isError: kept out of the conversation sent to the API (failed requests and setup hints).
     // local: written by the widget itself (wake lines, System Call, status reports): there is nothing
     // to regenerate, but they stay in the conversation so the next reply follows on from them.
+    // Yui's messages written without the AI (wake lines, System Call, reports, setup hints) look like
+    // a reply too: "..." first, the text after a random 0.6 - 1.6 s.
     function appendMessage(author, message, isError, local) {
+        var fromYui = author !== "user";
+        var index = chatModel.count;
+        var session = widget.chatSession;
         chatModel.append({
             "author": author,
-            "message": message,
-            "pending": false,
+            "message": fromYui ? "..." : message,
+            "pending": fromYui,
             "isError": isError,
             "local": !!local,
             "note": "",
@@ -658,8 +665,27 @@ T.Widget {
             "actionState": ""
         });
         chatView.stickToBottom = true;
-        scheduleSave();
-        logMessage(author, message);
+        if (!fromYui) {
+            scheduleSave();
+            logMessage(author, message);
+            return ;
+        }
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer {}", widget);
+        timer.interval = 600 + Math.round(Math.random() * 1000);
+        timer.triggered.connect(function() {
+            timer.destroy();
+            // The chat was cleared meanwhile.
+            if (session !== widget.chatSession || index >= chatModel.count)
+                return ;
+
+            chatModel.set(index, {
+                "message": message,
+                "pending": false
+            });
+            scheduleSave();
+            logMessage(author, message);
+        });
+        timer.start();
     }
 
     // Keep the last maxSavedMessages finished messages in settings so the chat survives restarts.
@@ -2516,7 +2542,7 @@ T.Widget {
             // whatever the image resolution is. Never take more than half of the widget, leave the chat
             // column enough room for its input row, but never get narrower than characterMinimumWidth
             // (the image is centered in that space when it is drawn narrower).
-            width: Math.max(widget.characterMinimumWidth, Math.min(widget.characterNaturalWidth, parent.width * 0.5, parent.width - widget.chatMinimumWidth - 20))
+            width: Math.max(widget.characterMinimumWidth, Math.min(widget.characterNaturalWidth, parent.width * 0.5, parent.width - widget.chatPanelMinimumWidth - 20))
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignHCenter
             verticalAlignment: Image.AlignVCenter
@@ -2832,6 +2858,8 @@ T.Widget {
                     id: chatScrollBar
 
                     onLight: true
+                    // Hidden: the chat scrolls with the wheel or by dragging the list.
+                    policy: ScrollBar.AlwaysOff
                 }
 
                 // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
@@ -2853,7 +2881,9 @@ T.Widget {
                         // Room for the pointers; the user's windows also stay clear of the scroll bar.
                         anchors.leftMargin: tailSize
                         anchors.rightMargin: 16 + tailSize
-                        maximumWidth: chatView.width - 48
+                        // Message windows keep their size when the chat panel is wider: at most as wide as
+                        // the original chat column (chatMinimumWidth).
+                        maximumWidth: Math.min(chatView.width - 48, Math.max(260, widget.chatMinimumWidth))
                         tailSide: messageItem.fromUser ? "right" : "left"
                         sender: messageItem.fromUser ? widget.userTitle() : "Yui"
                         text: model.message
@@ -2869,8 +2899,17 @@ T.Widget {
                         onRegenerateRequested: widget.regenerateReply()
                     }
 
+                    // "..." (a reply on its way) is not a message: it shows without popping up; the window pops
+                    // up with the message sound once the text arrives. The user's own messages pop up silently.
+                    readonly property bool pending: model.pending
+
+                    onPendingChanged: {
+                        if (!pending && widget.chatReady)
+                            messageWindow.popUp(true);
+
+                    }
                     Component.onCompleted: {
-                        if (widget.chatReady && index === chatModel.count - 1)
+                        if (widget.chatReady && index === chatModel.count - 1 && !pending)
                             messageWindow.popUp(!messageItem.fromUser);
 
                     }
