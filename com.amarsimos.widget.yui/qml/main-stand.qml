@@ -1754,12 +1754,12 @@ T.Widget {
         var offset = 30 * (labWidgets.length % 8);
         var view = component.createObject(widget, {
             "code": code,
-            "title": qsTr("Lab Widget") + " " + (labWidgets.length + 1),
+            "label": qsTr("Lab Widget") + " " + (labWidgets.length + 1),
             "x": corner.x + 40 + offset,
             "y": corner.y + 40 + offset
         });
         labWidgets = labWidgets.concat([view]);
-        view.closed.connect(function() {
+        view.removed.connect(function() {
             labWidgets = labWidgets.filter(function(other) {
                 return other !== view;
             });
@@ -1770,7 +1770,7 @@ T.Widget {
 
     function closeLabWidgets() {
         labWidgets.slice().forEach(function(view) {
-            view.close();
+            view.remove();
         });
     }
 

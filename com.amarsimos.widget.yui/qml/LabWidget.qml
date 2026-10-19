@@ -9,15 +9,16 @@ NVG.View {
 
     // The QML source; the view takes the size of what it creates.
     property string code
-    property string title: "Lab Widget"
+    // Shown in the move bar ("title" is a FINAL property of View).
+    property string label: "Lab Widget"
     property var created: null
     readonly property int barHeight: 18
 
-    signal closed()
+    signal removed()
 
-    function close() {
+    function remove() {
         visible = false;
-        view.closed();
+        view.removed();
         destroy();
     }
 
@@ -62,7 +63,7 @@ NVG.View {
             anchors.verticalCenter: parent.verticalCenter
             x: 6
             width: parent.width - 30
-            text: view.title
+            text: view.label
             color: "#DDFFFFFF"
             font.pixelSize: 10
             elide: Text.ElideRight
@@ -104,7 +105,7 @@ NVG.View {
                 anchors.margins: -4
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: view.close()
+                onClicked: view.remove()
             }
 
         }
