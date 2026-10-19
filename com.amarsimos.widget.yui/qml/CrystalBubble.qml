@@ -62,26 +62,34 @@ NVG.View {
         return screens.length > 0 ? screens[0] : null;
     }
 
-    // Moves with the crystal while shown (its floating, the widget being dragged); the side (above /
-    // below) chosen in show() is kept, so the bubble does not flip while following.
+    // Moves with the crystal while shown (its floating, the widget being dragged), changing sides
+    // when it reaches the top or bottom of its screen.
     function follow(newTarget) {
         if (newTarget.x === target.x && newTarget.y === target.y && newTarget.width === target.width)
             return ;
 
         target = newTarget;
-        place(true);
+        place();
     }
 
-    // Above the crystal, centered on it; below it when there is no room above (unless keepSide).
-    // Kept on its screen.
-    function place(keepSide) {
+    // Above the crystal, centered on it; below it when there is no room above, and back above once
+    // there is room again (with a margin, so the crystal's floating does not make it flip back and
+    // forth). When neither side has room, the side with more. Kept on the crystal's screen.
+    function place() {
         var s = targetScreen();
         var left = s ? s.virtualX : 0;
         var top = s ? s.virtualY : 0;
         var right = left + (s ? s.width : 1920);
-        if (!keepSide)
-            below = target.y - height < top;
-
+        var bottom = top + (s ? s.height : 1080);
+        var margin = 12;
+        var roomAbove = target.y - top;
+        var roomBelow = bottom - (target.y + target.height);
+        if (roomAbove < height && roomBelow < height)
+            below = roomBelow > roomAbove;
+        else if (below)
+            below = roomBelow >= height && roomAbove < height + margin;
+        else
+            below = roomAbove < height;
         x = Math.round(Math.max(left, Math.min(right - width, target.x + target.width / 2 - width / 2)));
         y = Math.round(below ? target.y + target.height : target.y - height);
     }
