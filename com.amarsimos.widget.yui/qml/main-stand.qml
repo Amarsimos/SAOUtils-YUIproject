@@ -2158,9 +2158,6 @@ T.Widget {
         });
         expandedLayer.parent = yuiView.host;
         expandedLayer.anchors.fill = yuiView.host;
-        // Visible from the start but transparent and click-through until opened (see YuiView.shown),
-        // so opening never goes through the system's showing of a window.
-        yuiView.visible = true;
         yuiView.closeRequested.connect(function() {
             setChatVisible(false);
         });

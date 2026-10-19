@@ -7,8 +7,10 @@ import QtQuick.Window 2.12
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
 // its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
 // moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
-// It opens and closes like the SAO Utils mail box message panel (com.gpbeta.mail-box MessagePanel.qml).
-NVG.View {
+// It is a plain frameless Window opened and closed like the SAO Utils mail box message panel
+// (com.gpbeta.mail-box MessagePanel.qml), which is also a Window: with an NVG.View, SAO Utils' own
+// handling of the view's appearing delayed it and covered the open animation.
+Window {
     id: view
 
     // The widget (main-stand.qml).
@@ -22,10 +24,9 @@ NVG.View {
     property point moveStart
     property point moveOrigin
 
-    // popUp is waiting for the window to be on screen before animating.
+    // popUp is about to start the open animation (next frame).
     property bool openPending: false
-    // Open (popUp) or closed (fold). Closed, the view stays visible but transparent, takes no input
-    // and lets clicks through.
+    // Open (popUp) or closed (fold, the window is then hidden).
     property bool shown: false
 
     signal closeRequested()
@@ -42,12 +43,10 @@ NVG.View {
         hostItem.opacity = 0;
         panelClip.opacity = 0;
         shown = true;
+        // As MessagePanel: the window is shown at the start of the animation (its content still
+        // invisible), and the animation runs right after.
         visible = true;
         requestActivate();
-        // The window itself stays visible and fully opaque (with a transparent background) the whole
-        // time; only its content is animated. Making the window transparent made SAO Utils take it
-        // off screen, and opening then waited for it to come back (slow) and faded it in on its own,
-        // covering the animation. The animation starts on the next frame.
         openPending = true;
         startTimer.restart();
     }
@@ -123,11 +122,8 @@ NVG.View {
     }
 
     color: "transparent"
-    // Always on top of every other window.
-    z: NVG.WindowCompositor.TopMostZ
-    acceptFocus: shown
-    acceptInput: shown
-    solid: shown
+    // Frameless, always on top of every other window, no taskbar button.
+    flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
     visible: false
 
     // The panel clip: full width (scaled horizontally while opening / closing), its height unfolding
@@ -135,7 +131,7 @@ NVG.View {
     Item {
         id: panelClip
 
-        // Invisible while the view is closed (the window itself stays opaque and on screen).
+        // Invisible until the open animation fades it in.
         opacity: 0
         y: Math.round((view.height - height) / 2)
         width: view.width
@@ -322,6 +318,7 @@ NVG.View {
         ScriptAction {
             script: {
                 view.shown = false;
+                view.visible = false;
                 view.folded();
             }
         }
