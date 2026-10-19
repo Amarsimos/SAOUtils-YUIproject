@@ -91,7 +91,6 @@ NVG.Window {
         targetWidget.settings.external_browser = !!externalBrowserPreference.value;
         targetWidget.settings.sleep_minutes = sleepPreference.value;
         targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
-        targetWidget.settings.max_history = historyPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
@@ -176,12 +175,11 @@ NVG.Window {
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
                         idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
-                        historyPreference.value = settings.max_history > 0 ? settings.max_history : 20;
                         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 1024;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
-                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, historyPreference, maxTokensPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
                             preference.valueChanged.connect(scheduleApply);
                         });
                     }
@@ -327,33 +325,6 @@ NVG.Window {
                         font.family: targetWidget.defaultValues.bubble_font_family
                         Layout.fillWidth: true
                         Layout.minimumHeight: 20
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-
-                        P.SliderPreference {
-                            id: historyPreference
-
-                            Layout.fillWidth: true
-
-                            name: "max_history"
-                            label: qsTr("Conversation Memory")
-                            from: 2
-                            to: 60
-                            stepSize: 2
-                            displayValue: value
-                        }
-
-                        ResetButton {
-                            changed: historyPreference.value !== 20
-                            onClicked: historyPreference.value = 20
-                        }
-
-                    }
-
-                    SettingNote {
-                        text: qsTr("How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
                     }
 
                     RowLayout {
@@ -649,7 +620,6 @@ NVG.Window {
             onReset: targetWidget.confirmReset(qsTr("Cardinal System"), function() {
                 systemPromptPreference.value = targetWidget.defaultSystemPrompt;
                 userTitlePreference.value = 0;
-                historyPreference.value = 20;
                 maxTokensPreference.value = 1024;
                 greetPreference.value = true;
                 carePreference.value = true;

@@ -86,7 +86,19 @@ T.Widget {
     property var currentRequest: null
     property int chatSession: 0
     // How many messages are kept in settings.chat_history across restarts.
-    readonly property int maxSavedMessages: 50
+    // Yui's Heart window: chat messages shown again after a restart, Auto Memory (Yui writes her
+    // memories herself), the heart core's size and how many daily backups are kept.
+    readonly property int maxSavedMessages: widget.settings.saved_messages > 0 ? widget.settings.saved_messages : 50
+    readonly property bool autoMemory: widget.settings.auto_memory !== false
+    readonly property int heartCoreCapacity: widget.settings.heart_core_capacity > 0 ? widget.settings.heart_core_capacity : Yui.MAX_CORE
+    readonly property int backupDays: widget.settings.backup_days > 0 ? widget.settings.backup_days : 7
+
+    // A smaller heart core moves its least recently used (unpinned) entries to the fragments.
+    onHeartCoreCapacityChanged: {
+        if (Yui.coreMemories(heartCache).length > heartCoreCapacity)
+            saveHeart(Yui.fitCore(Yui.copyEntries(heartCache), heartCoreCapacity));
+
+    }
     // Yui's current expression (see Yui.EMOTIONS); set by <<emotion:...>> tags in replies.
     property string currentEmotion: "normal"
     // Yui falls asleep after settings.sleep_minutes without interaction; a click wakes her up.
@@ -379,7 +391,8 @@ T.Widget {
             "web": widget.settings.action_web !== false,
             "launch": widget.settings.action_launch !== false,
             "find": widget.settings.action_find !== false,
-            "kill": widget.settings.action_kill !== false
+            "kill": widget.settings.action_kill !== false,
+            "memory": autoMemory
         };
     }
 
@@ -1081,10 +1094,15 @@ T.Widget {
     // Asks with SAO Utils' message box before a settings window is reset; onYes runs after OK. Without
     // the message box (no Promise), it resets right away.
     function confirmReset(windowTitle, onYes) {
+        askConfirm(qsTr("Warning"), qsTr("Restore all settings of %1 to their defaults?").arg(windowTitle), onYes);
+    }
+
+    // SAO Utils' message box with OK / Cancel; onYes runs after OK (right away without a message box).
+    function askConfirm(title, text, onYes) {
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Warning"),
-                "text": qsTr("Restore all settings of %1 to their defaults?").arg(windowTitle),
+                "title": title,
+                "text": text,
                 "modal": true
             });
             if (answer && typeof answer.then === "function") {
@@ -1528,7 +1546,7 @@ T.Widget {
         if (!entry)
             return false;
 
-        if (changes.kind === "core" && entry.kind !== "core" && Yui.coreMemories(entries).length >= Yui.MAX_CORE)
+        if (changes.kind === "core" && entry.kind !== "core" && Yui.coreMemories(entries).length >= heartCoreCapacity)
             return false;
 
         if (changes.text !== undefined) {
@@ -1552,6 +1570,70 @@ T.Widget {
         diag("memory " + id + " changed: " + JSON.stringify(changes));
         saveHeart(entries);
         return true;
+    }
+
+    // A memory added on the Yui's Heart page (kind "core" or "fragment"). Returns false when the text
+    // is empty or the core is full.
+    function addMemory(text, kind) {
+        text = String(text || "").trim();
+        if (!text || (kind === "core" && Yui.coreMemories(heartCache).length >= heartCoreCapacity))
+            return false;
+
+        diag("memory added (" + kind + ")");
+        saveHeart(Yui.rememberMemory(heartCache, text, kind, Date.now(), heartCoreCapacity));
+        return true;
+    }
+
+    // Recollection log (the messages table): how many messages it keeps, and clearing it.
+    function messageLogCount() {
+        var count = 0;
+        if (!database)
+            return 0;
+
+        try {
+            database.readTransaction(function(tx) {
+                count = tx.executeSql("SELECT COUNT(*) AS n FROM messages").rows.item(0).n;
+            });
+        } catch (e) {
+            diag("log count failed: " + e);
+        }
+        return count;
+    }
+
+    function clearMessageLog() {
+        if (!database)
+            return ;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql("DELETE FROM messages");
+            });
+            diag("recollection log cleared");
+        } catch (e) {
+            diag("clearing the log failed: " + e);
+        }
+    }
+
+    // "Forget Everything": writes a backup of all memories first, then deletes them; nothing is
+    // deleted when the backup cannot be written. onDone(message for the user).
+    function forgetEverything(onDone) {
+        var name = "结衣之心-forgotten-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".json";
+        writeHeartFile(name, heartDocument(false), function(path) {
+            if (!path) {
+                onDone(qsTr("The backup could not be written, so nothing was deleted. See the log in System Console."));
+                return ;
+            }
+            diag("forgot everything, backup " + path);
+            saveHeart([]);
+            onDone(qsTr("All memories were deleted. Backup: %1").arg(path));
+        });
+    }
+
+    // The folder of the backups and exports.
+    function openHeartFolder() {
+        var folder = widget.settings.heart_backup_path ? String(widget.settings.heart_backup_path).replace(/\\[^\\]*$/, "") : heartFolders()[0].replace(/\//g, "\\");
+        var started = NVG.SystemCall.execute("explorer.exe", "\"" + folder + "\"");
+        diag("execute(explorer.exe \"" + folder + "\") -> " + started);
     }
 
     function deleteMemory(id) {
@@ -1578,10 +1660,10 @@ T.Widget {
         });
         var now = Date.now();
         reply.cores.forEach(function(text) {
-            entries = Yui.rememberMemory(entries, text, "core", now);
+            entries = Yui.rememberMemory(entries, text, "core", now, heartCoreCapacity);
         });
         reply.memories.forEach(function(text) {
-            entries = Yui.rememberMemory(entries, text, "fragment", now);
+            entries = Yui.rememberMemory(entries, text, "fragment", now, heartCoreCapacity);
         });
         saveHeart(entries);
         var notes = [];
@@ -1897,14 +1979,14 @@ T.Widget {
         });
     }
 
-    // Once a day (on start): a backup without the chat history, one file per weekday slot, so the
-    // last 7 days are kept and older ones are overwritten.
+    // Once a day (on start): a backup without the chat history, one file per day slot, so the last
+    // backupDays days are kept and older ones are overwritten.
     function backupHeart() {
         var day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
         if (widget.settings.heart_backup_day === day || heartCache.length === 0)
             return ;
 
-        writeHeartFile("heart-backup-" + (day % 7 + 1) + ".json", heartDocument(false), function(path) {
+        writeHeartFile("heart-backup-" + (day % backupDays + 1) + ".json", heartDocument(false), function(path) {
             if (!path)
                 return ;
 
@@ -1936,7 +2018,7 @@ T.Widget {
         if (!document || document.format !== "MHCP001-yui-heart" || !Array.isArray(document.entries))
             return qsTr("This file is not a Yui's Heart export.");
 
-        var result = Yui.mergeHeart(heartCache, document.entries);
+        var result = Yui.mergeHeart(heartCache, document.entries, heartCoreCapacity);
         saveHeart(result.entries);
         var messages = 0;
         if (Array.isArray(document.messages) && database)

@@ -331,6 +331,10 @@ function parseReply(text, userProtected, options) {
         if (!value)
             return "";
 
+        // Auto Memory off (Yui's Heart): memory tags are dropped.
+        if ((kind === "memory" || kind === "core" || kind === "forget") && allowed.memory === false)
+            return "";
+
         if (ACTION_KINDS[kind] && allowed[ACTION_KINDS[kind]] === false) {
             result.disabled = result.disabled || kind;
             return "";
@@ -451,8 +455,9 @@ function copyEntries(entries) {
 
 // Yui's Heart after writing one memory (pure: returns new entries; new ones have no id). A memory
 // like an existing one replaces its text (and a core write promotes it); otherwise it is added.
-// When the core is over MAX_CORE, the least recently used unpinned core entries become fragments.
-function rememberMemory(entries, text, kind, now) {
+// When the core is over capacity (default MAX_CORE), the least recently used unpinned core entries
+// become fragments.
+function rememberMemory(entries, text, kind, now, capacity) {
     entries = copyEntries(entries);
     text = String(text || "").trim();
     if (!text)
@@ -490,16 +495,20 @@ function rememberMemory(entries, text, kind, now) {
         };
         entries.push(written);
     }
-    var core = entries.filter(function(entry) {
-        return entry.kind === "core" && !entry.pinned && entry !== written;
+    return fitCore(entries, capacity, written);
+}
+
+// The entries with at most capacity (default MAX_CORE) core entries: the least recently used unpinned
+// ones (never keep) become fragments. Changes the given entries.
+function fitCore(entries, capacity, keep) {
+    var movable = entries.filter(function(entry) {
+        return entry.kind === "core" && !entry.pinned && entry !== keep;
     }).sort(function(x, y) {
         return (x.lastUsed || 0) - (y.lastUsed || 0);
     });
-    var over = entries.filter(function(entry) {
-        return entry.kind === "core";
-    }).length - MAX_CORE;
-    for (var i = 0; i < over && i < core.length; i++)
-        core[i].kind = "fragment";
+    var over = coreMemories(entries).length - (capacity || MAX_CORE);
+    for (var i = 0; i < over && i < movable.length; i++)
+        movable[i].kind = "fragment";
     return entries;
 }
 
@@ -521,8 +530,9 @@ function forgetMemory(entries, text) {
 
 // Yui's Heart with the memories of an exported file added (pure): memories already remembered (at
 // least SAME_MEMORY alike) are skipped, the others keep their kind, dates and pin. Returns
-// {entries, added}. A core over MAX_CORE moves its least recently used unpinned entries to fragments.
-function mergeHeart(entries, imported) {
+// {entries, added}. A core over capacity (default MAX_CORE) moves its least recently used unpinned
+// entries to fragments.
+function mergeHeart(entries, imported, capacity) {
     entries = copyEntries(entries);
     var added = 0;
     copyEntries(imported).forEach(function(entry) {
@@ -544,14 +554,7 @@ function mergeHeart(entries, imported) {
         });
         added++;
     });
-    var movable = entries.filter(function(entry) {
-        return entry.kind === "core" && !entry.pinned;
-    }).sort(function(x, y) {
-        return (x.lastUsed || 0) - (y.lastUsed || 0);
-    });
-    var over = coreMemories(entries).length - MAX_CORE;
-    for (var i = 0; i < over && i < movable.length; i++)
-        movable[i].kind = "fragment";
+    fitCore(entries, capacity);
     return {
         "entries": entries,
         "added": added
@@ -615,6 +618,11 @@ function featureInstructions(title, core, allowed) {
 
     if (desktop.length > 0)
         lines.splice(allowed.web !== false ? 6 : 5, 0, "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：" + desktop.join("；") + "。");
+
+    if (allowed.memory === false)
+        lines = lines.filter(function(line) {
+            return line.indexOf("- 结衣之心：") !== 0;
+        });
 
     if (core && core.length > 0) {
         lines.push("", "结衣之心·心核（关于" + title + "最重要的事）：");

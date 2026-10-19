@@ -5,8 +5,9 @@ import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
 // Yui's Heart (YuisHeart.qml window): the heart core (sent with every request) and the memory
-// fragments (recalled when they match the conversation). Every memory can be edited, deleted,
-// pinned (core only: never moved out of a full core) and moved between core and fragments.
+// fragments (recalled when they match the conversation). Memories can be added, and every memory
+// can be edited, deleted, pinned (core only: never moved out of a full core) and moved between core
+// and fragments.
 ColumnLayout {
     id: page
 
@@ -31,7 +32,17 @@ ColumnLayout {
     }
 
     function change(id, changes) {
-        page.message = yui.changeMemory(id, changes) ? "" : qsTr("The heart core is full (%1). Move a memory out of it first.").arg(Yui.MAX_CORE);
+        page.message = yui.changeMemory(id, changes) ? "" : qsTr("The heart core is full (%1). Move a memory out of it first.").arg(yui.heartCoreCapacity);
+    }
+
+    function add() {
+        var kind = addKind.currentIndex === 1 ? "core" : "fragment";
+        if (yui.addMemory(addText.text, kind)) {
+            addText.text = "";
+            page.message = "";
+        } else if (addText.text.trim()) {
+            page.message = qsTr("The heart core is full (%1). Move a memory out of it first.").arg(yui.heartCoreCapacity);
+        }
     }
 
     // Deleting asks first, in SAO Utils' message box.
@@ -53,6 +64,33 @@ ColumnLayout {
         text: "♥ " + qsTr("Yui's Heart") + "  (" + yui.heartCache.length + ")"
         font.pixelSize: 13
         font.bold: true
+    }
+
+    // A new memory, as a fragment or in the heart core.
+    RowLayout {
+        Layout.fillWidth: true
+
+        TextField {
+            id: addText
+
+            Layout.fillWidth: true
+            selectByMouse: true
+            placeholderText: qsTr("Something Yui should remember")
+            onAccepted: page.add()
+        }
+
+        ComboBox {
+            id: addKind
+
+            model: [qsTr("Fragment"), qsTr("Heart Core")]
+        }
+
+        Button {
+            text: qsTr("Add")
+            enabled: addText.text.trim() !== ""
+            onClicked: page.add()
+        }
+
     }
 
     TextField {
@@ -127,7 +165,7 @@ ColumnLayout {
                 visible: !!row.memory.header
                 width: parent.width
                 topPadding: 6
-                text: row.memory.header === "core" ? "◆ " + qsTr("Heart Core") + "  " + page.core.length + " / " + Yui.MAX_CORE : "· " + qsTr("Memory Fragments") + "  " + page.fragments.length
+                text: row.memory.header === "core" ? "◆ " + qsTr("Heart Core") + "  " + page.core.length + " / " + page.yui.heartCoreCapacity : "· " + qsTr("Memory Fragments") + "  " + page.fragments.length
                 color: "#F59B00"
                 font.pixelSize: 12
                 font.bold: true
