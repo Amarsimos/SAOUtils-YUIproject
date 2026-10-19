@@ -486,12 +486,22 @@ NVG.Window {
                 targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
                 coreSettings.close();
             }
-            onReset: {
-                // Reset the shown provider to its defaults; other providers keep their settings.
-                showProvider(shownProvider, null);
+            // Reset (after confirming): everything but the connection (server, core, address, access
+            // key), shown here and kept once Save is pressed.
+            onReset: targetWidget.confirmReset(qsTr("Cardinal System"), function() {
                 systemPromptPreference.value = targetWidget.defaultSystemPrompt;
                 userTitlePreference.value = 0;
-            }
+                historyPreference.value = 20;
+                maxTokensPreference.value = 1024;
+                greetPreference.value = true;
+                carePreference.value = true;
+                statusPreference.value = true;
+                externalBrowserPreference.value = false;
+                searchPreference.value = 0;
+                searchCustomPreference.value = "";
+                sleepPreference.value = 20;
+                idleChatPreference.value = 15;
+            })
         }
 
     }

@@ -286,11 +286,11 @@ NVG.Window {
                 saveStyles();
                 styleSettingsWindow.close();
             }
-            onReset: {
+            onReset: targetWidget.confirmReset(qsTr("Equipment"), function() {
                 rootPreference.load(); // loads every defaultValue
                 // and saves the reset state right away
                 saveStyles();
-            }
+            })
         }
 
     }

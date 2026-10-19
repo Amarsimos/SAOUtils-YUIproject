@@ -44,6 +44,8 @@ NVG.Window {
                 }
 
                 SpinBox {
+                    id: recallBox
+
                     Layout.preferredWidth: 140
                     from: 0
                     to: 20
@@ -119,8 +121,14 @@ NVG.Window {
 
         }
 
+        // Reset: only the settings (how many memories are recalled), never the memories.
         header: TitleBar {
             text: qsTr("Yui's Heart")
+            standardButtons: Dialog.Reset
+            onReset: heartWindow.targetWidget.confirmReset(qsTr("Yui's Heart"), function() {
+                heartWindow.targetWidget.settings.recall_count = 5;
+                recallBox.value = 5;
+            })
         }
 
     }

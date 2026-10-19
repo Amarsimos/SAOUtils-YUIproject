@@ -12,6 +12,6 @@ call :lang zh zh_CN
 goto :eof
 
 :lang
-lupdate qml\main-stand.qml qml\CardinalSystem.qml qml\Equipment.qml qml\SettingNote.qml qml\SystemConsole.qml qml\ProcessListEditor.qml qml\YuisHeartPage.qml qml\YuisHeartImportDialog.qml qml\YuisHeart.qml qml\LoadBars.qml qml\Seedling.qml qml\SeedlingWidget.qml qml\MessageWindow.qml -source-language en -target-language %2 -no-obsolete -ts i18n\%1.ts
+lupdate qml\main-stand.qml qml\CardinalSystem.qml qml\Equipment.qml qml\SettingNote.qml qml\SystemConsole.qml qml\ProcessListEditor.qml qml\YuisHeartPage.qml qml\YuisHeartImportDialog.qml qml\YuisHeart.qml qml\LoadBars.qml qml\Seedling.qml qml\SeedlingWidget.qml qml\MessageWindow.qml qml\ResetButton.qml -source-language en -target-language %2 -no-obsolete -ts i18n\%1.ts
 lrelease i18n\%1.ts -qm Locales\%1.qm
 goto :eof

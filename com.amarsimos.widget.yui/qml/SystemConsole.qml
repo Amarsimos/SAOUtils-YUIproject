@@ -76,6 +76,10 @@ NVG.Window {
                         text: qsTr("Red")
                     }
 
+                    Item {
+                        Layout.preferredWidth: 28
+                    }
+
                 }
 
                 Repeater {
@@ -140,6 +144,17 @@ NVG.Window {
                             onValueModified: thresholdRow.save()
                         }
 
+                        ResetButton {
+                            readonly property var defaults: Yui.loadThresholds({}, modelData.metric)
+
+                            changed: yellowBox.value !== defaults[0] || redBox.value !== defaults[1]
+                            onClicked: {
+                                yellowBox.value = defaults[0];
+                                redBox.value = defaults[1];
+                                thresholdRow.save();
+                            }
+                        }
+
                     }
 
                 }
@@ -153,6 +168,8 @@ NVG.Window {
                     }
 
                     SpinBox {
+                        id: reportBox
+
                         Layout.preferredWidth: 140
                         from: 1
                         to: 24
@@ -167,20 +184,18 @@ NVG.Window {
                         onValueModified: consoleWindow.targetWidget.settings.load_report_hours = value
                     }
 
+                    ResetButton {
+                        changed: reportBox.value !== 1
+                        onClicked: {
+                            reportBox.value = 1;
+                            consoleWindow.targetWidget.settings.load_report_hours = 1;
+                        }
+                    }
+
                 }
 
                 SettingNote {
                     text: qsTr("Each load is reported at most once in this time.")
-                }
-
-                Button {
-                    text: qsTr("Restore Defaults")
-                    onClicked: {
-                        consoleWindow.targetWidget.settings.load_thresholds = {};
-                        for (var i = 0; i < thresholdRows.count; i++)
-                            thresholdRows.itemAt(i).load();
-
-                    }
                 }
 
                 Heading {
@@ -196,6 +211,8 @@ NVG.Window {
                     spacing: 12
 
                     Repeater {
+                        id: actionSwitches
+
                         model: [{
                             "key": "action_web",
                             "label": qsTr("Open Web Pages and Search")
@@ -210,10 +227,26 @@ NVG.Window {
                             "label": qsTr("Close Programs")
                         }]
 
-                        CheckBox {
-                            text: modelData.label
-                            checked: consoleWindow.targetWidget.settings[modelData.key] !== false
-                            onToggled: consoleWindow.targetWidget.settings[modelData.key] = checked
+                        Row {
+                            function reset() {
+                                actionBox.checked = true;
+                                consoleWindow.targetWidget.settings[modelData.key] = true;
+                            }
+
+                            CheckBox {
+                                id: actionBox
+
+                                text: modelData.label
+                                checked: consoleWindow.targetWidget.settings[modelData.key] !== false
+                                onToggled: consoleWindow.targetWidget.settings[modelData.key] = checked
+                            }
+
+                            ResetButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                changed: !actionBox.checked
+                                onClicked: parent.reset()
+                            }
+
                         }
 
                     }
@@ -418,8 +451,22 @@ NVG.Window {
 
         }
 
+        // Reset: the thresholds, the report interval and the action switches. The es.exe path and the
+        // two process lists are the user's own entries and stay.
         header: TitleBar {
             text: qsTr("System Console")
+            standardButtons: Dialog.Reset
+            onReset: consoleWindow.targetWidget.confirmReset(qsTr("System Console"), function() {
+                consoleWindow.targetWidget.settings.load_thresholds = {};
+                for (var i = 0; i < thresholdRows.count; i++)
+                    thresholdRows.itemAt(i).load();
+
+                reportBox.value = 1;
+                consoleWindow.targetWidget.settings.load_report_hours = 1;
+                for (var j = 0; j < actionSwitches.count; j++)
+                    actionSwitches.itemAt(j).reset();
+
+            })
         }
 
     }

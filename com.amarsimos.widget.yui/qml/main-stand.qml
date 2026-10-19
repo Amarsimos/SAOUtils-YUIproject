@@ -1075,6 +1075,30 @@ T.Widget {
         actionDialog.open();
     }
 
+    // Asks with SAO Utils' message box before a settings window is reset; onYes runs after OK. Without
+    // the message box (no Promise), it resets right away.
+    function confirmReset(windowTitle, onYes) {
+        try {
+            var answer = NVG.SystemCall.messageBox({
+                "title": qsTr("Warning"),
+                "text": qsTr("Restore all settings of %1 to their defaults?").arg(windowTitle),
+                "modal": true
+            });
+            if (answer && typeof answer.then === "function") {
+                answer.then(function(result) {
+                    if (result !== false && result !== 0)
+                        onYes();
+
+                }, function() {
+                });
+                return ;
+            }
+        } catch (e) {
+            diag("reset: messageBox failed: " + e);
+        }
+        onYes();
+    }
+
     function diag(message) {
         var line = Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + message;
         console.log("[diag]", message);
