@@ -1,7 +1,7 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 
-// A widget made from QML source in the Widget Lab (WidgetLab.qml), shown in its own desktop view.
+// A widget made from QML source in the Seedling (WidgetLab.qml), shown in its own desktop view.
 // It is not a registered SAO Utils widget, so it lasts until it is closed or SAO Utils exits. A thin
 // bar appears at its top while hovered: drag it to move the widget, ✕ closes it.
 NVG.View {

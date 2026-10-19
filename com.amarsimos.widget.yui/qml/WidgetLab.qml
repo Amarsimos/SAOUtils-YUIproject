@@ -4,7 +4,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
-// "Widget Lab" window: turns QML source text into a widget-like view (Qt.createQmlObject). Render
+// "Seedling" window: turns QML source text into a widget-like view (Qt.createQmlObject). Render
 // previews it here and lists compile errors; Pop Out puts it on the desktop as a LabWidget. Test
 // stage: the code is typed in (later Yui may write it); nothing is kept except the editor text.
 NVG.Window {
@@ -60,7 +60,7 @@ NVG.Window {
         result.color = errors ? "#D0302A" : "#2C9E5C";
     }
 
-    title: qsTr("Widget Lab")
+    title: qsTr("Seedling")
     visible: true
     minimumWidth: 480
     minimumHeight: 560
@@ -271,7 +271,7 @@ NVG.Window {
         }
 
         header: TitleBar {
-            text: qsTr("Widget Lab")
+            text: qsTr("Seedling")
         }
 
     }

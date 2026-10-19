@@ -796,7 +796,7 @@
     <message>
         <location filename="../qml/WidgetLab.qml" line="63"/>
         <location filename="../qml/WidgetLab.qml" line="274"/>
-        <source>Widget Lab</source>
+        <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1007,7 +1007,7 @@ You can change this in Option.</source>
         <location filename="../qml/main-stand.qml" line="3299"/>
         <location filename="../qml/main-stand.qml" line="3361"/>
         <location filename="../qml/main-stand.qml" line="3386"/>
-        <source>Widget Lab</source>
+        <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

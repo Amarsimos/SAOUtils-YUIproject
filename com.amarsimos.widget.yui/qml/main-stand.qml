@@ -21,7 +21,7 @@ T.Widget {
     property var heartSettingsDialogInstance: null
     property Component widgetLabDialog: Qt.createComponent("WidgetLab.qml")
     property var widgetLabDialogInstance: null
-    // Widgets popped out of the Widget Lab (LabWidget.qml views), not saved.
+    // Widgets popped out of the Seedling (LabWidget.qml views), not saved.
     property var labWidgets: []
     property var coreSettingsDialogInstance: null
     // Shared with CoreSettings.qml. settings.provider stores a provider id and
@@ -1654,7 +1654,7 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Lab widgets in "My Widgets"
-    // Widget Lab "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
+    // Seedling "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
     // saves them; see Yui.labPresetFiles) whose widget is this widget type with lab_widget / lab_code in its
     // settings, so it opens in lab widget mode. The folder is made with mkdir (files cannot create
     // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
@@ -1716,8 +1716,8 @@ T.Widget {
 
     }
 
-    // ---------------------------------------------------------------- Widget Lab item in Yui
-    // Widget Lab "Show in Yui (live)": the code becomes an Item inside this widget (labSlot), reloaded
+    // ---------------------------------------------------------------- Seedling item in Yui
+    // Seedling "Show in Yui (live)": the code becomes an Item inside this widget (labSlot), reloaded
     // whenever the code changes. Returns "" when it loaded, or the compile errors ("line:column
     // message" lines); on errors the last working item stays.
     property var yuiLabItem: null
@@ -2027,7 +2027,7 @@ T.Widget {
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
-    // Widget Lab "Pop Out": the QML as a LabWidget view on the desktop, next to this widget (each one a
+    // Seedling "Pop Out": the QML as a LabWidget view on the desktop, next to this widget (each one a
     // little further down and right, so they do not cover each other).
     function popOutLabWidget(code) {
         var component = Qt.createComponent("LabWidget.qml");
@@ -2343,7 +2343,7 @@ T.Widget {
             startLabWidget();
             return ;
         }
-        // Repair: an earlier version kept the Widget Lab editor text in Yui's own settings as
+        // Repair: an earlier version kept the Seedling editor text in Yui's own settings as
         // lab_code, which turned Yui into a lab widget. Keep the text as editor text and clear the rest.
         if (widget.settings.lab_code !== undefined) {
             if (!widget.settings.lab_editor_code)
@@ -2352,7 +2352,7 @@ T.Widget {
             ["lab_code", "lab_title", "lab_width", "lab_height", "lab_sized"].forEach(function(key) {
                 delete widget.settings[key];
             });
-            console.log("repaired: Widget Lab editor text moved out of lab_code");
+            console.log("repaired: Seedling editor text moved out of lab_code");
         }
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;
@@ -2383,7 +2383,7 @@ T.Widget {
             widget.firstNewMessage = chatModel.count;
             widget.chatReady = true;
         });
-        // The Widget Lab item shown in Yui, if it was on.
+        // The Seedling item shown in Yui, if it was on.
         if (widget.settings.lab_in_yui && widget.settings.lab_editor_code)
             loadIntoYui(widget.settings.lab_editor_code);
 
@@ -3329,7 +3329,7 @@ T.Widget {
 
         }
 
-        // Where the Widget Lab item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
+        // Where the Seedling item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
         // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
         Item {
             id: labSlot
@@ -3356,7 +3356,7 @@ T.Widget {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "⠿ " + qsTr("Widget Lab")
+                    text: "⠿ " + qsTr("Seedling")
                     color: "#DDFFFFFF"
                     font.pixelSize: 9
                 }
@@ -3413,12 +3413,12 @@ T.Widget {
 
     menu: labMode ? labMenu : yuiMenu
 
-    // A lab widget's menu: only the Widget Lab.
+    // A lab widget's menu: only the Seedling.
     Menu {
         id: labMenu
 
         Action {
-            text: qsTr("Widget Lab") + "..."
+            text: qsTr("Seedling") + "..."
             onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
         }
 
@@ -3443,7 +3443,7 @@ T.Widget {
         }
 
         Action {
-            text: qsTr("Widget Lab") + "..."
+            text: qsTr("Seedling") + "..."
             onTriggered: showDialog(widget.widgetLabDialog, "widgetLabDialogInstance")
         }
 
