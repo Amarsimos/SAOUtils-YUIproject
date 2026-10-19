@@ -140,6 +140,35 @@ NVG.Window {
 
                 }
 
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Report Interval")
+                    }
+
+                    SpinBox {
+                        Layout.preferredWidth: 120
+                        from: 1
+                        to: 24
+                        editable: true
+                        value: consoleWindow.targetWidget.loadReportHours
+                        textFromValue: function(value) {
+                            return qsTr("%1 h").arg(value);
+                        }
+                        valueFromText: function(text) {
+                            return parseInt(text) || 1;
+                        }
+                        onValueModified: consoleWindow.targetWidget.settings.load_report_hours = value
+                    }
+
+                }
+
+                SettingNote {
+                    text: qsTr("Each load is reported at most once in this time.")
+                }
+
                 Button {
                     text: qsTr("Restore Defaults")
                     onClicked: {
@@ -152,6 +181,43 @@ NVG.Window {
 
                 Heading {
                     text: qsTr("Object Control Authority")
+                }
+
+                Label {
+                    text: qsTr("Yui may")
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    Repeater {
+                        model: [{
+                            "key": "action_web",
+                            "label": qsTr("Open Web Pages and Search")
+                        }, {
+                            "key": "action_launch",
+                            "label": qsTr("Start Programs")
+                        }, {
+                            "key": "action_find",
+                            "label": qsTr("Search Files")
+                        }, {
+                            "key": "action_kill",
+                            "label": qsTr("Close Programs")
+                        }]
+
+                        CheckBox {
+                            text: modelData.label
+                            checked: consoleWindow.targetWidget.settings[modelData.key] !== false
+                            onToggled: consoleWindow.targetWidget.settings[modelData.key] = checked
+                        }
+
+                    }
+
+                }
+
+                SettingNote {
+                    text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
                 }
 
                 Label {

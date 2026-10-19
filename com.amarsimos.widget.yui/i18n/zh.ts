@@ -677,12 +677,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="162"/>
+        <location filename="../qml/SystemConsole.qml" line="228"/>
         <source>es.exe Path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="177"/>
+        <location filename="../qml/SystemConsole.qml" line="243"/>
         <source>File search uses Everything&apos;s command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.</source>
         <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
     </message>
@@ -693,7 +693,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location filename="../qml/SystemConsole.qml" line="17"/>
-        <location filename="../qml/SystemConsole.qml" line="350"/>
+        <location filename="../qml/SystemConsole.qml" line="416"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
@@ -733,112 +733,157 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="144"/>
+        <location filename="../qml/SystemConsole.qml" line="173"/>
         <source>Restore Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="185"/>
+        <location filename="../qml/SystemConsole.qml" line="251"/>
         <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
         <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="192"/>
+        <location filename="../qml/SystemConsole.qml" line="258"/>
         <source>No programs yet.</source>
         <translation>暂无程序。</translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="204"/>
+        <location filename="../qml/SystemConsole.qml" line="270"/>
         <source>Immortal Objects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="208"/>
+        <location filename="../qml/SystemConsole.qml" line="274"/>
         <source>Yui never closes these programs. The locked system processes cannot be removed; you can protect more.</source>
         <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="154"/>
+        <location filename="../qml/SystemConsole.qml" line="183"/>
         <source>Object Control Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../qml/SystemConsole.qml" line="148"/>
+        <source>Report Interval</source>
+        <translation>提醒间隔</translation>
+    </message>
+    <message>
         <location filename="../qml/SystemConsole.qml" line="158"/>
+        <source>%1 h</source>
+        <translation>%1 小时</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="169"/>
+        <source>Each load is reported at most once in this time.</source>
+        <translation>每项负载在这段时间内最多提醒一次。</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="187"/>
+        <source>Yui may</source>
+        <translation>允许结衣</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="197"/>
+        <source>Open Web Pages and Search</source>
+        <translation>打开网页和搜索</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="200"/>
+        <source>Start Programs</source>
+        <translation>启动程序</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="203"/>
+        <source>Search Files</source>
+        <translation>查找文件</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="206"/>
+        <source>Close Programs</source>
+        <translation>关闭程序</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="220"/>
+        <source>Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.</source>
+        <translation>在这里关闭的操作不会告诉 AI，即使回复里要求也不会执行。</translation>
+    </message>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="224"/>
         <source>Object Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="181"/>
+        <location filename="../qml/SystemConsole.qml" line="247"/>
         <source>Delete Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="219"/>
+        <location filename="../qml/SystemConsole.qml" line="285"/>
         <source>System Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="223"/>
+        <location filename="../qml/SystemConsole.qml" line="289"/>
         <source>Test Call</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="227"/>
+        <location filename="../qml/SystemConsole.qml" line="293"/>
         <source>Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.</source>
         <translation>逐个测试桌面代行功能。每个按钮都会发一条测试消息，并像真实操作一样请求确认；受保护进程应当不经询问直接被拦截。</translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="236"/>
+        <location filename="../qml/SystemConsole.qml" line="302"/>
         <source>Launch Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="239"/>
+        <location filename="../qml/SystemConsole.qml" line="305"/>
         <source>Close Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="242"/>
+        <location filename="../qml/SystemConsole.qml" line="308"/>
         <source>Find File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="245"/>
+        <location filename="../qml/SystemConsole.qml" line="311"/>
         <source>Open Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="248"/>
+        <location filename="../qml/SystemConsole.qml" line="314"/>
         <source>Protected Process</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="251"/>
+        <location filename="../qml/SystemConsole.qml" line="317"/>
         <source>Test Bubble</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="254"/>
+        <location filename="../qml/SystemConsole.qml" line="320"/>
         <source>Test Streaming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="275"/>
+        <location filename="../qml/SystemConsole.qml" line="341"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="279"/>
+        <location filename="../qml/SystemConsole.qml" line="345"/>
         <source>Copy Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="289"/>
+        <location filename="../qml/SystemConsole.qml" line="355"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="338"/>
+        <location filename="../qml/SystemConsole.qml" line="404"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -1002,158 +1047,158 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="1022"/>
+        <location filename="../qml/main-stand.qml" line="1036"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1021"/>
+        <location filename="../qml/main-stand.qml" line="1035"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2380"/>
+        <location filename="../qml/main-stand.qml" line="2397"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1037"/>
-        <location filename="../qml/main-stand.qml" line="2473"/>
+        <location filename="../qml/main-stand.qml" line="1051"/>
+        <location filename="../qml/main-stand.qml" line="2490"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1023"/>
+        <location filename="../qml/main-stand.qml" line="1037"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1024"/>
+        <location filename="../qml/main-stand.qml" line="1038"/>
         <source>Yui will search your computer for:</source>
         <translation>结衣将在电脑里搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1025"/>
+        <location filename="../qml/main-stand.qml" line="1039"/>
         <source>Yui will close this program:</source>
         <translation>结衣将关闭这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1037"/>
+        <location filename="../qml/main-stand.qml" line="1051"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1075"/>
+        <location filename="../qml/main-stand.qml" line="1089"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1113"/>
+        <location filename="../qml/main-stand.qml" line="1127"/>
         <source>Immortal Object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1113"/>
+        <location filename="../qml/main-stand.qml" line="1127"/>
         <source>%1 is a protected system process. Yui cannot close it.</source>
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1175"/>
+        <location filename="../qml/main-stand.qml" line="1189"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1176"/>
+        <location filename="../qml/main-stand.qml" line="1190"/>
         <source>Close %1 without asking from now on?
 You can change this in System Console.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1769"/>
+        <location filename="../qml/main-stand.qml" line="1783"/>
         <source>Line %1, column %2: %3</source>
         <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1893"/>
+        <location filename="../qml/main-stand.qml" line="1907"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1896"/>
+        <location filename="../qml/main-stand.qml" line="1910"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1912"/>
+        <location filename="../qml/main-stand.qml" line="1926"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2037"/>
-        <location filename="../qml/main-stand.qml" line="2218"/>
+        <location filename="../qml/main-stand.qml" line="2054"/>
+        <location filename="../qml/main-stand.qml" line="2235"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3502"/>
+        <location filename="../qml/main-stand.qml" line="3519"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2218"/>
-        <location filename="../qml/main-stand.qml" line="2240"/>
-        <location filename="../qml/main-stand.qml" line="2246"/>
+        <location filename="../qml/main-stand.qml" line="2235"/>
+        <location filename="../qml/main-stand.qml" line="2257"/>
+        <location filename="../qml/main-stand.qml" line="2263"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3322"/>
+        <location filename="../qml/main-stand.qml" line="3339"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="171"/>
-        <location filename="../qml/main-stand.qml" line="3351"/>
+        <location filename="../qml/main-stand.qml" line="3368"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="164"/>
-        <location filename="../qml/main-stand.qml" line="3351"/>
+        <location filename="../qml/main-stand.qml" line="3368"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2089"/>
-        <location filename="../qml/main-stand.qml" line="2380"/>
+        <location filename="../qml/main-stand.qml" line="2106"/>
+        <location filename="../qml/main-stand.qml" line="2397"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3368"/>
+        <location filename="../qml/main-stand.qml" line="3385"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3482"/>
+        <location filename="../qml/main-stand.qml" line="3499"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3487"/>
+        <location filename="../qml/main-stand.qml" line="3504"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3492"/>
+        <location filename="../qml/main-stand.qml" line="3509"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3410"/>
-        <location filename="../qml/main-stand.qml" line="3472"/>
-        <location filename="../qml/main-stand.qml" line="3497"/>
+        <location filename="../qml/main-stand.qml" line="3427"/>
+        <location filename="../qml/main-stand.qml" line="3489"/>
+        <location filename="../qml/main-stand.qml" line="3514"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>

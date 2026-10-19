@@ -365,12 +365,23 @@ T.Widget {
     function replyOptions() {
         return {
             "searchEngine": widget.settings.search_engine || "bing",
-            "searchCustom": widget.settings.search_custom || ""
+            "searchCustom": widget.settings.search_custom || "",
+            "allowed": allowedActions()
+        };
+    }
+
+    // The desktop actions Yui may do (System Console, Object Control Authority; all by default).
+    function allowedActions() {
+        return {
+            "web": widget.settings.action_web !== false,
+            "launch": widget.settings.action_launch !== false,
+            "find": widget.settings.action_find !== false,
+            "kill": widget.settings.action_kill !== false
         };
     }
 
     function systemExtras(title, query) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache)) + timeContext() + Yui.recallContext(title, recall(query));
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions()) + timeContext() + Yui.recallContext(title, recall(query));
     }
 
     // Appended to the system prompt on every request, so Yui knows the current date and time.
@@ -848,6 +859,9 @@ T.Widget {
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
+                if (reply.disabled)
+                    note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
+
                 if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
                     Qt.callLater(showImmortalObject, reply.blocked);
@@ -1080,7 +1094,7 @@ T.Widget {
             "pending": false,
             "isError": true,
             "local": true,
-            "note": reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
+            "note": reply.disabled ? "🚫 已在 System Console 中关闭这类代行，没有执行" : reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
             "action": reply.action ? JSON.stringify(reply.action) : "",
             "actionState": reply.action ? "pending" : ""
         });
@@ -2009,10 +2023,13 @@ T.Widget {
         highLoadChecks = checks;
     }
 
-    // Whether a load may be reported now (once an hour per metric); marks it reported.
+    // At most one report per load in this many hours (System Console, default 1).
+    readonly property int loadReportHours: widget.settings.load_report_hours > 0 ? widget.settings.load_report_hours : 1
+
+    // Whether a load may be reported now (once per loadReportHours per metric); marks it reported.
     function loadWarningDue(metric, now) {
         var last = lastLoadWarnings;
-        if (now - (last[metric] || 0) <= 3600000)
+        if (now - (last[metric] || 0) <= loadReportHours * 3600000)
             return false;
 
         last[metric] = now;

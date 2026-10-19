@@ -297,9 +297,21 @@ function searchUrl(engine, custom, query) {
     return template.split("%s").join(encodeURIComponent(query));
 }
 
-// options (optional): {searchEngine, searchCustom} for the address of <<search:>> (see searchUrl).
+// The desktop actions the user can allow or forbid (System Console), and the tags of each.
+var ACTION_KINDS = {
+    "open": "web",
+    "search": "web",
+    "launch": "launch",
+    "find": "find",
+    "kill": "kill"
+};
+
+// options (optional): {searchEngine, searchCustom} for the address of <<search:>> (see searchUrl), and
+// allowed: {web, launch, find, kill}, false for actions the user forbade (their tags are dropped and
+// result.disabled names the first one).
 function parseReply(text, userProtected, options) {
     options = options || {};
+    var allowed = options.allowed || {};
     var result = {
         "text": "",
         "emotion": "",
@@ -309,7 +321,9 @@ function parseReply(text, userProtected, options) {
         "forgets": [],
         "action": null,
         // A <<kill:>> refused because the process is protected.
-        "blocked": ""
+        "blocked": "",
+        // The type of an action tag dropped because the user forbade it ("" when none).
+        "disabled": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -317,6 +331,10 @@ function parseReply(text, userProtected, options) {
         if (!value)
             return "";
 
+        if (ACTION_KINDS[kind] && allowed[ACTION_KINDS[kind]] === false) {
+            result.disabled = result.disabled || kind;
+            return "";
+        }
         if (kind === "emotion") {
             var emotion = value.toLowerCase();
             if (EMOTIONS.indexOf(emotion) !== -1)
@@ -578,8 +596,26 @@ function recallFragments(entries, query, count) {
 
 // Extra system prompt instructions: how to use the control tags, and the heart core. Nothing in it
 // changes from request to request unless the core does (see recallContext for the rest).
-function featureInstructions(title, core) {
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。", "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：启动程序用 <<launch:程序名或完整路径>>；在电脑里找文件用 <<find:文件名或关键词>>；关闭某个程序用 <<kill:进程名，如 chrome.exe>>。系统关键进程不能关闭。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+// allowed (optional): which desktop actions Yui may do (see ACTION_KINDS); only those are explained.
+function featureInstructions(title, core, allowed) {
+    allowed = allowed || {};
+    var desktop = [];
+    if (allowed.launch !== false)
+        desktop.push("启动程序用 <<launch:程序名或完整路径>>");
+
+    if (allowed.find !== false)
+        desktop.push("在电脑里找文件用 <<find:文件名或关键词>>");
+
+    if (allowed.kill !== false)
+        desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe>>（系统关键进程不能关闭）");
+
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    if (allowed.web !== false)
+        lines.splice(5, 0, "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。");
+
+    if (desktop.length > 0)
+        lines.splice(allowed.web !== false ? 6 : 5, 0, "- 桌面代行：只有当" + title + "明确请你做这些事时才使用，每次都会先请" + title + "确认：" + desktop.join("；") + "。");
+
     if (core && core.length > 0) {
         lines.push("", "结衣之心·心核（关于" + title + "最重要的事）：");
         core.forEach(function(entry) {
