@@ -705,8 +705,10 @@ T.Widget {
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
-                if (reply.blocked)
+                if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
+                    Qt.callLater(showImmortalObject, reply.blocked);
+                }
 
             }
             chatModel.set(index, {
@@ -892,7 +894,23 @@ T.Widget {
         widget.consoleOpen = false;
         if (reply.action)
             Qt.callLater(confirmAction, index);
+        else if (reply.blocked)
+            Qt.callLater(showImmortalObject, reply.blocked);
 
+    }
+
+    // A refused <<kill:>> of a protected process: SAO Utils' system message box, titled after the
+    // indestructible objects of SAO ("Immortal Object"), with only an OK button.
+    function showImmortalObject(name) {
+        try {
+            NVG.SystemCall.messageBox({
+                "title": qsTr("Immortal Object"),
+                "text": qsTr("%1 is a protected system process. Yui cannot close it.").arg(name),
+                "modal": false
+            });
+        } catch (e) {
+            console.log("system message box unavailable:", e);
+        }
     }
 
     function cancelAction(index) {
