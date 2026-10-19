@@ -3105,6 +3105,7 @@ T.Widget {
                         note: model.note
                         actionLabel: widget.actionLabel(messageItem.action)
                         actionState: model.actionState
+                        thinking: model.pending
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size

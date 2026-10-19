@@ -19,6 +19,9 @@ Item {
     property string actionLabel
     property string actionState
     property bool canRegenerate: false
+    // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
+    // strip under the title bar.
+    property bool thinking: false
     property string fontFamily
     property int fontSize: 14
     // Widest the window may get.
@@ -129,6 +132,38 @@ Item {
 
         }
 
+        // While thinking: a thin SAO orange strip under the title bar, slowly breathing.
+        Rectangle {
+            z: 1
+            x: 1
+            y: header.y + header.height
+            width: parent.width - 2
+            height: 2
+            color: messageWindow.orange
+            visible: messageWindow.thinking
+
+            SequentialAnimation on opacity {
+                running: messageWindow.thinking
+                loops: Animation.Infinite
+
+                NumberAnimation {
+                    from: 0.25
+                    to: 1
+                    duration: 700
+                    easing.type: Easing.InOutSine
+                }
+
+                NumberAnimation {
+                    from: 1
+                    to: 0.25
+                    duration: 700
+                    easing.type: Easing.InOutSine
+                }
+
+            }
+
+        }
+
         // Body: the message text on light gray, between thin shadow lines.
         Rectangle {
             id: body
@@ -136,7 +171,7 @@ Item {
             x: 1
             y: header.y + header.height
             width: parent.width - 2
-            height: messageText.implicitHeight + 20
+            height: (messageWindow.thinking ? thinkingRow.height : messageText.implicitHeight) + 20
             color: "#E4E4E4"
             clip: true
 
@@ -165,11 +200,78 @@ Item {
                 color: "#D6D6D6"
             }
 
+            Row {
+                id: thinkingRow
+
+                x: 12
+                y: 10
+                visible: messageWindow.thinking
+
+                Text {
+                    text: "YUI正在思考"
+                    color: "#3A3A3A"
+                    font.family: messageWindow.fontFamily
+                    font.pixelSize: messageWindow.fontSize
+                }
+
+                // Three dots hopping one after another.
+                Repeater {
+                    model: 3
+
+                    Item {
+                        width: dot.implicitWidth
+                        height: dot.implicitHeight
+
+                        Text {
+                            id: dot
+
+                            text: "."
+                            color: "#3A3A3A"
+                            font.family: messageWindow.fontFamily
+                            font.pixelSize: messageWindow.fontSize
+
+                            SequentialAnimation on y {
+                                running: messageWindow.thinking
+                                loops: Animation.Infinite
+
+                                PauseAnimation {
+                                    duration: index * 150
+                                }
+
+                                NumberAnimation {
+                                    from: 0
+                                    to: -4
+                                    duration: 180
+                                    easing.type: Easing.OutQuad
+                                }
+
+                                NumberAnimation {
+                                    from: -4
+                                    to: 0
+                                    duration: 180
+                                    easing.type: Easing.InQuad
+                                }
+
+                                PauseAnimation {
+                                    duration: 660 - index * 150
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
             TextEdit {
                 id: messageText
 
                 x: 12
                 y: 10
+                visible: !messageWindow.thinking
                 width: parent.width - 24
                 text: messageWindow.linkedText || messageWindow.text
                 // Shown verbatim: only the escaped, link-marked text is rich text.
