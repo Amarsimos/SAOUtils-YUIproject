@@ -307,7 +307,7 @@
     <name>OptionSettings</name>
     <message>
         <location filename="../qml/OptionSettings.qml" line="15"/>
-        <location filename="../qml/OptionSettings.qml" line="160"/>
+        <location filename="../qml/OptionSettings.qml" line="181"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>
@@ -368,11 +368,16 @@
     </message>
     <message>
         <location filename="../qml/OptionSettings.qml" line="110"/>
+        <source>Copy Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/OptionSettings.qml" line="120"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="148"/>
+        <location filename="../qml/OptionSettings.qml" line="169"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>

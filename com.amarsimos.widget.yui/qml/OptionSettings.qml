@@ -107,6 +107,16 @@ NVG.Window {
                     }
 
                     Button {
+                        text: qsTr("Copy Log")
+                        enabled: optionWindow.targetWidget.diagLog.length > 0
+                        onClicked: {
+                            logText.selectAll();
+                            logText.copy();
+                            logText.deselect();
+                        }
+                    }
+
+                    Button {
                         text: qsTr("Clear Log")
                         onClicked: optionWindow.targetWidget.diagLog = []
                     }
@@ -119,32 +129,43 @@ NVG.Window {
                     color: "#1A1D24"
                     radius: 4
 
-                    ListView {
-                        id: logView
+                    // Read-only but selectable text, so the log can be copied (drag + Ctrl+C or Copy Log).
+                    ScrollView {
+                        id: logScroll
 
                         anchors.fill: parent
                         anchors.margins: 6
                         clip: true
-                        model: optionWindow.targetWidget.diagLog
-                        onCountChanged: Qt.callLater(positionViewAtEnd)
-
-                        delegate: Text {
-                            width: logView.width
-                            text: modelData
-                            color: "#DDFFFFFF"
-                            font.family: "Consolas"
-                            font.pixelSize: 11
-                            wrapMode: Text.WrapAnywhere
+                        ScrollBar.vertical: SaoScrollBar {
                         }
 
-                        ScrollBar.vertical: SaoScrollBar {
+                        TextArea {
+                            id: logText
+
+                            readOnly: true
+                            selectByMouse: true
+                            wrapMode: TextArea.WrapAnywhere
+                            text: optionWindow.targetWidget.diagLog.join("\n")
+                            color: "#DDFFFFFF"
+                            selectionColor: "#F59B00"
+                            selectedTextColor: "#FFFFFF"
+                            font.family: "Consolas"
+                            font.pixelSize: 11
+                            padding: 0
+                            background: null
+                            // Follow new lines unless the user is selecting text.
+                            onTextChanged: {
+                                if (selectionStart === selectionEnd)
+                                    cursorPosition = length;
+
+                            }
                         }
 
                     }
 
                     Text {
                         anchors.centerIn: parent
-                        visible: logView.count === 0
+                        visible: optionWindow.targetWidget.diagLog.length === 0
                         text: qsTr("Run a test to see its steps here.")
                         color: "#88FFFFFF"
                         font.pixelSize: 11
