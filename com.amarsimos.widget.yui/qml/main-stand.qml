@@ -948,7 +948,9 @@ T.Widget {
         var folder = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/");
         var file = folder + "/find-" + Date.now() + ".txt";
         if (!NVG.SystemCall.command(Yui.actionCommand(action, file))) {
-            appendMessage("ai", "呜……结衣没能启动文件检索 (T_T)", false, true);
+            // command() fails when es.exe cannot be started, which nearly always means it is missing.
+            appendMessage("ai", "呜……结衣没能启动文件检索 (T_T)
+电脑里好像没有 Everything 的命令行工具 es.exe。请先安装 Everything（voidtools.com），再下载 ES 命令行工具，把 es.exe 放到 Everything 的安装目录并加入系统 PATH，结衣就能帮你找文件啦！", false, true);
             return ;
         }
         var tries = 0;
