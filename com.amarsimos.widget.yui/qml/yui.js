@@ -266,7 +266,40 @@ function parseSearchResults(text) {
 
 // Split a finished reply into the text to show and the tags it carried.
 // userProtected: extra protected process names (see isProtectedProcess).
-function parseReply(text, userProtected) {
+// Search engines for <<search:>> (Cardinal System); %s is the search term.
+var SEARCH_ENGINES = [{
+    "id": "bing",
+    "url": "https://www.bing.com/search?q=%s"
+}, {
+    "id": "google",
+    "url": "https://www.google.com/search?q=%s"
+}, {
+    "id": "baidu",
+    "url": "https://www.baidu.com/s?wd=%s"
+}, {
+    "id": "duckduckgo",
+    "url": "https://duckduckgo.com/?q=%s"
+}];
+
+// The search address of a query: the engine with this id, or with "custom" the user's own address
+// (an http(s) address containing %s; Bing otherwise).
+function searchUrl(engine, custom, query) {
+    var template = SEARCH_ENGINES[0].url;
+    SEARCH_ENGINES.forEach(function(item) {
+        if (item.id === engine)
+            template = item.url;
+
+    });
+    custom = String(custom || "").trim();
+    if (engine === "custom" && /^https?:\/\/[^\s"'<>]+$/i.test(custom) && custom.indexOf("%s") !== -1)
+        template = custom;
+
+    return template.split("%s").join(encodeURIComponent(query));
+}
+
+// options (optional): {searchEngine, searchCustom} for the address of <<search:>> (see searchUrl).
+function parseReply(text, userProtected, options) {
+    options = options || {};
     var result = {
         "text": "",
         "emotion": "",
@@ -307,7 +340,7 @@ function parseReply(text, userProtected) {
                 result.action = {
                     "type": "search",
                     "target": value,
-                    "url": "https://www.bing.com/search?q=" + encodeURIComponent(value)
+                    "url": searchUrl(options.searchEngine, options.searchCustom, value)
                 };
         } else if (kind === "launch") {
             // A program name or path only: no quotes or line breaks.

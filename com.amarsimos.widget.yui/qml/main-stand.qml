@@ -66,7 +66,11 @@ T.Widget {
     }]
     // Model list of version 0.0.2, where settings.model was an index into it.
     readonly property var legacyModelList: ["gpt-5.2", "gpt-5.2-pro", "gpt-5-mini", "gpt-5-nano", "gpt-5", "gpt-4.1", "gemini-3.0-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
-    readonly property int maxHistory: 20
+    // Conversation turns sent with each request (Cardinal System, default 20).
+    readonly property int maxHistory: widget.settings.max_history > 0 ? widget.settings.max_history : 20
+    // Longest reply asked for, in tokens (Cardinal System, default 1024); 0 sends no limit, except to
+    // Claude, which requires one.
+    readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 1024
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -345,6 +349,14 @@ T.Widget {
     // Everything appended to the system prompt. What stays the same between requests comes first, so
     // providers that cache the start of a prompt can reuse it: feature instructions and the heart core,
     // then the time and the memory fragments recalled for query (the user's latest message).
+    // How replies are read (Yui.parseReply): the search engine chosen in Cardinal System.
+    function replyOptions() {
+        return {
+            "searchEngine": widget.settings.search_engine || "bing",
+            "searchCustom": widget.settings.search_custom || ""
+        };
+    }
+
     function systemExtras(title, query) {
         return Yui.featureInstructions(title, Yui.coreMemories(heartCache)) + timeContext() + Yui.recallContext(title, recall(query));
     }
@@ -552,7 +564,7 @@ T.Widget {
             http.setRequestHeader("anthropic-version", "2023-06-01");
             data = {
                 "model": config.model,
-                "max_tokens": 1024,
+                "max_tokens": maxTokens > 0 ? maxTokens : 1024,
                 "stream": true,
                 "system": systemPrompt,
                 "messages": messages
@@ -568,7 +580,15 @@ T.Widget {
                     "content": systemPrompt
                 }].concat(messages)
             };
+            if (maxTokens > 0)
+                data.max_tokens = maxTokens;
+
         }
+        if (format === "gemini" && maxTokens > 0)
+            data.generationConfig = {
+            "maxOutputTokens": maxTokens
+        };
+
         http.setRequestHeader("Content-Type", "application/json");
         http.send(JSON.stringify(data));
         return {
@@ -807,7 +827,7 @@ T.Widget {
             var action = "";
             if (!isError) {
                 // Apply and strip the control tags (expression, memories, navigation).
-                var reply = Yui.parseReply(text, widget.settings.kill_protected);
+                var reply = Yui.parseReply(text, widget.settings.kill_protected, replyOptions());
                 text = reply.text || "(・ω・)";
                 if (reply.emotion)
                     setEmotion(reply.emotion);
@@ -1040,7 +1060,7 @@ T.Widget {
     // "blocked" note instead of asking.
     function testAction(tag) {
         diag("test " + tag);
-        var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected);
+        var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected, replyOptions());
         var index = chatModel.count;
         chatModel.append({
             "author": "ai",

@@ -134,6 +134,10 @@ NVG.Window {
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
                         idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
+                        historyPreference.value = settings.max_history > 0 ? settings.max_history : 20;
+                        maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 1024;
+                        searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
+                        searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
                     }
 
@@ -280,6 +284,36 @@ NVG.Window {
                         Layout.minimumHeight: 20
                     }
 
+                    P.SliderPreference {
+                        id: historyPreference
+
+                        name: "max_history"
+                        label: qsTr("Conversation Memory")
+                        from: 2
+                        to: 60
+                        stepSize: 2
+                        displayValue: qsTr("%1 messages").arg(value)
+                    }
+
+                    SettingNote {
+                        text: qsTr("How many of the latest messages are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
+                    }
+
+                    P.SliderPreference {
+                        id: maxTokensPreference
+
+                        name: "max_tokens"
+                        label: qsTr("Reply Length Limit")
+                        from: 0
+                        to: 8192
+                        stepSize: 256
+                        displayValue: value === 0 ? qsTr("No Limit") : qsTr("%1 tokens").arg(value)
+                    }
+
+                    SettingNote {
+                        text: qsTr("The longest reply Yui may give, which also caps its cost. Set it to No Limit if the server rejects the max_tokens parameter (Claude always gets 1024 then).")
+                    }
+
                     // ---------------------------------------------------------------- MHCP001 personality
                     Heading {
                         text: qsTr("MHCP001 Personality")
@@ -370,6 +404,27 @@ NVG.Window {
                         message: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
                     }
 
+                    P.SelectPreference {
+                        id: searchPreference
+
+                        readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
+
+                        name: "search_engine"
+                        label: qsTr("Search Engine")
+                        model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
+                    }
+
+                    P.TextFieldPreference {
+                        id: searchCustomPreference
+
+                        name: "search_custom"
+                        label: qsTr("Custom Search Address")
+                        visible: searchPreference.value === 4
+                        display: P.TextFieldPreference.ExpandControl
+                        hint: "https://example.com/search?q=%s"
+                        message: qsTr("%s is replaced by the search words.")
+                    }
+
                     P.SliderPreference {
                         id: sleepPreference
 
@@ -421,6 +476,10 @@ NVG.Window {
                 targetWidget.settings.external_browser = !!externalBrowserPreference.value;
                 targetWidget.settings.sleep_minutes = sleepPreference.value;
                 targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
+                targetWidget.settings.max_history = historyPreference.value;
+                targetWidget.settings.max_tokens = maxTokensPreference.value;
+                targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
+                targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
                 coreSettings.close();
             }
             onReset: {
