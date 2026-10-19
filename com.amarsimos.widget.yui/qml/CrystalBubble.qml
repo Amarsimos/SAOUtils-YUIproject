@@ -21,6 +21,8 @@ NVG.View {
     readonly property int stayTime: 8000
     readonly property int tailSize: 10
     readonly property color edgeColor: "#99888888"
+    // The bubble is shown slightly see-through.
+    readonly property real shownOpacity: 0.8
     // Opacity of the texts, faded out first when the bubble closes.
     property real textOpacity: 1
 
@@ -31,7 +33,7 @@ NVG.View {
         bubble.target = target;
         place();
         aniOut.stop();
-        if (!visible || content.opacity < 1) {
+        if (!visible || content.opacity < shownOpacity) {
             visible = true;
             aniIn.restart();
         }
@@ -317,7 +319,7 @@ NVG.View {
             target: content
             property: "opacity"
             from: 0
-            to: 1
+            to: bubble.shownOpacity
             duration: 200
         }
 
@@ -348,7 +350,7 @@ NVG.View {
             NumberAnimation {
                 target: content
                 property: "opacity"
-                from: 1
+                from: bubble.shownOpacity
                 to: 0
                 duration: 300
             }

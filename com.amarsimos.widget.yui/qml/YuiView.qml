@@ -6,7 +6,7 @@ import QtQuick.Window 2.12
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
 // its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
 // moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
-// It opens and closes like SAO Utils' SAO theme panels (com.gpbeta.theme.sao PanelView.qml).
+// It opens and closes like the SAO Utils mail box message panel (com.gpbeta.mail-box MessagePanel.qml).
 NVG.View {
     id: view
 
@@ -16,8 +16,8 @@ NVG.View {
     readonly property Item host: hostItem
     readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
-    // Height the panel first opens to before unfolding fully (PanelView's collapsedHeight).
-    readonly property real collapsedHeight: Math.round(height * 0.66)
+    // Height of the strip the panel unfolds from (MessagePanel's style.collapse).
+    readonly property real collapsedHeight: Math.min(156, height)
     property point moveStart
     property point moveOrigin
 
@@ -25,14 +25,13 @@ NVG.View {
     // The close animation has finished and the view is hidden.
     signal folded()
 
-    // Opens: the clip grows from 80 x 80 at the right edge to the full width and collapsedHeight
-    // (400 ms) while the view fades in (500 ms) with the panel sound, then unfolds to the full height
-    // (250 ms); the character and chat fade in at the end. The content stays where it is while the
-    // clip reveals it (no scaling).
+    // Opens as the mail box message panel: widens from 10 % (200 ms) while fading in (250 ms), then
+    // the message sound, the height unfolds from a strip in the middle (250 ms) and the character and
+    // chat fade in (250 ms). The content stays laid out at full size; the clip reveals it.
     function popUp() {
         aniClose.stop();
-        panelClip.width = 80;
-        panelClip.height = 80;
+        clipScale.xScale = 0.1;
+        panelClip.height = collapsedHeight;
         hostItem.opacity = 0;
         opacity = 0;
         visible = true;
@@ -40,7 +39,8 @@ NVG.View {
         aniOpen.restart();
     }
 
-    // Closes: fades out (250 ms), then folded().
+    // Closes as the message panel: the close sound, narrows back to 10 % while fading out (250 ms),
+    // then folded().
     function fold() {
         if (!visible || aniClose.running)
             return ;
@@ -116,16 +116,22 @@ NVG.View {
     opacity: 0
     visible: false
 
-    // The panel clip (as PanelView: anchored to the right edge, growing up from collapsedHeight while
-    // it is lower than that, then down), with the content kept in place inside it.
+    // The panel clip: full width (scaled horizontally while opening / closing), its height unfolding
+    // from the middle, with the content kept in place inside it.
     Item {
         id: panelClip
 
-        x: view.width - width
-        y: Math.max(view.collapsedHeight - height, 0)
+        y: Math.round((view.height - height) / 2)
         width: view.width
         height: view.height
         clip: true
+
+        transform: Scale {
+            id: clipScale
+
+            origin.x: panelClip.width / 2
+            origin.y: panelClip.height / 2
+        }
 
         Item {
             id: inner
@@ -197,67 +203,54 @@ NVG.View {
 
     }
 
-    SequentialAnimation {
+    ParallelAnimation {
         id: aniOpen
 
-        ParallelAnimation {
-            ScriptAction {
-                script: NVG.SystemCall.playSound(NVG.SFX.PopupPanel)
-            }
+        NumberAnimation {
+            target: clipScale
+            property: "xScale"
+            from: 0.1
+            to: 1
+            duration: 200
+            easing.type: Easing.OutQuart
+        }
 
-            NumberAnimation {
-                target: panelClip
-                property: "width"
-                from: 80
-                to: view.width
-                duration: 400
-                easing.type: Easing.OutQuart
-            }
-
-            NumberAnimation {
-                target: panelClip
-                property: "height"
-                from: 80
-                to: view.collapsedHeight
-                duration: 400
-                easing.type: Easing.OutQuart
-            }
-
+        SequentialAnimation {
             NumberAnimation {
                 target: view
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: 500
+                duration: 250
             }
 
-        }
+            ScriptAction {
+                script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
+            }
 
-        NumberAnimation {
-            target: panelClip
-            property: "height"
-            to: view.height
-            duration: 250
-            easing.type: Easing.OutQuart
-        }
+            NumberAnimation {
+                target: panelClip
+                property: "height"
+                to: view.height
+                duration: 250
+                easing.type: Easing.OutQuart
+            }
 
-        NumberAnimation {
-            target: hostItem
-            property: "opacity"
-            to: 1
-            duration: 250
-        }
+            NumberAnimation {
+                target: hostItem
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 250
+            }
 
-        // The clip follows the view's size again (for resizing).
-        ScriptAction {
-            script: {
-                panelClip.width = Qt.binding(function() {
-                    return view.width;
-                });
-                panelClip.height = Qt.binding(function() {
+            // The clip follows the view's height again (for resizing).
+            ScriptAction {
+                script: panelClip.height = Qt.binding(function() {
                     return view.height;
-                });
+                })
             }
+
         }
 
     }
@@ -265,11 +258,27 @@ NVG.View {
     SequentialAnimation {
         id: aniClose
 
-        NumberAnimation {
-            target: view
-            property: "opacity"
-            to: 0
-            duration: 250
+        ScriptAction {
+            script: NVG.SystemCall.playSound(NVG.SFX.DismissMessage)
+        }
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: clipScale
+                property: "xScale"
+                from: 1
+                to: 0.1
+                duration: 250
+                easing.type: Easing.OutQuart
+            }
+
+            NumberAnimation {
+                target: view
+                property: "opacity"
+                to: 0
+                duration: 250
+            }
+
         }
 
         ScriptAction {
