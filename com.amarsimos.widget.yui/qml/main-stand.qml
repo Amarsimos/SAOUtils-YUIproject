@@ -1777,8 +1777,23 @@ T.Widget {
         idleChat();
     }
 
-    // Yui says something by herself (idle chatter). Also the Option window's "Yui Speaks" test, which
-    // ignores the timing; its reply shows in the crystal's bubble when she is a crystal.
+    // Option window "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
+    // click shows the next sample (short, long, a status report), so the layout can be checked.
+    property int testBubbleCount: 0
+
+    function testBubble() {
+        if (!crystalForm.visible) {
+            diag("test bubble: Yui is not a crystal; collapse her to the crystal form first");
+            return ;
+        }
+        var title = userTitle();
+        var samples = [["", title + "～结衣在这里哦！(｡･ω･｡)"], ["", "嗯……" + title + "已经对着屏幕好久了呢。结衣刚才在想，等这件事忙完，要不要一起去看看窗外的风景？外面的天空说不定很漂亮哦！不过在那之前，先喝一口水吧～这句话故意写得很长，用来测试气泡最多显示六行时的省略效果。"], [qsTr("Navigation Report"), "警告！系统负荷过高：GPU 98%……" + title + "，要不要看看是什么程序在占用呢？(・_・;)"], [qsTr("Mental Health Counseling"), "已经连续使用电脑 2 小时了哦，" + title + "，休息一下眼睛吧 (´・ω・`)"]];
+        var sample = samples[testBubbleCount++ % samples.length];
+        showBubble(sample[0] || "MHCP001 · Yui", sample[1]);
+    }
+
+    // Yui says something by herself (idle chatter); its reply shows in the crystal's bubble when she
+    // is a crystal.
     function idleChat() {
         var title = userTitle();
         var started = yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
