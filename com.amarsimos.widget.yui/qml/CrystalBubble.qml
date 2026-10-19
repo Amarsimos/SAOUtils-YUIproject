@@ -6,8 +6,9 @@ import QtQuick.Window 2.12
 
 // What Yui says while she is a crystal (Yui's Heart): a small SAO message window next to the crystal,
 // in its own view so it is not clipped by the small widget, with a comic-style tail pointing at the
-// crystal. Its title bar takes the crystal's status color. It never takes focus; it stays stayTime ms
-// (paused while hovered) and a click closes it. Created once and reused; call show().
+// crystal. Its title bar takes the crystal's status color; it pops up like SAO Utils' GGO mail box
+// menu. It never takes focus; it stays stayTime ms (paused while hovered) and a click closes it.
+// Created once and reused; call show().
 NVG.View {
     id: bubble
 
@@ -21,6 +22,8 @@ NVG.View {
     readonly property int stayTime: 8000
     readonly property int tailSize: 18
     readonly property color edgeColor: "#99888888"
+    // Opacity of the texts, faded out first when the bubble closes.
+    property real textOpacity: 1
 
     function show(heading, text, accent, target) {
         bubble.heading = heading;
@@ -139,6 +142,7 @@ NVG.View {
                     x: 10
                     width: parent.width - 20
                     text: bubble.heading
+                    opacity: bubble.textOpacity
                     color: "#FFFFFF"
                     font.pixelSize: 12
                     font.bold: true
@@ -154,6 +158,7 @@ NVG.View {
                 y: header.height + 10
                 width: parent.width - 24
                 text: bubble.text
+                opacity: bubble.textOpacity
                 color: "#333333"
                 font.pixelSize: 13
                 wrapMode: Text.Wrap
@@ -226,81 +231,101 @@ NVG.View {
             }
         }
 
-        transform: Scale {
-            id: contentScale
+        // Scaled toward the tail's tip, slid in from the crystal's side (see aniIn / aniOut).
+        transform: [
+            Scale {
+                id: contentScale
 
-            xScale: 0.1
-            yScale: 0.05
-            origin.x: tail.tipX
-            origin.y: bubble.below ? 0 : bubble.height
-        }
+                origin.x: tail.tipX
+                origin.y: bubble.below ? 0 : bubble.height
+            },
+            Translate {
+                id: contentSlide
+            }
+        ]
 
     }
 
-    // Opens like SAO Utils' own warning: a thin line widens, then unfolds (from the tail's tip).
+    // Pop-up as in SAO Utils' GGO mail box menu (com.gpbeta.mail-box, MessagePanelMenuGGO.qml):
+    // rises 100 px into place while fading in, with the menu sound...
     ParallelAnimation {
         id: aniIn
 
+        PropertyAction {
+            target: bubble
+            property: "textOpacity"
+            value: 1
+        }
+
+        PropertyAction {
+            target: contentScale
+            property: "xScale"
+            value: 1
+        }
+
+        PropertyAction {
+            target: contentScale
+            property: "yScale"
+            value: 1
+        }
+
+        ScriptAction {
+            script: NVG.SystemCall.playSound(NVG.SFX.PopupMenu)
+        }
+
+        NumberAnimation {
+            target: contentSlide
+            property: "y"
+            from: bubble.below ? -100 : 100
+            to: 0
+            duration: 300
+            easing.type: Easing.OutQuart
+        }
+
         NumberAnimation {
             target: content
             property: "opacity"
-            duration: 250
+            from: 0
             to: 1
-        }
-
-        SequentialAnimation {
-            NumberAnimation {
-                target: contentScale
-                property: "xScale"
-                duration: 100
-                from: 0.1
-                to: 1
-                easing.type: Easing.OutQuad
-            }
-
-            NumberAnimation {
-                target: contentScale
-                property: "yScale"
-                duration: 200
-                from: 0.05
-                to: 1
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.5
-            }
-
+            duration: 200
         }
 
     }
 
-    ParallelAnimation {
+    // ...and closes by fading its texts while shrinking toward the tail and fading out.
+    SequentialAnimation {
         id: aniOut
 
-        onFinished: bubble.visible = false
+        ParallelAnimation {
+            NumberAnimation {
+                target: bubble
+                property: "textOpacity"
+                from: 1
+                to: 0
+                duration: 200
+            }
 
-        NumberAnimation {
-            target: content
-            property: "opacity"
-            duration: 300
-            to: 0
+            NumberAnimation {
+                target: contentScale
+                properties: "xScale,yScale"
+                from: 1
+                to: 0.1
+                duration: 300
+                easing.type: Easing.OutQuart
+            }
+
+            NumberAnimation {
+                target: content
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: 300
+            }
+
         }
 
-        SequentialAnimation {
-            NumberAnimation {
-                target: contentScale
-                property: "yScale"
-                duration: 180
-                to: 0.05
-                easing.type: Easing.InQuad
-            }
-
-            NumberAnimation {
-                target: contentScale
-                property: "xScale"
-                duration: 120
-                to: 0.1
-                easing.type: Easing.OutQuad
-            }
-
+        ScriptAction {
+            script: bubble.visible = false
         }
 
     }
