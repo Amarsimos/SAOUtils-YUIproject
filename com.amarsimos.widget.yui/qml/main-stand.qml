@@ -2813,47 +2813,47 @@ T.Widget {
                 font.pixelSize: 20
             }
 
-            // Drag the title bar to move Yui's view.
+            // The title bar: a click closes the view (as the Information panel of SAO Utils' bangumi
+            // widget, which closes on a click), pressing and dragging moves it. A press counts as a drag
+            // once the mouse has moved more than dragThreshold px; Esc also closes.
             MouseArea {
-                width: parent.width - 34
+                property point pressPoint
+                property bool dragging: false
+                readonly property real dragThreshold: 4
+
+                width: parent.width
                 height: chatPanel.titleHeight
-                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                hoverEnabled: true
+                cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                 onPressed: {
+                    dragging = false;
+                    pressPoint = mapToGlobal(mouse.x, mouse.y);
                     if (widget.yuiView)
-                        widget.yuiView.beginMove(mapToGlobal(mouse.x, mouse.y));
+                        widget.yuiView.beginMove(pressPoint);
 
                 }
                 onPositionChanged: {
-                    if (pressed && widget.yuiView)
-                        widget.yuiView.moveTo(mapToGlobal(mouse.x, mouse.y));
+                    if (!pressed || !widget.yuiView)
+                        return ;
+
+                    var now = mapToGlobal(mouse.x, mouse.y);
+                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > dragThreshold)
+                        dragging = true;
+
+                    if (dragging)
+                        widget.yuiView.moveTo(now);
 
                 }
                 onReleased: {
-                    if (widget.yuiView)
-                        widget.yuiView.endMove();
+                    if (dragging) {
+                        if (widget.yuiView)
+                            widget.yuiView.endMove();
 
+                    } else {
+                        setChatVisible(false);
+                    }
+                    dragging = false;
                 }
-            }
-
-            // Close (also Esc).
-            Text {
-                anchors.right: parent.right
-                anchors.rightMargin: 12
-                y: 11
-                text: "✕"
-                color: panelCloseArea.containsMouse ? "#F59B00" : "#999999"
-                font.pixelSize: 15
-
-                MouseArea {
-                    id: panelCloseArea
-
-                    anchors.fill: parent
-                    anchors.margins: -6
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: setChatVisible(false)
-                }
-
             }
 
             Shape {
