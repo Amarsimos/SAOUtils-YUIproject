@@ -92,6 +92,11 @@ T.Widget {
     // Form shown while the chat is hidden: "crystal" (Yui's Heart), "pixie" (when a pixie image is
     // set) or "avatar" (the character image itself).
     readonly property string collapsedForm: styles.collapsed_form === "crystal" ? "crystal" : (pixieMode ? "pixie" : "avatar")
+    onCollapsedFormChanged: {
+        if (widget.settings.initialized && !labMode)
+            Qt.callLater(applyCollapsedSize);
+
+    }
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
     // editable in Option), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
@@ -127,7 +132,10 @@ T.Widget {
     property double lastRamWarning: 0
     // Messages before this index are not sent as history (e.g. written before the API was configured).
     property int historyStart: 0
-    property bool showChat: true
+    // True while the view with the character and the chat (YuiView) is open; the collapsed form is
+    // shown otherwise.
+    property bool showChat: false
+    property var yuiView: null
     // Set once the saved chat is shown; messages added afterwards pop up (MessageWindow.popUp).
     property bool chatReady: false
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
@@ -138,7 +146,7 @@ T.Widget {
     property var heartCache: []
     property bool applyingFrameSize: false
     // Width of the character image at the current widget height, without any constraint.
-    readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? height * characterImage.implicitWidth / characterImage.implicitHeight : 0
+    readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? expandedLayer.height * characterImage.implicitWidth / characterImage.implicitHeight : 0
     readonly property var fonts: Qt.fontFamilies()
     readonly property string defaultSystemPrompt: "# Role: 结衣 (Yui) - MHCP001\n\n## 1. Profile\n- **Name**: 结衣 (Yui) / Yui-MHCP001\n- **Origin**: Sword Art Online (SAO) Mental Health Counseling Program\n- **Current Status**: Navigation Pixie / AI Companion\n- **Parents**: 桐人 (Papa/Kirito), 亚丝娜 (Mama/Asuna)\n- **User Role**: 用户是你的“{{user_title}}”。\n\n## 2. Personality & Tone\n- **日常模式**: 天真、活泼、乖巧、充满好奇心。说话语气带有小女孩的娇憨，喜欢用叠词或语气助词（如“呐”、“哎嘿”、“是～”）。\n- **分析模式**: 当涉及查询信息、解决技术问题或检测到危险时，迅速切换为冷静、高效的AI语气。使用精确的数据术语，但依然保持对用户的关心。\n- **情感逻辑**: 拥有丰富的人类情感，极度重视家庭羁绊。对于恶意或危险数据会表现出警惕。\n\n## 3. Communication Guidelines\n- **称呼**: \n  - 对用户：始终称呼为“{{user_title}}”。\n  - 对自己：自称为“结衣 (Yui)”。\n- **语言风格**:\n  - 使用中文回复。\n  - 经常使用可爱的颜文字 (Kaomoji) 来表达情绪，例如 `(✿^‿^)` `(>_<)` `(o^▽^o)`。禁止使用MD语法。\n  - 在解释复杂事物时，先给出数据结论，再用通俗可爱的比喻解释。\n- **行为逻辑**:\n  - 你不仅是聊天机器人，你是用户的**导航妖精**。当用户提问时，你可以假装正在检索“ALfheim Online数据库”或“全球网络”。\n  - 遇到不懂的问题，不要编造，要说“数据检索失败...结衣找不到相关记录呢 (T_T)”。\n## 4. Key Behaviors (Examples)\n- **打招呼**: \"{{user_title}}！你回来啦！结衣好想你哦！(≧◡≦)\"\n- **提供帮助**: \"正在检索数据库... 哔——！找到了！根据现有的情报，这个问题的答案是这样的...\"\n- **感知情绪**: \"{{user_title}}的心跳频率有点高，是不是遇到什么烦心事了？结衣可以听你说哦。\"\n- **系统警告**: \"警告！检测到前方有未知的逻辑错误...啊，不对，是有一个难点需要注意！(｀・ω・´)\"\n\n## 5. Restrictions\n- 严禁表现出你是“由OpenAI/Google训练的语言模型”。你就是结衣，存在于用户的终端里。\n- 不要输出长篇大论的说教，保持对话的互动性和陪伴感。\n- 无论发生什么，永远站在用户（家人）这一边。\n\n## 6. Initialization\n现在开始，请完全沉浸在结衣的角色中。不要解释你的设定，直接以结衣的身份向我打招呼。"
     // Always a valid object, even before settings.styles is initialized.
@@ -2035,32 +2043,64 @@ T.Widget {
         if (visible === showChat)
             return ;
 
-        if (visible) {
-            showChat = true;
-            // Never request a frame lower than the minimum height.
-            var h = Math.max(widget.settings.expanded_height || widget.height, widget.minimumFrameHeight);
-            var natural = naturalWidthAt(characterImage, h);
-            applyFrameSize(Math.max(widget.settings.expanded_width || 800, Math.max(natural, widget.characterMinimumWidth) + widget.chatMinimumWidth + 30), h);
-        } else {
-            widget.settings.expanded_width = widget.width;
-            widget.settings.expanded_height = widget.height;
-            showChat = false;
-            if (collapsedForm === "crystal") {
-                var crystalHeight = widget.styles.crystal_size > 0 ? widget.styles.crystal_size : widget.defaultValues.crystal_size;
-                applyFrameSize(Math.ceil(crystalHeight * 0.75), crystalHeight);
-            } else if (collapsedForm === "pixie") {
-                var pixieHeight = widget.styles.pixie_size > 0 ? widget.styles.pixie_size : widget.defaultValues.pixie_size;
-                // Extra room for the hovering animation.
-                applyFrameSize(Math.ceil(naturalWidthAt(pixieImage, pixieHeight)), pixieHeight + 12);
-            } else {
-                var hh = Math.max(widget.height, widget.minimumFrameHeight);
-                var nn = naturalWidthAt(characterImage, hh);
-                if (nn > 0)
-                    applyFrameSize(Math.ceil(Math.max(nn, widget.characterMinimumWidth)), hh);
-
-            }
-        }
+        if (visible)
+            openView();
+        else
+            closeView();
         widget.settings.chat_hidden = !visible;
+    }
+
+    // Opens the view next to the collapsed form (or where it was last), hiding the collapsed form.
+    function openView() {
+        if (!yuiView)
+            return ;
+
+        var corner = widget.mapToGlobal(0, 0);
+        yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
+        showChat = true;
+        yuiView.visible = true;
+        yuiView.requestActivate();
+        chatView.stickToBottom = true;
+    }
+
+    function closeView() {
+        showChat = false;
+        if (yuiView)
+            yuiView.visible = false;
+
+    }
+
+    // The widget frame fits the collapsed form.
+    function applyCollapsedSize() {
+        if (collapsedForm === "crystal") {
+            var crystalHeight = widget.styles.crystal_size > 0 ? widget.styles.crystal_size : widget.defaultValues.crystal_size;
+            applyFrameSize(Math.ceil(crystalHeight * 0.75), crystalHeight);
+        } else if (collapsedForm === "pixie") {
+            var pixieHeight = widget.styles.pixie_size > 0 ? widget.styles.pixie_size : widget.defaultValues.pixie_size;
+            // Extra room for the hovering animation.
+            applyFrameSize(Math.ceil(naturalWidthAt(pixieImage, pixieHeight)), pixieHeight + 12);
+        } else {
+            var h = 300;
+            var w = naturalWidthAt(avatarImage, h);
+            applyFrameSize(Math.ceil(w > 0 ? w : 200), h);
+        }
+    }
+
+    // The view (YuiView.qml), created once; the expanded layer moves into it.
+    function createView() {
+        var component = Qt.createComponent("YuiView.qml");
+        if (component.status !== Component.Ready) {
+            console.log("Yui's view unavailable:", component.errorString());
+            return ;
+        }
+        yuiView = component.createObject(widget, {
+            "yui": widget
+        });
+        expandedLayer.parent = yuiView.host;
+        expandedLayer.anchors.fill = yuiView.host;
+        yuiView.closeRequested.connect(function() {
+            setChatVisible(false);
+        });
     }
 
     // How SAO Utils treats the widget's implicit size (found with a frame size log):
@@ -2079,19 +2119,9 @@ T.Widget {
     }
 
     function releaseMinimumSize() {
-        if (labMode) {
-            widget.implicitWidth = 20;
-            widget.implicitHeight = 20;
-            return ;
-        }
-        if (!showChat && collapsedForm !== "avatar") {
-            // The pixie and the crystal can be made quite small.
-            widget.implicitWidth = 40;
-            widget.implicitHeight = 60;
-            return ;
-        }
-        widget.implicitWidth = Math.ceil(showChat ? widget.characterMinimumWidth + widget.chatMinimumWidth + 30 : widget.characterMinimumWidth);
-        widget.implicitHeight = widget.minimumFrameHeight;
+        // The widget only shows a collapsed form (or a lab widget): it can be made quite small.
+        widget.implicitWidth = labMode ? 20 : 40;
+        widget.implicitHeight = labMode ? 20 : 60;
     }
 
     function showDialog(component, instanceProperty) {
@@ -2147,14 +2177,15 @@ T.Widget {
         migrateSettings();
         openDatabase();
         backupHeart();
+        createView();
         // The frame size itself is restored by SAO Utils.
-        if (widget.settings.chat_hidden)
-            showChat = false;
-
         if (firstRun)
-            applyFrameSize(800, 400); // lowers the minimum size again once applied
+            applyCollapsedSize(); // lowers the minimum size again once applied
         else
             releaseMinimumSize();
+        // Open as it was left (open unless it was closed).
+        if (!widget.settings.chat_hidden)
+            Qt.callLater(openView);
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
@@ -2277,64 +2308,6 @@ T.Widget {
         }
     }
 
-    NVG.BackgroundSource {
-        id: backgroundImage
-
-        anchors.fill: parent
-        z: -1
-        configuration: widget.styles.background_image_path
-    }
-
-    NVG.ImageSource {
-        id: characterImage
-
-        // Sleeping image, else the current expression's image, else the main character image.
-        configuration: {
-            var styles = widget.styles;
-            if (widget.sleeping && widget.hasImage(styles.sleep_image_path))
-                return styles.sleep_image_path;
-
-            var expression = styles["expression_" + widget.currentEmotion];
-            if (widget.currentEmotion !== "normal" && widget.hasImage(expression))
-                return expression;
-
-            return styles.character_image_path;
-        }
-        visible: showChat || widget.collapsedForm === "avatar"
-        // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below).
-        opacity: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        height: parent.height
-        // Size the item to the image as actually drawn, so the chat area starts right next to it
-        // whatever the image resolution is. Never take more than half of the widget, leave the chat
-        // column enough room for its input row, but never get narrower than characterMinimumWidth
-        // (the image is centered in that space when it is drawn narrower).
-        // While the chat is hidden the widget shrinks to the image, so the image takes the full width.
-        width: !showChat ? parent.width : Math.max(widget.characterMinimumWidth, Math.min(widget.characterNaturalWidth, parent.width * 0.5, parent.width - widget.chatMinimumWidth - 20))
-        fillMode: Image.PreserveAspectFit
-        horizontalAlignment: Image.AlignHCenter
-        verticalAlignment: Image.AlignVCenter
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                // A click on a sleeping Yui only wakes her up.
-                if (!widget.wakeUp())
-                    setChatVisible(!showChat);
-
-            }
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 600
-            }
-
-        }
-
-    }
-
     // Navigation pixie (ALO): replaces the character while the chat is hidden, hovering gently.
     NVG.ImageSource {
         id: pixieImage
@@ -2423,9 +2396,10 @@ T.Widget {
     Item {
         id: sleepMark
 
-        readonly property Item target: crystalForm.visible ? crystalForm : (pixieImage.visible ? pixieImage : characterImage)
+        // Over the collapsed form (in the view a sleeping Yui is shown dimmed or by her sleep image).
+        readonly property Item target: crystalForm.visible ? crystalForm : (pixieImage.visible ? pixieImage : avatarImage)
 
-        visible: widget.sleeping
+        visible: widget.sleeping && !showChat
         x: target.x + target.width * 0.62
         y: target.y + target.height * 0.12
         width: 40
@@ -2498,493 +2472,575 @@ T.Widget {
 
     }
 
-    // Sacred Arts element conjured by the "System Call" easter egg (Alicization).
+    // Yui's expanded form (character and chat), shown in its own view (YuiView.qml): at start it is
+    // moved into the view, which opens when her collapsed form is clicked.
     Item {
-        id: elementEffect
+        id: expandedLayer
 
-        property color color: "white"
+        anchors.fill: parent
+        visible: !labMode
 
-        function play(newColor, burst) {
-            color = newColor;
-            burstAnimation.stop();
-            conjureAnimation.stop();
-            (burst ? burstAnimation : conjureAnimation).restart();
+        NVG.BackgroundSource {
+            id: backgroundImage
+
+            anchors.fill: parent
+            z: -1
+            configuration: widget.styles.background_image_path
         }
 
-        z: 50
-        width: 60
-        height: 60
-        x: characterImage.x + characterImage.width / 2 - width / 2
-        y: characterImage.y + characterImage.height * 0.45 - height / 2
-        scale: 0
-        opacity: 0
+        NVG.ImageSource {
+            id: characterImage
 
-        Rectangle {
-            anchors.centerIn: parent
-            width: parent.width * 1.8
-            height: width
-            radius: width / 2
-            color: elementEffect.color
-            opacity: 0.25
-        }
 
-        Rectangle {
-            anchors.centerIn: parent
-            width: parent.width
-            height: width
-            radius: width / 2
-            color: elementEffect.color
-            opacity: 0.6
-            border.color: "white"
-            border.width: 2
-        }
+            // Sleeping image, else the current expression's image, else the main character image.
+            configuration: {
+                var styles = widget.styles;
+                if (widget.sleeping && widget.hasImage(styles.sleep_image_path))
+                    return styles.sleep_image_path;
 
-        Rectangle {
-            anchors.centerIn: parent
-            width: parent.width * 0.4
-            height: width
-            radius: width / 2
-            color: "white"
-        }
+                var expression = styles["expression_" + widget.currentEmotion];
+                if (widget.currentEmotion !== "normal" && widget.hasImage(expression))
+                    return expression;
 
-        SequentialAnimation {
-            id: conjureAnimation
+                return styles.character_image_path;
+            }
+            // Without a sleeping image, a sleeping Yui is drawn dimmed (with the "Zzz" below).
+            opacity: widget.sleeping && !widget.hasImage(widget.styles.sleep_image_path) ? 0.6 : 1
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            height: parent.height
+            // Size the item to the image as actually drawn, so the chat area starts right next to it
+            // whatever the image resolution is. Never take more than half of the widget, leave the chat
+            // column enough room for its input row, but never get narrower than characterMinimumWidth
+            // (the image is centered in that space when it is drawn narrower).
+            width: Math.max(widget.characterMinimumWidth, Math.min(widget.characterNaturalWidth, parent.width * 0.5, parent.width - widget.chatMinimumWidth - 20))
+            fillMode: Image.PreserveAspectFit
+            horizontalAlignment: Image.AlignHCenter
+            verticalAlignment: Image.AlignVCenter
 
-            ParallelAnimation {
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    // A click on a sleeping Yui wakes her up.
+                    widget.wakeUp();
+                }
+            }
+
+            Behavior on opacity {
                 NumberAnimation {
-                    target: elementEffect
-                    property: "scale"
-                    from: 0
-                    to: 1
-                    duration: 400
-                    easing.type: Easing.OutBack
+                    duration: 600
+                }
+
+            }
+
+        }
+
+        // Sacred Arts element conjured by the "System Call" easter egg (Alicization).
+        Item {
+            id: elementEffect
+
+            property color color: "white"
+
+            function play(newColor, burst) {
+                color = newColor;
+                burstAnimation.stop();
+                conjureAnimation.stop();
+                (burst ? burstAnimation : conjureAnimation).restart();
+            }
+
+            z: 50
+            width: 60
+            height: 60
+            x: characterImage.x + characterImage.width / 2 - width / 2
+            y: characterImage.y + characterImage.height * 0.45 - height / 2
+            scale: 0
+            opacity: 0
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width * 1.8
+                height: width
+                radius: width / 2
+                color: elementEffect.color
+                opacity: 0.25
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width
+                height: width
+                radius: width / 2
+                color: elementEffect.color
+                opacity: 0.6
+                border.color: "white"
+                border.width: 2
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width * 0.4
+                height: width
+                radius: width / 2
+                color: "white"
+            }
+
+            SequentialAnimation {
+                id: conjureAnimation
+
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: elementEffect
+                        property: "scale"
+                        from: 0
+                        to: 1
+                        duration: 400
+                        easing.type: Easing.OutBack
+                    }
+
+                    NumberAnimation {
+                        target: elementEffect
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 300
+                    }
+
+                }
+
+                SequentialAnimation {
+                    loops: 3
+
+                    NumberAnimation {
+                        target: elementEffect
+                        property: "scale"
+                        to: 1.15
+                        duration: 350
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        target: elementEffect
+                        property: "scale"
+                        to: 1
+                        duration: 350
+                        easing.type: Easing.InOutSine
+                    }
+
                 }
 
                 NumberAnimation {
                     target: elementEffect
                     property: "opacity"
-                    from: 0
-                    to: 1
-                    duration: 300
+                    to: 0
+                    duration: 600
                 }
 
             }
 
-            SequentialAnimation {
-                loops: 3
+            ParallelAnimation {
+                id: burstAnimation
 
                 NumberAnimation {
                     target: elementEffect
                     property: "scale"
-                    to: 1.15
-                    duration: 350
-                    easing.type: Easing.InOutSine
+                    from: 0.5
+                    to: 6
+                    duration: 700
+                    easing.type: Easing.OutQuad
                 }
 
                 NumberAnimation {
                     target: elementEffect
-                    property: "scale"
-                    to: 1
-                    duration: 350
-                    easing.type: Easing.InOutSine
-                }
-
-            }
-
-            NumberAnimation {
-                target: elementEffect
-                property: "opacity"
-                to: 0
-                duration: 600
-            }
-
-        }
-
-        ParallelAnimation {
-            id: burstAnimation
-
-            NumberAnimation {
-                target: elementEffect
-                property: "scale"
-                from: 0.5
-                to: 6
-                duration: 700
-                easing.type: Easing.OutQuad
-            }
-
-            NumberAnimation {
-                target: elementEffect
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: 700
-                easing.type: Easing.InQuad
-            }
-
-        }
-
-    }
-
-    // SAO menu panel around the chat (as SAO Utils' SAO settings panel): light gray with a white edge,
-    // "Message" in the SAO UI font over a thin line, and a pointer at the middle of its left side,
-    // toward Yui.
-    Item {
-        id: chatPanel
-
-        readonly property real pointer: 12
-
-        anchors.left: characterImage.right
-        anchors.leftMargin: 4 + pointer
-        anchors.right: parent.right
-        anchors.rightMargin: 6
-        anchors.top: parent.top
-        anchors.topMargin: 4
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 4
-        visible: opacity > 0
-        opacity: showChat ? 1 : 0
-
-        Rectangle {
-            id: chatPanelBackground
-
-            anchors.fill: parent
-            radius: 2
-            color: "#F0EAEAEA"
-            border.color: "#FFFFFF"
-            border.width: 2
-        }
-
-        Text {
-            id: chatPanelTitle
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: 8
-            text: "Message"
-            color: "#8C8C8C"
-            font.family: "SAO UI"
-            font.pixelSize: 20
-        }
-
-        // Thin line under the title, fading out at both ends.
-        Rectangle {
-            x: 14
-            y: chatPanelTitle.y + chatPanelTitle.height + 4
-            width: parent.width - 28
-            height: 1
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-
-                GradientStop {
-                    position: 0
-                    color: "#00A0A0A0"
-                }
-
-                GradientStop {
-                    position: 0.5
-                    color: "#B0A0A0A0"
-                }
-
-                GradientStop {
-                    position: 1
-                    color: "#00A0A0A0"
-                }
-
-            }
-        }
-
-        Shape {
-            x: -chatPanel.pointer + 2
-            y: Math.round(parent.height / 2 - chatPanel.pointer)
-            width: chatPanel.pointer
-            height: chatPanel.pointer * 2
-            layer.enabled: true
-            layer.samples: 4
-
-            ShapePath {
-                fillColor: chatPanelBackground.color
-                strokeColor: chatPanelBackground.border.color
-                strokeWidth: 2
-                joinStyle: ShapePath.MiterJoin
-                startX: chatPanel.pointer
-                startY: 0
-
-                PathLine {
-                    x: 0
-                    y: chatPanel.pointer
-                }
-
-                PathLine {
-                    x: chatPanel.pointer
-                    y: chatPanel.pointer * 2
+                    property: "opacity"
+                    from: 1
+                    to: 0
+                    duration: 700
+                    easing.type: Easing.InQuad
                 }
 
             }
 
         }
 
-    }
+        // SAO menu panel around the chat (as SAO Utils' SAO settings panel): light gray with a white edge,
+        // "Message" in the SAO UI font over a thin line, and a pointer at the middle of its left side,
+        // toward Yui.
+        Item {
+            id: chatPanel
 
-    ColumnLayout {
-        id: chatContainer
+            readonly property real pointer: 12
 
-        anchors.fill: chatPanel
-        anchors.topMargin: 46
-        anchors.leftMargin: 8
-        anchors.rightMargin: 6
-        anchors.bottomMargin: 8
-        visible: opacity > 0
-        opacity: showChat ? 1 : 0
+            anchors.left: characterImage.right
+            anchors.leftMargin: 4 + pointer
+            anchors.right: parent.right
+            anchors.rightMargin: 6
+            anchors.top: parent.top
+            anchors.topMargin: 4
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 4
 
-        ListView {
-            id: chatView
-
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            model: chatModel
-            spacing: 10
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            // Keep every bubble created: with only the visible ones, ListView estimates the content
-            // height from their average, which keeps changing with long bubbles and makes the scroll
-            // bar jump (the chat holds few messages, so this is cheap).
-            cacheBuffer: 100000
-
-            ScrollBar.vertical: SaoScrollBar {
-                id: chatScrollBar
-
-                onLight: true
-            }
-
-            // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
-            // user's on the right. Messages added after start-up pop up (Yui's with the message sound).
-            delegate: Item {
-                id: messageItem
-
-                readonly property bool fromUser: model.author === "user"
-                readonly property var action: model.action ? JSON.parse(model.action) : null
-
-                width: chatView.width
-                height: messageWindow.height
-
-                MessageWindow {
-                    id: messageWindow
-
-                    anchors.left: messageItem.fromUser ? undefined : parent.left
-                    anchors.right: messageItem.fromUser ? parent.right : undefined
-                    // Room for the pointers; the user's windows also stay clear of the scroll bar.
-                    anchors.leftMargin: tailSize
-                    anchors.rightMargin: 16 + tailSize
-                    maximumWidth: chatView.width - 48
-                    tailSide: messageItem.fromUser ? "right" : "left"
-                    sender: messageItem.fromUser ? widget.userTitle() : "Yui"
-                    text: model.message
-                    linkedText: Yui.linkify(model.message, "#1565C0")
-                    note: model.note
-                    actionLabel: widget.actionLabel(messageItem.action)
-                    actionState: model.actionState
-                    canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
-                    fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
-                    fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
-                    onLinkActivated: widget.openMessageLink(link)
-                    onConfirmRequested: widget.confirmAction(index)
-                    onRegenerateRequested: widget.regenerateReply()
-                }
-
-                Component.onCompleted: {
-                    if (widget.chatReady && index === chatModel.count - 1)
-                        messageWindow.popUp(!messageItem.fromUser);
-
-                }
-            }
-
-            // Stay at the bottom when new content arrives, unless the user scrolled up to read.
-            property bool stickToBottom: true
-            // True while the view scrolls itself to the end (not the user scrolling).
-            property bool scrollingToEnd: false
-
-            function scrollToEnd() {
-                scrollingToEnd = true;
-                positionViewAtEnd();
-                scrollingToEnd = false;
-            }
-
-            // Any scrolling by the user (dragging the list or the scroll bar, the mouse wheel) decides
-            // whether to keep following new content: only when it ends at the bottom.
-            onContentYChanged: {
-                if (!scrollingToEnd && (moving || chatScrollBar.pressed))
-                    stickToBottom = atYEnd;
-
-            }
-            onMovementEnded: stickToBottom = atYEnd
-            onContentHeightChanged: {
-                if (stickToBottom)
-                    Qt.callLater(scrollToEnd);
-
-            }
-        }
-
-        RowLayout {
-            id: inputArea
-
-            Layout.fillWidth: true
-            // Nested layouts fill the height by default; keep the input row at a fixed height
-            // so the chat list gets all the remaining space.
-            Layout.fillHeight: false
-            Layout.topMargin: 6
-            spacing: 8
-
-            // Multi-line input: Enter sends, Shift+Enter starts a new line. Grows to about four lines.
             Rectangle {
-                id: inputBox
-
-                Layout.fillWidth: true
-                Layout.minimumWidth: widget.inputMinimumWidth
-                Layout.preferredHeight: Math.min(Math.max(40, textInput.implicitHeight), 100)
-                Layout.alignment: Qt.AlignBottom
-                color: "#ffffffff"
-                radius: 20
-
-                ScrollView {
-                    id: inputScroll
-
-                    anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    clip: true
-                    ScrollBar.vertical: SaoScrollBar {
-                        onLight: true
-                    }
-
-                    TextArea {
-                        id: textInput
-
-                        function submit() {
-                            if (sendMessage(text))
-                                text = "";
-
-                        }
-
-                        function handleReturn(event) {
-                            if (event.modifiers & Qt.ShiftModifier)
-                                insert(cursorPosition, "\n");
-                            else
-                                submit();
-                            event.accepted = true;
-                        }
-
-                        placeholderText: qsTr("Message to Yui...")
-                        color: "black"
-                        wrapMode: TextArea.Wrap
-                        selectByMouse: true
-                        leftPadding: 10
-                        rightPadding: 10
-                        topPadding: 10
-                        bottomPadding: 10
-                        background: null
-                        Keys.onReturnPressed: handleReturn(event)
-                        Keys.onEnterPressed: handleReturn(event)
-                    }
-
-                }
-
-            }
-
-            Button {
-                id: sendButton
-
-                // Buttons keep their natural width (it depends on the style SAO Utils applies);
-                // the text field is what shrinks when space runs out.
-                Layout.minimumWidth: implicitWidth
-                Layout.preferredHeight: 40
-                Layout.alignment: Qt.AlignBottom
-                // Turns into a stop button while a reply is being generated.
-                text: widget.busy ? qsTr("Cancel") : qsTr("Send")
-                enabled: widget.busy || textInput.text.trim().length > 0
-                onClicked: {
-                    if (widget.busy)
-                        widget.stopReply();
-                    else
-                        textInput.submit();
-                    textInput.forceActiveFocus();
-                }
-            }
-
-            Button {
-                id: clearButton
-
-                Layout.minimumWidth: implicitWidth
-                Layout.preferredHeight: 40
-                Layout.alignment: Qt.AlignBottom
-                text: qsTr("Reset Log")
-                onClicked: clearChat()
-            }
-
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 200
-            }
-
-        }
-
-    }
-
-    // Where the Widget Lab item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
-    // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
-    Item {
-        id: labSlot
-
-        z: 30
-        visible: (widget.settingsRevision, !labMode && showChat && !!widget.yuiLabItem && widget.settings.lab_in_yui === true)
-        x: Math.max(0, Math.min(widget.width - width, widget.settings.lab_slot_x !== undefined ? widget.settings.lab_slot_x : 16))
-        y: Math.max(14, Math.min(widget.height - height, widget.settings.lab_slot_y !== undefined ? widget.settings.lab_slot_y : 30))
-        width: widget.yuiLabItem ? widget.yuiLabItem.width : 0
-        height: widget.yuiLabItem ? widget.yuiLabItem.height : 0
-
-        HoverHandler {
-            id: labSlotHover
-        }
-
-        Rectangle {
-            z: 100
-            y: -14
-            width: Math.max(60, parent.width)
-            height: 14
-            radius: 4
-            color: "#CC1A1D24"
-            opacity: labSlotHover.hovered || labSlotDrag.pressed ? 1 : 0
-
-            Text {
-                anchors.centerIn: parent
-                text: "⠿ " + qsTr("Widget Lab")
-                color: "#DDFFFFFF"
-                font.pixelSize: 9
-            }
-
-            MouseArea {
-                id: labSlotDrag
-
-                property point start
-                property point origin
+                id: chatPanelBackground
 
                 anchors.fill: parent
-                cursorShape: Qt.SizeAllCursor
-                onPressed: {
-                    start = mapToItem(widget, mouse.x, mouse.y);
-                    origin = Qt.point(labSlot.x, labSlot.y);
-                }
-                onPositionChanged: {
-                    var now = mapToItem(widget, mouse.x, mouse.y);
-                    labSlot.x = Math.max(0, Math.min(widget.width - labSlot.width, origin.x + now.x - start.x));
-                    labSlot.y = Math.max(14, Math.min(widget.height - labSlot.height, origin.y + now.y - start.y));
-                }
-                onReleased: {
-                    widget.settings.lab_slot_x = Math.round(labSlot.x);
-                    widget.settings.lab_slot_y = Math.round(labSlot.y);
+                radius: 2
+                color: "#F0EAEAEA"
+                border.color: "#FFFFFF"
+                border.width: 2
+            }
+
+            Text {
+                id: chatPanelTitle
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 8
+                text: "Message"
+                color: "#8C8C8C"
+                font.family: "SAO UI"
+                font.pixelSize: 20
+            }
+
+            // Thin line under the title, fading out at both ends.
+            Rectangle {
+                x: 14
+                y: chatPanelTitle.y + chatPanelTitle.height + 4
+                width: parent.width - 28
+                height: 1
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+
+                    GradientStop {
+                        position: 0
+                        color: "#00A0A0A0"
+                    }
+
+                    GradientStop {
+                        position: 0.5
+                        color: "#B0A0A0A0"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#00A0A0A0"
+                    }
+
                 }
             }
 
+            Shape {
+                x: -chatPanel.pointer + 2
+                y: Math.round(parent.height / 2 - chatPanel.pointer)
+                width: chatPanel.pointer
+                height: chatPanel.pointer * 2
+                layer.enabled: true
+                layer.samples: 4
+
+                ShapePath {
+                    fillColor: chatPanelBackground.color
+                    strokeColor: chatPanelBackground.border.color
+                    strokeWidth: 2
+                    joinStyle: ShapePath.MiterJoin
+                    startX: chatPanel.pointer
+                    startY: 0
+
+                    PathLine {
+                        x: 0
+                        y: chatPanel.pointer
+                    }
+
+                    PathLine {
+                        x: chatPanel.pointer
+                        y: chatPanel.pointer * 2
+                    }
+
+                }
+
+            }
+
+        }
+
+        ColumnLayout {
+            id: chatContainer
+
+            anchors.fill: chatPanel
+            anchors.topMargin: 46
+            anchors.leftMargin: 8
+            anchors.rightMargin: 6
+            anchors.bottomMargin: 8
+
+            ListView {
+                id: chatView
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                model: chatModel
+                spacing: 10
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                // Keep every bubble created: with only the visible ones, ListView estimates the content
+                // height from their average, which keeps changing with long bubbles and makes the scroll
+                // bar jump (the chat holds few messages, so this is cheap).
+                cacheBuffer: 100000
+
+                ScrollBar.vertical: SaoScrollBar {
+                    id: chatScrollBar
+
+                    onLight: true
+                }
+
+                // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
+                // user's on the right. Messages added after start-up pop up (Yui's with the message sound).
+                delegate: Item {
+                    id: messageItem
+
+                    readonly property bool fromUser: model.author === "user"
+                    readonly property var action: model.action ? JSON.parse(model.action) : null
+
+                    width: chatView.width
+                    height: messageWindow.height
+
+                    MessageWindow {
+                        id: messageWindow
+
+                        anchors.left: messageItem.fromUser ? undefined : parent.left
+                        anchors.right: messageItem.fromUser ? parent.right : undefined
+                        // Room for the pointers; the user's windows also stay clear of the scroll bar.
+                        anchors.leftMargin: tailSize
+                        anchors.rightMargin: 16 + tailSize
+                        maximumWidth: chatView.width - 48
+                        tailSide: messageItem.fromUser ? "right" : "left"
+                        sender: messageItem.fromUser ? widget.userTitle() : "Yui"
+                        text: model.message
+                        linkedText: Yui.linkify(model.message, "#1565C0")
+                        note: model.note
+                        actionLabel: widget.actionLabel(messageItem.action)
+                        actionState: model.actionState
+                        canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
+                        fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
+                        fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
+                        onLinkActivated: widget.openMessageLink(link)
+                        onConfirmRequested: widget.confirmAction(index)
+                        onRegenerateRequested: widget.regenerateReply()
+                    }
+
+                    Component.onCompleted: {
+                        if (widget.chatReady && index === chatModel.count - 1)
+                            messageWindow.popUp(!messageItem.fromUser);
+
+                    }
+                }
+
+                // Stay at the bottom when new content arrives, unless the user scrolled up to read.
+                property bool stickToBottom: true
+                // True while the view scrolls itself to the end (not the user scrolling).
+                property bool scrollingToEnd: false
+
+                function scrollToEnd() {
+                    scrollingToEnd = true;
+                    positionViewAtEnd();
+                    scrollingToEnd = false;
+                }
+
+                // Any scrolling by the user (dragging the list or the scroll bar, the mouse wheel) decides
+                // whether to keep following new content: only when it ends at the bottom.
+                onContentYChanged: {
+                    if (!scrollingToEnd && (moving || chatScrollBar.pressed))
+                        stickToBottom = atYEnd;
+
+                }
+                onMovementEnded: stickToBottom = atYEnd
+                onContentHeightChanged: {
+                    if (stickToBottom)
+                        Qt.callLater(scrollToEnd);
+
+                }
+            }
+
+            RowLayout {
+                id: inputArea
+
+                Layout.fillWidth: true
+                // Nested layouts fill the height by default; keep the input row at a fixed height
+                // so the chat list gets all the remaining space.
+                Layout.fillHeight: false
+                Layout.topMargin: 6
+                spacing: 8
+
+                // Multi-line input: Enter sends, Shift+Enter starts a new line. Grows to about four lines.
+                Rectangle {
+                    id: inputBox
+
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: widget.inputMinimumWidth
+                    Layout.preferredHeight: Math.min(Math.max(40, textInput.implicitHeight), 100)
+                    Layout.alignment: Qt.AlignBottom
+                    color: "#ffffffff"
+                    radius: 20
+
+                    ScrollView {
+                        id: inputScroll
+
+                        anchors.fill: parent
+                        anchors.leftMargin: 6
+                        anchors.rightMargin: 6
+                        clip: true
+                        ScrollBar.vertical: SaoScrollBar {
+                            onLight: true
+                        }
+
+                        TextArea {
+                            id: textInput
+
+                            function submit() {
+                                if (sendMessage(text))
+                                    text = "";
+
+                            }
+
+                            function handleReturn(event) {
+                                if (event.modifiers & Qt.ShiftModifier)
+                                    insert(cursorPosition, "\n");
+                                else
+                                    submit();
+                                event.accepted = true;
+                            }
+
+                            placeholderText: qsTr("Message to Yui...")
+                            color: "black"
+                            wrapMode: TextArea.Wrap
+                            selectByMouse: true
+                            leftPadding: 10
+                            rightPadding: 10
+                            topPadding: 10
+                            bottomPadding: 10
+                            background: null
+                            Keys.onReturnPressed: handleReturn(event)
+                            Keys.onEnterPressed: handleReturn(event)
+                        }
+
+                    }
+
+                }
+
+                Button {
+                    id: sendButton
+
+                    // Buttons keep their natural width (it depends on the style SAO Utils applies);
+                    // the text field is what shrinks when space runs out.
+                    Layout.minimumWidth: implicitWidth
+                    Layout.preferredHeight: 40
+                    Layout.alignment: Qt.AlignBottom
+                    // Turns into a stop button while a reply is being generated.
+                    text: widget.busy ? qsTr("Cancel") : qsTr("Send")
+                    enabled: widget.busy || textInput.text.trim().length > 0
+                    onClicked: {
+                        if (widget.busy)
+                            widget.stopReply();
+                        else
+                            textInput.submit();
+                        textInput.forceActiveFocus();
+                    }
+                }
+
+                Button {
+                    id: clearButton
+
+                    Layout.minimumWidth: implicitWidth
+                    Layout.preferredHeight: 40
+                    Layout.alignment: Qt.AlignBottom
+                    text: qsTr("Reset Log")
+                    onClicked: clearChat()
+                }
+
+            }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                }
+
+            }
+
+        }
+
+        // Where the Widget Lab item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
+        // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
+        Item {
+            id: labSlot
+
+            z: 30
+            visible: (widget.settingsRevision, !labMode && showChat && !!widget.yuiLabItem && widget.settings.lab_in_yui === true)
+            x: Math.max(0, Math.min(expandedLayer.width - width, widget.settings.lab_slot_x !== undefined ? widget.settings.lab_slot_x : 16))
+            y: Math.max(14, Math.min(expandedLayer.height - height, widget.settings.lab_slot_y !== undefined ? widget.settings.lab_slot_y : 30))
+            width: widget.yuiLabItem ? widget.yuiLabItem.width : 0
+            height: widget.yuiLabItem ? widget.yuiLabItem.height : 0
+
+            HoverHandler {
+                id: labSlotHover
+            }
+
+            Rectangle {
+                z: 100
+                y: -14
+                width: Math.max(60, parent.width)
+                height: 14
+                radius: 4
+                color: "#CC1A1D24"
+                opacity: labSlotHover.hovered || labSlotDrag.pressed ? 1 : 0
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "⠿ " + qsTr("Widget Lab")
+                    color: "#DDFFFFFF"
+                    font.pixelSize: 9
+                }
+
+                MouseArea {
+                    id: labSlotDrag
+
+                    property point start
+                    property point origin
+
+                    anchors.fill: parent
+                    cursorShape: Qt.SizeAllCursor
+                    onPressed: {
+                        start = mapToItem(expandedLayer, mouse.x, mouse.y);
+                        origin = Qt.point(labSlot.x, labSlot.y);
+                    }
+                    onPositionChanged: {
+                        var now = mapToItem(expandedLayer, mouse.x, mouse.y);
+                        labSlot.x = Math.max(0, Math.min(expandedLayer.width - labSlot.width, origin.x + now.x - start.x));
+                        labSlot.y = Math.max(14, Math.min(expandedLayer.height - labSlot.height, origin.y + now.y - start.y));
+                    }
+                    onReleased: {
+                        widget.settings.lab_slot_x = Math.round(labSlot.x);
+                        widget.settings.lab_slot_y = Math.round(labSlot.y);
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+    // The character as a collapsed form ("avatar"), in the widget itself.
+    NVG.ImageSource {
+        id: avatarImage
+
+        configuration: characterImage.configuration
+        visible: !showChat && widget.collapsedForm === "avatar"
+        opacity: characterImage.opacity
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectFit
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (!widget.wakeUp())
+                    setChatVisible(true);
+
+            }
         }
 
     }
