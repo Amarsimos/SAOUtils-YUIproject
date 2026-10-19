@@ -23,6 +23,9 @@ NVG.View {
 
     // popUp is waiting for the window to be on screen before animating.
     property bool openPending: false
+    // Open (popUp) or closed (fold). Closed, the view stays visible but transparent, takes no input
+    // and lets clicks through.
+    property bool shown: false
 
     signal closeRequested()
     // The close animation has finished and the view is hidden.
@@ -37,11 +40,12 @@ NVG.View {
         panelClip.height = collapsedHeight;
         hostItem.opacity = 0;
         opacity = 0;
+        shown = true;
         visible = true;
         requestActivate();
-        // The window only appears on screen some time after it is made visible (more so the first
-        // time); started right away, the animation was over by then and only a fade-in was seen.
-        // So it starts once the window is exposed, after one more frame.
+        // Showing a hidden window goes through SAO Utils' own appearing, which covered the animation
+        // (only a fade-in was seen). The view therefore stays visible once created (transparent and
+        // click-through while closed, see shown), and the animation starts once it is exposed.
         openPending = true;
         if (exposed)
             startTimer.restart();
@@ -51,7 +55,7 @@ NVG.View {
     // Closes as the message panel: the close sound, narrows back to 10 % while fading out (250 ms),
     // then folded().
     function fold() {
-        if (!visible || aniClose.running)
+        if (!shown || aniClose.running)
             return ;
 
         openPending = false;
@@ -124,9 +128,11 @@ NVG.View {
 
     }
     color: "transparent"
-    acceptFocus: true
-    acceptInput: true
-    solid: true
+    // A normal window (not kept on top): raised when clicked, covered by others otherwise.
+    z: NVG.WindowCompositor.DefaultZ
+    acceptFocus: shown
+    acceptInput: shown
+    solid: shown
     // Starts transparent and is only shown by popUp, so nothing flashes before the open animation.
     opacity: 0
     visible: false
@@ -176,15 +182,15 @@ NVG.View {
             Item {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                width: 30
-                height: 30
+                width: 20
+                height: 20
                 z: 100
 
                 Repeater {
                     model: 3
 
                     Rectangle {
-                        readonly property real length: 10 + index * 7
+                        readonly property real length: 6 + index * 5
 
                         x: parent.width - 4 - length / Math.SQRT2 - 1
                         y: parent.height - 4 - length / Math.SQRT2 + 1
@@ -308,7 +314,7 @@ NVG.View {
 
         ScriptAction {
             script: {
-                view.visible = false;
+                view.shown = false;
                 view.folded();
             }
         }

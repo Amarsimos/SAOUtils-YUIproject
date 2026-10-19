@@ -384,9 +384,19 @@ T.Widget {
         }).pop();
         systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle(), lastUser ? lastUser.content : "");
         if (!config.apiKey || !config.endpoint || !config.model) {
-            onFinished("警告！连接数据缺失……结衣找不到通往网络的路了 (T_T)\n请在「Cardinal System」里检查 Access Key、Server Address 和 Core Program 有没有填好哦～", true, true);
+            // Answered without a request, but after a random 0.6 - 1.6 s like any reply ("..." first).
+            var notConfiguredTimer = Qt.createQmlObject("import QtQuick 2.12; Timer {}", widget);
+            notConfiguredTimer.interval = 600 + Math.round(Math.random() * 1000);
+            notConfiguredTimer.triggered.connect(function() {
+                notConfiguredTimer.destroy();
+                onFinished("警告！连接数据缺失……结衣找不到通往网络的路了 (T_T)\n请在「Cardinal System」里检查 Access Key、Server Address 和 Core Program 有没有填好哦～", true, true);
+            });
+            notConfiguredTimer.start();
             return {
                 "abort": function() {
+                    notConfiguredTimer.stop();
+                    notConfiguredTimer.destroy();
+                    onFinished("结衣停下来了～ (・_・)", true);
                 }
             };
         }
@@ -2090,7 +2100,7 @@ T.Widget {
 
     // Folds the view away; the collapsed form comes back once it is gone (onFolded in createView).
     function closeView() {
-        if (yuiView && yuiView.visible)
+        if (yuiView && yuiView.shown)
             yuiView.fold();
         else
             showChat = false;
@@ -2124,6 +2134,9 @@ T.Widget {
         });
         expandedLayer.parent = yuiView.host;
         expandedLayer.anchors.fill = yuiView.host;
+        // Visible from the start but transparent and click-through until opened (see YuiView.shown),
+        // so opening never goes through the system's showing of a window.
+        yuiView.visible = true;
         yuiView.closeRequested.connect(function() {
             setChatVisible(false);
         });
@@ -2858,8 +2871,6 @@ T.Widget {
                     id: chatScrollBar
 
                     onLight: true
-                    // Hidden: the chat scrolls with the wheel or by dragging the list.
-                    policy: ScrollBar.AlwaysOff
                 }
 
                 // Each message is an SAO instant message window (MessageWindow.qml): Yui's on the left, the
@@ -2900,7 +2911,7 @@ T.Widget {
                     }
 
                     // "..." (a reply on its way) is not a message: it shows without popping up; the window pops
-                    // up with the message sound once the text arrives. The user's own messages pop up silently.
+                    // up with the message sound once the text arrives. The user's own messages pop up the same way.
                     readonly property bool pending: model.pending
 
                     onPendingChanged: {
@@ -2910,7 +2921,7 @@ T.Widget {
                     }
                     Component.onCompleted: {
                         if (widget.chatReady && index === chatModel.count - 1 && !pending)
-                            messageWindow.popUp(!messageItem.fromUser);
+                            messageWindow.popUp(true);
 
                     }
                 }
@@ -2969,8 +2980,10 @@ T.Widget {
                         anchors.leftMargin: 6
                         anchors.rightMargin: 6
                         clip: true
+                        // No scroll bar in the input box (it still scrolls with the wheel / cursor).
                         ScrollBar.vertical: SaoScrollBar {
                             onLight: true
+                            policy: ScrollBar.AlwaysOff
                         }
 
                         TextArea {
