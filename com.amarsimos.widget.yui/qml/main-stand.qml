@@ -950,10 +950,10 @@ T.Widget {
 
             } else if (action.type === "kill") {
                 var killCommand = Yui.actionCommand(action);
+                // The return value of command() is not reliable (false although the command ran),
+                // so it is only logged.
                 var killed = NVG.SystemCall.command(killCommand);
-                diag("command(" + killCommand + ") -> " + killed);
-                if (!killed)
-                    addNote(index, "⚠ 无法执行：taskkill " + action.target);
+                diag("command(" + killCommand + ") -> " + killed + " (not used)");
 
             } else if (action.type === "find") {
                 runFind(action);
@@ -988,14 +988,10 @@ T.Widget {
         var file = folder + "/find-" + Date.now() + ".txt";
         diag("es.exe path setting: " + (widget.settings.es_path ? "\"" + widget.settings.es_path + "\"" : "(empty, using es.exe from PATH)"));
         var command = Yui.actionCommand(action, file, widget.settings.es_path);
+        // command() has been seen to return false although es.exe ran and wrote its results, so its
+        // return value is only logged; whether the search worked is decided by the result file.
         var started = NVG.SystemCall.command(command);
-        diag("command(" + command + ") -> " + started);
-        if (!started) {
-            // command() fails when es.exe cannot be started, which nearly always means it is missing.
-            appendMessage("ai", "呜……结衣没能启动文件检索 (T_T)
-结衣找不到 Everything 的命令行工具 es.exe。请在 Option 里填写 es.exe 的完整路径（或把它加入系统 PATH），并确认 Everything 正在运行。还没有的话，可以从 voidtools.com 下载 Everything 和 ES 命令行工具哦！", false, true);
-            return ;
-        }
+        diag("command(" + command + ") -> " + started + " (not used, waiting for the result file)");
         var tries = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
@@ -1011,7 +1007,7 @@ T.Widget {
             if (results.length > 0)
                 appendMessage("ai", "检索完成！结衣找到了 " + results.length + " 个和「" + action.target + "」有关的结果：\n" + results.join("\n"), false, true);
             else
-                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n请确认 Everything 正在运行，并在 Option 里填好 es.exe 的位置（或把它加入系统 PATH）。", false, true);
+                appendMessage("ai", "数据检索失败……没有找到「" + action.target + "」(T_T)\n可能是真的没有这个文件，也可能是 Everything 没有运行，或者 es.exe 的位置不对。请确认 Everything 正在运行，并在 Option 里填好 es.exe 的完整路径（或把它加入系统 PATH）。还没有的话，可以从 voidtools.com 下载 Everything 和 ES 命令行工具哦！", false, true);
         });
         timer.start();
     }
