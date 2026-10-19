@@ -268,12 +268,16 @@ NVG.Window {
                         }, {
                             "label": qsTr("Test Bubble"),
                             "tag": ""
+                        }, {
+                            "label": qsTr("Test Streaming"),
+                            "tag": "stream"
                         }]
 
-                        // "Test Bubble" shows a sample line in the crystal's speech bubble (no API request).
+                        // "Test Bubble" shows a sample line in the crystal's speech bubble, "Test Streaming" a
+                        // made-up streamed reply in the chat (neither makes an API request).
                         Button {
                             text: modelData.label
-                            onClicked: modelData.tag ? optionWindow.targetWidget.testAction(modelData.tag) : optionWindow.targetWidget.testBubble()
+                            onClicked: modelData.tag === "stream" ? optionWindow.targetWidget.testStreamReply() : modelData.tag ? optionWindow.targetWidget.testAction(modelData.tag) : optionWindow.targetWidget.testBubble()
                         }
 
                     }

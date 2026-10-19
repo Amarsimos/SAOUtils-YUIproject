@@ -411,6 +411,10 @@ T.Widget {
     // config: optional, defaults to activeConfig(); may carry "systemPrompt" and "userTitle" to override the saved ones.
     // Returns { abort() }: ends the request early, keeping the text received so far.
     function requestCompletion(messages, onFinished, config, onDelta) {
+        if (testStreaming) {
+            testStreaming = false;
+            return fakeStream(onFinished, onDelta);
+        }
         config = config || activeConfig();
         var format = config.provider.format;
         var systemPrompt = config.systemPrompt !== undefined ? config.systemPrompt : widget.settings.system_prompt;
@@ -780,6 +784,7 @@ T.Widget {
     // Show a "..." placeholder and replace it in place once the reply arrives.
     function startReply(messages, notifyTitle) {
         var session = widget.chatSession;
+        var test = widget.testStreaming;
         var index = chatModel.count;
         chatModel.append({
             "author": "ai",
@@ -820,6 +825,7 @@ T.Widget {
             chatModel.set(index, {
                 "message": text,
                 "pending": false,
+                "local": test,
                 "isError": isError,
                 "note": note,
                 "action": action,
@@ -832,7 +838,7 @@ T.Widget {
             widget.busy = false;
             widget.currentRequest = null;
             scheduleSave();
-            if (!isError) {
+            if (!isError && !test) {
                 logMessage("ai", text);
                 announce(notifyTitle, text);
             }
@@ -2110,6 +2116,51 @@ T.Widget {
     // Option window "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
     // click shows the next sample (short, long, a status report), so the layout can be checked.
     property int testBubbleCount: 0
+    // The next reply is a made-up streamed one (Test Streaming): no API request, no tokens.
+    property bool testStreaming: false
+
+    // Diagnostics: Yui "thinks" for 3 s, then a sample reply streams in a few characters at a time.
+    function testStreamReply() {
+        if (busy) {
+            diag("test streaming: Yui is busy with a reply");
+            return ;
+        }
+        if (!yuiView || !yuiView.visible)
+            diag("test streaming: open the chat (click Yui) to watch it");
+
+        testStreaming = true;
+        startReply([], "Yui");
+    }
+
+    // A fake streamed completion with requestCompletion's callbacks and an abort().
+    function fakeStream(onFinished, onDelta) {
+        var full = "（测试回复，没有调用 API）
+嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
+        var shown = 0;
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
+        timer.interval = 3000;
+        timer.triggered.connect(function() {
+            timer.interval = 60;
+            shown = Math.min(full.length, shown + 2);
+            if (shown < full.length) {
+                if (onDelta)
+                    onDelta(full.slice(0, shown));
+
+                return ;
+            }
+            timer.stop();
+            timer.destroy();
+            onFinished(full, false, false);
+        });
+        timer.start();
+        return {
+            "abort": function() {
+                timer.stop();
+                timer.destroy();
+                onFinished(full.slice(0, shown) || "(・ω・)", false, false);
+            }
+        };
+    }
 
     function testBubble() {
         if (!crystalForm.visible) {
