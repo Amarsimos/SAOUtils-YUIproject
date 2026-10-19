@@ -1,11 +1,13 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import QtQuick.Shapes 1.12
+// Fills Qt.application.screens (the monitors), used to keep the bubble on the crystal's screen.
+import QtQuick.Window 2.12
 
 // What Yui says while she is a crystal (Yui's Heart): a small SAO message window next to the crystal,
-// in its own view so it is not clipped by the small widget. Its title bar takes the crystal's status
-// color. It never takes focus; it stays BUBBLE_TIME ms (paused while hovered), and a click opens the
-// chat. Created once and reused; call show().
+// in its own view so it is not clipped by the small widget, with a comic-style tail pointing at the
+// crystal. Its title bar takes the crystal's status color. It never takes focus; it stays stayTime ms
+// (paused while hovered) and a click closes it. Created once and reused; call show().
 NVG.View {
     id: bubble
 
@@ -17,9 +19,8 @@ NVG.View {
     // True when the bubble sits below the crystal (no room above it).
     property bool below: false
     readonly property int stayTime: 8000
-    readonly property int tailSize: 9
-
-    signal clicked()
+    readonly property int tailSize: 18
+    readonly property color edgeColor: "#99888888"
 
     function show(heading, text, accent, target) {
         bubble.heading = heading;
@@ -28,7 +29,7 @@ NVG.View {
         bubble.target = target;
         place();
         aniOut.stop();
-        if (!visible || panel.opacity < 1) {
+        if (!visible || content.opacity < 1) {
             visible = true;
             aniIn.restart();
         }
@@ -43,11 +44,27 @@ NVG.View {
         }
     }
 
+    // The screen the crystal is on (with several monitors the bubble must follow it, not stay on the
+    // screen its own view was created on).
+    function targetScreen() {
+        var cx = target.x + target.width / 2;
+        var cy = target.y + target.height / 2;
+        var screens = Qt.application.screens;
+        for (var i = 0; i < screens.length; i++) {
+            var s = screens[i];
+            if (cx >= s.virtualX && cx < s.virtualX + s.width && cy >= s.virtualY && cy < s.virtualY + s.height)
+                return s;
+
+        }
+        return screens.length > 0 ? screens[0] : null;
+    }
+
     // Above the crystal, centered on it; below it when there is no room above. Kept on its screen.
     function place() {
-        var left = screen ? screen.virtualX : 0;
-        var top = screen ? screen.virtualY : 0;
-        var right = left + (screen ? screen.width : 1920);
+        var s = targetScreen();
+        var left = s ? s.virtualX : 0;
+        var top = s ? s.virtualY : 0;
+        var right = left + (s ? s.width : 1920);
         below = target.y - height < top;
         x = Math.round(Math.max(left, Math.min(right - width, target.x + target.width / 2 - width / 2)));
         y = Math.round(below ? target.y + target.height : target.y - height);
@@ -57,15 +74,19 @@ NVG.View {
     acceptFocus: false
     acceptInput: false
     width: 300
-    height: panel.height + tailSize + 4
+    height: panel.height + tailSize
     visible: false
-    onHeightChanged: if (visible)
-        place()
+    onHeightChanged: {
+        if (visible)
+            place();
+
+    }
 
     Item {
         id: content
 
         anchors.fill: parent
+        opacity: 0
 
         // SAO message window: light translucent panel under a title bar.
         Rectangle {
@@ -74,16 +95,17 @@ NVG.View {
             y: bubble.below ? bubble.tailSize : 0
             width: parent.width
             height: header.height + body.implicitHeight + 20
-            radius: 3
-            color: "#EEF4F4F4"
-            border.color: "#FFFFFF"
+            radius: 4
+            color: "#F2F4F4F4"
+            border.color: bubble.edgeColor
             border.width: 1
-            opacity: 0
 
             Rectangle {
                 id: header
 
-                width: parent.width
+                x: 1
+                y: 1
+                width: parent.width - 2
                 height: 24
                 radius: 3
                 color: bubble.accent
@@ -124,42 +146,46 @@ NVG.View {
                 textFormat: Text.PlainText
             }
 
-            transform: Scale {
-                id: panelScale
-
-                xScale: 0.1
-                yScale: 0.05
-                origin.x: panel.width / 2
-                origin.y: bubble.below ? 0 : panel.height
-            }
-
         }
 
-        // Pointer toward the crystal (below the panel, or above it when the bubble is below).
+        // Comic-style tail: two curved sides from the panel edge to a point aimed at the crystal,
+        // leaning toward it. Drawn over the panel's edge so it joins the panel seamlessly; mirrored
+        // when the bubble is below the crystal (then it starts from the title bar).
         Shape {
             id: tail
 
-            readonly property real tipX: Math.max(bubble.tailSize + 4, Math.min(bubble.width - bubble.tailSize - 4, bubble.target.x + bubble.target.width / 2 - bubble.x))
+            // Tip: straight toward the crystal's center; base: up to 14 px back toward the middle.
+            readonly property real tipX: Math.max(10, Math.min(bubble.width - 10, bubble.target.x + bubble.target.width / 2 - bubble.x))
+            readonly property real baseX: Math.max(16, Math.min(bubble.width - 16, tipX + Math.max(-14, Math.min(14, bubble.width / 2 - tipX))))
+            readonly property real h: bubble.tailSize
 
-            opacity: panel.opacity
+            y: bubble.below ? 0 : panel.height - 1
             width: bubble.width
-            height: bubble.tailSize
-            y: bubble.below ? 0 : panel.height
+            height: h + 1
+            layer.enabled: true
+            layer.samples: 4
 
             ShapePath {
                 fillColor: bubble.below ? bubble.accent : panel.color
-                strokeColor: "transparent"
-                startX: tail.tipX - bubble.tailSize
-                startY: bubble.below ? bubble.tailSize : 0
+                strokeColor: bubble.below ? "transparent" : bubble.edgeColor
+                strokeWidth: 1
+                joinStyle: ShapePath.RoundJoin
+                // From the panel edge (left of the base) out to the tip and back (right of the base).
+                startX: tail.baseX - 9
+                startY: bubble.below ? tail.h + 1 : 0
 
-                PathLine {
+                PathQuad {
                     x: tail.tipX
-                    y: bubble.below ? 0 : bubble.tailSize
+                    y: bubble.below ? 0 : tail.h
+                    controlX: tail.baseX - 3
+                    controlY: bubble.below ? tail.h * 0.4 : tail.h * 0.6
                 }
 
-                PathLine {
-                    x: tail.tipX + bubble.tailSize
-                    y: bubble.below ? bubble.tailSize : 0
+                PathQuad {
+                    x: tail.baseX + 9
+                    y: bubble.below ? tail.h + 1 : 0
+                    controlX: tail.baseX + 5
+                    controlY: bubble.below ? tail.h * 0.6 : tail.h * 0.4
                 }
 
             }
@@ -176,20 +202,27 @@ NVG.View {
                 else if (bubble.visible && !aniOut.running)
                     stayTimer.restart();
             }
-            onClicked: {
-                bubble.hide();
-                bubble.clicked();
-            }
+            // A click closes the bubble (the crystal itself opens the chat).
+            onClicked: bubble.hide()
+        }
+
+        transform: Scale {
+            id: contentScale
+
+            xScale: 0.1
+            yScale: 0.05
+            origin.x: tail.tipX
+            origin.y: bubble.below ? 0 : bubble.height
         }
 
     }
 
-    // Opens like SAO Utils' own warning: a thin line widens, then unfolds.
+    // Opens like SAO Utils' own warning: a thin line widens, then unfolds (from the tail's tip).
     ParallelAnimation {
         id: aniIn
 
         NumberAnimation {
-            target: panel
+            target: content
             property: "opacity"
             duration: 250
             to: 1
@@ -197,7 +230,7 @@ NVG.View {
 
         SequentialAnimation {
             NumberAnimation {
-                target: panelScale
+                target: contentScale
                 property: "xScale"
                 duration: 100
                 from: 0.1
@@ -206,7 +239,7 @@ NVG.View {
             }
 
             NumberAnimation {
-                target: panelScale
+                target: contentScale
                 property: "yScale"
                 duration: 200
                 from: 0.05
@@ -225,7 +258,7 @@ NVG.View {
         onFinished: bubble.visible = false
 
         NumberAnimation {
-            target: panel
+            target: content
             property: "opacity"
             duration: 300
             to: 0
@@ -233,7 +266,7 @@ NVG.View {
 
         SequentialAnimation {
             NumberAnimation {
-                target: panelScale
+                target: contentScale
                 property: "yScale"
                 duration: 180
                 to: 0.05
@@ -241,7 +274,7 @@ NVG.View {
             }
 
             NumberAnimation {
-                target: panelScale
+                target: contentScale
                 property: "xScale"
                 duration: 120
                 to: 0.1

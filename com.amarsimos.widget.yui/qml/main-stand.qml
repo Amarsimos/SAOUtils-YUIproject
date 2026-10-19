@@ -1721,7 +1721,7 @@ T.Widget {
     }
 
     // The crystal's speech bubble (CrystalBubble.qml), created on first use; its title bar takes the
-    // crystal's color. Clicking it opens the chat.
+    // crystal's color. Clicking it closes it.
     property var crystalBubble: null
 
     function showBubble(title, text) {
@@ -1733,9 +1733,6 @@ T.Widget {
                 return ;
             }
             crystalBubble = component.createObject(widget);
-            crystalBubble.clicked.connect(function() {
-                setChatVisible(true);
-            });
         }
         var corner = crystalForm.mapToGlobal(0, 0);
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
