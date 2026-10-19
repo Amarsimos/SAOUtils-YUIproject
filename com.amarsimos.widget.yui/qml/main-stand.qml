@@ -1012,14 +1012,20 @@ T.Widget {
         timer.start();
     }
 
-    // Contents of a local text file ("" when missing).
+    // Contents of a local text file ("" when missing). The path is URL-encoded (it may contain
+    // spaces, e.g. "SAO Utils 2") and a changing query is added so a cached earlier read (made
+    // before es.exe wrote the file) is never returned again. Each read is logged with its status.
     function readLocalFile(path) {
+        var url = "file:///" + encodeURI(path.replace(/^\/+/, "")) + "?t=" + Date.now();
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", "file:///" + path.replace(/^\/+/, ""), false);
+            request.open("GET", url, false);
             request.send(null);
-            return request.responseText || "";
+            var text = request.responseText || "";
+            diag("GET " + url + " -> status " + request.status + ", " + text.length + " chars");
+            return text;
         } catch (e) {
+            diag("GET " + url + " failed: " + e);
             return "";
         }
     }
