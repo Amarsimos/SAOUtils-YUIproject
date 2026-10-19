@@ -40,17 +40,16 @@ NVG.View {
         clipScale.xScale = 0.1;
         panelClip.height = collapsedHeight;
         hostItem.opacity = 0;
-        opacity = 0;
+        panelClip.opacity = 0;
         shown = true;
         visible = true;
         requestActivate();
-        // Showing a hidden window goes through SAO Utils' own appearing, which covered the animation
-        // (only a fade-in was seen). The view therefore stays visible once created (transparent and
-        // click-through while closed, see shown), and the animation starts once it is exposed.
+        // The window itself stays visible and fully opaque (with a transparent background) the whole
+        // time; only its content is animated. Making the window transparent made SAO Utils take it
+        // off screen, and opening then waited for it to come back (slow) and faded it in on its own,
+        // covering the animation. The animation starts on the next frame.
         openPending = true;
-        if (exposed)
-            startTimer.restart();
-
+        startTimer.restart();
     }
 
     // Closes as the message panel: the close sound, narrows back to 10 % while fading out (250 ms),
@@ -123,19 +122,12 @@ NVG.View {
         y = Math.round(Math.max(top, Math.min(bottom - height, y)));
     }
 
-    onExposedChanged: {
-        if (exposed && openPending)
-            startTimer.restart();
-
-    }
     color: "transparent"
     // Always on top of every other window.
     z: NVG.WindowCompositor.TopMostZ
     acceptFocus: shown
     acceptInput: shown
     solid: shown
-    // Starts transparent and is only shown by popUp, so nothing flashes before the open animation.
-    opacity: 0
     visible: false
 
     // The panel clip: full width (scaled horizontally while opening / closing), its height unfolding
@@ -143,6 +135,8 @@ NVG.View {
     Item {
         id: panelClip
 
+        // Invisible while the view is closed (the window itself stays opaque and on screen).
+        opacity: 0
         y: Math.round((view.height - height) / 2)
         width: view.width
         height: view.height
@@ -261,7 +255,7 @@ NVG.View {
 
         SequentialAnimation {
             NumberAnimation {
-                target: view
+                target: panelClip
                 property: "opacity"
                 from: 0
                 to: 1
@@ -317,7 +311,7 @@ NVG.View {
             }
 
             NumberAnimation {
-                target: view
+                target: panelClip
                 property: "opacity"
                 to: 0
                 duration: 250
