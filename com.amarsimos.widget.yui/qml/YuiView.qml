@@ -34,13 +34,15 @@ Window {
     signal folded()
 
     // Opens as the mail box message panel: widens from 10 % (200 ms) while fading in (250 ms), then
-    // the message sound, the height unfolds from a strip in the middle (250 ms) and the character and
-    // chat fade in (250 ms). The content stays laid out at full size; the clip reveals it.
+    // the message sound and the height unfolds from a strip in the middle (250 ms). The character and
+    // chat stay visible and laid out at full size the whole time: the clip reveals them (they were
+    // first kept transparent until the end, so only a fade-in was seen).
     function popUp() {
         aniClose.stop();
+        hideTimer.stop();
+        warmUpTimer.stop();
         clipScale.xScale = 0.1;
         panelClip.height = collapsedHeight;
-        hostItem.opacity = 0;
         panelClip.opacity = 0;
         shown = true;
         // As MessagePanel: the window is shown at the start of the animation (its content still
@@ -54,7 +56,7 @@ Window {
     // Closes as the message panel: the close sound, narrows back to 10 % while fading out (250 ms),
     // then folded().
     function fold() {
-        if (!shown || aniClose.running)
+        if (!shown || aniClose.running || hideTimer.running)
             return ;
 
         openPending = false;
@@ -270,14 +272,6 @@ Window {
                 easing.type: Easing.OutQuart
             }
 
-            NumberAnimation {
-                target: hostItem
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: 250
-            }
-
             // The clip follows the view's height again (for resizing).
             ScriptAction {
                 script: panelClip.height = Qt.binding(function() {
@@ -316,13 +310,42 @@ Window {
         }
 
         ScriptAction {
-            script: {
-                view.shown = false;
-                view.visible = false;
-                view.folded();
-            }
+            script: hideTimer.restart()
         }
 
+    }
+
+    // Hides the window one frame after the close animation, once its last (transparent) frame has
+    // been drawn; hidden earlier, that last visible frame flashed when the window was shown again.
+    Timer {
+        id: hideTimer
+
+        interval: 30
+        onTriggered: {
+            view.shown = false;
+            view.visible = false;
+            view.folded();
+        }
+    }
+
+    // A transparent window's very first showing can draw one frame before its transparency takes
+    // effect: it is shown once off screen at start, so that frame is never seen.
+    Component.onCompleted: {
+        x = -10000;
+        y = -10000;
+        visible = true;
+        warmUpTimer.start();
+    }
+
+    Timer {
+        id: warmUpTimer
+
+        interval: 100
+        onTriggered: {
+            if (!view.shown)
+                view.visible = false;
+
+        }
     }
 
     Timer {
