@@ -1317,6 +1317,49 @@ T.Widget {
         saveHeart(entries);
     }
 
+    // Edits from the Yui's Heart page (HeartPage.qml) on the memory with this id. changes may set
+    // text, kind ("core" / "fragment") and pinned. Returns false when it would overfill the core.
+    function changeMemory(id, changes) {
+        var entries = Yui.copyEntries(heartCache);
+        var entry = entries.filter(function(e) {
+            return e.id === id;
+        })[0];
+        if (!entry)
+            return false;
+
+        if (changes.kind === "core" && entry.kind !== "core" && Yui.coreMemories(entries).length >= Yui.MAX_CORE)
+            return false;
+
+        if (changes.text !== undefined) {
+            var text = String(changes.text).trim();
+            if (!text)
+                return false;
+
+            entry.text = text;
+            entry.updated = Date.now();
+        }
+        if (changes.kind !== undefined)
+            entry.kind = changes.kind;
+
+        if (changes.pinned !== undefined)
+            entry.pinned = !!changes.pinned;
+
+        // Only core entries can be pinned.
+        if (entry.kind !== "core")
+            entry.pinned = false;
+
+        diag("memory " + id + " changed: " + JSON.stringify(changes));
+        saveHeart(entries);
+        return true;
+    }
+
+    function deleteMemory(id) {
+        diag("memory " + id + " deleted");
+        saveHeart(heartCache.filter(function(entry) {
+            return entry.id !== id;
+        }));
+    }
+
     // Apply the memory tags of a reply (<<core:>>, <<memory:>>, <<forget:>>); returns the note shown
     // under the bubble ("" when there were none).
     function applyMemoryTags(reply) {

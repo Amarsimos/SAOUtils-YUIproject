@@ -300,48 +300,12 @@ Item {
 
             }
 
-            // Memory: what Yui remembers (edited in Cardinal System).
-            ColumnLayout {
+            // Memory: Yui's Heart, viewed and edited here.
+            HeartPage {
                 visible: console_.page === "memory"
                 anchors.fill: parent
                 anchors.margins: 16
-                spacing: 8
-
-                Text {
-                    text: "♥ " + qsTr("Yui's Heart") + "  (" + console_.yui.heartCache.length + ")"
-                    color: "#FFFFFF"
-                    font.pixelSize: 13
-                    font.bold: true
-                }
-
-                ListView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    spacing: 6
-                    model: console_.yui.heartCache
-
-                    delegate: Text {
-                        width: ListView.view.width
-                        // ◆ heart core, · memory fragment.
-                        text: (modelData.kind === "core" ? "◆ " : "· ") + modelData.text
-                        color: "#DDFFFFFF"
-                        font.pixelSize: 12
-                        wrapMode: Text.Wrap
-                    }
-
-                    ScrollBar.vertical: SaoScrollBar {
-                    }
-
-                }
-
-                Text {
-                    visible: console_.yui.heartCache.length === 0
-                    text: qsTr("No memories yet")
-                    color: "#99FFFFFF"
-                    font.pixelSize: 12
-                }
-
+                yui: console_.yui
             }
 
         }

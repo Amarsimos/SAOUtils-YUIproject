@@ -133,7 +133,6 @@ NVG.Window {
                         statusPreference.value = settings.status_reports !== false;
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
-                        heartPreference.value = targetWidget.heartEntries().join("\n");
                         loading = false;
                     }
 
@@ -385,20 +384,6 @@ NVG.Window {
                         text: qsTr("Yui goes to sleep after this long without interaction; click her to wake her up.")
                     }
 
-                    // ---------------------------------------------------------------- Yui's Heart
-                    Heading {
-                        text: qsTr("Yui's Heart")
-                    }
-
-                    // Long-term memories, one per line. Yui adds to them herself; edit or delete freely.
-                    P.TextAreaPreference {
-                        id: heartPreference
-
-                        name: "yui_heart"
-                        hint: qsTr("No memories yet")
-                        message: qsTr("What Yui remembers about you, one memory per line. She adds memories herself when you tell her something worth remembering; edit or delete them freely.")
-                    }
-
                 }
 
             }
@@ -419,11 +404,6 @@ NVG.Window {
                 targetWidget.settings.status_reports = !!statusPreference.value;
                 targetWidget.settings.external_browser = !!externalBrowserPreference.value;
                 targetWidget.settings.sleep_minutes = sleepPreference.value;
-                targetWidget.setHeartEntries(String(heartPreference.value || "").split("\n").map(function(line) {
-                    return line.trim();
-                }).filter(function(line) {
-                    return line.length > 0;
-                }));
                 coreSettings.close();
             }
             onReset: {
