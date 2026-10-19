@@ -1599,6 +1599,35 @@ T.Widget {
 
     }
 
+    // ---------------------------------------------------------------- Widget Lab item in Yui
+    // Widget Lab "Show in Yui (live)": the code becomes an Item inside this widget (labSlot), reloaded
+    // whenever the code changes. Returns "" when it loaded, or the compile errors ("line:column
+    // message" lines); on errors the last working item stays.
+    property var yuiLabItem: null
+
+    function loadIntoYui(code) {
+        var created;
+        try {
+            created = Qt.createQmlObject(code, labSlot, "WidgetLab");
+        } catch (e) {
+            return (e.qmlErrors || []).map(function(error) {
+                return qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message);
+            }).join("\n") || String(e);
+        }
+        if (yuiLabItem)
+            yuiLabItem.destroy();
+
+        yuiLabItem = created;
+        return "";
+    }
+
+    function clearYuiLab() {
+        if (yuiLabItem)
+            yuiLabItem.destroy();
+
+        yuiLabItem = null;
+    }
+
     // Lab widget mode: this widget was created from a saved Lab widget (lab_widget and lab_code in
     // its settings).
     // Yui is not started; the widget only shows the code.
@@ -2130,6 +2159,10 @@ T.Widget {
             welcomeBack();
         else
             getInitialMessage();
+        // The Widget Lab item shown in Yui, if it was on.
+        if (widget.settings.lab_in_yui && widget.settings.lab_editor_code)
+            loadIntoYui(widget.settings.lab_editor_code);
+
     }
 
     // Any mouse movement over the widget counts as the user being around.
@@ -2982,6 +3015,65 @@ T.Widget {
         Behavior on opacity {
             NumberAnimation {
                 duration: 200
+            }
+
+        }
+
+    }
+
+    // Where the Widget Lab item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
+    // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
+    Item {
+        id: labSlot
+
+        z: 30
+        visible: (widget.settingsRevision, !labMode && showChat && !!widget.yuiLabItem && widget.settings.lab_in_yui === true)
+        x: Math.max(0, Math.min(widget.width - width, widget.settings.lab_slot_x !== undefined ? widget.settings.lab_slot_x : 16))
+        y: Math.max(14, Math.min(widget.height - height, widget.settings.lab_slot_y !== undefined ? widget.settings.lab_slot_y : 30))
+        width: widget.yuiLabItem ? widget.yuiLabItem.width : 0
+        height: widget.yuiLabItem ? widget.yuiLabItem.height : 0
+
+        HoverHandler {
+            id: labSlotHover
+        }
+
+        Rectangle {
+            z: 100
+            y: -14
+            width: Math.max(60, parent.width)
+            height: 14
+            radius: 4
+            color: "#CC1A1D24"
+            opacity: labSlotHover.hovered || labSlotDrag.pressed ? 1 : 0
+
+            Text {
+                anchors.centerIn: parent
+                text: "⠿ " + qsTr("Widget Lab")
+                color: "#DDFFFFFF"
+                font.pixelSize: 9
+            }
+
+            MouseArea {
+                id: labSlotDrag
+
+                property point start
+                property point origin
+
+                anchors.fill: parent
+                cursorShape: Qt.SizeAllCursor
+                onPressed: {
+                    start = mapToItem(widget, mouse.x, mouse.y);
+                    origin = Qt.point(labSlot.x, labSlot.y);
+                }
+                onPositionChanged: {
+                    var now = mapToItem(widget, mouse.x, mouse.y);
+                    labSlot.x = Math.max(0, Math.min(widget.width - labSlot.width, origin.x + now.x - start.x));
+                    labSlot.y = Math.max(14, Math.min(widget.height - labSlot.height, origin.y + now.y - start.y));
+                }
+                onReleased: {
+                    widget.settings.lab_slot_x = Math.round(labSlot.x);
+                    widget.settings.lab_slot_y = Math.round(labSlot.y);
+                }
             }
 
         }

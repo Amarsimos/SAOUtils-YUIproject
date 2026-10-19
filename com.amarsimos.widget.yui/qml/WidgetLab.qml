@@ -53,6 +53,13 @@ NVG.Window {
         return preview;
     }
 
+    // Loads the editor text into Yui (Show in Yui) and reports the result below the editor.
+    function loadLive() {
+        var errors = labWindow.targetWidget.loadIntoYui(editor.text);
+        result.text = errors ? errors : qsTr("Shown in Yui.");
+        result.color = errors ? "#D0302A" : "#2C9E5C";
+    }
+
     title: qsTr("Widget Lab")
     visible: true
     minimumWidth: 480
@@ -117,14 +124,44 @@ NVG.Window {
                     font.pixelSize: 12
                     placeholderText: "import QtQuick 2.12\n\nRectangle { width: 100; height: 100; color: \"orange\" }"
                     text: labWindow.targetWidget.settings.lab_editor_code || ""
-                    // The editor text is the only thing kept between openings.
-                    onTextChanged: labWindow.targetWidget.settings.lab_editor_code = text
+                    // Kept between openings (and shown in Yui after a restart when that is on).
+                    onTextChanged: {
+                        labWindow.targetWidget.settings.lab_editor_code = text;
+                        if (showInYui.checked)
+                            liveTimer.restart();
+
+                    }
                     background: Rectangle {
                         color: "#F7F7F7"
                         border.color: "#CCCCCC"
                     }
                 }
 
+            }
+
+            // Live in Yui: the code is loaded as an Item into Yui's own widget and reloaded 0.4 s after
+            // each change; when it does not compile, the errors show below and the last working
+            // version stays in Yui.
+            CheckBox {
+                id: showInYui
+
+                text: qsTr("Show in Yui (live)")
+                checked: labWindow.targetWidget.settings.lab_in_yui === true
+                onToggled: {
+                    labWindow.targetWidget.settings.lab_in_yui = checked;
+                    labWindow.targetWidget.settingsRevision++;
+                    if (checked)
+                        labWindow.loadLive();
+                    else
+                        labWindow.targetWidget.clearYuiLab();
+                }
+            }
+
+            Timer {
+                id: liveTimer
+
+                interval: 400
+                onTriggered: labWindow.loadLive()
             }
 
             RowLayout {
