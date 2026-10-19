@@ -2426,8 +2426,13 @@ T.Widget {
             spacing: 10
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            // Keep every bubble created: with only the visible ones, ListView estimates the content
+            // height from their average, which keeps changing with long bubbles and makes the scroll
+            // bar jump (the chat holds few messages, so this is cheap).
+            cacheBuffer: 100000
 
             ScrollBar.vertical: SaoScrollBar {
+                id: chatScrollBar
             }
 
             delegate: Item {
@@ -2669,11 +2674,26 @@ T.Widget {
 
             // Stay at the bottom when new content arrives, unless the user scrolled up to read.
             property bool stickToBottom: true
+            // True while the view scrolls itself to the end (not the user scrolling).
+            property bool scrollingToEnd: false
 
+            function scrollToEnd() {
+                scrollingToEnd = true;
+                positionViewAtEnd();
+                scrollingToEnd = false;
+            }
+
+            // Any scrolling by the user (dragging the list or the scroll bar, the mouse wheel) decides
+            // whether to keep following new content: only when it ends at the bottom.
+            onContentYChanged: {
+                if (!scrollingToEnd && (moving || chatScrollBar.pressed))
+                    stickToBottom = atYEnd;
+
+            }
             onMovementEnded: stickToBottom = atYEnd
             onContentHeightChanged: {
                 if (stickToBottom)
-                    Qt.callLater(positionViewAtEnd);
+                    Qt.callLater(scrollToEnd);
 
             }
         }
