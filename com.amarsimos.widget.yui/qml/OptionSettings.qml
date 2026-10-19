@@ -163,6 +163,65 @@ NVG.Window {
                 }
 
                 Heading {
+                    text: qsTr("Yui's Heart")
+                }
+
+                SettingNote {
+                    text: qsTr("Export Yui's memories to a file to keep them or move them to another computer; importing adds the memories of such a file. A backup is also made once a day (the last 7 days are kept).")
+                }
+
+                CheckBox {
+                    id: withMessages
+
+                    text: qsTr("Include the chat history (private conversations)")
+                }
+
+                RowLayout {
+                    Button {
+                        text: qsTr("Export")
+                        onClicked: optionWindow.targetWidget.exportHeart(withMessages.checked, function(path) {
+                            heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log below.");
+                        })
+                    }
+
+                    Button {
+                        text: qsTr("Import")
+                        onClicked: {
+                            var component = Qt.createComponent("HeartImportDialog.qml");
+                            if (component.status !== Component.Ready) {
+                                optionWindow.targetWidget.diag("import dialog unavailable: " + component.errorString());
+                                heartMessage.text = qsTr("The file picker is not available. See the log below.");
+                                return ;
+                            }
+                            var dialog = component.createObject(optionWindow);
+                            dialog.accepted.connect(function() {
+                                heartMessage.text = optionWindow.targetWidget.importHeart(dialog.fileUrl);
+                                dialog.destroy();
+                            });
+                            dialog.rejected.connect(function() {
+                                dialog.destroy();
+                            });
+                            dialog.open();
+                        }
+                    }
+
+                    Button {
+                        text: qsTr("Open Backup Folder")
+                        enabled: (optionWindow.targetWidget.settingsRevision, !!optionWindow.targetWidget.settings.heart_backup_path)
+                        onClicked: optionWindow.targetWidget.showInExplorer(optionWindow.targetWidget.settings.heart_backup_path)
+                    }
+
+                }
+
+                Label {
+                    id: heartMessage
+
+                    visible: text !== ""
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
+
+                Heading {
                     text: qsTr("Close Programs")
                 }
 

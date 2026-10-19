@@ -1460,6 +1460,159 @@ T.Widget {
         }));
     }
 
+    // ---------------------------------------------------------------- Yui's Heart files
+    // Exported files and daily backups: JSON {format, version, exported, entries[, messages]}.
+    // They are written to the extension's storage folder (Storages\yui, kept when the plugin is
+    // updated) or, when SAO Utils does not allow that, to the plugin's own folder.
+
+    // Where heart files go, best first, as local paths with "/".
+    function heartFolders() {
+        return [String(NVG.Utils.storagePath("yui")), String(NVG.Url.toLocalFile(Qt.resolvedUrl("..")))].map(function(folder) {
+            return folder.replace(/\\/g, "/").replace(/\/+$/, "");
+        });
+    }
+
+    function fileUrl(path) {
+        return "file:///" + encodeURI(path.replace(/^\/+/, ""));
+    }
+
+    // Writes text to name in the first heart folder that accepts it, checked by reading it back once
+    // the write has finished (a file PUT completes later even when sent synchronously).
+    // onDone(path): the Windows path written, or "" when no folder worked.
+    function writeHeartFile(name, text, onDone) {
+        var folders = heartFolders();
+        var tryFolder = function(i) {
+            if (i >= folders.length) {
+                onDone("");
+                return ;
+            }
+            var path = folders[i] + "/" + name;
+            var put = new XMLHttpRequest();
+            put.onreadystatechange = function() {
+                if (put.readyState !== XMLHttpRequest.DONE)
+                    return ;
+
+                var ok = false;
+                try {
+                    var get = new XMLHttpRequest();
+                    get.open("GET", fileUrl(path) + "?t=" + Date.now(), false);
+                    get.send(null);
+                    ok = get.responseText === text;
+                } catch (e) {
+                }
+                diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
+                if (ok)
+                    onDone(path.replace(/\//g, "\\"));
+                else
+                    tryFolder(i + 1);
+            };
+            try {
+                put.open("PUT", fileUrl(path));
+                put.send(text);
+            } catch (e) {
+                diag("write " + path + " failed: " + e);
+                tryFolder(i + 1);
+            }
+        };
+        tryFolder(0);
+    }
+
+    // The heart as a file; withMessages adds the complete chat history (private conversations).
+    function heartDocument(withMessages) {
+        var document = {
+            "format": "MHCP001-yui-heart",
+            "version": 1,
+            "exported": new Date().toISOString(),
+            "entries": Yui.copyEntries(heartCache).map(function(entry) {
+                delete entry.id;
+                return entry;
+            })
+        };
+        if (withMessages && database) {
+            document.messages = [];
+            database.readTransaction(function(tx) {
+                var rows = tx.executeSql("SELECT author, message, created FROM messages ORDER BY id").rows;
+                for (var i = 0; i < rows.length; i++)
+                    document.messages.push({
+                    "author": rows.item(i).author,
+                    "message": rows.item(i).message,
+                    "created": rows.item(i).created
+                });
+
+            });
+        }
+        return JSON.stringify(document, null, 2);
+    }
+
+    // Option window "Export": writes 结衣之心-<date>.json and shows it in File Explorer.
+    // onDone(path), optional: the path written, or "" when it failed.
+    function exportHeart(withMessages, onDone) {
+        writeHeartFile("结衣之心-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".json", heartDocument(withMessages), function(path) {
+            if (path)
+                showInExplorer(path);
+
+            if (onDone)
+                onDone(path);
+
+        });
+    }
+
+    // Once a day (on start): a backup without the chat history, one file per weekday slot, so the
+    // last 7 days are kept and older ones are overwritten.
+    function backupHeart() {
+        var day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+        if (widget.settings.heart_backup_day === day || heartCache.length === 0)
+            return ;
+
+        writeHeartFile("heart-backup-" + (day % 7 + 1) + ".json", heartDocument(false), function(path) {
+            if (!path)
+                return ;
+
+            widget.settings.heart_backup_day = day;
+            widget.settings.heart_backup_path = path;
+            widget.settingsRevision++;
+        });
+    }
+
+    // Option window "Import": adds the memories of an exported file (and its chat history, if it has
+    // one) to Yui's Heart; nothing is replaced. Returns a message for the user.
+    function importHeart(url) {
+        var text = "";
+        try {
+            var get = new XMLHttpRequest();
+            get.open("GET", String(url), false);
+            get.send(null);
+            text = get.responseText || "";
+            diag("import " + url + " -> status " + get.status + ", " + text.length + " chars");
+        } catch (e) {
+            diag("import " + url + " failed: " + e);
+        }
+        var document;
+        try {
+            document = JSON.parse(text.replace(/^﻿/, ""));
+        } catch (e) {
+            return qsTr("This file could not be read as Yui's Heart.");
+        }
+        if (!document || document.format !== "MHCP001-yui-heart" || !Array.isArray(document.entries))
+            return qsTr("This file is not a Yui's Heart export.");
+
+        var result = Yui.mergeHeart(heartCache, document.entries);
+        saveHeart(result.entries);
+        var messages = 0;
+        if (Array.isArray(document.messages) && database)
+            database.transaction(function(tx) {
+            document.messages.forEach(function(m) {
+                if (tx.executeSql("SELECT id FROM messages WHERE created = ? AND message = ?", [m.created, m.message]).rows.length === 0) {
+                    tx.executeSql("INSERT INTO messages(author, message, created) VALUES(?, ?, ?)", [m.author, m.message, m.created]);
+                    messages++;
+                }
+            });
+        });
+
+        diag("import: " + result.added + " memories, " + messages + " messages added");
+        return qsTr("Imported %1 new memories and %2 chat messages.").arg(result.added).arg(messages);
+    }
+
     // Keep every finished message in the complete history.
     function logMessage(author, message) {
         if (!database)
@@ -1713,6 +1866,7 @@ T.Widget {
             widget.settings.styles = updateObject(JSON.parse(JSON.stringify(defaultValues)), widget.settings.styles);
         migrateSettings();
         openDatabase();
+        backupHeart();
         // The frame size itself is restored by SAO Utils.
         if (widget.settings.chat_hidden)
             showChat = false;

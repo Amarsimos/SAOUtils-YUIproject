@@ -403,6 +403,45 @@ function forgetMemory(entries, text) {
     };
 }
 
+// Yui's Heart with the memories of an exported file added (pure): memories already remembered (at
+// least SAME_MEMORY alike) are skipped, the others keep their kind, dates and pin. Returns
+// {entries, added}. A core over MAX_CORE moves its least recently used unpinned entries to fragments.
+function mergeHeart(entries, imported) {
+    entries = copyEntries(entries);
+    var added = 0;
+    copyEntries(imported).forEach(function(entry) {
+        var text = String(entry.text || "").trim();
+        if (!text || entries.some(function(old) {
+            return memorySimilarity(old.text, text) >= SAME_MEMORY;
+        }))
+            return ;
+
+        entries.push({
+            "id": null,
+            "text": text,
+            "kind": entry.kind === "core" ? "core" : "fragment",
+            "created": entry.created || 0,
+            "updated": entry.updated || entry.created || 0,
+            "lastUsed": entry.lastUsed || entry.created || 0,
+            "uses": entry.uses || 0,
+            "pinned": entry.kind === "core" && !!entry.pinned
+        });
+        added++;
+    });
+    var movable = entries.filter(function(entry) {
+        return entry.kind === "core" && !entry.pinned;
+    }).sort(function(x, y) {
+        return (x.lastUsed || 0) - (y.lastUsed || 0);
+    });
+    var over = coreMemories(entries).length - MAX_CORE;
+    for (var i = 0; i < over && i < movable.length; i++)
+        movable[i].kind = "fragment";
+    return {
+        "entries": entries,
+        "added": added
+    };
+}
+
 // Heart core entries in a stable order (oldest first), so this part of the prompt rarely changes.
 function coreMemories(entries) {
     return (entries || []).filter(function(entry) {
