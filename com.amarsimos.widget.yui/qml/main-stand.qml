@@ -2572,13 +2572,7 @@ T.Widget {
         NVG.BackgroundSource {
             id: backgroundImage
 
-            // As tall as the chat panel's message area (between its title and input bars), across the
-            // whole width; it unfolds with that area. Filling the whole view, it showed through the
-            // translucent panel above and below that area as separate dark bands.
-            anchors.left: parent.left
-            anchors.right: parent.right
-            y: chatPanel.y + chatPanel.titleHeight
-            height: Math.max(0, chatPanel.height - chatPanel.titleHeight - chatPanel.inputHeight)
+            anchors.fill: parent
             z: -1
             configuration: widget.styles.background_image_path
         }
@@ -2800,6 +2794,10 @@ T.Widget {
 
                 anchors.fill: parent
                 opacity: 0.8
+                // Drawn as one layer and then made 80 % opaque: without it each part got the opacity on
+                // its own, so the inner shadows lying over the gray showed through twice and ended in
+                // visible lines about 12 px inside the title and input bars.
+                layer.enabled: true
 
                 // Gray edge, then a white highlight inside it.
                 Rectangle {
