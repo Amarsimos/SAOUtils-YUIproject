@@ -919,11 +919,25 @@ T.Widget {
 
     }
 
-    // A refused <<kill:>> of a protected process: SAO Utils' system message box, titled after the
-    // indestructible objects of SAO ("Immortal Object"), with only an OK button.
+    // A refused <<kill:>> of a protected process: SAO Utils' own "Immortal Object" warning (rebuilt in
+    // ImmortalObject.qml) with the "system forbidden" sound. Should that window fail to load, a
+    // notification says the same.
+    property var immortalObjectView: null
+
     function showImmortalObject(name) {
         diag("blocked: " + name + " is protected (no confirmation)");
-        notify(qsTr("Immortal Object"), qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
+        NVG.SystemCall.playSound(NVG.SFX.NotifyWarning);
+        if (!immortalObjectView) {
+            var component = Qt.createComponent("ImmortalObject.qml");
+            if (component.status === Component.Ready)
+                immortalObjectView = component.createObject(widget);
+            else
+                diag("Immortal Object window failed to load: " + component.errorString());
+        }
+        if (immortalObjectView)
+            immortalObjectView.popup();
+        else
+            notify(qsTr("Immortal Object"), qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
     }
 
     function cancelAction(index) {
