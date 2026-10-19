@@ -2012,16 +2012,31 @@ T.Widget {
     }
 
     // Deletes the daily backups beyond backupDays (heart-backup-<n>.json with n > backupDays, up to
-    // the largest setting, 30), e.g. after Backup Days was lowered.
+    // the largest setting, 30), e.g. after Backup Days was lowered. Which ones exist is checked by
+    // reading them first (no window), so the command (which shows a console window for a moment) only
+    // runs when there is something to delete.
     function removeOldBackups() {
-        if (backupDays >= 30)
+        var found = [];
+        heartFolders().forEach(function(folder) {
+            for (var n = backupDays + 1; n <= 30; n++) {
+                var path = folder + "/heart-backup-" + n + ".json";
+                try {
+                    var get = new XMLHttpRequest();
+                    get.open("GET", fileUrl(path), false);
+                    get.send(null);
+                    if (get.responseText)
+                        found.push(path.replace(/\//g, "\\"));
+
+                } catch (e) {
+                }
+            }
+        });
+        if (found.length === 0)
             return ;
 
-        heartFolders().forEach(function(folder) {
-            var command = 'cmd /c for /l %i in (' + (backupDays + 1) + ',1,30) do @del /q "' + folder.replace(/\//g, "\\") + '\\heart-backup-%i.json" 2>nul';
-            NVG.SystemCall.command(command);
-            diag("command(" + command + ")");
-        });
+        var command = 'cmd /c del /q "' + found.join('" "') + '"';
+        NVG.SystemCall.command(command);
+        diag("command(" + command + ")");
     }
 
     onBackupDaysChanged: removeOldBackups()
