@@ -95,6 +95,12 @@ T.Widget {
     property var loadValues: ({})
     readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
     readonly property color crystalColor: levelColors[crystalLevel]
+    // The crystal turning red is reported in its bubble (and the chat).
+    onCrystalLevelChanged: {
+        if (crystalLevel === 2 && crystalForm.visible && featureEnabled("status_reports"))
+            statusWarning("警告！系统负荷过高：" + crystalStatus + "……" + userTitle() + "，要不要看看是什么程序在占用呢？(・_・;)");
+
+    }
     // What raised the color, e.g. "GPU 98%" (shown when hovering the crystal).
     readonly property string crystalStatus: loadMetrics.filter(function(metric) {
         return loadLevelOf(metric) > 0;
@@ -743,9 +749,7 @@ T.Widget {
             scheduleSave();
             if (!isError) {
                 logMessage("ai", text);
-                if (notifyTitle)
-                    notify(notifyTitle, text);
-
+                announce(notifyTitle, text);
             }
 
             if (action)
@@ -1174,6 +1178,7 @@ T.Widget {
 
         checkSystemStatus(now);
         checkCare(now);
+        checkIdleChat(now);
     }
 
     // ---------------------------------------------------------------- Yui's Heart (SQLite)
@@ -1703,7 +1708,39 @@ T.Widget {
     function statusWarning(text) {
         appendMessage("ai", text, false, true);
         setEmotion("surprised");
-        notify(qsTr("Navigation Report"), text);
+        announce(qsTr("Navigation Report"), text);
+    }
+
+    // Something Yui says outside the chat: while she is a crystal, in the bubble next to it (every
+    // reply, titled or not); otherwise, when it has a title (care, status reports), as a notification.
+    function announce(title, text) {
+        if (crystalForm.visible)
+            showBubble(title || "MHCP001 · Yui", text);
+        else if (title)
+            notify(title, text);
+    }
+
+    // The crystal's speech bubble (CrystalBubble.qml), created on first use; its title bar takes the
+    // crystal's color. Clicking it opens the chat.
+    property var crystalBubble: null
+
+    function showBubble(title, text) {
+        if (!crystalBubble) {
+            var component = Qt.createComponent("CrystalBubble.qml");
+            if (component.status !== Component.Ready) {
+                diag("crystal bubble unavailable: " + component.errorString());
+                notify(title, text);
+                return ;
+            }
+            crystalBubble = component.createObject(widget);
+            crystalBubble.clicked.connect(function() {
+                setChatVisible(true);
+            });
+        }
+        var corner = crystalForm.mapToGlobal(0, 0);
+        // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
+        crystalBubble.show(title, text, levelColors[crystalLevel], Qt.rect(corner.x, corner.y, crystalForm.width, crystalForm.height));
+        diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
     // SAO Utils' global notification (NVG.Notification). Opening it brings the chat back.
@@ -1730,6 +1767,17 @@ T.Widget {
 
     // MHCP001 care: remind the user to sleep late at night or to rest after a long session.
     // At most once an hour, only while the user is around and Yui is awake.
+    // Yui talks by herself while she is a crystal and nothing happened for settings.idle_chat_minutes
+    // (0 = never; default 15, before she falls asleep after the standby time).
+    function checkIdleChat(now) {
+        var minutes = widget.settings.idle_chat_minutes !== undefined ? widget.settings.idle_chat_minutes : 15;
+        if (minutes <= 0 || !crystalForm.visible || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
+            return ;
+
+        var title = userTitle();
+        yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
+    }
+
     function checkCare(now) {
         if (!featureEnabled("proactive_care") || sleeping || widget.busy || now - lastProactive < 3600000 || now - lastActivity > 15 * 60000)
             return ;

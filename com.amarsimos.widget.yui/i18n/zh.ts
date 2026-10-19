@@ -281,12 +281,12 @@
 <context>
     <name>HeartImportDialog</name>
     <message>
-        <location filename="../qml/HeartImportDialog.qml" line="7"/>
+        <location filename="../qml/HeartImportDialog.qml" line="10"/>
         <source>Import Yui&apos;s Heart</source>
         <translation>导入结衣之心</translation>
     </message>
     <message>
-        <location filename="../qml/HeartImportDialog.qml" line="9"/>
+        <location filename="../qml/HeartImportDialog.qml" line="12"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
@@ -374,7 +374,7 @@
     <name>OptionSettings</name>
     <message>
         <location filename="../qml/OptionSettings.qml" line="16"/>
-        <location filename="../qml/OptionSettings.qml" line="387"/>
+        <location filename="../qml/OptionSettings.qml" line="411"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>
@@ -429,137 +429,147 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="156"/>
+        <location filename="../qml/OptionSettings.qml" line="160"/>
+        <source>Idle Chatter (minutes, 0 = off)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/OptionSettings.qml" line="176"/>
+        <source>While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).</source>
+        <translation>结衣处于水晶形态时，她说的话会显示在水晶旁边的气泡里；没有互动超过这个时间时，她会主动说一句话（每次都会调用 API）。</translation>
+    </message>
+    <message>
+        <location filename="../qml/OptionSettings.qml" line="180"/>
         <source>Restore Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="166"/>
+        <location filename="../qml/OptionSettings.qml" line="190"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="170"/>
+        <location filename="../qml/OptionSettings.qml" line="194"/>
         <source>Export Yui&apos;s memories to a file to keep them or move them to another computer; importing adds the memories of such a file. A backup is also made once a day (the last 7 days are kept).</source>
         <translation>把结衣的记忆导出成文件，用来保存或转移到其他电脑；导入时会把文件里的记忆合并进来。另外每天会自动备份一次（保留最近 7 天）。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="176"/>
+        <location filename="../qml/OptionSettings.qml" line="200"/>
         <source>Include the chat history (private conversations)</source>
         <translation>包含聊天记录（私人对话）</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="181"/>
+        <location filename="../qml/OptionSettings.qml" line="205"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="183"/>
+        <location filename="../qml/OptionSettings.qml" line="207"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="183"/>
+        <location filename="../qml/OptionSettings.qml" line="207"/>
         <source>The export could not be written. See the log below.</source>
         <translation>导出文件无法写入，请查看下方日志。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="188"/>
+        <location filename="../qml/OptionSettings.qml" line="212"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="193"/>
+        <location filename="../qml/OptionSettings.qml" line="217"/>
         <source>The file picker is not available. See the log below.</source>
         <translation>无法打开文件选择框，请查看下方日志。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="209"/>
+        <location filename="../qml/OptionSettings.qml" line="233"/>
         <source>Open Backup Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="225"/>
+        <location filename="../qml/OptionSettings.qml" line="249"/>
         <source>Close Programs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="229"/>
+        <location filename="../qml/OptionSettings.qml" line="253"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="233"/>
+        <location filename="../qml/OptionSettings.qml" line="257"/>
         <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
         <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="240"/>
+        <location filename="../qml/OptionSettings.qml" line="264"/>
         <source>No programs yet.</source>
         <translation>暂无程序。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="252"/>
+        <location filename="../qml/OptionSettings.qml" line="276"/>
         <source>Immortal Objects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="256"/>
+        <location filename="../qml/OptionSettings.qml" line="280"/>
         <source>Yui never closes these programs. The locked system processes cannot be removed; you can protect more.</source>
         <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="267"/>
+        <location filename="../qml/OptionSettings.qml" line="291"/>
         <source>Diagnostics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="271"/>
+        <location filename="../qml/OptionSettings.qml" line="295"/>
         <source>Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.</source>
         <translation>逐个测试桌面代行功能。每个按钮都会发一条测试消息，并像真实操作一样请求确认；受保护进程应当不经询问直接被拦截。</translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="280"/>
+        <location filename="../qml/OptionSettings.qml" line="304"/>
         <source>Launch Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="283"/>
+        <location filename="../qml/OptionSettings.qml" line="307"/>
         <source>Close Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="286"/>
+        <location filename="../qml/OptionSettings.qml" line="310"/>
         <source>Find File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="289"/>
+        <location filename="../qml/OptionSettings.qml" line="313"/>
         <source>Open Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="292"/>
+        <location filename="../qml/OptionSettings.qml" line="316"/>
         <source>Protected Process</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="311"/>
+        <location filename="../qml/OptionSettings.qml" line="335"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="316"/>
+        <location filename="../qml/OptionSettings.qml" line="340"/>
         <source>Copy Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="326"/>
+        <location filename="../qml/OptionSettings.qml" line="350"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/OptionSettings.qml" line="375"/>
+        <location filename="../qml/OptionSettings.qml" line="399"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -742,146 +752,146 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="865"/>
+        <location filename="../qml/main-stand.qml" line="869"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="864"/>
+        <location filename="../qml/main-stand.qml" line="868"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1852"/>
+        <location filename="../qml/main-stand.qml" line="1900"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="880"/>
-        <location filename="../qml/main-stand.qml" line="1917"/>
+        <location filename="../qml/main-stand.qml" line="884"/>
+        <location filename="../qml/main-stand.qml" line="1965"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="866"/>
+        <location filename="../qml/main-stand.qml" line="870"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="867"/>
+        <location filename="../qml/main-stand.qml" line="871"/>
         <source>Yui will search your computer for:</source>
         <translation>结衣将在电脑里搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="868"/>
+        <location filename="../qml/main-stand.qml" line="872"/>
         <source>Yui will close this program:</source>
         <translation>结衣将关闭这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="880"/>
+        <location filename="../qml/main-stand.qml" line="884"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="918"/>
+        <location filename="../qml/main-stand.qml" line="922"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="957"/>
+        <location filename="../qml/main-stand.qml" line="961"/>
         <source>Immortal Object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="957"/>
+        <location filename="../qml/main-stand.qml" line="961"/>
         <source>%1 is a protected system process. Yui cannot close it.</source>
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1019"/>
+        <location filename="../qml/main-stand.qml" line="1023"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1020"/>
+        <location filename="../qml/main-stand.qml" line="1024"/>
         <source>Close %1 without asking from now on?
 You can change this in Option.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 Option 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1594"/>
+        <location filename="../qml/main-stand.qml" line="1599"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1597"/>
+        <location filename="../qml/main-stand.qml" line="1602"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1613"/>
+        <location filename="../qml/main-stand.qml" line="1618"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1706"/>
+        <location filename="../qml/main-stand.qml" line="1711"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1742"/>
-        <location filename="../qml/main-stand.qml" line="1748"/>
+        <location filename="../qml/main-stand.qml" line="1790"/>
+        <location filename="../qml/main-stand.qml" line="1796"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2537"/>
+        <location filename="../qml/main-stand.qml" line="2585"/>
         <source>Confirm...</source>
         <translation>确认……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2537"/>
+        <location filename="../qml/main-stand.qml" line="2585"/>
         <source>Done ✓</source>
         <translation>已完成 ✓</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2537"/>
+        <location filename="../qml/main-stand.qml" line="2585"/>
         <source>Cancelled</source>
         <translation>已取消</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2664"/>
+        <location filename="../qml/main-stand.qml" line="2712"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2690"/>
+        <location filename="../qml/main-stand.qml" line="2738"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2690"/>
+        <location filename="../qml/main-stand.qml" line="2738"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2707"/>
+        <location filename="../qml/main-stand.qml" line="2755"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2769"/>
+        <location filename="../qml/main-stand.qml" line="2817"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2774"/>
+        <location filename="../qml/main-stand.qml" line="2822"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2779"/>
+        <location filename="../qml/main-stand.qml" line="2827"/>
         <source>Option</source>
         <translation type="unfinished"></translation>
     </message>

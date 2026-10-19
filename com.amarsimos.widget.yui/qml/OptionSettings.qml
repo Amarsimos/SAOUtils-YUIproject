@@ -152,6 +152,30 @@ NVG.Window {
 
                 }
 
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Idle Chatter (minutes, 0 = off)")
+                    }
+
+                    SpinBox {
+                        Layout.preferredWidth: 120
+                        from: 0
+                        to: 240
+                        stepSize: 5
+                        editable: true
+                        value: optionWindow.targetWidget.settings.idle_chat_minutes !== undefined ? optionWindow.targetWidget.settings.idle_chat_minutes : 15
+                        onValueModified: optionWindow.targetWidget.settings.idle_chat_minutes = value
+                    }
+
+                }
+
+                SettingNote {
+                    text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).")
+                }
+
                 Button {
                     text: qsTr("Restore Defaults")
                     onClicked: {
