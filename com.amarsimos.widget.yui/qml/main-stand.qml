@@ -2081,6 +2081,37 @@ T.Widget {
     }
 
     // Keep every finished message in the complete history.
+    // Your sent messages for ↑ / ↓ in the input box, newest first (at most 100, repeats in a row
+    // once): from the recollection log, so they survive clearing the chat and restarts; from the
+    // chat itself without a database.
+    function sentHistory() {
+        var list = [];
+        var add = function(message) {
+            message = String(message || "");
+            if (message.trim() && list[list.length - 1] !== message)
+                list.push(message);
+
+        };
+        if (database) {
+            try {
+                database.readTransaction(function(tx) {
+                    var rows = tx.executeSql("SELECT message FROM messages WHERE author = 'user' ORDER BY id DESC LIMIT 200").rows;
+                    for (var i = 0; i < rows.length; i++)
+                        add(rows.item(i).message);
+
+                });
+            } catch (e) {
+                diag("input history: " + e);
+            }
+        }
+        if (list.length === 0)
+            for (var j = chatModel.count - 1; j >= 0; j--)
+                if (chatModel.get(j).author === "user")
+                    add(chatModel.get(j).message);
+
+        return list.slice(0, 100);
+    }
+
     function logMessage(author, message) {
         if (!database)
             return ;
@@ -3581,10 +3612,47 @@ T.Widget {
                         TextArea {
                             id: textInput
 
-                            function submit() {
-                                if (sendMessage(text))
-                                    text = "";
+                            // ↑ / ↓ go through your sent messages (widget.sentHistory()), as in command line AI
+                            // tools: index -1 is the text being written (draft), kept while browsing.
+                            property var history: []
+                            property int historyIndex: -1
+                            property string draft
 
+                            function submit() {
+                                if (sendMessage(text)) {
+                                    text = "";
+                                    historyIndex = -1;
+                                }
+                            }
+
+                            // step 1: older, -1: newer. Returns false at either end (the key then does
+                            // what it normally does).
+                            function browseHistory(step) {
+                                if (historyIndex === -1) {
+                                    if (step < 0)
+                                        return false;
+
+                                    history = widget.sentHistory();
+                                    draft = text;
+                                }
+                                var next = historyIndex + step;
+                                if (next >= history.length || next < -1)
+                                    return false;
+
+                                historyIndex = next;
+                                text = next === -1 ? draft : history[next];
+                                cursorPosition = length;
+                                return true;
+                            }
+
+                            // Whether the cursor is on the first / last line (a multi-line message moves
+                            // the cursor between its lines first).
+                            function onFirstLine() {
+                                return positionToRectangle(cursorPosition).y <= positionToRectangle(0).y;
+                            }
+
+                            function onLastLine() {
+                                return positionToRectangle(cursorPosition).y >= positionToRectangle(length).y;
                             }
 
                             function handleReturn(event) {
@@ -3606,6 +3674,8 @@ T.Widget {
                             background: null
                             Keys.onReturnPressed: handleReturn(event)
                             Keys.onEnterPressed: handleReturn(event)
+                            Keys.onUpPressed: event.accepted = onFirstLine() && browseHistory(1)
+                            Keys.onDownPressed: event.accepted = onLastLine() && browseHistory(-1)
                         }
 
                     }
