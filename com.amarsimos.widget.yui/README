@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Chat in its own window, styled as an SAO message panel: opens and closes with SAO animations,
-  can be moved and resized, and is closed by clicking its title, Yui's image or with Esc.
+  can be resized and moved by dragging its title or Yui herself, and is closed by clicking its
+  title, Yui's image or with Esc.
 - Messages as SAO instant message windows; while Yui thinks, "YUI正在思考" with hints.
 - Yui's Heart Crystal: a collapsed form colored by CPU, GPU and memory load, with a speech bubble.
 - Desktop actions: Yui can start programs, find files (Everything) and close programs, always
