@@ -2675,8 +2675,8 @@ T.Widget {
             applyCollapsedSize(); // lowers the minimum size again once applied
         else
             releaseMinimumSize();
-        // Open as it was left (open unless it was closed).
-        if (!widget.settings.chat_hidden)
+        // Open as it was left: a new widget starts collapsed, the chat reopens only if it was left open.
+        if (widget.settings.chat_hidden === false)
             Qt.callLater(openView);
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
