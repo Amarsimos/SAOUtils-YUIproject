@@ -175,7 +175,7 @@ NVG.Window {
                         externalBrowserPreference.value = settings.external_browser === true;
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
                         idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
-                        maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 1024;
+                        maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
@@ -344,14 +344,14 @@ NVG.Window {
                         }
 
                         ResetButton {
-                            changed: maxTokensPreference.value !== 1024
-                            onClicked: maxTokensPreference.value = 1024
+                            changed: maxTokensPreference.value !== 0
+                            onClicked: maxTokensPreference.value = 0
                         }
 
                     }
 
                     SettingNote {
-                        text: qsTr("The longest reply Yui may give, which also caps its cost. In tokens; set it to ∞ (no limit) if the server rejects the max_tokens parameter (Claude always gets 1024 then).")
+                        text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. ∞ (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
                     }
 
                     // ---------------------------------------------------------------- MHCP001 personality
@@ -620,7 +620,7 @@ NVG.Window {
             onReset: targetWidget.confirmReset(qsTr("Cardinal System"), function() {
                 systemPromptPreference.value = targetWidget.defaultSystemPrompt;
                 userTitlePreference.value = 0;
-                maxTokensPreference.value = 1024;
+                maxTokensPreference.value = 0;
                 greetPreference.value = true;
                 carePreference.value = true;
                 statusPreference.value = true;

@@ -68,9 +68,9 @@ T.Widget {
     readonly property var legacyModelList: ["gpt-5.2", "gpt-5.2-pro", "gpt-5-mini", "gpt-5-nano", "gpt-5", "gpt-4.1", "gemini-3.0-pro", "gemini-3.0-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
     // Conversation turns sent with each request (Cardinal System, default 20).
     readonly property int maxHistory: widget.settings.max_history > 0 ? widget.settings.max_history : 20
-    // Longest reply asked for, in tokens (Cardinal System, default 1024); 0 sends no limit, except to
+    // Longest reply asked for, in tokens (Cardinal System); 0 (the default) sends no limit, except to
     // Claude, which requires one.
-    readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 1024
+    readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -626,8 +626,10 @@ T.Widget {
                     "content": systemPrompt
                 }].concat(messages)
             };
+            // OpenAI's own server takes max_completion_tokens (its newer models reject max_tokens);
+            // compatible servers take max_tokens.
             if (maxTokens > 0)
-                data.max_tokens = maxTokens;
+                data[config.provider.id === "openai" ? "max_completion_tokens" : "max_tokens"] = maxTokens;
 
         }
         if (format === "gemini" && maxTokens > 0)
@@ -1105,8 +1107,8 @@ T.Widget {
         askConfirm(qsTr("Warning"), qsTr("Restore all settings of %1 to their defaults?").arg(windowTitle), onYes);
     }
 
-    // SAO Utils' message box with OK / Cancel; onYes runs after OK (right away without a message box),
-    // onNo after Cancel. alert (confirmations that delete something): titled "Alert", for which SAO
+    // SAO Utils' message box with OK / Cancel; onYes runs after OK, onNo after Cancel. Without a
+    // message box a plain question goes ahead, an alert (deleting something) does not. alert (confirmations that delete something): titled "Alert", for which SAO
     // Utils plays the system alert sound instead of the message sound (as when asking to exit).
     function askConfirm(title, text, onYes, alert, onNo) {
         try {
@@ -1131,7 +1133,15 @@ T.Widget {
         } catch (e) {
             diag("confirm: messageBox failed: " + e);
         }
-        onYes();
+        // Without an answer nothing that deletes is done; a plain question goes ahead.
+        if (alert) {
+            diag("confirm: no message box, \"" + text + "\" not done");
+            if (onNo)
+                onNo();
+
+        } else {
+            onYes();
+        }
     }
 
     function diag(message) {
