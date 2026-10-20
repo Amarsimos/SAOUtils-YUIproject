@@ -3003,15 +3003,42 @@ T.Widget {
 
             }
 
+            // Grabbing Yui and dragging moves the view (as the title bar does). A click without dragging
+            // wakes a sleeping Yui, or closes the chat (back to the collapsed form) like the title and Esc.
             MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                // A click on a sleeping Yui wakes her up; on an awake Yui it closes the chat (back to
-                // the collapsed form), like the message bar and Esc.
-                onClicked: {
-                    if (!widget.wakeUp())
-                        widget.setChatVisible(false);
+                property point pressPoint
+                property bool dragging: false
 
+                anchors.fill: parent
+                cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                onPressed: {
+                    dragging = false;
+                    pressPoint = mapToGlobal(mouse.x, mouse.y);
+                    if (widget.yuiView)
+                        widget.yuiView.beginMove(pressPoint);
+
+                }
+                onPositionChanged: {
+                    if (!pressed || !widget.yuiView)
+                        return ;
+
+                    var now = mapToGlobal(mouse.x, mouse.y);
+                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > 4)
+                        dragging = true;
+
+                    if (dragging)
+                        widget.yuiView.moveTo(now);
+
+                }
+                onReleased: {
+                    if (dragging) {
+                        if (widget.yuiView)
+                            widget.yuiView.endMove();
+
+                    } else if (!widget.wakeUp()) {
+                        widget.setChatVisible(false);
+                    }
+                    dragging = false;
                 }
             }
 
