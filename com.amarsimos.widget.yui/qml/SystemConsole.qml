@@ -378,6 +378,13 @@ NVG.Window {
                         text: qsTr("Log")
                     }
 
+                    // The full requests to the AI and its raw replies (tags included) in the log.
+                    CheckBox {
+                        text: qsTr("Log Requests")
+                        checked: consoleWindow.targetWidget.logRequests
+                        onToggled: consoleWindow.targetWidget.settings.log_requests = checked
+                    }
+
                     Button {
                         text: qsTr("Copy Log")
                         enabled: consoleWindow.targetWidget.diagLog.length > 0
@@ -397,7 +404,7 @@ NVG.Window {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 220
+                    Layout.preferredHeight: 360
                     color: "#1A1D24"
                     radius: 4
 

@@ -506,6 +506,7 @@ T.Widget {
         var streamError = "";
         // Give up when no data arrives for a while, so the chat never stays busy forever.
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 60000 }", widget);
+        var sentAt = Date.now();
         var finish = function(text, isError) {
             if (done)
                 return ;
@@ -513,6 +514,7 @@ T.Widget {
             done = true;
             timer.stop();
             timer.destroy();
+            logReply(config, text, isError, Date.now() - sentAt);
             onFinished(text, isError, false);
         };
         // Parse the complete lines received since the last call (all remaining text at the end).
@@ -638,6 +640,7 @@ T.Widget {
         };
 
         http.setRequestHeader("Content-Type", "application/json");
+        logRequest(config, data);
         http.send(JSON.stringify(data));
         return {
             "abort": function() {
@@ -1142,6 +1145,24 @@ T.Widget {
         } else {
             onYes();
         }
+    }
+
+    // Requests in the System Console log: a summary line always, the full body (system prompt and
+    // messages; the access key is only in a header and never logged) and the raw reply with its tags
+    // while "Log Requests" is on.
+    readonly property bool logRequests: widget.settings.log_requests !== false
+
+    function logRequest(config, data) {
+        var count = (data.messages || data.contents || []).length;
+        diag("→ request: " + config.provider.title + " · " + (config.model || "?") + " · " + count + " messages · " + config.endpoint);
+        if (logRequests)
+            diag("→ body:\n" + JSON.stringify(data, null, 2));
+
+    }
+
+    function logReply(config, text, isError, ms) {
+        var head = (isError ? "✕ error" : "← reply") + " after " + (ms / 1000).toFixed(1) + " s, " + String(text || "").length + " chars";
+        diag(logRequests || isError ? head + ":\n" + text : head);
     }
 
     function diag(message) {
