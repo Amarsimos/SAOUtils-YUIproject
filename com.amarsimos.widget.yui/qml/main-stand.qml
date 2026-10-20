@@ -640,7 +640,7 @@ T.Widget {
         };
 
         http.setRequestHeader("Content-Type", "application/json");
-        logRequest(config, data);
+        logRequest(config, data, systemPrompt, messages);
         http.send(JSON.stringify(data));
         return {
             "abort": function() {
@@ -1152,12 +1152,24 @@ T.Widget {
     // while "Log Requests" is on.
     readonly property bool logRequests: widget.settings.log_requests !== false
 
-    function logRequest(config, data) {
-        var count = (data.messages || data.contents || []).length;
-        diag("→ request: " + config.provider.title + " · " + (config.model || "?") + " · " + count + " messages · " + config.endpoint);
-        if (logRequests)
-            diag("→ body:\n" + JSON.stringify(data, null, 2));
+    // The body is shown as readable text: the parameters, then the system prompt and every message
+    // with their line breaks (the system prompt is the personality followed by the feature
+    // instructions, heart core, time and recalled memories).
+    function logRequest(config, data, systemPrompt, messages) {
+        diag("→ request: " + config.provider.title + " · " + (config.model || "?") + " · " + messages.length + " messages · " + config.endpoint);
+        if (!logRequests)
+            return ;
 
+        var params = {};
+        for (var key in data)
+            if (["messages", "contents", "system", "systemInstruction"].indexOf(key) === -1)
+                params[key] = data[key];
+
+        var parts = ["→ body " + JSON.stringify(params), "━━━━ system (" + systemPrompt.length + " chars) ━━━━", systemPrompt];
+        messages.forEach(function(message) {
+            parts.push("━━━━ " + message.role + " ━━━━", message.content);
+        });
+        diag(parts.join("\n"));
     }
 
     function logReply(config, text, isError, ms) {
