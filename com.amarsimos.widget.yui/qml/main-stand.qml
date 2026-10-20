@@ -3004,7 +3004,8 @@ T.Widget {
             }
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            height: parent.height
+            // Room above her for floating (hover goes up to -10), so her head is never cut off.
+            height: parent.height - 10
             // Size the item to the image as actually drawn, so the chat area starts right next to it
             // whatever the image resolution is. Never take more than half of the widget, leave the chat
             // column enough room for its input row, but never get narrower than characterMinimumWidth
