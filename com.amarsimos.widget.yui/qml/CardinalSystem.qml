@@ -1,0 +1,637 @@
+import NERvGear 1.0 as NVG
+import NERvGear.Controls 1.0
+import NERvGear.Preferences 1.0 as P
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
+
+NVG.Window {
+    id: coreSettings
+
+    property var targetWidget
+    // Working copy of settings.provider_settings, keyed by provider id.
+    property var providerSettings: ({
+    })
+    // Index of the provider whose fields are currently shown.
+    property int shownProvider: -1
+    // Models in the model dropdown: the list fetched from the provider, or its preset list.
+    property var shownModels: []
+    // List fetched with "Refresh Model List" for the shown provider (null: use the preset list).
+    property var shownFetchedModels: null
+    property bool loading: true
+
+    function open() {
+        visible = true;
+    }
+
+    // Fill the model/endpoint/key fields with the saved values of a provider.
+    function showProvider(index, saved) {
+        var provider = targetWidget.providers[index];
+        saved = saved || {
+        };
+        shownProvider = index;
+        shownFetchedModels = saved.fetched_models && saved.fetched_models.length > 0 ? saved.fetched_models : null;
+        setModelList(shownFetchedModels || provider.models, saved.model);
+        modelStatus.text = "";
+        customModelPreference.value = saved.custom_model || "";
+        apiEndpointPreference.value = saved.api_endpoint || provider.endpoint;
+        apiKeyPreference.value = saved.api_key || "";
+    }
+
+    // Fill the model dropdown, keeping the given model selected when it is in the list.
+    function setModelList(models, selected) {
+        shownModels = models;
+        modelPreference.model = models;
+        var modelIndex = models.indexOf(selected);
+        modelPreference.value = modelIndex >= 0 ? modelIndex : 0;
+    }
+
+    function refreshModelList() {
+        var provider = targetWidget.providers[shownProvider];
+        var current = shownModels[modelPreference.value];
+        modelStatus.text = qsTr("Scanning...");
+        targetWidget.fetchModels(targetWidget.providerConfig(provider, shownSettings()), function(models, error) {
+            // The user switched to another provider meanwhile.
+            if (targetWidget.providers[shownProvider] !== provider)
+                return ;
+
+            if (!models) {
+                modelStatus.text = qsTr("Scan failed: %1").arg(error);
+                return ;
+            }
+            shownFetchedModels = models;
+            setModelList(models, current);
+            modelStatus.text = qsTr("%1 cores found").arg(models.length);
+        });
+    }
+
+    // Read the shown fields back into a provider_settings entry.
+    function shownSettings() {
+        return {
+            "model": shownModels[modelPreference.value] || "",
+            "fetched_models": shownFetchedModels,
+            "custom_model": customModelPreference.value || "",
+            "api_endpoint": apiEndpointPreference.value || "",
+            "api_key": apiKeyPreference.value || ""
+        };
+    }
+
+    // Every change takes effect without a Save button: written shortly after the last change (so
+    // typing an access key or the personality is not written on every key) and when the window closes.
+    function applySettings() {
+        applyTimer.stop();
+        stashShownProvider();
+        targetWidget.settings.provider = targetWidget.providers[shownProvider].id;
+        targetWidget.settings.provider_settings = JSON.parse(JSON.stringify(providerSettings));
+        targetWidget.settings.system_prompt = systemPromptPreference.value;
+        targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
+        targetWidget.settings.greet_on_start = !!greetPreference.value;
+        targetWidget.settings.proactive_care = !!carePreference.value;
+        targetWidget.settings.status_reports = !!statusPreference.value;
+        targetWidget.settings.external_browser = !!externalBrowserPreference.value;
+        targetWidget.settings.sleep_minutes = sleepPreference.value;
+        targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
+        targetWidget.settings.max_tokens = maxTokensPreference.value;
+        targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
+        targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
+    }
+
+    function scheduleApply() {
+        if (!loading)
+            applyTimer.restart();
+
+    }
+
+    function stashShownProvider() {
+        if (shownProvider >= 0)
+            providerSettings[targetWidget.providers[shownProvider].id] = shownSettings();
+
+    }
+
+    title: qsTr("Cardinal System")
+    visible: true
+    minimumWidth: 480
+    // Content scrolls, so keep the window usable on small screens.
+    minimumHeight: 480
+    width: minimumWidth
+    height: 930
+    transientParent: widget.NVG.View.window
+    onShownFetchedModelsChanged: scheduleApply()
+    onClosing: {
+        if (applyTimer.running)
+            applySettings();
+
+        // When the window is closed, destroy the object to free up resources.
+        // A new one is created every time the settings action is triggered.
+        destroy();
+    }
+
+    Timer {
+        id: applyTimer
+
+        interval: 600
+        onTriggered: applySettings()
+    }
+
+    Page {
+        id: cfg_page
+
+        anchors.fill: parent
+
+        ScrollView {
+            id: scrollView
+
+            anchors.fill: parent
+            anchors.margins: 16
+            anchors.topMargin: 0
+            clip: true
+            // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll bar
+            // (which is drawn over the page and covered the values at the right edge).
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            contentWidth: availableWidth
+
+            ColumnLayout {
+                id: preferenceLayout
+
+                width: scrollView.availableWidth - scrollView.ScrollBar.vertical.width - 4
+
+                P.PreferenceGroup {
+                    id: rootPreference
+
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Component.onCompleted: {
+                        var settings = targetWidget.settings;
+                        providerSettings = JSON.parse(JSON.stringify(settings.provider_settings || {
+                        }));
+                        var index = targetWidget.providerIndexOf(settings.provider);
+                        providerPreference.value = index;
+                        showProvider(index, providerSettings[targetWidget.providers[index].id]);
+                        systemPromptPreference.value = settings.system_prompt !== undefined ? settings.system_prompt : targetWidget.defaultSystemPrompt;
+                        userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
+                        greetPreference.value = settings.greet_on_start !== false;
+                        carePreference.value = settings.proactive_care !== false;
+                        statusPreference.value = settings.status_reports !== false;
+                        externalBrowserPreference.value = settings.external_browser === true;
+                        sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
+                        idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
+                        maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
+                        searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
+                        searchCustomPreference.value = settings.search_custom || "";
+                        loading = false;
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                            preference.valueChanged.connect(scheduleApply);
+                        });
+                    }
+
+                    // ---------------------------------------------------------------- Link Start
+                    Heading {
+                        text: qsTr("Link Start")
+                    }
+
+                    P.SelectPreference {
+                        id: providerPreference
+
+                        name: "provider"
+                        label: qsTr("Seed Server")
+                        model: targetWidget.providers.map(function(provider) {
+                            return provider.title;
+                        })
+                        onValueChanged: {
+                            if (loading || value < 0 || value === shownProvider)
+                                return ;
+
+                            stashShownProvider();
+                            showProvider(value, providerSettings[targetWidget.providers[value].id]);
+                        }
+                    }
+
+                    SettingNote {
+                        text: qsTr("The AI service Yui connects to. Each server keeps its own core, address and access key.")
+                    }
+
+                    P.SelectPreference {
+                        id: modelPreference
+
+                        name: "model"
+                        label: qsTr("Core Program")
+                        visible: model.length > 0
+                    }
+
+                    SettingNote {
+                        visible: modelPreference.visible
+                        text: qsTr("The AI model that runs Yui.")
+                    }
+
+                    RowLayout {
+                        spacing: 12
+                        Layout.fillWidth: true
+
+                        Button {
+                            text: qsTr("Scan Cores")
+                            onClicked: refreshModelList()
+                        }
+
+                        Button {
+                            text: qsTr("Restore Registry")
+                            visible: shownFetchedModels !== null
+                            onClicked: {
+                                var current = shownModels[modelPreference.value];
+                                shownFetchedModels = null;
+                                setModelList(targetWidget.providers[shownProvider].models, current);
+                                modelStatus.text = "";
+                            }
+                        }
+
+                        Label {
+                            id: modelStatus
+
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
+                    }
+
+                    P.TextFieldPreference {
+                        id: customModelPreference
+
+                        name: "custom_model"
+                        label: qsTr("Manual Core ID")
+                        display: P.TextFieldPreference.ExpandControl
+                        hint: qsTr("model id, e.g. gpt-6-sol")
+                        message: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
+                    }
+
+                    P.TextFieldPreference {
+                        id: apiEndpointPreference
+
+                        name: "api_endpoint"
+                        label: qsTr("Server Address")
+                        display: P.TextFieldPreference.ExpandControl
+                        message: qsTr("The API endpoint URL. Change it only when using a proxy or a self-hosted service.")
+                    }
+
+                    P.TextFieldPreference {
+                        id: apiKeyPreference
+
+                        name: "api_key"
+                        label: qsTr("Access Key")
+                        display: P.TextFieldPreference.ExpandControl
+                        echoMode: TextInput.Password
+                        message: qsTr("The API key of this server. Each server keeps its own key.")
+                    }
+
+                    RowLayout {
+                        spacing: 20
+                        Layout.alignment: Qt.AlignHCenter
+
+                        Button {
+                            text: qsTr("Link Start!")
+                            onClicked: {
+                                apiResponseArea.value = qsTr("Linking...");
+                                var config = targetWidget.providerConfig(targetWidget.providers[shownProvider], shownSettings());
+                                config.systemPrompt = systemPromptPreference.value;
+                                config.userTitle = userTitlePreference.ids[userTitlePreference.value] === "mama" ? "妈妈" : "爸爸";
+                                targetWidget.requestCompletion([{
+                                    "role": "user",
+                                    "content": "Hello"
+                                }], function(text, isError) {
+                                    apiResponseArea.value = (isError ? "" : qsTr("Link established") + " (" + config.model + "):\n") + text;
+                                }, config);
+                            }
+                        }
+
+                        Button {
+                            text: qsTr("Clear Log")
+                            onClicked: {
+                                apiResponseArea.value = "";
+                            }
+                        }
+
+                    }
+
+                    P.TextAreaPreference {
+                        id: apiResponseArea
+
+                        name: "api_response_text"
+                        label: qsTr("Connection Log")
+                        readOnly: true
+                        hint: qsTr("Press Link Start! to test the connection.")
+                        wrapMode: Text.Wrap
+                        font.family: targetWidget.defaultValues.bubble_font_family
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 20
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SliderPreference {
+                            id: maxTokensPreference
+
+                            Layout.fillWidth: true
+
+                            name: "max_tokens"
+                            label: qsTr("Reply Length Limit")
+                            from: 0
+                            to: 8192
+                            stepSize: 256
+                            displayValue: value === 0 ? "∞" : value
+                        }
+
+                        ResetButton {
+                            changed: maxTokensPreference.value !== 0
+                            onClicked: maxTokensPreference.value = 0
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. ∞ (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
+                    }
+
+                    // ---------------------------------------------------------------- MHCP001 personality
+                    Heading {
+                        text: qsTr("MHCP001 Personality")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SelectPreference {
+                            id: userTitlePreference
+
+                            Layout.fillWidth: true
+
+                            readonly property var ids: ["papa", "mama"]
+
+                            name: "user_title"
+                            label: qsTr("Registered Parent")
+                            model: [qsTr("Papa (Kirito)"), qsTr("Mama (Asuna)")]
+                        }
+
+                        ResetButton {
+                            changed: userTitlePreference.value !== 0
+                            onClicked: userTitlePreference.value = 0
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("How Yui calls you. Replaces {{user_title}} in the personality data.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.TextAreaPreference {
+                            id: systemPromptPreference
+
+                            Layout.fillWidth: true
+
+                            // No label: the "MHCP001 Personality" heading above already names it.
+                            name: "system_prompt"
+                            message:qsTr("The system prompt that defines Yui's personality. {{user_title}} is replaced with the registered parent.")
+                            // The box grows with its text up to maximumHeight; make it 0.75x the default.
+                            Component.onCompleted: {
+                                if (isFinite(maximumHeight) && maximumHeight > 0)
+                                    maximumHeight = maximumHeight * 0.75;
+
+                            }
+                        }
+
+                        ResetButton {
+                            changed: systemPromptPreference.value !== targetWidget.defaultSystemPrompt
+                            onClicked: systemPromptPreference.value = targetWidget.defaultSystemPrompt
+                        }
+
+                    }
+
+                    RowLayout {
+                        spacing: 20
+                        Layout.alignment: Qt.AlignHCenter
+
+                        Button {
+                            text: qsTr("Restore MHCP001")
+                            onClicked: {
+                                systemPromptPreference.value = targetWidget.defaultSystemPrompt;
+                            }
+                        }
+
+                        Button {
+                            text: qsTr("Wipe Data")
+                            onClicked: {
+                                systemPromptPreference.value = "";
+                            }
+                        }
+
+                    }
+
+                    // ---------------------------------------------------------------- Pixie functions
+                    Heading {
+                        text: qsTr("Pixie Functions")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: greetPreference
+
+                            Layout.fillWidth: true
+
+                            name: "greet_on_start"
+                            label: qsTr("Login Greeting")
+                            message: qsTr("Yui welcomes you back when you return after a while.")
+                        }
+
+                        ResetButton {
+                            changed: !!greetPreference.value !== true
+                            onClicked: greetPreference.value = true
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: carePreference
+
+                            Layout.fillWidth: true
+
+                            name: "proactive_care"
+                            label: qsTr("Mental Health Counseling")
+                            message: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                        }
+
+                        ResetButton {
+                            changed: !!carePreference.value !== true
+                            onClicked: carePreference.value = true
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: statusPreference
+
+                            Layout.fillWidth: true
+
+                            name: "status_reports"
+                            label: qsTr("Navigation Reports")
+                            message: qsTr("Yui warns you about low battery and high CPU or memory usage.")
+                        }
+
+                        ResetButton {
+                            changed: !!statusPreference.value !== true
+                            onClicked: statusPreference.value = true
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: externalBrowserPreference
+
+                            Layout.fillWidth: true
+
+                            name: "external_browser"
+                            label: qsTr("External Browser")
+                            message: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
+                        }
+
+                        ResetButton {
+                            changed: !!externalBrowserPreference.value !== false
+                            onClicked: externalBrowserPreference.value = false
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SelectPreference {
+                            id: searchPreference
+
+                            Layout.fillWidth: true
+
+                            readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
+
+                            name: "search_engine"
+                            label: qsTr("Search Engine")
+                            model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
+                        }
+
+                        ResetButton {
+                            changed: searchPreference.value !== 0
+                            onClicked: searchPreference.value = 0
+                        }
+
+                    }
+
+                    P.TextFieldPreference {
+                        id: searchCustomPreference
+
+                        name: "search_custom"
+                        label: qsTr("Custom Search Address")
+                        visible: searchPreference.value === 4
+                        display: P.TextFieldPreference.ExpandControl
+                        hint: "https://example.com/search?q=%s"
+                        message: qsTr("%s is replaced by the search words.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SliderPreference {
+                            id: sleepPreference
+
+                            Layout.fillWidth: true
+
+                            name: "sleep_minutes"
+                            label: qsTr("Standby Mode")
+                            from: 0
+                            to: 120
+                            stepSize: 5
+                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        }
+
+                        ResetButton {
+                            changed: sleepPreference.value !== 20
+                            onClicked: sleepPreference.value = 20
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("Yui goes to sleep after this long without interaction; click her to wake her up.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SliderPreference {
+                            id: idleChatPreference
+
+                            Layout.fillWidth: true
+
+                            name: "idle_chat_minutes"
+                            label: qsTr("Spontaneous Talk")
+                            from: 0
+                            to: 240
+                            stepSize: 5
+                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                        }
+
+                        ResetButton {
+                            changed: idleChatPreference.value !== 15
+                            onClicked: idleChatPreference.value = 15
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).")
+                    }
+
+                }
+
+            }
+
+        }
+
+        header: TitleBar {
+            // Every settings window has the same light title bar (as SAO Utils' own dialogs, e.g. the
+            // mail box composer); without this some came out in the theme's blue.
+            Style.primary: coreSettings.Style.dialogColor
+            text: qsTr("Cardinal System")
+            standardButtons: Dialog.Reset
+            // Reset (after confirming): everything but the connection (server, core, address, access
+            // key); it takes effect at once like any change.
+            onReset: targetWidget.confirmReset(qsTr("Cardinal System"), function() {
+                systemPromptPreference.value = targetWidget.defaultSystemPrompt;
+                userTitlePreference.value = 0;
+                maxTokensPreference.value = 0;
+                greetPreference.value = true;
+                carePreference.value = true;
+                statusPreference.value = true;
+                externalBrowserPreference.value = false;
+                searchPreference.value = 0;
+                searchCustomPreference.value = "";
+                sleepPreference.value = 20;
+                idleChatPreference.value = 15;
+            })
+        }
+
+    }
+
+}

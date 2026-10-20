@@ -1,4 +1,6 @@
 {
-  "source": "nvg://hud.widget.gpbeta.com/widget/adv",
-  "settings": "widget-yui.xml"
+  "source": "nvg://yui.widget.amarsimos.com/widget/mhcp-yui",
+  "settings": "widget-yui.xml",
+  "width": 120,
+  "height": 172
 }
