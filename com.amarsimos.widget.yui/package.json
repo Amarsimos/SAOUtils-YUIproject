@@ -1,6 +1,6 @@
 {
     "name": "com.amarsimos.widget.yui",
-    "version": "1.0.0",
+    "version": "1.1.0",
 
     "title": {
         "en": "SAO YUI project",
@@ -8,23 +8,23 @@
     },
 
     "description": {
-        "en": "SAO YUI project\nAn AI chat companion in the style of Yui (MHCP001). Set up your own API in Cardinal System.\n\n1.0.0:\n- Supports OpenAI, Gemini, DeepSeek, Kimi, Claude and custom servers, with streaming replies\n- Remembers the conversation and what you tell her (Yui's Heart)\n- Expressions, navigation pixie form, standby / wake up, welcome-back greeting\n- Care reminders late at night and after long sessions, battery / CPU / memory warnings\n- Opens links and searches for you after confirmation\n- SAO-style settings (Cardinal System / Equipment), localizable interface\n",
-        "zh": "SAO YUI 计划\n实在是很想要一个YUI,但是没人做,只能自己搓一个了,全Ai编程,本体就是个AI套壳.需要自己设置api.\n有意见可以反馈,但是我不一定能改出来orz.\n\n1.0.0 更新:\n- 支持 OpenAI、Gemini、DeepSeek、Kimi、Claude 和自定义服务,回复逐字显示\n- 记住对话内容和你告诉她的事(结衣之心)\n- 表情切换、导航妖精形态、待机与唤醒、回来时的问候\n- 深夜和长时间使用时的关心提醒,电量/CPU/内存警告\n- 确认后帮你打开网页或搜索\n- SAO 风格的设置界面(Cardinal System / Equipment),界面支持多语言\n"
+        "en": "SAO YUI project\nAn AI chat companion in the style of Yui (MHCP001). Set up your own API in Cardinal System.\n\n1.1.0:\n- Chat in its own SAO message panel window: move it by its title or by Yui, resize it, click to close\n- Yui's Heart Crystal: a collapsed form that changes color with CPU / GPU / memory load, with a speech bubble\n- Desktop actions: Yui can start programs, find files (Everything) and close programs, always after your confirmation\n- Yui's Heart window: add and edit memories, choose how much is remembered and sent, export / import / daily backups\n- System Console, more settings with ↺ to restore each one, settings take effect at once\n- Up / down in the input box bring back your earlier messages\n\n1.0.0:\n- Supports OpenAI, Gemini, DeepSeek, Kimi, Claude and custom servers, with streaming replies\n- Remembers the conversation and what you tell her (Yui's Heart)\n- Expressions, navigation pixie form, standby / wake up, welcome-back greeting\n- Care reminders late at night and after long sessions, battery / CPU / memory warnings\n- Opens links and searches for you after confirmation\n- SAO-style settings (Cardinal System / Equipment), localizable interface\n",
+        "zh": "SAO YUI 计划\n实在是很想要一个YUI,但是没人做,只能自己搓一个了,全Ai编程,本体就是个AI套壳.需要自己设置api.\n有意见可以反馈,但是我不一定能改出来orz.\n\n1.1.0 更新:\n- 聊天界面独立成 SAO 消息面板窗口:可拖动标题或结衣移动,可调大小,点击关闭\n- 结衣之心水晶:新的收起形态,随 CPU / GPU / 内存负载变色,并会在旁边冒出对话气泡\n- 桌面代行:结衣可以帮你启动程序、查找文件(Everything)、关闭程序,每次都会先请你确认\n- 结衣之心窗口:添加和编辑记忆,调整记住和发送的内容,导出 / 导入 / 每日备份\n- System Console、更多可调设置(每项都能用 ↺ 恢复默认),设置即时生效\n- 输入框按上 / 下键可以找回之前发过的消息\n\n1.0.0 更新:\n- 支持 OpenAI、Gemini、DeepSeek、Kimi、Claude 和自定义服务,回复逐字显示\n- 记住对话内容和你告诉她的事(结衣之心)\n- 表情切换、导航妖精形态、待机与唤醒、回来时的问候\n- 深夜和长时间使用时的关心提醒,电量/CPU/内存警告\n- 确认后帮你打开网页或搜索\n- SAO 风格的设置界面(Cardinal System / Equipment),界面支持多语言\n"
     },
 
-    "homepage": "https://moe.amarsioms.top",
+    "homepage": "https://moe.amarsimos.top",
 
     "main": "module.qml",
 
     "bugs": {
         "email": "amarsimoss@gmail.com",
-        "url": "https://moe.amarsioms.top"
+        "url": "https://moe.amarsimos.top"
     },
 
     "author": {
         "name": "Amarsimos",
         "email": "amarsimoss@gmail.com",
-        "url": "https://moe.amarsioms.top"
+        "url": "https://moe.amarsimos.top"
     },
 
     "dependencies": {
@@ -38,6 +38,24 @@
             "title": "MHCP-YUI",
             "preview": "Presets/widget-yui.png",
             "entry": "qml/main-stand.qml"
+        }, {
+            "location": "/preset/yui-pixie",
+            "catalog": "preset/widget",
+            "title": {
+                "en": "Yui · Navigation Pixie",
+                "zh": "结衣 · 导航妖精"
+            },
+            "preview": "Presets/widget-yui.png",
+            "entry": "Presets/widget-yui.json"
+        }, {
+            "location": "/preset/yui-crystal",
+            "catalog": "preset/widget",
+            "title": {
+                "en": "Yui · Heart Crystal",
+                "zh": "结衣 · 结衣之心水晶"
+            },
+            "preview": "Presets/widget-yui-crystal.png",
+            "entry": "Presets/widget-yui-crystal.json"
         }
     ]
 }
