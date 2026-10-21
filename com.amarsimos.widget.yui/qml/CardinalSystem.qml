@@ -95,6 +95,7 @@ NVG.Window {
         targetWidget.settings.thinking = !!thinkingPreference.value;
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
+        targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tools";
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
@@ -182,10 +183,11 @@ NVG.Window {
                         thinkingPreference.value = settings.thinking !== false;
                         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
                         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
+                        actionModePreference.value = settings.action_mode === "tags" ? 1 : 0;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
-                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
                             preference.valueChanged.connect(scheduleApply);
                         });
                     }
@@ -432,6 +434,31 @@ NVG.Window {
 
                     SettingNote {
                         text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SelectPreference {
+                            id: actionModePreference
+
+                            readonly property var ids: ["tools", "tags"]
+
+                            Layout.fillWidth: true
+                            name: "action_mode"
+                            label: qsTr("Action Mode")
+                            model: ["Tools", "Tags"]
+                        }
+
+                        ResetButton {
+                            changed: actionModePreference.value !== 0
+                            onClicked: actionModePreference.value = 0
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("How Yui operates the computer and her memories. Tools uses the server's function calling, which small models follow far more reliably; Tags writes them into the reply, for servers or models without function calling. A server that rejects tools is switched to Tags automatically.")
                     }
 
                     // ---------------------------------------------------------------- MHCP001 personality
@@ -704,6 +731,7 @@ NVG.Window {
                 thinkingPreference.value = true;
                 temperaturePreference.value = -1;
                 penaltyPreference.value = -1;
+                actionModePreference.value = 0;
                 greetPreference.value = true;
                 carePreference.value = true;
                 statusPreference.value = true;

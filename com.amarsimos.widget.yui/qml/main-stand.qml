@@ -79,6 +79,11 @@ T.Widget {
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
     // The next request regenerates a reply (regenerateReply): it asks for a different answer.
     property bool regenerating: false
+    // Action Mode (Cardinal System): "tools" (default) sends the desktop actions and Yui's Heart as
+    // function calling tools (OpenAI-compatible servers for now); "tags" teaches <<launch:>> etc.
+    // tags. Servers that rejected tools this session (by endpoint) get tags.
+    readonly property string actionMode: widget.settings.action_mode === "tags" ? "tags" : "tools"
+    property var toolsRejected: ({})
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -411,8 +416,8 @@ T.Widget {
         };
     }
 
-    function systemExtras(title, query) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions()) + timeContext() + Yui.recallContext(title, recall(query));
+    function systemExtras(title, query, mode) {
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query));
     }
 
     // Appended to the system prompt on every request, so Yui knows the current date and time.
@@ -496,11 +501,13 @@ T.Widget {
                 "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子。）"
             };
         }
+        // Tools for the OpenAI-compatible format; other formats and servers that rejected tools get tags.
+        var tools = actionMode === "tools" && format === "openai" && !config.noTools && !toolsRejected[config.endpoint] ? Yui.toolDefinitions(allowedActions()) : [];
         var systemPrompt = config.systemPrompt !== undefined ? config.systemPrompt : widget.settings.system_prompt;
         var lastUser = messages.filter(function(m) {
             return m.role === "user";
         }).pop();
-        systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle(), lastUser ? lastUser.content : "");
+        systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle(), lastUser ? lastUser.content : "", tools.length > 0 ? "tools" : "tags");
         if (!config.apiKey || !config.endpoint || !config.model) {
             // Answered without a request, but after a random 0.6 - 1.6 s like any reply ("..." first).
             var notConfiguredTimer = Qt.createQmlObject("import QtQuick 2.12; Timer {}", widget);
@@ -528,6 +535,10 @@ T.Widget {
         // Give up when no data arrives for a while, so the chat never stays busy forever.
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 60000 }", widget);
         var sentAt = Date.now();
+        // Tool calls of the reply: [{id, name, arguments (JSON text)}], streamed in by index.
+        var toolCalls = [];
+        // The same request sent again with tags, when the server rejected the tools.
+        var retry = null;
         var finish = function(text, isError) {
             if (done)
                 return ;
@@ -535,8 +546,28 @@ T.Widget {
             done = true;
             timer.stop();
             timer.destroy();
-            logReply(config, text, isError, Date.now() - sentAt);
-            onFinished(text, isError, false);
+            logReply(config, text, isError, Date.now() - sentAt, toolCalls);
+            onFinished(text, isError, false, toolCalls);
+        };
+        var addToolCalls = function(calls) {
+            (calls || []).forEach(function(call, n) {
+                var i = typeof call.index === "number" ? call.index : toolCalls.length + n;
+                var slot = toolCalls[i] || (toolCalls[i] = {
+                    "id": "",
+                    "name": "",
+                    "arguments": ""
+                });
+                if (call.id)
+                    slot.id = call.id;
+
+                var fn = call["function"] || {};
+                if (fn.name)
+                    slot.name += fn.name;
+
+                if (fn.arguments !== undefined)
+                    slot.arguments += typeof fn.arguments === "string" ? fn.arguments : JSON.stringify(fn.arguments);
+
+            });
         };
         // Parse the complete lines received since the last call (all remaining text at the end).
         var parseStream = function(atEnd) {
@@ -558,7 +589,11 @@ T.Widget {
                     continue;
 
                 try {
-                    streamed += streamDeltaOf(format, JSON.parse(payload));
+                    var event = JSON.parse(payload);
+                    streamed += streamDeltaOf(format, event);
+                    if (format === "openai" && event.choices && event.choices[0] && event.choices[0].delta)
+                        addToolCalls(event.choices[0].delta.tool_calls);
+
                 } catch (e) {
                     streamError = e.message;
                 }
@@ -592,15 +627,34 @@ T.Widget {
                 if (http.status === 200) {
                     parseStream(true);
                     // Not a stream (e.g. a proxy that ignores "stream"): parse it as a whole response.
-                    if (!sawEvents)
-                        streamed = replyTextOf(format, JSON.parse(http.responseText));
+                    if (!sawEvents) {
+                        var whole = JSON.parse(http.responseText);
+                        streamed = replyTextOf(format, whole);
+                        if (format === "openai" && whole.choices && whole.choices[0] && whole.choices[0].message)
+                            addToolCalls(whole.choices[0].message.tool_calls);
 
-                    if (streamed)
+                    }
+                    toolCalls = toolCalls.filter(function(call) {
+                        return call && call.name;
+                    });
+                    if (streamed || toolCalls.length > 0)
                         finish(streamed, false);
                     else if (streamError)
                         finish("数据检索失败……服务器说出错了 (T_T)\n[Error: " + streamError + "]", true);
                     else
                         finish("咦？收到的数据是空的……结衣读不出内容呢 (・_・;)\n[Received an empty or unexpected response from the API.]", true);
+                } else if (tools.length > 0 && http.status >= 400 && http.status < 500 && /tool|function/i.test(http.responseText || "")) {
+                    // The server (or model) does not take tools: the same request with tags, and tags for
+                    // this server for the rest of the session.
+                    diag("tools rejected by " + config.endpoint + " (" + http.status + "), sending with tags instead");
+                    toolsRejected[config.endpoint] = true;
+                    done = true;
+                    timer.stop();
+                    timer.destroy();
+                    var tagConfig = JSON.parse(JSON.stringify(config));
+                    tagConfig.provider = config.provider;
+                    tagConfig.noTools = true;
+                    retry = requestCompletion(messages, onFinished, tagConfig, onDelta);
                 } else {
                     finish(httpErrorHint(http.status) + "\n[Error: " + http.status + " " + http.statusText + (http.responseText ? ": " + http.responseText : "") + "]", true);
                 }
@@ -667,6 +721,14 @@ T.Widget {
             if (presencePenalty >= 0)
                 data.presence_penalty = presencePenalty;
 
+            if (tools.length > 0)
+                data.tools = tools.map(function(tool) {
+                return {
+                    "type": "function",
+                    "function": tool
+                };
+            });
+
         }
         if (format === "gemini") {
             var generation = {};
@@ -689,6 +751,9 @@ T.Widget {
         http.send(JSON.stringify(data));
         return {
             "abort": function() {
+                if (retry)
+                    return retry.abort();
+
                 if (done)
                     return ;
 
@@ -914,7 +979,7 @@ T.Widget {
         });
         chatView.stickToBottom = true;
         widget.busy = true;
-        widget.currentRequest = requestCompletion(messages, function(text, isError, notConfigured) {
+        widget.currentRequest = requestCompletion(messages, function(text, isError, notConfigured, toolCalls) {
             // The chat was cleared while this request was in flight.
             if (session !== widget.chatSession)
                 return ;
@@ -922,11 +987,12 @@ T.Widget {
             var note = "";
             var action = "";
             if (!isError) {
-                // Apply and strip the control tags (expression, memories, navigation).
+                // Apply and strip the control tags (expression, memories, navigation), then the tool calls.
                 var reply = Yui.parseReply(text, widget.settings.kill_protected, replyOptions());
+                applyToolCalls(reply, toolCalls);
                 text = reply.text || "(・ω・)";
-                if (reply.emotion)
-                    setEmotion(reply.emotion);
+                // No <<emotion:>>: guessed from the reply's kaomoji and words.
+                setEmotion(reply.emotion || Yui.guessEmotion(text));
 
                 note = applyMemoryTags(reply);
                 if (reply.action)
@@ -1208,8 +1274,13 @@ T.Widget {
 
         var params = {};
         for (var key in data)
-            if (["messages", "contents", "system", "systemInstruction"].indexOf(key) === -1)
+            if (["messages", "contents", "system", "systemInstruction", "tools"].indexOf(key) === -1)
                 params[key] = data[key];
+
+        if (data.tools)
+            params.tools = data.tools.map(function(tool) {
+                return (tool["function"] || tool).name;
+            }).join(", ");
 
         var parts = ["→ body " + JSON.stringify(params), "━━━━ system (" + systemPrompt.length + " chars) ━━━━", systemPrompt];
         messages.forEach(function(message) {
@@ -1218,9 +1289,42 @@ T.Widget {
         diag(parts.join("\n"));
     }
 
-    function logReply(config, text, isError, ms) {
+    function logReply(config, text, isError, ms, toolCalls) {
         var head = (isError ? "✕ error" : "← reply") + " after " + (ms / 1000).toFixed(1) + " s, " + String(text || "").length + " chars";
-        diag(logRequests || isError ? head + ":\n" + text : head);
+        var calls = (toolCalls || []).filter(function(call) {
+            return call && call.name;
+        }).map(function(call) {
+            return "⚙ " + call.name + "(" + call.arguments + ")";
+        });
+        if (calls.length > 0)
+            head += ", " + calls.length + " tool call(s)";
+
+        diag(logRequests || isError ? head + ":\n" + [text].concat(calls).join("\n") : head);
+    }
+
+    // Applies the tool calls of a reply to it, as its tags would be (Yui.parseReply's result): memories
+    // and forgets, the first desktop action (one at a time), a refused protected process. Every call
+    // and what became of it is logged.
+    function applyToolCalls(reply, toolCalls) {
+        (toolCalls || []).forEach(function(call) {
+            var made = Yui.toolCallToAction(call.name, call.arguments, widget.settings.kill_protected, replyOptions());
+            var outcome = made.kind;
+            if (made.kind === "remember") {
+                (made.core ? reply.cores : reply.memories).push(made.text);
+            } else if (made.kind === "forget") {
+                reply.forgets.push(made.text);
+            } else if (made.kind === "blocked") {
+                reply.blocked = made.blocked;
+            } else if (made.kind === "action") {
+                if (reply.action)
+                    outcome = "not done: one action at a time";
+                else
+                    reply.action = made.action;
+            } else {
+                outcome = "error: " + made.error;
+            }
+            diag("⚙ " + call.name + " → " + outcome);
+        });
     }
 
     function diag(message) {
