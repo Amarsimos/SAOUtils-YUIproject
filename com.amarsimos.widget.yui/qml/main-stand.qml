@@ -79,10 +79,11 @@ T.Widget {
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
     // The next request regenerates a reply (regenerateReply): it asks for a different answer.
     property bool regenerating: false
-    // Action Mode (Cardinal System): "tools" (default) sends the desktop actions and Yui's Heart as
-    // function calling tools (OpenAI-compatible servers for now); "tags" teaches <<launch:>> etc.
-    // tags. Servers that rejected tools this session (by endpoint) get tags.
-    readonly property string actionMode: widget.settings.action_mode === "tags" ? "tags" : "tools"
+    // Action Mode (Cardinal System): "tags" (default; local models follow them best) teaches
+    // <<launch:>> etc. tags; "tools" sends the desktop actions as function calling tools
+    // (OpenAI-compatible servers for now), Yui's Heart keeping its tags. Servers that rejected tools
+    // this session (by endpoint) get tags.
+    readonly property string actionMode: widget.settings.action_mode === "tools" ? "tools" : "tags"
     property var toolsRejected: ({})
     // Small Model Mode (Cardinal System): a short reminder of the tag / tool rules with every message.
     readonly property bool smallModelMode: widget.settings.small_model === true

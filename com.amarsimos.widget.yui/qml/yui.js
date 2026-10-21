@@ -486,10 +486,12 @@ var TOOLS = [{
 }];
 
 // The tools offered with a request: allowed as in options.allowed of parseReply (false = left out).
-function toolDefinitions(allowed) {
+// The memory tools (remember / forget) only with withMemory: in the tests no model called them, so
+// Yui's Heart keeps its tags in Tools mode too.
+function toolDefinitions(allowed, withMemory) {
     allowed = allowed || {};
     return TOOLS.filter(function(tool) {
-        return allowed[tool.allow] !== false;
+        return allowed[tool.allow] !== false && (withMemory || (tool.kind !== "remember" && tool.kind !== "forget"));
     }).map(function(tool) {
         return {
             "name": tool.name,
@@ -872,7 +874,7 @@ function featureInstructions(title, core, allowed, mode) {
     if (mode === "tools") {
         // Only the expression and care lines stay; actions and memories are tools.
         lines = lines.filter(function(line) {
-            return line.indexOf("- 结衣之心：") !== 0 && line.indexOf("- 导航：") !== 0 && line.indexOf("- 桌面代行：") !== 0;
+            return line.indexOf("- 导航：") !== 0 && line.indexOf("- 桌面代行：") !== 0;
         });
         var abilities = [];
         if (allowed.web !== false)
@@ -889,9 +891,6 @@ function featureInstructions(title, core, allowed, mode) {
 
         if (abilities.length > 0)
             lines.splice(4, 0, "- 电脑操作：你可以用提供的工具" + abilities.join("、") + "。只有当" + title + "明确请你做这些事时才使用；需要天气、新闻这类实时信息时用搜索，不要编造。");
-
-        if (allowed.memory !== false)
-            lines.splice(4, 0, "- 结衣之心：当" + title + "告诉你值得长期记住的事时，用 remember 工具记下来（名字、称呼、身份、重要约定和偏好这类最核心的事，core 设为 true）；需要忘掉或更新某件事时用 forget 工具。闲聊不要记，已经记住的不要重复记。");
 
     }
 
@@ -919,13 +918,25 @@ function priorityRules(title, allowed, mode) {
     if (allowed.find !== false)
         acts.push("查找文件");
 
-    var what = acts.join("、");
-    if (allowed.memory !== false)
-        what = what ? what + "，以及记住、忘记事情" : "记住、忘记事情";
-
+    var memory = allowed.memory !== false;
     var rules = ["每条回复的最后都加一个表情标签 <<emotion:…>>，从 normal、happy、sad、surprised、angry、shy 中选一个。"];
-    if (what)
-        rules.push(what + "时，" + (mode === "tools" ? "必须调用提供的工具" : "必须在回复里写对应的标签（见后面的说明）") + "。只用文字说“正在执行”“已经打开了”，电脑上什么都不会发生。");
+    if (mode === "tools") {
+        // Tools for the desktop actions, tags for Yui's Heart.
+        if (acts.length > 0)
+            rules.push(acts.join("、") + "时，必须调用提供的工具。只用文字说“正在执行”“已经打开了”，电脑上什么都不会发生。");
+
+        if (memory)
+            rules.push("记住、忘记事情时，必须在回复里写对应的标签（见后面的说明），光说“记住了”是记不住的。");
+
+    } else {
+        var what = acts.join("、");
+        if (memory)
+            what = what ? what + "，以及记住、忘记事情" : "记住、忘记事情";
+
+        if (what)
+            rules.push(what + "时，必须在回复里写对应的标签（见后面的说明）。只用文字说“正在执行”“已经打开了”，电脑上什么都不会发生。");
+
+    }
 
     if (allowed.web !== false)
         rules.push("需要天气、新闻、价格这类实时信息时，必须搜索，绝不自己编造。");
@@ -939,7 +950,7 @@ function priorityRules(title, allowed, mode) {
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
-    return "\n\n（提醒：回复最后加 <<emotion:…>>" + (acting ? (mode === "tools" ? "；需要操作电脑或记忆时调用工具" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+    return "\n\n（提醒：回复最后加 <<emotion:…>>" + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
 }
 
 // Memory fragments recalled for this request (placed after the parts that stay the same).

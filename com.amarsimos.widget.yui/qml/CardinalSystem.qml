@@ -95,7 +95,7 @@ NVG.Window {
         targetWidget.settings.thinking = !!thinkingPreference.value;
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
-        targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tools";
+        targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
@@ -184,7 +184,7 @@ NVG.Window {
                         thinkingPreference.value = settings.thinking !== false;
                         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
                         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
-                        actionModePreference.value = settings.action_mode === "tags" ? 1 : 0;
+                        actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
                         smallModelPreference.value = settings.small_model === true;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
@@ -444,12 +444,12 @@ NVG.Window {
                         P.SelectPreference {
                             id: actionModePreference
 
-                            readonly property var ids: ["tools", "tags"]
+                            readonly property var ids: ["tags", "tools"]
 
                             Layout.fillWidth: true
                             name: "action_mode"
                             label: qsTr("Action Mode")
-                            model: ["Tools", "Tags"]
+                            model: ["Tags", "Tools"]
                         }
 
                         ResetButton {
@@ -460,7 +460,7 @@ NVG.Window {
                     }
 
                     SettingNote {
-                        text: qsTr("How Yui operates the computer and her memories. Tools uses the server's function calling, which small models follow far more reliably; Tags writes them into the reply, for servers or models without function calling. A server that rejects tools is switched to Tags automatically.")
+                        text: qsTr("How Yui operates the computer. Tags (the default) writes the actions into her reply, which local models follow best; Tools uses the server's function calling, for large models that are good at it. Memories always use tags. A server that rejects tools is switched to Tags automatically.")
                     }
 
                     RowLayout {
