@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Yui no longer makes up real-time information such as the weather; she searches instead.
 - Regenerating a reply asks for a different answer.
 - No reply limit by default (OpenAI gets max_completion_tokens when one is set).
-- A new widget starts collapsed; the chat reopens only if it was left open.
 
 ### Fixed
 
