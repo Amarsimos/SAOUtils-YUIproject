@@ -460,7 +460,7 @@ NVG.Window {
                     }
 
                     SettingNote {
-                        text: qsTr("How Yui operates the computer. Tags (the default) writes the actions into her reply, which local models follow best; Tools uses the server's function calling, for large models that are good at it. Memories always use tags. A server that rejects tools is switched to Tags automatically.")
+                        text: qsTr("How Yui operates the computer. Tags (the default) writes the actions into her reply, which local models follow best; Tools uses the server's function calling, for large models that are good at it (for now only OpenAI-compatible servers; others keep Tags). Memories always use tags. A server that rejects tools is switched to Tags automatically.")
                     }
 
                     RowLayout {
