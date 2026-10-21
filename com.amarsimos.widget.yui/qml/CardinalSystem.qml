@@ -95,6 +95,8 @@ NVG.Window {
         targetWidget.settings.thinking = !!thinkingPreference.value;
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
+        targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
+        targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
@@ -182,10 +184,12 @@ NVG.Window {
                         thinkingPreference.value = settings.thinking !== false;
                         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
                         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
+                        actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
+                        smallModelPreference.value = settings.small_model === true;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
-                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
                             preference.valueChanged.connect(scheduleApply);
                         });
                     }
@@ -432,6 +436,53 @@ NVG.Window {
 
                     SettingNote {
                         text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SelectPreference {
+                            id: actionModePreference
+
+                            readonly property var ids: ["tags", "tools"]
+
+                            Layout.fillWidth: true
+                            name: "action_mode"
+                            label: qsTr("Action Mode")
+                            model: ["Tags", "Tools"]
+                        }
+
+                        ResetButton {
+                            changed: actionModePreference.value !== 0
+                            onClicked: actionModePreference.value = 0
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("How Yui operates the computer. Tags (the default) writes the actions into her reply, which local models follow best; Tools uses the server's function calling, for large models that are good at it (for now only OpenAI-compatible servers; others keep Tags). Memories always use tags. A server that rejects tools is switched to Tags automatically.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: smallModelPreference
+
+                            Layout.fillWidth: true
+                            name: "small_model"
+                            label: qsTr("Small Model Mode")
+                        }
+
+                        ResetButton {
+                            changed: !!smallModelPreference.value
+                            onClicked: smallModelPreference.value = false
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.")
                     }
 
                     // ---------------------------------------------------------------- MHCP001 personality
@@ -704,6 +755,8 @@ NVG.Window {
                 thinkingPreference.value = true;
                 temperaturePreference.value = -1;
                 penaltyPreference.value = -1;
+                actionModePreference.value = 0;
+                smallModelPreference.value = false;
                 greetPreference.value = true;
                 carePreference.value = true;
                 statusPreference.value = true;

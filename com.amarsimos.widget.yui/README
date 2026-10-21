@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Local models (Ollama and other OpenAI-compatible servers): Thinking can be turned off for much
+  faster replies, and Temperature and Repetition Penalty can be set (Cardinal System).
+- Action Mode: desktop actions as tags (default, best for local models) or as the server's tool
+  calling (Tools, for large models; OpenAI-compatible servers for now). A server that rejects tools
+  falls back to tags by itself.
+- Small Model Mode: a short reminder with every message for small local models.
+- The System Console log can show every request to the AI (without the access key) and its raw reply.
+- Message windows show a little Markdown: bold, inline code, bullets, headings and code blocks.
+
+### Changed
+
+- New default personality: shorter, with the most important rules first and without example lines
+  that small models used to copy. **If you changed nothing in the personality, press ↺ next to it in
+  Cardinal System to switch to the new one** (a saved personality is kept as it is).
+- Yui no longer makes up real-time information such as the weather; she searches instead.
+- Regenerating a reply asks for a different answer.
+- No reply limit by default (OpenAI gets max_completion_tokens when one is set).
+
+### Fixed
+
+- Misspelled or full-width tags (for example <<emphy:happy>>) are no longer shown in the chat.
+- When the reply names no expression, Yui guesses one from it.
+
 ## [1.1.0] - 2026-10-20
 
 ### Added
