@@ -165,9 +165,62 @@ function escapeHtml(text) {
 // Line breaks and spaces are kept as they are.
 function linkify(text, linkColor) {
     text = String(text || "");
+    var found = false;
+    var html = "";
+    // Code blocks (```...```) first: shown as they are, in a monospaced box.
+    var blocks = /```[^\n]*\n?([\s\S]*?)```/g;
+    var last = 0;
+    var match;
+    while ((match = blocks.exec(text)) !== null) {
+        // The line breaks next to a block are its own margins.
+        html += formatLines(text.slice(last, match.index).replace(/\n$/, ""), linkColor).html;
+        html += '<pre style="font-family:Consolas; background-color:#D3D3D3">' + escapeHtml(match[1].replace(/\n$/, "")) + "</pre>";
+        last = match.index + match[0].length;
+        if (text.charAt(last) === "\n")
+            last++;
+
+        found = true;
+    }
+    var rest = formatLines(text.slice(last), linkColor);
+    html += rest.html;
+    if (!found && !rest.changed)
+        return "";
+
+    return '<span style="white-space:pre-wrap">' + html + "</span>";
+}
+
+// Lines of a message as rich text: links (LINK_PATTERN), and the little Markdown that suits a chat
+// window: **bold**, `code`, "- " / "* " bullets as "・", "# " headings as a bold line. Anything else is
+// left as written. Returns {html, changed}: changed when the text needed rich text at all.
+function formatLines(text, linkColor) {
+    var changed = false;
+    var lines = String(text).split(/\r?\n/).map(function(line) {
+        var heading = /^\s{0,3}#{1,6}\s+(.*)$/.exec(line);
+        if (heading)
+            line = heading[1];
+
+        var bullet = /^(\s*)[-*+]\s+(.*)$/.exec(line);
+        if (bullet && !heading)
+            line = bullet[1] + "・" + bullet[2];
+
+        var html = linkLine(line, linkColor);
+        var styled = html.replace(/\*\*([^*\n]+?)\*\*/g, "<b>$1</b>").replace(/`([^`\n]+)`/g, '<span style="font-family:Consolas; background-color:#D3D3D3">&nbsp;$1&nbsp;</span>');
+        if (heading || bullet || styled !== html || html !== escapeHtml(line))
+            changed = true;
+
+        return heading ? "<b>" + styled + "</b>" : styled;
+    });
+    return {
+        "html": lines.join("<br>"),
+        "changed": changed
+    };
+}
+
+// One line with its links (see LINK_PATTERN) made clickable: web links as themselves, paths as
+// "yui-path:", 「System Console」 as "yui-option:". Escaped for rich text.
+function linkLine(text, linkColor) {
     var html = "";
     var last = 0;
-    var found = false;
     var match;
     LINK_PATTERN.lastIndex = 0;
     while ((match = LINK_PATTERN.exec(text)) !== null) {
@@ -180,13 +233,8 @@ function linkify(text, linkColor) {
         html += escapeHtml(text.slice(last, match.index));
         html += '<a href="' + escapeHtml(href) + '" style="color:' + linkColor + '">' + escapeHtml(shown) + "</a>";
         last = match.index + shown.length;
-        found = true;
     }
-    if (!found)
-        return "";
-
-    html += escapeHtml(text.slice(last));
-    return '<span style="white-space:pre-wrap">' + html.replace(/\r?\n/g, "<br>") + "</span>";
+    return html + escapeHtml(text.slice(last));
 }
 
 // The Windows path of a "yui-path:" link ("" for any other link).
