@@ -1012,10 +1012,12 @@ function priorityRules(title, allowed, mode) {
 }
 
 // Small Model Mode: a short reminder added to the user's latest message.
+// It does not spell the tag out: with a repetition penalty, a tag written just before made models
+// misspell it (<<emphy:happy>>).
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
-    return "\n\n（提醒：回复最后加 <<emotion:…>>" + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+    return "\n\n（提醒：回复最后加上表情标签" + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
 }
 
 // Memory fragments recalled for this request (placed after the parts that stay the same).
