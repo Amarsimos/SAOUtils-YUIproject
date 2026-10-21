@@ -904,6 +904,44 @@ function featureInstructions(title, core, allowed, mode) {
     return lines.join("\n");
 }
 
+// The most important rules, put before the personality (whatever the user wrote there) so that small
+// models do not lose them: the expression tag, that actions only happen through tools / tags (the
+// enabled ones only), and searching instead of inventing real-time facts. mode: "tools" or "tags".
+function priorityRules(title, allowed, mode) {
+    allowed = allowed || {};
+    var acts = [];
+    if (allowed.web !== false)
+        acts.push("打开网页、搜索");
+
+    if (allowed.launch !== false || allowed.kill !== false)
+        acts.push(allowed.launch === false ? "关闭程序" : allowed.kill === false ? "启动程序" : "启动或关闭程序");
+
+    if (allowed.find !== false)
+        acts.push("查找文件");
+
+    var what = acts.join("、");
+    if (allowed.memory !== false)
+        what = what ? what + "，以及记住、忘记事情" : "记住、忘记事情";
+
+    var rules = ["每条回复的最后都加一个表情标签 <<emotion:…>>，从 normal、happy、sad、surprised、angry、shy 中选一个。"];
+    if (what)
+        rules.push(what + "时，" + (mode === "tools" ? "必须调用提供的工具" : "必须在回复里写对应的标签（见后面的说明）") + "。只用文字说“正在执行”“已经打开了”，电脑上什么都不会发生。");
+
+    if (allowed.web !== false)
+        rules.push("需要天气、新闻、价格这类实时信息时，必须搜索，绝不自己编造。");
+
+    return "【最重要的规则】\n" + rules.map(function(rule, i) {
+        return (i + 1) + ". " + rule;
+    }).join("\n") + "\n\n";
+}
+
+// Small Model Mode: a short reminder added to the user's latest message.
+function smallModelReminder(mode, allowed) {
+    allowed = allowed || {};
+    var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
+    return "\n\n（提醒：回复最后加 <<emotion:…>>" + (acting ? (mode === "tools" ? "；需要操作电脑或记忆时调用工具" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+}
+
 // Memory fragments recalled for this request (placed after the parts that stay the same).
 function recallContext(title, fragments) {
     if (!fragments || fragments.length === 0)

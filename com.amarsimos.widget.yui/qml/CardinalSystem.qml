@@ -96,6 +96,7 @@ NVG.Window {
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tools";
+        targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
@@ -184,10 +185,11 @@ NVG.Window {
                         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
                         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
                         actionModePreference.value = settings.action_mode === "tags" ? 1 : 0;
+                        smallModelPreference.value = settings.small_model === true;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
-                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
                             preference.valueChanged.connect(scheduleApply);
                         });
                     }
@@ -461,6 +463,28 @@ NVG.Window {
                         text: qsTr("How Yui operates the computer and her memories. Tools uses the server's function calling, which small models follow far more reliably; Tags writes them into the reply, for servers or models without function calling. A server that rejects tools is switched to Tags automatically.")
                     }
 
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: smallModelPreference
+
+                            Layout.fillWidth: true
+                            name: "small_model"
+                            label: qsTr("Small Model Mode")
+                        }
+
+                        ResetButton {
+                            changed: !!smallModelPreference.value
+                            onClicked: smallModelPreference.value = false
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.")
+                    }
+
                     // ---------------------------------------------------------------- MHCP001 personality
                     Heading {
                         text: qsTr("MHCP001 Personality")
@@ -732,6 +756,7 @@ NVG.Window {
                 temperaturePreference.value = -1;
                 penaltyPreference.value = -1;
                 actionModePreference.value = 0;
+                smallModelPreference.value = false;
                 greetPreference.value = true;
                 carePreference.value = true;
                 statusPreference.value = true;

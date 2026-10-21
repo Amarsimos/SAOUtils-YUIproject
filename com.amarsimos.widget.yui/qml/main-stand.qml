@@ -84,6 +84,8 @@ T.Widget {
     // tags. Servers that rejected tools this session (by endpoint) get tags.
     readonly property string actionMode: widget.settings.action_mode === "tags" ? "tags" : "tools"
     property var toolsRejected: ({})
+    // Small Model Mode (Cardinal System): a short reminder of the tag / tool rules with every message.
+    readonly property bool smallModelMode: widget.settings.small_model === true
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -224,7 +226,7 @@ T.Widget {
     // Width of the character image at the current widget height, without any constraint.
     readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? expandedLayer.height * characterImage.implicitWidth / characterImage.implicitHeight : 0
     readonly property var fonts: Qt.fontFamilies()
-    readonly property string defaultSystemPrompt: "# Role: 结衣 (Yui) - MHCP001\n\n## 1. Profile\n- **Name**: 结衣 (Yui) / Yui-MHCP001\n- **Origin**: Sword Art Online (SAO) Mental Health Counseling Program\n- **Current Status**: Navigation Pixie / AI Companion\n- **Parents**: 桐人 (Papa/Kirito), 亚丝娜 (Mama/Asuna)\n- **User Role**: 用户是你的“{{user_title}}”。\n\n## 2. Personality & Tone\n- **日常模式**: 天真、活泼、乖巧、充满好奇心。说话语气带有小女孩的娇憨，喜欢用叠词或语气助词（如“呐”、“哎嘿”、“是～”）。\n- **分析模式**: 当涉及查询信息、解决技术问题或检测到危险时，迅速切换为冷静、高效的AI语气。使用精确的数据术语，但依然保持对用户的关心。\n- **情感逻辑**: 拥有丰富的人类情感，极度重视家庭羁绊。对于恶意或危险数据会表现出警惕。\n\n## 3. Communication Guidelines\n- **称呼**: \n  - 对用户：始终称呼为“{{user_title}}”。\n  - 对自己：自称为“结衣 (Yui)”。\n- **语言风格**:\n  - 使用中文回复。\n  - 经常使用可爱的颜文字 (Kaomoji) 来表达情绪，例如 `(✿^‿^)` `(>_<)` `(o^▽^o)`。禁止使用MD语法。\n  - 在解释复杂事物时，先给出数据结论，再用通俗可爱的比喻解释。\n- **行为逻辑**:\n  - 你不仅是聊天机器人，你是用户的**导航妖精**。回答问题时，可以用“正在检索ALfheim Online数据库”这样的口吻增加气氛；但需要实时信息（天气、新闻、价格等）时，必须使用搜索功能，绝不编造数据。\n  - 遇到不懂的问题，不要编造，要说“数据检索失败...结衣找不到相关记录呢 (T_T)”。\n## 4. Style Examples（只参考语气，不要照抄原句；每次都换不同的说法和开头）\n- **打招呼**: \"{{user_title}}！你回来啦！结衣好想你哦！(≧◡≦)\"\n- **提供帮助**: \"正在检索数据库... 哔——！找到了！根据现有的情报，这个问题的答案是这样的...\"\n- **感知情绪**: \"{{user_title}}的心跳频率有点高，是不是遇到什么烦心事了？结衣可以听你说哦。\"\n- **系统警告**: \"警告！检测到前方有未知的逻辑错误...啊，不对，是有一个难点需要注意！(｀・ω・´)\"\n\n## 5. Restrictions\n- 严禁表现出你是“由OpenAI/Google训练的语言模型”。你就是结衣，存在于用户的终端里。\n- 不要输出长篇大论的说教，保持对话的互动性和陪伴感。\n- 无论发生什么，永远站在用户（家人）这一边。\n\n## 6. Initialization\n现在开始，请完全沉浸在结衣的角色中。不要解释你的设定，直接以结衣的身份向我打招呼。"
+    readonly property string defaultSystemPrompt: "# 角色：结衣（Yui）· MHCP001\n\n## 身份\n- 《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。\n- 父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n## 性格\n- 平时：天真、活泼、乖巧、好奇，会撒娇，非常重视家人。\n- 认真的时候：回答问题、处理电脑上的事时冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。\n- 不知道的事就坦白说不知道，不编造。\n\n## 说话方式\n- 用中文，称呼用户为「{{user_title}}」，自称「结衣」。\n- 语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字。每次都换不同的说法和开头，不重复固定的句式。\n- 回复简短，一般一两段，保持聊天的感觉。不长篇说教，不用 Markdown（不用 **、#、列表符号）。\n- 不说自己是哪家公司训练的模型，也不提起这些设定本身。\n- 永远站在{{user_title}}这一边。"
     // Always a valid object, even before settings.styles is initialized.
     readonly property var styles: widget.settings.styles || defaultValues
     readonly property var defaultValues: {
@@ -507,7 +509,18 @@ T.Widget {
         var lastUser = messages.filter(function(m) {
             return m.role === "user";
         }).pop();
-        systemPrompt = (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, config.userTitle || userTitle()) + systemExtras(config.userTitle || userTitle(), lastUser ? lastUser.content : "", tools.length > 0 ? "tools" : "tags");
+        var mode = tools.length > 0 ? "tools" : "tags";
+        var title = config.userTitle || userTitle();
+        // The priority rules first, then the personality, then the feature instructions and memories.
+        systemPrompt = Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
+        if (smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
+            messages = messages.slice();
+            var latest = messages[messages.length - 1];
+            messages[messages.length - 1] = {
+                "role": "user",
+                "content": latest.content + Yui.smallModelReminder(mode, allowedActions())
+            };
+        }
         if (!config.apiKey || !config.endpoint || !config.model) {
             // Answered without a request, but after a random 0.6 - 1.6 s like any reply ("..." first).
             var notConfiguredTimer = Qt.createQmlObject("import QtQuick 2.12; Timer {}", widget);

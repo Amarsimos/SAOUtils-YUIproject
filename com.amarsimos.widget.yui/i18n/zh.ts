@@ -19,312 +19,322 @@
         <translation>找到 %1 个核心</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="115"/>
-        <location filename="../qml/CardinalSystem.qml" line="723"/>
-        <location filename="../qml/CardinalSystem.qml" line="727"/>
+        <location filename="../qml/CardinalSystem.qml" line="116"/>
+        <location filename="../qml/CardinalSystem.qml" line="747"/>
+        <location filename="../qml/CardinalSystem.qml" line="751"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="197"/>
+        <location filename="../qml/CardinalSystem.qml" line="199"/>
         <source>Link Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="204"/>
+        <location filename="../qml/CardinalSystem.qml" line="206"/>
         <source>Seed Server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="218"/>
+        <location filename="../qml/CardinalSystem.qml" line="220"/>
         <source>The AI service Yui connects to. Each server keeps its own core, address and access key.</source>
         <translation>结衣连接的 AI 服务商。每个服务器分别保存自己的核心、地址和密钥。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="225"/>
+        <location filename="../qml/CardinalSystem.qml" line="227"/>
         <source>Core Program</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="231"/>
+        <location filename="../qml/CardinalSystem.qml" line="233"/>
         <source>The AI model that runs Yui.</source>
         <translation>驱动结衣的 AI 模型。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="239"/>
+        <location filename="../qml/CardinalSystem.qml" line="241"/>
         <source>Scan Cores</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="244"/>
+        <location filename="../qml/CardinalSystem.qml" line="246"/>
         <source>Restore Registry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="264"/>
+        <location filename="../qml/CardinalSystem.qml" line="266"/>
         <source>Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.</source>
         <translation>「Scan Cores」向服务器获取最新的模型列表；「Restore Registry」恢复内置列表。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="271"/>
+        <location filename="../qml/CardinalSystem.qml" line="273"/>
         <source>Manual Core ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="273"/>
+        <location filename="../qml/CardinalSystem.qml" line="275"/>
         <source>model id, e.g. gpt-6-sol</source>
         <translation>模型 ID，例如 gpt-6-sol</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="274"/>
+        <location filename="../qml/CardinalSystem.qml" line="276"/>
         <source>When filled in, this model id is used instead of the Core Program selected above.</source>
         <translation>填写后将使用这里的模型 ID，而不是上面选择的 Core Program。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="281"/>
+        <location filename="../qml/CardinalSystem.qml" line="283"/>
         <source>Server Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="283"/>
+        <location filename="../qml/CardinalSystem.qml" line="285"/>
         <source>The API endpoint URL. Change it only when using a proxy or a self-hosted service.</source>
         <translation>API 接口地址。只有使用代理或自建服务时才需要修改。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="290"/>
+        <location filename="../qml/CardinalSystem.qml" line="292"/>
         <source>Access Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="293"/>
+        <location filename="../qml/CardinalSystem.qml" line="295"/>
         <source>The API key of this server. Each server keeps its own key.</source>
         <translation>这个服务器的 API Key。每个服务器分别保存自己的密钥。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="301"/>
+        <location filename="../qml/CardinalSystem.qml" line="303"/>
         <source>Link Start!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="303"/>
+        <location filename="../qml/CardinalSystem.qml" line="305"/>
         <source>Linking...</source>
         <translation>连接中……</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="311"/>
+        <location filename="../qml/CardinalSystem.qml" line="313"/>
         <source>Link established</source>
         <translation>连接成功</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="317"/>
+        <location filename="../qml/CardinalSystem.qml" line="319"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="329"/>
+        <location filename="../qml/CardinalSystem.qml" line="331"/>
         <source>Connection Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="331"/>
+        <location filename="../qml/CardinalSystem.qml" line="333"/>
         <source>Press Link Start! to test the connection.</source>
         <translation>按下「Link Start!」测试连接。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="347"/>
+        <location filename="../qml/CardinalSystem.qml" line="349"/>
         <source>Reply Length Limit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="362"/>
+        <location filename="../qml/CardinalSystem.qml" line="364"/>
         <source>The longest reply Yui may give, in tokens, which also caps its cost. ∞ (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.</source>
         <translation>结衣单次回复的最大长度（单位 token），也就限制了每次的费用。默认为 ∞，即不限制（此时 Claude 仍按 1024 发送）。思考型模型的思考过程也计入这个长度，上限太低可能导致回复被截断。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="373"/>
+        <location filename="../qml/CardinalSystem.qml" line="375"/>
         <source>Thinking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="384"/>
+        <location filename="../qml/CardinalSystem.qml" line="386"/>
         <source>Lets thinking models (e.g. Qwen 3.5 on Ollama) think before answering. Turning it off makes them much faster; it sends reasoning_effort: none, which only some servers understand.</source>
         <translation>让思考型模型（例如 Ollama 上的 Qwen 3.5）先思考再回答。关闭后回复会快很多；关闭时会发送 reasoning_effort: none，只有部分服务器支持。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="395"/>
+        <location filename="../qml/CardinalSystem.qml" line="397"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="399"/>
-        <location filename="../qml/CardinalSystem.qml" line="425"/>
+        <location filename="../qml/CardinalSystem.qml" line="401"/>
+        <location filename="../qml/CardinalSystem.qml" line="427"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="410"/>
+        <location filename="../qml/CardinalSystem.qml" line="412"/>
         <source>Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.</source>
         <translation>越高回复越多变，越低越稳定。Default 表示交给服务器决定。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="421"/>
+        <location filename="../qml/CardinalSystem.qml" line="423"/>
         <source>Repetition Penalty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="436"/>
+        <location filename="../qml/CardinalSystem.qml" line="438"/>
         <source>Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.</source>
         <translation>越高结衣越少重复自己说过的话（presence penalty）。Default 表示交给服务器决定。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="449"/>
+        <location filename="../qml/CardinalSystem.qml" line="451"/>
         <source>Action Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="461"/>
+        <location filename="../qml/CardinalSystem.qml" line="463"/>
         <source>How Yui operates the computer and her memories. Tools uses the server&apos;s function calling, which small models follow far more reliably; Tags writes them into the reply, for servers or models without function calling. A server that rejects tools is switched to Tags automatically.</source>
         <translation>结衣操作电脑和管理记忆的方式。Tools 使用服务器的工具调用（function calling），小模型执行得可靠得多；Tags 把操作写在回复里，适合不支持工具调用的服务器或模型。服务器不接受工具时，会自动改用 Tags。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="466"/>
+        <location filename="../qml/CardinalSystem.qml" line="474"/>
+        <source>Small Model Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/CardinalSystem.qml" line="485"/>
+        <source>For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.</source>
+        <translation>适合本地小模型：每条消息都会附一句简短的提醒，提醒模型写表情标签、使用工具（或标签），小模型不提醒时常常会忘。大模型不需要开启。</translation>
+    </message>
+    <message>
+        <location filename="../qml/CardinalSystem.qml" line="490"/>
         <source>MHCP001 Personality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="480"/>
+        <location filename="../qml/CardinalSystem.qml" line="504"/>
         <source>Registered Parent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="481"/>
+        <location filename="../qml/CardinalSystem.qml" line="505"/>
         <source>Papa (Kirito)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="481"/>
+        <location filename="../qml/CardinalSystem.qml" line="505"/>
         <source>Mama (Asuna)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="492"/>
+        <location filename="../qml/CardinalSystem.qml" line="516"/>
         <source>How Yui calls you. Replaces {{user_title}} in the personality data.</source>
         <translation>结衣对你的称呼，会替换人格数据中的 {{user_title}}。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="505"/>
+        <location filename="../qml/CardinalSystem.qml" line="529"/>
         <source>The system prompt that defines Yui&apos;s personality. {{user_title}} is replaced with the registered parent.</source>
         <translation>定义结衣人格的系统提示词。{{user_title}} 会被替换为登记的称呼。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="526"/>
+        <location filename="../qml/CardinalSystem.qml" line="550"/>
         <source>Restore MHCP001</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="533"/>
+        <location filename="../qml/CardinalSystem.qml" line="557"/>
         <source>Wipe Data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="543"/>
+        <location filename="../qml/CardinalSystem.qml" line="567"/>
         <source>Pixie Functions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="555"/>
+        <location filename="../qml/CardinalSystem.qml" line="579"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="556"/>
+        <location filename="../qml/CardinalSystem.qml" line="580"/>
         <source>Yui welcomes you back when you return after a while.</source>
         <translation>离开一段时间后回来时，结衣会欢迎你回来。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="575"/>
+        <location filename="../qml/CardinalSystem.qml" line="599"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="576"/>
+        <location filename="../qml/CardinalSystem.qml" line="600"/>
         <source>Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).</source>
         <translation>深夜提醒你早点睡，长时间使用后提醒你休息（每小时最多一次）。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="595"/>
+        <location filename="../qml/CardinalSystem.qml" line="619"/>
         <source>Navigation Reports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="596"/>
+        <location filename="../qml/CardinalSystem.qml" line="620"/>
         <source>Yui warns you about low battery and high CPU or memory usage.</source>
         <translation>电量低、CPU 或内存占用过高时，结衣会提醒你。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="615"/>
+        <location filename="../qml/CardinalSystem.qml" line="639"/>
         <source>External Browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="616"/>
+        <location filename="../qml/CardinalSystem.qml" line="640"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="637"/>
+        <location filename="../qml/CardinalSystem.qml" line="661"/>
         <source>Search Engine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="638"/>
+        <location filename="../qml/CardinalSystem.qml" line="662"/>
         <source>Baidu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="638"/>
+        <location filename="../qml/CardinalSystem.qml" line="662"/>
         <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="652"/>
+        <location filename="../qml/CardinalSystem.qml" line="676"/>
         <source>Custom Search Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="656"/>
+        <location filename="../qml/CardinalSystem.qml" line="680"/>
         <source>%s is replaced by the search words.</source>
         <translation>%s 会被替换为搜索词。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="668"/>
+        <location filename="../qml/CardinalSystem.qml" line="692"/>
         <source>Standby Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="672"/>
-        <location filename="../qml/CardinalSystem.qml" line="699"/>
+        <location filename="../qml/CardinalSystem.qml" line="696"/>
+        <location filename="../qml/CardinalSystem.qml" line="723"/>
         <source>%1 min</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="683"/>
+        <location filename="../qml/CardinalSystem.qml" line="707"/>
         <source>Yui goes to sleep after this long without interaction; click her to wake her up.</source>
         <translation>超过这段时间没有互动，结衣会进入待机睡眠；点击她即可唤醒。</translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="695"/>
+        <location filename="../qml/CardinalSystem.qml" line="719"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="672"/>
-        <location filename="../qml/CardinalSystem.qml" line="699"/>
+        <location filename="../qml/CardinalSystem.qml" line="696"/>
+        <location filename="../qml/CardinalSystem.qml" line="723"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/CardinalSystem.qml" line="710"/>
+        <location filename="../qml/CardinalSystem.qml" line="734"/>
         <source>While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).</source>
         <translation>结衣处于水晶形态时，她说的话会显示在水晶旁边的气泡里；没有互动超过这个时间时，她会主动说一句话（每次都会调用 API）。</translation>
     </message>
@@ -1202,172 +1212,172 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="1176"/>
+        <location filename="../qml/main-stand.qml" line="1189"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1175"/>
+        <location filename="../qml/main-stand.qml" line="1188"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2818"/>
+        <location filename="../qml/main-stand.qml" line="2831"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1192"/>
-        <location filename="../qml/main-stand.qml" line="2911"/>
+        <location filename="../qml/main-stand.qml" line="1205"/>
+        <location filename="../qml/main-stand.qml" line="2924"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1177"/>
+        <location filename="../qml/main-stand.qml" line="1190"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1178"/>
+        <location filename="../qml/main-stand.qml" line="1191"/>
         <source>Yui will search your computer for:</source>
         <translation>结衣将在电脑里搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1179"/>
+        <location filename="../qml/main-stand.qml" line="1192"/>
         <source>Yui will close this program:</source>
         <translation>结衣将关闭这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1222"/>
+        <location filename="../qml/main-stand.qml" line="1235"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1222"/>
+        <location filename="../qml/main-stand.qml" line="1235"/>
         <source>Restore all settings of %1 to their defaults?</source>
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1341"/>
+        <location filename="../qml/main-stand.qml" line="1354"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1379"/>
+        <location filename="../qml/main-stand.qml" line="1392"/>
         <source>Immortal Object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1379"/>
+        <location filename="../qml/main-stand.qml" line="1392"/>
         <source>%1 is a protected system process. Yui cannot close it.</source>
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1441"/>
+        <location filename="../qml/main-stand.qml" line="1454"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1442"/>
+        <location filename="../qml/main-stand.qml" line="1455"/>
         <source>Close %1 without asking from now on?
 You can change this in System Console.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1830"/>
+        <location filename="../qml/main-stand.qml" line="1843"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1835"/>
+        <location filename="../qml/main-stand.qml" line="1848"/>
         <source>All memories were deleted. Backup: %1</source>
         <translation>已删除全部记忆。备份：%1</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2099"/>
+        <location filename="../qml/main-stand.qml" line="2112"/>
         <source>Line %1, column %2: %3</source>
         <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2254"/>
+        <location filename="../qml/main-stand.qml" line="2267"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2257"/>
+        <location filename="../qml/main-stand.qml" line="2270"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2273"/>
+        <location filename="../qml/main-stand.qml" line="2286"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2432"/>
-        <location filename="../qml/main-stand.qml" line="2613"/>
+        <location filename="../qml/main-stand.qml" line="2445"/>
+        <location filename="../qml/main-stand.qml" line="2626"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4039"/>
+        <location filename="../qml/main-stand.qml" line="4052"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2613"/>
-        <location filename="../qml/main-stand.qml" line="2635"/>
-        <location filename="../qml/main-stand.qml" line="2641"/>
+        <location filename="../qml/main-stand.qml" line="2626"/>
+        <location filename="../qml/main-stand.qml" line="2648"/>
+        <location filename="../qml/main-stand.qml" line="2654"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3860"/>
+        <location filename="../qml/main-stand.qml" line="3873"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="203"/>
-        <location filename="../qml/main-stand.qml" line="3891"/>
+        <location filename="../qml/main-stand.qml" line="205"/>
+        <location filename="../qml/main-stand.qml" line="3904"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="196"/>
-        <location filename="../qml/main-stand.qml" line="3891"/>
+        <location filename="../qml/main-stand.qml" line="198"/>
+        <location filename="../qml/main-stand.qml" line="3904"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2484"/>
-        <location filename="../qml/main-stand.qml" line="2818"/>
+        <location filename="../qml/main-stand.qml" line="2497"/>
+        <location filename="../qml/main-stand.qml" line="2831"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3908"/>
+        <location filename="../qml/main-stand.qml" line="3921"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4023"/>
+        <location filename="../qml/main-stand.qml" line="4036"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4028"/>
+        <location filename="../qml/main-stand.qml" line="4041"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4033"/>
+        <location filename="../qml/main-stand.qml" line="4046"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3950"/>
-        <location filename="../qml/main-stand.qml" line="4013"/>
+        <location filename="../qml/main-stand.qml" line="3963"/>
+        <location filename="../qml/main-stand.qml" line="4026"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
