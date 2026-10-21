@@ -92,6 +92,9 @@ NVG.Window {
         targetWidget.settings.sleep_minutes = sleepPreference.value;
         targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
+        targetWidget.settings.thinking = !!thinkingPreference.value;
+        targetWidget.settings.temperature = temperaturePreference.value;
+        targetWidget.settings.presence_penalty = penaltyPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
         targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
@@ -176,10 +179,13 @@ NVG.Window {
                         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
                         idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
                         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
+                        thinkingPreference.value = settings.thinking !== false;
+                        temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
+                        penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
                         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
                         searchCustomPreference.value = settings.search_custom || "";
                         loading = false;
-                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+                        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
                             preference.valueChanged.connect(scheduleApply);
                         });
                     }
@@ -352,6 +358,80 @@ NVG.Window {
 
                     SettingNote {
                         text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. ∞ (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            id: thinkingPreference
+
+                            Layout.fillWidth: true
+                            name: "thinking"
+                            label: qsTr("Thinking")
+                        }
+
+                        ResetButton {
+                            changed: !thinkingPreference.value
+                            onClicked: thinkingPreference.value = true
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("Lets thinking models (e.g. Qwen 3.5 on Ollama) think before answering. Turning it off makes them much faster; it sends reasoning_effort: none, which only some servers understand.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SliderPreference {
+                            id: temperaturePreference
+
+                            Layout.fillWidth: true
+                            name: "temperature"
+                            label: qsTr("Temperature")
+                            from: -1
+                            to: 20
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        ResetButton {
+                            changed: temperaturePreference.value !== -1
+                            onClicked: temperaturePreference.value = -1
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        P.SliderPreference {
+                            id: penaltyPreference
+
+                            Layout.fillWidth: true
+                            name: "presence_penalty"
+                            label: qsTr("Repetition Penalty")
+                            from: -1
+                            to: 20
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        ResetButton {
+                            changed: penaltyPreference.value !== -1
+                            onClicked: penaltyPreference.value = -1
+                        }
+
+                    }
+
+                    SettingNote {
+                        text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
                     }
 
                     // ---------------------------------------------------------------- MHCP001 personality
@@ -621,6 +701,9 @@ NVG.Window {
                 systemPromptPreference.value = targetWidget.defaultSystemPrompt;
                 userTitlePreference.value = 0;
                 maxTokensPreference.value = 0;
+                thinkingPreference.value = true;
+                temperaturePreference.value = -1;
+                penaltyPreference.value = -1;
                 greetPreference.value = true;
                 carePreference.value = true;
                 statusPreference.value = true;

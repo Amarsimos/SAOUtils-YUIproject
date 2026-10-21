@@ -71,6 +71,14 @@ T.Widget {
     // Longest reply asked for, in tokens (Cardinal System); 0 (the default) sends no limit, except to
     // Claude, which requires one.
     readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
+    // Cardinal System: thinking on (the server's default) or off (reasoning_effort: none, understood by
+    // e.g. Ollama), and the sampling temperature / presence penalty (stored in tenths; -1 = the
+    // server's default, nothing is sent).
+    readonly property bool thinkingOn: widget.settings.thinking !== false
+    readonly property real temperature: widget.settings.temperature >= 0 ? widget.settings.temperature / 10 : -1
+    readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
+    // The next request regenerates a reply (regenerateReply): it asks for a different answer.
+    property bool regenerating: false
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -475,6 +483,19 @@ T.Widget {
         }
         config = config || activeConfig();
         var format = config.provider.format;
+        // Regenerating: a note the user does not see asks for another answer, a little warmer when a
+        // temperature is set.
+        var regenerate = regenerating;
+        regenerating = false;
+        var temperatureNow = temperature >= 0 && regenerate ? Math.min(2, temperature + 0.3) : temperature;
+        if (regenerate && messages.length > 0) {
+            messages = messages.slice();
+            var last = messages[messages.length - 1];
+            messages[messages.length - 1] = {
+                "role": last.role,
+                "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子。）"
+            };
+        }
         var systemPrompt = config.systemPrompt !== undefined ? config.systemPrompt : widget.settings.system_prompt;
         var lastUser = messages.filter(function(m) {
             return m.role === "user";
@@ -617,6 +638,10 @@ T.Widget {
                 "system": systemPrompt,
                 "messages": messages
             };
+            // Claude takes a temperature of at most 1.
+            if (temperatureNow >= 0)
+                data.temperature = Math.min(1, temperatureNow);
+
         } else {
             http.open("POST", config.endpoint);
             http.setRequestHeader("Authorization", "Bearer " + config.apiKey);
@@ -633,11 +658,31 @@ T.Widget {
             if (maxTokens > 0)
                 data[config.provider.id === "openai" ? "max_completion_tokens" : "max_tokens"] = maxTokens;
 
+            if (!thinkingOn)
+                data.reasoning_effort = "none";
+
+            if (temperatureNow >= 0)
+                data.temperature = temperatureNow;
+
+            if (presencePenalty >= 0)
+                data.presence_penalty = presencePenalty;
+
         }
-        if (format === "gemini" && maxTokens > 0)
-            data.generationConfig = {
-            "maxOutputTokens": maxTokens
-        };
+        if (format === "gemini") {
+            var generation = {};
+            if (maxTokens > 0)
+                generation.maxOutputTokens = maxTokens;
+
+            if (temperatureNow >= 0)
+                generation.temperature = temperatureNow;
+
+            if (presencePenalty >= 0)
+                generation.presencePenalty = presencePenalty;
+
+            if (Object.keys(generation).length > 0)
+                data.generationConfig = generation;
+
+        }
 
         http.setRequestHeader("Content-Type", "application/json");
         logRequest(config, data, systemPrompt, messages);
@@ -955,6 +1000,7 @@ T.Widget {
         widget.historyStart = Math.min(widget.historyStart, chatModel.count);
         scheduleSave();
         var history = buildHistory();
+        regenerating = true;
         // Only the greeting was there: greet again.
         if (history.length === 0)
             getInitialMessage();
