@@ -1007,7 +1007,7 @@ T.Widget {
                 if (reply.unknown.length > 0)
                     diag("tags not understood (hidden): " + reply.unknown.join(" "));
 
-                text = reply.text || "(・ω・)";
+                text = reply.text || silentReplyText(reply);
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
@@ -1322,6 +1322,20 @@ T.Widget {
     // Applies the tool calls of a reply to it, as its tags would be (Yui.parseReply's result): memories
     // and forgets, the first desktop action (one at a time), a refused protected process. Every call
     // and what became of it is logged.
+    // A reply that only called tools (no text of its own): a line that fits what is done with it.
+    function silentReplyText(reply) {
+        if (reply.blocked)
+            return "这个是系统的重要程序，结衣不能关掉哦 (>_<)";
+
+        if (reply.action)
+            return "好的，结衣来帮你～ (｡･ω･｡)";
+
+        if (reply.cores.length + reply.memories.length + reply.forgets.length > 0)
+            return "嗯嗯，结衣记住啦～ (✿^‿^)";
+
+        return "(・ω・)";
+    }
+
     function applyToolCalls(reply, toolCalls) {
         (toolCalls || []).forEach(function(call) {
             var made = Yui.toolCallToAction(call.name, call.arguments, widget.settings.kill_protected, replyOptions());
