@@ -306,6 +306,281 @@ var ACTION_KINDS = {
     "kill": "kill"
 };
 
+// The action of one desktop action request (a tag or a tool call), checked the same way for both:
+// kind is "open", "search", "launch", "find" or "kill". Returns {action, blocked}: action is null when
+// the value is not acceptable; blocked names a protected process <<kill:>> / close_program asked for.
+function actionFrom(kind, value, userProtected, options) {
+    options = options || {};
+    value = String(value || "").trim();
+    var result = {
+        "action": null,
+        "blocked": ""
+    };
+    if (!value)
+        return result;
+
+    if (kind === "open") {
+        // Only plain web links: never local files or other schemes.
+        if (/^https?:\/\/[^\s"'<>]+$/i.test(value))
+            result.action = {
+                "type": "open",
+                "target": value,
+                "url": value
+            };
+
+    } else if (kind === "search") {
+        result.action = {
+            "type": "search",
+            "target": value,
+            "url": searchUrl(options.searchEngine, options.searchCustom, value)
+        };
+    } else if (kind === "launch") {
+        // A program name or path only: no quotes or line breaks.
+        if (!/["\r\n]/.test(value))
+            result.action = {
+                "type": "launch",
+                "target": value
+            };
+
+    } else if (kind === "find") {
+        var query = value.replace(/"/g, "").trim();
+        if (query)
+            result.action = {
+                "type": "find",
+                "target": query
+            };
+
+    } else if (kind === "kill") {
+        var name = processName(value);
+        if (name && isProtectedProcess(name, userProtected))
+            result.blocked = name;
+        else if (name)
+            result.action = {
+                "type": "kill",
+                "target": name
+            };
+    }
+    return result;
+}
+
+// Tools (Action Mode "Tools"): the desktop actions and Yui's Heart as function calls, in a neutral
+// form (name, description, JSON schema parameters) that the request turns into each API's format.
+// kind: the action (see actionFrom) or "remember" / "forget"; allow: the switch that offers it
+// (System Console's actions, Yui's Heart's Auto Memory); arg: the argument holding the value.
+var TOOLS = [{
+    "name": "open_url",
+    "kind": "open",
+    "allow": "web",
+    "arg": "url",
+    "description": "在浏览器中打开一个网页。只有当用户明确要求打开某个网站时才使用。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "url": {
+                "type": "string",
+                "description": "完整的 https 网址"
+            }
+        },
+        "required": ["url"]
+    }
+}, {
+    "name": "web_search",
+    "kind": "search",
+    "allow": "web",
+    "arg": "query",
+    "description": "在网上搜索。用户明确要求搜索，或者需要天气、新闻、价格等实时信息时使用；不要自己编造这些信息。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "搜索词"
+            }
+        },
+        "required": ["query"]
+    }
+}, {
+    "name": "launch_program",
+    "kind": "launch",
+    "allow": "launch",
+    "arg": "program",
+    "description": "启动电脑上的程序。只有当用户明确要求打开或启动某个程序时才使用；执行前会先请用户确认。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "program": {
+                "type": "string",
+                "description": "程序名或完整路径，例如 notepad、chrome"
+            }
+        },
+        "required": ["program"]
+    }
+}, {
+    "name": "find_file",
+    "kind": "find",
+    "allow": "find",
+    "arg": "query",
+    "description": "在用户的电脑里查找文件。只有当用户明确要求找文件时才使用。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "文件名或关键词"
+            }
+        },
+        "required": ["query"]
+    }
+}, {
+    "name": "close_program",
+    "kind": "kill",
+    "allow": "kill",
+    "arg": "process",
+    "description": "关闭电脑上正在运行的程序。只有当用户明确要求关闭某个程序时才使用；执行前会先请用户确认，系统关键进程不能关闭。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "process": {
+                "type": "string",
+                "description": "进程名，例如 chrome.exe"
+            }
+        },
+        "required": ["process"]
+    }
+}, {
+    "name": "remember",
+    "kind": "remember",
+    "allow": "memory",
+    "arg": "text",
+    "description": "把关于用户、值得长期记住的事记进结衣之心。闲聊、天气这类一时的信息不要记，已经记住的不要重复记。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "text": {
+                "type": "string",
+                "description": "用一句话写下要记住的事"
+            },
+            "core": {
+                "type": "boolean",
+                "description": "是否是最核心的事：名字、希望被怎么称呼、身份、重要的约定和偏好"
+            }
+        },
+        "required": ["text"]
+    }
+}, {
+    "name": "forget",
+    "kind": "forget",
+    "allow": "memory",
+    "arg": "text",
+    "description": "从结衣之心里忘掉某件事。用户要求忘掉，或者某件事已经不再成立时使用；情况有变化时，先忘掉旧的，再用 remember 记下新的。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "text": {
+                "type": "string",
+                "description": "要忘掉的内容"
+            }
+        },
+        "required": ["text"]
+    }
+}];
+
+// The tools offered with a request: allowed as in options.allowed of parseReply (false = left out).
+function toolDefinitions(allowed) {
+    allowed = allowed || {};
+    return TOOLS.filter(function(tool) {
+        return allowed[tool.allow] !== false;
+    }).map(function(tool) {
+        return {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.parameters
+        };
+    });
+}
+
+// One tool call of the model (name, arguments object or JSON text) as what the widget does with it:
+// {kind: "action", action} | {kind: "blocked", blocked} | {kind: "remember", text, core} |
+// {kind: "forget", text} | {kind: "error", error} (unknown tool, forbidden, bad arguments). options as
+// for parseReply (allowed, searchEngine, searchCustom).
+function toolCallToAction(name, args, userProtected, options) {
+    options = options || {};
+    var allowed = options.allowed || {};
+    var tool = TOOLS.filter(function(item) {
+        return item.name === name;
+    })[0];
+    if (!tool)
+        return {
+            "kind": "error",
+            "error": "unknown tool " + name
+        };
+
+    if (allowed[tool.allow] === false)
+        return {
+            "kind": "error",
+            "error": "the user turned " + name + " off"
+        };
+
+    if (typeof args === "string") {
+        try {
+            args = args.trim() ? JSON.parse(args) : {};
+        } catch (e) {
+            return {
+                "kind": "error",
+                "error": "bad arguments: " + args
+            };
+        }
+    }
+    var value = String((args || {})[tool.arg] || "").trim();
+    if (!value)
+        return {
+            "kind": "error",
+            "error": "missing " + tool.arg
+        };
+
+    if (tool.kind === "remember")
+        return {
+            "kind": "remember",
+            "text": value,
+            "core": args.core === true || args.core === "true"
+        };
+
+    if (tool.kind === "forget")
+        return {
+            "kind": "forget",
+            "text": value
+        };
+
+    var made = actionFrom(tool.kind, value, userProtected, options);
+    if (made.blocked)
+        return {
+            "kind": "blocked",
+            "blocked": made.blocked
+        };
+
+    if (!made.action)
+        return {
+            "kind": "error",
+            "error": "not accepted: " + value
+        };
+
+    return {
+        "kind": "action",
+        "action": made.action
+    };
+}
+
+// A likely expression for a reply that names none (<<emotion:>> missing), from its kaomoji and words.
+function guessEmotion(text) {
+    text = String(text || "");
+    var rules = [["sad", /T_T|T▽T|ToT|；_；|´・ω・`|•́︿•̀|(｡•́︿•̀｡)|难过|伤心|呜呜|哭|心疼|对不起|抱歉|寂寞|孤单/], ["angry", /｀へ´|ಠ|＃|生气|哼！|过分|讨厌/], ["shy", /〃|\/\/\/|害羞|脸红|不好意思|羞/], ["surprised", /⊙|O_O|o_O|！？|!\?|咦|欸|诶|竟然|居然|真的吗/], ["happy", /≧|◡|▽|✿|★|☆|♪|\^_\^|哈哈|嘿嘿|开心|太好了|好棒|喜欢|耶/]];
+    for (var i = 0; i < rules.length; i++)
+        if (rules[i][1].test(text))
+            return rules[i][0];
+
+    return "normal";
+}
+
 // options (optional): {searchEngine, searchCustom} for the address of <<search:>> (see searchUrl), and
 // allowed: {web, launch, find, kill}, false for actions the user forbade (their tags are dropped and
 // result.disabled names the first one).
@@ -349,44 +624,12 @@ function parseReply(text, userProtected, options) {
             result.cores.push(value);
         } else if (kind === "forget") {
             result.forgets.push(value);
-        } else if (kind === "open") {
-            // Only plain web links: never local files or other schemes.
-            if (!result.action && /^https?:\/\/[^\s"'<>]+$/i.test(value))
-                result.action = {
-                    "type": "open",
-                    "target": value,
-                    "url": value
-                };
-        } else if (kind === "search") {
-            if (!result.action)
-                result.action = {
-                    "type": "search",
-                    "target": value,
-                    "url": searchUrl(options.searchEngine, options.searchCustom, value)
-                };
-        } else if (kind === "launch") {
-            // A program name or path only: no quotes or line breaks.
-            if (!result.action && !/["\r\n]/.test(value))
-                result.action = {
-                    "type": "launch",
-                    "target": value
-                };
-        } else if (kind === "find") {
-            var query = value.replace(/"/g, "").trim();
-            if (!result.action && query)
-                result.action = {
-                    "type": "find",
-                    "target": query
-                };
-        } else if (kind === "kill") {
-            var name = processName(value);
-            if (name && isProtectedProcess(name, userProtected))
-                result.blocked = name;
-            else if (!result.action && name)
-                result.action = {
-                    "type": "kill",
-                    "target": name
-                };
+        } else if (ACTION_KINDS[kind]) {
+            var made = actionFrom(kind, value, userProtected, options);
+            if (made.blocked)
+                result.blocked = made.blocked;
+            else if (!result.action && made.action)
+                result.action = made.action;
         }
         return "";
     }).replace(/[ \t]+\n/g, "\n").trim();
@@ -600,7 +843,9 @@ function recallFragments(entries, query, count) {
 // Extra system prompt instructions: how to use the control tags, and the heart core. Nothing in it
 // changes from request to request unless the core does (see recallContext for the rest).
 // allowed (optional): which desktop actions Yui may do (see ACTION_KINDS); only those are explained.
-function featureInstructions(title, core, allowed) {
+// mode "tools": the desktop actions and Yui's Heart are tools (toolDefinitions), so only their use is
+// explained, not tags; "tags" (default): everything is a tag.
+function featureInstructions(title, core, allowed, mode) {
     allowed = allowed || {};
     var desktop = [];
     if (allowed.launch !== false)
@@ -623,6 +868,32 @@ function featureInstructions(title, core, allowed) {
         lines = lines.filter(function(line) {
             return line.indexOf("- 结衣之心：") !== 0;
         });
+
+    if (mode === "tools") {
+        // Only the expression and care lines stay; actions and memories are tools.
+        lines = lines.filter(function(line) {
+            return line.indexOf("- 结衣之心：") !== 0 && line.indexOf("- 导航：") !== 0 && line.indexOf("- 桌面代行：") !== 0;
+        });
+        var abilities = [];
+        if (allowed.web !== false)
+            abilities.push("打开网页、上网搜索");
+
+        if (allowed.launch !== false)
+            abilities.push("启动程序");
+
+        if (allowed.find !== false)
+            abilities.push("查找文件");
+
+        if (allowed.kill !== false)
+            abilities.push("关闭程序");
+
+        if (abilities.length > 0)
+            lines.splice(4, 0, "- 电脑操作：你可以用提供的工具" + abilities.join("、") + "。只有当" + title + "明确请你做这些事时才使用；需要天气、新闻这类实时信息时用搜索，不要编造。");
+
+        if (allowed.memory !== false)
+            lines.splice(4, 0, "- 结衣之心：当" + title + "告诉你值得长期记住的事时，用 remember 工具记下来（名字、称呼、身份、重要约定和偏好这类最核心的事，core 设为 true）；需要忘掉或更新某件事时用 forget 工具。闲聊不要记，已经记住的不要重复记。");
+
+    }
 
     if (core && core.length > 0) {
         lines.push("", "结衣之心·心核（关于" + title + "最重要的事）：");
