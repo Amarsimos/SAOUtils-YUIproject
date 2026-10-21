@@ -1004,6 +1004,9 @@ T.Widget {
                 // Apply and strip the control tags (expression, memories, navigation), then the tool calls.
                 var reply = Yui.parseReply(text, widget.settings.kill_protected, replyOptions());
                 applyToolCalls(reply, toolCalls);
+                if (reply.unknown.length > 0)
+                    diag("tags not understood (hidden): " + reply.unknown.join(" "));
+
                 text = reply.text || "(・ω・)";
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));

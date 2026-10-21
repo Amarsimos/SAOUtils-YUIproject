@@ -77,6 +77,11 @@ function loadStep(state, value, pair) {
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
 //   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>
+// Any tag-like <<name:value>>, also misspelled ones (<<emphy:happy>>) and full-width brackets.
+function anyTagPattern() {
+    return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
+}
+
 function tagPattern() {
     return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
@@ -600,7 +605,9 @@ function parseReply(text, userProtected, options) {
         // A <<kill:>> refused because the process is protected.
         "blocked": "",
         // The type of an action tag dropped because the user forbade it ("" when none).
-        "disabled": ""
+        "disabled": "",
+        // Tags that were not understood (misspelled, full-width brackets), dropped from the text.
+        "unknown": []
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -634,6 +641,16 @@ function parseReply(text, userProtected, options) {
                 result.action = made.action;
         }
         return "";
+    });
+    // What is left that looks like a tag (a misspelled name, full-width brackets) is never shown; one
+    // whose value is an expression still counts as the expression.
+    result.text = result.text.replace(anyTagPattern(), function(all, kind, value) {
+        var emotion = String(value).trim().toLowerCase();
+        if (!result.emotion && EMOTIONS.indexOf(emotion) !== -1)
+            result.emotion = emotion;
+
+        result.unknown.push(all);
+        return "";
     }).replace(/[ \t]+\n/g, "\n").trim();
     return result;
 }
@@ -646,7 +663,7 @@ function displayText(partial) {
     if (cut !== -1 && text.indexOf(">>", cut) === -1)
         text = text.substring(0, cut);
 
-    return text.replace(tagPattern(), "").trim();
+    return text.replace(tagPattern(), "").replace(anyTagPattern(), "").trim();
 }
 
 // Keywords of a text for recall and dedupe: Latin words and numbers whole, Chinese / Japanese runs
