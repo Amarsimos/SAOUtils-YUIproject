@@ -1,6 +1,8 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import QtQuick.Shapes 1.12
+// For Qt.application.screens (empty without it), used to keep the view on a screen.
+import QtQuick.Window 2.12
 
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
