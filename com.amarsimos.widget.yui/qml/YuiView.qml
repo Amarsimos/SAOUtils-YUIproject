@@ -1,16 +1,14 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import QtQuick.Shapes 1.12
-import QtQuick.Window 2.12
 
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
 // its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
 // moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
-// It is a plain frameless Window opened and closed like the SAO Utils mail box message panel
-// (com.gpbeta.mail-box MessagePanel.qml), which is also a Window: with an NVG.View, SAO Utils' own
-// handling of the view's appearing delayed it and covered the open animation.
-Window {
+// It is an NVG.View so that it is shown where the widget is (desktop or launcher, see compositor),
+// opened and closed like the SAO Utils mail box message panel (com.gpbeta.mail-box MessagePanel.qml).
+NVG.View {
     id: view
 
     // The widget (main-stand.qml).
@@ -130,9 +128,20 @@ Window {
         y = Math.round(Math.max(top, Math.min(bottom - height, y)));
     }
 
+    // Where the widget is shown (desktop or launcher): set by the widget (main-stand.qml openView).
+    // Changing it resets x, y and z, so they are set again.
+    onCompositorChanged: {
+        z = NVG.WindowCompositor.TopWidgetZ;
+        if (shown)
+            place(yui.collapsedScreenRect ? yui.collapsedScreenRect() : Qt.rect(x, y, 0, 0));
+
+    }
     color: "transparent"
-    // Frameless, always on top of every other window, no taskbar button.
-    flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
+    // On the desktop above other windows (like the old always-on-top window); it takes the keyboard
+    // for the input box.
+    z: NVG.WindowCompositor.TopWidgetZ
+    acceptFocus: true
+    acceptInput: true
     visible: false
 
     // The content (the animation acts on the widget's character and chat panel inside it).
@@ -359,15 +368,19 @@ Window {
 
     // Two frames drawn since then (so the blank one is on screen): hide on the next turn of the event loop (frameSwapped comes from
     // the render thread).
-    onFrameSwapped: {
-        if (!hidePending)
-            return ;
+    Connections {
+        target: view.window
+        ignoreUnknownSignals: true
+        onFrameSwapped: {
+            if (!view.hidePending)
+                return ;
 
-        // A still window draws no more frames by itself: ask for one more.
-        if (++blankFrames >= 2)
-            Qt.callLater(finishHide);
-        else
-            Qt.callLater(view.update);
+            // A still window draws no more frames by itself: ask for one more.
+            if (++view.blankFrames >= 2)
+                Qt.callLater(view.finishHide);
+            else if (view.window)
+                Qt.callLater(view.window.update);
+        }
     }
 
     // A transparent window's very first showing can draw one frame before its transparency takes

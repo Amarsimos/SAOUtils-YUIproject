@@ -2485,6 +2485,10 @@ T.Widget {
                 return ;
             }
             crystalBubble = component.createObject(widget);
+            // On the widget's layer: above it, but not above windows that cover the widget.
+            followHostView(crystalBubble, function() {
+                return widget.hostView.z;
+            });
             crystalBubble.stayTime = Qt.binding(function() {
                 return widget.bubbleSeconds * 1000;
             });
@@ -2515,6 +2519,9 @@ T.Widget {
             "label": qsTr("Seedling Widget") + " " + (seedlingWidgets.length + 1),
             "x": corner.x + 40 + offset,
             "y": corner.y + 40 + offset
+        });
+        followHostView(view, function() {
+            return widget.hostView.z;
         });
         seedlingWidgets = seedlingWidgets.concat([view]);
         view.removed.connect(function() {
@@ -2763,6 +2770,31 @@ T.Widget {
         }
     }
 
+    // The view the widget is shown in (its compositor says where: desktop or launcher, as set in the
+    // widget's own display setting).
+    readonly property var hostView: widget.NVG.View.view
+
+    // Makes one of Yui's own views (chat, bubble, Seedling widget) show where the widget is: the same
+    // compositor (desktop or launcher), and, with z, its z. Changing the compositor resets the view's
+    // z, so z is set again then.
+    function followHostView(view, z) {
+        if (!hostView)
+            return ;
+
+        view.compositor = Qt.binding(function() {
+            return widget.hostView.compositor;
+        });
+        if (z === undefined)
+            return ;
+
+        var applyZ = function() {
+            view.z = typeof z === "function" ? z() : z;
+        };
+        applyZ();
+        view.compositorChanged.connect(applyZ);
+        hostView.zChanged.connect(applyZ);
+    }
+
     // The view (YuiView.qml), created once; the expanded layer moves into it.
     function createView() {
         var component = Qt.createComponent("YuiView.qml");
@@ -2773,6 +2805,7 @@ T.Widget {
         yuiView = component.createObject(widget, {
             "yui": widget
         });
+        followHostView(yuiView);
         expandedLayer.parent = yuiView.host;
         expandedLayer.anchors.fill = yuiView.host;
         yuiView.closeRequested.connect(function() {
