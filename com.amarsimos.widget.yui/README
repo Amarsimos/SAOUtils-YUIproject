@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - While the chat is closed, everything Yui says (replies, care reminders, load and battery warnings)
   appears in the speech bubble next to her collapsed form, pixie and avatar too, instead of SAO Utils
   notifications. While the chat is open it is only in the chat. The crystal's load tooltip is gone.
+- The chat, the speech bubble and Seedling widgets follow the widget's display settings: shown in the
+  launcher or on the desktop as the widget is (also when the launcher opens and closes), and on top
+  or not as the widget is. The chat remembers where it is relative to Yui, the same in both.
+- The speech bubble keeps clear of the widget's drag bar.
 - New default personality: shorter, with the most important rules first and without example lines
   that small models used to copy. **If you changed nothing in the personality, press ↺ next to it in
   Cardinal System to switch to the new one** (a saved personality is kept as it is).

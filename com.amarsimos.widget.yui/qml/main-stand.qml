@@ -2466,9 +2466,9 @@ T.Widget {
 
     // Something Yui says outside the chat (replies, care, status reports): while the chat is closed, in
     // the bubble next to her collapsed form (crystal, pixie or avatar); while it is open it is already in
-    // the chat. title: unused (the bubble is headed "Yui"), kept for the callers' sake.
+    // the chat (and while the launcher she is in is closed, only in the chat). title: unused (the bubble is headed "Yui"), kept for the callers' sake.
     function announce(title, text) {
-        if (!showChat)
+        if (!showChat && !launcherClosed)
             showBubble("Yui", text);
 
     }
@@ -2487,7 +2487,7 @@ T.Widget {
             crystalBubble = component.createObject(widget);
             // On the widget's layer: above it, but not above windows that cover the widget.
             followHostView(crystalBubble, function() {
-                return widget.hostView.z;
+                return widget.hostView ? widget.hostView.z : 0;
             });
             crystalBubble.stayTime = Qt.binding(function() {
                 return widget.bubbleSeconds * 1000;
@@ -2521,7 +2521,7 @@ T.Widget {
             "y": corner.y + 40 + offset
         });
         followHostView(view, function() {
-            return widget.hostView.z;
+            return widget.hostView ? widget.hostView.z : 0;
         });
         seedlingWidgets = seedlingWidgets.concat([view]);
         view.removed.connect(function() {
@@ -2694,13 +2694,20 @@ T.Widget {
         widget.settings.chat_hidden = !visible;
     }
 
+    // The widget's rectangle on screen (in the launcher, in its space): the chat view is placed by it.
+    function widgetScreenRect() {
+        var corner = widget.mapToGlobal(0, 0);
+        return Qt.rect(corner.x, corner.y, widget.width, widget.height);
+    }
+
     // Opens the view next to the collapsed form (or where it was last), hiding the collapsed form.
     function openView() {
         if (!yuiView)
             return ;
 
         var corner = widget.mapToGlobal(0, 0);
-        yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
+        yuiView.place(widgetScreenRect());
+        diag("view: open at " + yuiView.x + "," + yuiView.y + " " + yuiView.width + "x" + yuiView.height + ", widget at " + corner.x + "," + corner.y + " (host " + (hostView ? hostView.x + "," + hostView.y : "-") + "), compositor " + yuiView.compositor + " / host " + (hostView ? hostView.compositor : "-") + ", launcher " + NVG.LauncherCompositor.geometry + " visible " + NVG.LauncherCompositor.visible);
         showChat = true;
         // Like closing in reverse: the collapsed form goes first, and the view pops up as it is
         // almost gone (popUpTimer).
@@ -2773,26 +2780,48 @@ T.Widget {
     // The view the widget is shown in (its compositor says where: desktop or launcher, as set in the
     // widget's own display setting).
     readonly property var hostView: widget.NVG.View.view
+    // The widget's compositor, kept while its view is away (it may be, while the launcher is closed):
+    // falling back to the desktop then moved Yui's views out of the launcher and back.
+    property var hostCompositor: null
+
+    onHostViewChanged: {
+        diag("view: host view " + (hostView ? "is " + hostView.compositor : "gone"));
+        if (hostView)
+            hostCompositor = Qt.binding(function() {
+            return widget.hostView ? widget.hostView.compositor : widget.hostCompositor;
+        });
+        else if (hostCompositor === null)
+            hostCompositor = NVG.WindowCompositor;
+    }
+    onHostCompositorChanged: diag("view: host compositor " + hostCompositor + (hostView ? "" : " (kept, host view gone)") + ", launcher visible " + NVG.LauncherCompositor.visible)
+    // The widget is in the launcher and the launcher is closed. SAO Utils hides the views in the
+    // launcher by itself then (their visible stays, exposed turns false), as it does the widget, and
+    // shows them again in place; only the bubble is closed.
+    readonly property bool launcherClosed: !!hostView && hostView.compositor === NVG.LauncherCompositor && !NVG.LauncherCompositor.visible
+
+    onLauncherClosedChanged: {
+        diag("launcher " + (launcherClosed ? "closed" : "open"));
+        if (launcherClosed && crystalBubble)
+            crystalBubble.hide();
+
+    }
 
     // Makes one of Yui's own views (chat, bubble, Seedling widget) show where the widget is: the same
-    // compositor (desktop or launcher), and, with z, its z. Changing the compositor resets the view's
-    // z, so z is set again then.
+    // compositor (desktop or launcher), and, with z (a function), that z. Bindings, as the widget's
+    // view may not be there yet when the chat view is made at start (then it is the desktop). Changing
+    // the compositor resets the view's z, so z is bound again then.
     function followHostView(view, z) {
-        if (!hostView)
-            return ;
-
         view.compositor = Qt.binding(function() {
-            return widget.hostView.compositor;
+            return widget.hostView ? widget.hostView.compositor : (widget.hostCompositor || NVG.WindowCompositor);
         });
-        if (z === undefined)
+        if (!z)
             return ;
 
-        var applyZ = function() {
-            view.z = typeof z === "function" ? z() : z;
+        var bindZ = function() {
+            view.z = Qt.binding(z);
         };
-        applyZ();
-        view.compositorChanged.connect(applyZ);
-        hostView.zChanged.connect(applyZ);
+        bindZ();
+        view.compositorChanged.connect(bindZ);
     }
 
     // The view (YuiView.qml), created once; the expanded layer moves into it.
@@ -2805,7 +2834,9 @@ T.Widget {
         yuiView = component.createObject(widget, {
             "yui": widget
         });
-        followHostView(yuiView);
+        followHostView(yuiView, function() {
+            return widget.hostView ? widget.hostView.z : 0;
+        });
         expandedLayer.parent = yuiView.host;
         expandedLayer.anchors.fill = yuiView.host;
         yuiView.closeRequested.connect(function() {

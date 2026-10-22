@@ -21,6 +21,9 @@ NVG.View {
     // Time on screen and opacity (Equipment, set by the widget), and whether it pops up with a sound.
     property int stayTime: 8000
     readonly property int tailSize: 10
+    // Room left between the bubble and Yui, for the widget's drag bar that SAO Utils shows above the
+    // widget (the bubble's whole rectangle takes the mouse, so it must not cover it).
+    readonly property int gap: 28
     readonly property color edgeColor: "#99888888"
     property real shownOpacity: 0.8
     property bool sound: true
@@ -74,9 +77,9 @@ NVG.View {
         place();
     }
 
-    // Above the crystal, centered on it; below it when there is no room above, and back above once
-    // there is room again (with a margin, so the crystal's floating does not make it flip back and
-    // forth). When neither side has room, the side with more. Kept on the crystal's screen.
+    // Above Yui (gap away), centered on her; below her when there is no room above, and back above
+    // once there is room again (with a margin, so her floating does not make it flip back and forth).
+    // When neither side has room, the side with more. Kept on her screen.
     function place() {
         var s = targetScreen();
         var left = s ? s.virtualX : 0;
@@ -84,8 +87,8 @@ NVG.View {
         var right = left + (s ? s.width : 1920);
         var bottom = top + (s ? s.height : 1080);
         var margin = 12;
-        var roomAbove = target.y - top;
-        var roomBelow = bottom - (target.y + target.height);
+        var roomAbove = target.y - gap - top;
+        var roomBelow = bottom - (target.y + target.height + gap);
         if (roomAbove < height && roomBelow < height)
             below = roomBelow > roomAbove;
         else if (below)
@@ -93,7 +96,7 @@ NVG.View {
         else
             below = roomAbove < height;
         x = Math.round(Math.max(left, Math.min(right - width, target.x + target.width / 2 - width / 2)));
-        y = Math.round(below ? target.y + target.height : target.y - height);
+        y = Math.round(below ? target.y + target.height + gap : target.y - gap - height);
     }
 
     color: "transparent"
