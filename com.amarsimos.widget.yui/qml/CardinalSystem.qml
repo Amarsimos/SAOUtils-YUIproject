@@ -340,17 +340,19 @@ NVG.Window {
                     RowLayout {
                         Layout.fillWidth: true
 
-                        P.SliderPreference {
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
                             id: maxTokensPreference
 
                             Layout.fillWidth: true
 
                             name: "max_tokens"
                             label: qsTr("Reply Length Limit")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
                             from: 0
-                            to: 8192
+                            to: 1000000
                             stepSize: 256
-                            displayValue: value === 0 ? "∞" : value
                         }
 
                         ResetButton {
@@ -361,7 +363,7 @@ NVG.Window {
                     }
 
                     SettingNote {
-                        text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. ∞ (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
+                        text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
                     }
 
                     RowLayout {
@@ -392,6 +394,8 @@ NVG.Window {
                         P.SliderPreference {
                             id: temperaturePreference
 
+                            // Updates (and shows its value) while being dragged.
+                            live: true
                             Layout.fillWidth: true
                             name: "temperature"
                             label: qsTr("Temperature")
@@ -418,6 +422,8 @@ NVG.Window {
                         P.SliderPreference {
                             id: penaltyPreference
 
+                            // Updates (and shows its value) while being dragged.
+                            live: true
                             Layout.fillWidth: true
                             name: "presence_penalty"
                             label: qsTr("Repetition Penalty")
@@ -683,17 +689,19 @@ NVG.Window {
                     RowLayout {
                         Layout.fillWidth: true
 
-                        P.SliderPreference {
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
                             id: sleepPreference
 
                             Layout.fillWidth: true
 
                             name: "sleep_minutes"
                             label: qsTr("Standby Mode")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
                             from: 0
-                            to: 120
-                            stepSize: 5
-                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                            to: 1440
+                            stepSize: 1
                         }
 
                         ResetButton {
@@ -704,23 +712,25 @@ NVG.Window {
                     }
 
                     SettingNote {
-                        text: qsTr("Yui goes to sleep after this long without interaction; click her to wake her up.")
+                        text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
 
-                        P.SliderPreference {
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
                             id: idleChatPreference
 
                             Layout.fillWidth: true
 
                             name: "idle_chat_minutes"
                             label: qsTr("Spontaneous Talk")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
                             from: 0
-                            to: 240
-                            stepSize: 5
-                            displayValue: value === 0 ? qsTr("Off") : qsTr("%1 min").arg(value)
+                            to: 1440
+                            stepSize: 1
                         }
 
                         ResetButton {
@@ -731,7 +741,7 @@ NVG.Window {
                     }
 
                     SettingNote {
-                        text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this long without interaction (each time uses the API).")
+                        text: qsTr("While Yui is a crystal, what she says appears in a bubble next to it, and she says something by herself after this many minutes without interaction (each time uses the API). 0 turns it off.")
                     }
 
                 }

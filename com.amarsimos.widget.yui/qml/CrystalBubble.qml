@@ -37,7 +37,7 @@ NVG.View {
         bubble.target = target;
         place();
         aniOut.stop();
-        if (!visible || content.opacity < shownOpacity) {
+        if (!visible || content.opacity < 1) {
             visible = true;
             aniIn.restart();
         }
@@ -120,134 +120,150 @@ NVG.View {
         anchors.fill: parent
         opacity: 0
 
-        // SAO instant message window (as the chat's MessageWindow.qml): a white title bar in the SAO UI
-        // font, a thin strip in the crystal's status color, the text on light gray, a white bottom edge.
-        Rectangle {
-            id: panel
+        // The bubble's background (panel and tail), at the Bubble Opacity (shownOpacity, Equipment) as
+        // one layer (so overlapping parts do not show through twice); the texts are above it and stay
+        // fully visible, as in the chat panel.
+        Item {
+            id: backgroundLayer
 
-            y: bubble.below ? bubble.tailSize : 0
-            width: parent.width
-            height: header.height + statusStrip.height + body.height + 6
-            radius: 3
-            color: "#F8F8F8"
-            border.color: "#C8C8C8"
-            border.width: 1
+            anchors.fill: parent
+            opacity: bubble.shownOpacity
+            layer.enabled: true
 
+            // SAO instant message window (as the chat's MessageWindow.qml): a white title bar in the SAO
+            // UI font, a thin strip in the crystal's status color, the text on light gray, a white bottom
+            // edge.
             Rectangle {
-                id: header
+                id: panel
 
-                x: 1
-                y: 1
-                width: parent.width - 2
-                height: 24
-                radius: 2
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "#FFFFFF"
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: "#EEEEEE"
-                    }
-
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    width: parent.width - 16
-                    horizontalAlignment: Text.AlignHCenter
-                    text: bubble.heading
-                    opacity: bubble.textOpacity
-                    color: "#777777"
-                    font.family: "SAO UI"
-                    font.pixelSize: 15
-                    elide: Text.ElideRight
-                }
-
-            }
-
-            Rectangle {
-                id: statusStrip
-
-                x: 1
-                y: header.y + header.height
-                width: parent.width - 2
-                height: 2
-                color: bubble.accent
-            }
-
-            Rectangle {
-                id: body
-
-                x: 1
-                y: statusStrip.y + statusStrip.height
-                width: parent.width - 2
-                height: bodyText.implicitHeight + 18
-                color: "#E4E4E4"
+                y: bubble.below ? bubble.tailSize : 0
+                width: parent.width
+                height: header.height + statusStrip.height + body.height + 6
+                radius: 3
+                color: "#F8F8F8"
+                border.color: "#C8C8C8"
+                border.width: 1
 
                 Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: 1
-                    color: "#D6D6D6"
+                    id: header
+
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    height: 24
+                    radius: 2
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#FFFFFF"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#EEEEEE"
+                        }
+
+                    }
+
                 }
 
-                Text {
-                    id: bodyText
+                Rectangle {
+                    id: statusStrip
 
-                    x: 11
-                    y: 9
-                    width: parent.width - 22
-                    text: bubble.text
-                    opacity: bubble.textOpacity
-                    color: "#3A3A3A"
-                    font.pixelSize: 13
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 6
-                    elide: Text.ElideRight
-                    textFormat: Text.PlainText
+                    x: 1
+                    y: header.y + header.height
+                    width: parent.width - 2
+                    height: 2
+                    color: bubble.accent
+                }
+
+                Rectangle {
+                    id: body
+
+                    x: 1
+                    y: statusStrip.y + statusStrip.height
+                    width: parent.width - 2
+                    height: bodyText.implicitHeight + 18
+                    color: "#E4E4E4"
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: "#D6D6D6"
+                    }
+
+                }
+
+            }
+
+            // SAO pointer: a straight triangle from the panel's edge to the crystal (as the message
+            // windows' pointers), over the edge so it joins the panel; at the top when the bubble is below.
+            Shape {
+                id: tail
+
+                readonly property real tipX: Math.max(12, Math.min(bubble.width - 12, bubble.target.x + bubble.target.width / 2 - bubble.x))
+                readonly property real h: bubble.tailSize
+
+                y: bubble.below ? 0 : panel.height - 1
+                width: bubble.width
+                height: h + 1
+                layer.enabled: true
+                layer.samples: 4
+
+                ShapePath {
+                    fillColor: panel.color
+                    strokeColor: panel.border.color
+                    strokeWidth: 1
+                    joinStyle: ShapePath.MiterJoin
+                    startX: tail.tipX - tail.h
+                    startY: bubble.below ? tail.h + 1 : 0
+
+                    PathLine {
+                        x: tail.tipX
+                        y: bubble.below ? 0 : tail.h
+                    }
+
+                    PathLine {
+                        x: tail.tipX + tail.h
+                        y: bubble.below ? tail.h + 1 : 0
+                    }
+
                 }
 
             }
 
         }
 
-        // SAO pointer: a straight triangle from the panel's edge to the crystal (as the message
-        // windows' pointers), over the edge so it joins the panel; at the top when the bubble is below.
-        Shape {
-            id: tail
+        Text {
+            x: panel.x + header.x + 8
+            y: panel.y + header.y
+            width: header.width - 16
+            height: header.height
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: bubble.heading
+            opacity: bubble.textOpacity
+            color: "#777777"
+            font.family: "SAO UI"
+            font.pixelSize: 15
+            elide: Text.ElideRight
+        }
 
-            readonly property real tipX: Math.max(12, Math.min(bubble.width - 12, bubble.target.x + bubble.target.width / 2 - bubble.x))
-            readonly property real h: bubble.tailSize
+        Text {
+            id: bodyText
 
-            y: bubble.below ? 0 : panel.height - 1
-            width: bubble.width
-            height: h + 1
-            layer.enabled: true
-            layer.samples: 4
-
-            ShapePath {
-                fillColor: panel.color
-                strokeColor: panel.border.color
-                strokeWidth: 1
-                joinStyle: ShapePath.MiterJoin
-                startX: tail.tipX - tail.h
-                startY: bubble.below ? tail.h + 1 : 0
-
-                PathLine {
-                    x: tail.tipX
-                    y: bubble.below ? 0 : tail.h
-                }
-
-                PathLine {
-                    x: tail.tipX + tail.h
-                    y: bubble.below ? tail.h + 1 : 0
-                }
-
-            }
-
+            x: panel.x + body.x + 11
+            y: panel.y + body.y + 9
+            width: body.width - 22
+            text: bubble.text
+            opacity: bubble.textOpacity
+            color: "#3A3A3A"
+            font.pixelSize: 13
+            wrapMode: Text.Wrap
+            maximumLineCount: 6
+            elide: Text.ElideRight
+            textFormat: Text.PlainText
         }
 
         MouseArea {
@@ -323,7 +339,7 @@ NVG.View {
             target: content
             property: "opacity"
             from: 0
-            to: bubble.shownOpacity
+            to: 1
             duration: 200
         }
 
@@ -354,7 +370,7 @@ NVG.View {
             NumberAnimation {
                 target: content
                 property: "opacity"
-                from: bubble.shownOpacity
+                from: 1
                 to: 0
                 duration: 300
             }

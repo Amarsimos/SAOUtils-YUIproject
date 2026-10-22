@@ -250,8 +250,8 @@ T.Widget {
     // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
     // sounds of Yui's messages and of the chat panel opening and closing.
     readonly property int bubbleSeconds: styles.bubble_seconds > 0 ? styles.bubble_seconds : defaultValues.bubble_seconds
-    readonly property real bubbleOpacity: (styles.bubble_opacity > 0 ? styles.bubble_opacity : defaultValues.bubble_opacity) / 100
-    readonly property real chatOpacity: (styles.chat_opacity > 0 ? styles.chat_opacity : defaultValues.chat_opacity) / 100
+    readonly property real bubbleOpacity: (styles.bubble_opacity >= 0 ? styles.bubble_opacity : defaultValues.bubble_opacity) / 100
+    readonly property real chatOpacity: (styles.chat_opacity >= 0 ? styles.chat_opacity : defaultValues.chat_opacity) / 100
     readonly property bool messageSounds: styles.sound_messages !== false
     readonly property bool interfaceSounds: styles.sound_interface !== false
 
