@@ -163,7 +163,7 @@ T.Widget {
             statusWarning("警告！系统负荷过高：" + crystalStatus + "……" + userTitle() + "，要不要看看是什么程序在占用呢？(・_・;)");
 
     }
-    // What raised the color, e.g. "GPU 98%" (shown when hovering the crystal).
+    // What raised the color, e.g. "GPU 98%" (in the high load warning).
     readonly property string crystalStatus: loadMetrics.filter(function(metric) {
         return loadLevelOf(metric) > 0;
     }).map(function(metric) {
@@ -3080,10 +3080,6 @@ T.Widget {
             id: crystalMouse
 
             anchors.fill: parent
-            hoverEnabled: true
-            // Hovering a yellow / red crystal tells which load raised it.
-            ToolTip.visible: containsMouse && widget.crystalStatus !== ""
-            ToolTip.text: widget.crystalStatus
             onClicked: {
                 if (!widget.wakeUp())
                     setChatVisible(true);
