@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- While the chat is closed, everything Yui says (replies, care reminders, load and battery warnings)
+  appears in the speech bubble next to her collapsed form, pixie and avatar too, instead of SAO Utils
+  notifications. While the chat is open it is only in the chat. The crystal's load tooltip is gone.
 - New default personality: shorter, with the most important rules first and without example lines
   that small models used to copy. **If you changed nothing in the personality, press ↺ next to it in
   Cardinal System to switch to the new one** (a saved personality is kept as it is).

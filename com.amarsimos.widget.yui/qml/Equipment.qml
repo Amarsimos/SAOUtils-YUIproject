@@ -347,9 +347,9 @@ NVG.Window {
 
                     }
 
-                    // ---------------------------------------------------------------- Crystal bubble
+                    // ---------------------------------------------------------------- Speech bubble
                     Heading {
-                        text: qsTr("Crystal Bubble")
+                        text: qsTr("Speech Bubble")
                     }
 
                     RowLayout {
@@ -415,7 +415,7 @@ NVG.Window {
 
                             name: "sound_messages"
                             label: qsTr("Message Sounds")
-                            message: qsTr("The sound of Yui's messages in the chat and in the crystal's bubble.")
+                            message: qsTr("The sound of Yui's messages in the chat and in her speech bubble.")
                             defaultValue: true
                         }
 

@@ -1104,7 +1104,8 @@ T.Widget {
 
     // Let Yui speak on her own (greetings, care): the instruction is sent as a hidden user turn
     // after the recent conversation. Returns false when she cannot speak right now.
-    // notifyTitle: also send the reply as a system notification with this title (care reminders).
+    // notifyTitle: a title for the reply (care reminders); like every reply while the chat is closed, it
+    // is shown in the bubble next to Yui (see announce()).
     function yuiSpeaks(instruction, notifyTitle) {
         if (widget.busy || !activeConfig().apiKey)
             return false;
@@ -1390,8 +1391,8 @@ T.Widget {
     }
 
     // A refused <<kill:>> of a protected process: SAO Utils' own "Immortal Object" warning (rebuilt in
-    // ImmortalObject.qml) with the "system forbidden" sound. Should that window fail to load, a
-    // notification says the same.
+    // ImmortalObject.qml) with the "system forbidden" sound. Should that window fail to load, the bubble
+    // says the same (while the chat is closed; it is in the chat anyway).
     property var immortalObjectView: null
 
     function showImmortalObject(name) {
@@ -1407,7 +1408,7 @@ T.Widget {
         if (immortalObjectView)
             immortalObjectView.popup();
         else
-            notify(qsTr("Immortal Object"), qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
+            announce("", qsTr("%1 is a protected system process. Yui cannot close it.").arg(name));
     }
 
     function cancelAction(index) {
@@ -2463,25 +2464,24 @@ T.Widget {
         announce(qsTr("Navigation Report"), text);
     }
 
-    // Something Yui says outside the chat: while she is a crystal, in the bubble next to it (every
-    // reply, titled or not); otherwise, when it has a title (care, status reports), as a notification.
+    // Something Yui says outside the chat (replies, care, status reports): while the chat is closed, in
+    // the bubble next to her collapsed form (crystal, pixie or avatar); while it is open it is already in
+    // the chat. title: unused (the bubble is headed "Yui"), kept for the callers' sake.
     function announce(title, text) {
-        if (crystalForm.visible)
+        if (!showChat)
             showBubble("Yui", text);
-        else if (title)
-            notify(title, text);
+
     }
 
-    // The crystal's speech bubble (CrystalBubble.qml), created on first use; its title bar takes the
-    // crystal's color. Clicking it closes it.
+    // Yui's speech bubble (CrystalBubble.qml) next to her collapsed form, created on first use. Next to
+    // the crystal its title bar takes the crystal's color, else Yui's green. Clicking it closes it.
     property var crystalBubble: null
 
     function showBubble(title, text) {
         if (!crystalBubble) {
             var component = Qt.createComponent("CrystalBubble.qml");
             if (component.status !== Component.Ready) {
-                diag("crystal bubble unavailable: " + component.errorString());
-                notify(title, text);
+                diag("bubble unavailable: " + component.errorString());
                 return ;
             }
             crystalBubble = component.createObject(widget);
@@ -2496,7 +2496,7 @@ T.Widget {
             });
         }
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
-        crystalBubble.show(title, text, levelColors[crystalLevel], crystalScreenRect());
+        crystalBubble.show(title, text, collapsedForm === "crystal" ? levelColors[crystalLevel] : levelColors[0], collapsedScreenRect());
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
@@ -2532,46 +2532,26 @@ T.Widget {
         });
     }
 
-    // The crystal on screen, including its floating up and down.
-    function crystalScreenRect() {
-        var corner = crystalForm.mapToGlobal(0, crystalForm.hover);
-        return Qt.rect(corner.x, corner.y, crystalForm.width, crystalForm.height);
+    // Yui's collapsed form on screen, including its floating up and down (the pixie floats by a
+    // transform, which the mapping includes; the crystal by its own hover).
+    function collapsedScreenRect() {
+        var item = collapsedForm === "crystal" ? crystalForm : (collapsedForm === "pixie" ? pixieImage : avatarImage);
+        var corner = item.mapToGlobal(0, item === crystalForm ? crystalForm.hover : 0);
+        return Qt.rect(corner.x, corner.y, item.width, item.height);
     }
 
-    // While the bubble is shown it follows the crystal: its floating, and the widget being moved.
-    // It closes when the crystal goes away (the chat is opened).
+    // While the bubble is shown it follows her collapsed form: its floating, and the widget being
+    // moved. It closes when the chat is opened.
     Timer {
         interval: 16
         repeat: true
         running: !!widget.crystalBubble && widget.crystalBubble.visible
         onTriggered: {
-            if (crystalForm.visible)
-                widget.crystalBubble.follow(widget.crystalScreenRect());
+            if (!widget.showChat)
+                widget.crystalBubble.follow(widget.collapsedScreenRect());
             else
                 widget.crystalBubble.hide();
         }
-    }
-
-    // SAO Utils' global notification (NVG.Notification). Opening it brings the chat back.
-    // Returns the notification object (null when it could not be created).
-    function notify(title, message) {
-        var notification = notificationComponent.createObject(widget, {
-            "title": title,
-            "message": message
-        });
-        if (!notification)
-            return null;
-
-        notification.accepted.connect(function() {
-            setChatVisible(true);
-            notification.destroy();
-        });
-        notification.rejected.connect(function() {
-            notification.destroy();
-        });
-        notification.active = true;
-        diag("notification: " + title);
-        return notification;
     }
 
     // MHCP001 care: remind the user to sleep late at night or to rest after a long session.
@@ -2956,15 +2936,6 @@ T.Widget {
                 wrapMode: Text.WrapAnywhere
             }
 
-        }
-
-    }
-
-    // Global notifications (see notify()).
-    Component {
-        id: notificationComponent
-
-        NVG.Notification {
         }
 
     }
