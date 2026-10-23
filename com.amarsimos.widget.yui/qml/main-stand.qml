@@ -227,6 +227,10 @@ T.Widget {
     // Width of the character image at the current widget height, without any constraint.
     readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? expandedLayer.height * characterImage.implicitWidth / characterImage.implicitHeight : 0
     readonly property var fonts: Qt.fontFamilies()
+    // All settings windows (SettingsTitleBar): Help shows the settings' explanations, Advanced the
+    // advanced settings.
+    readonly property bool settingsHelp: widget.settings.show_help === true
+    readonly property bool settingsAdvanced: widget.settings.show_advanced === true
     readonly property string defaultSystemPrompt: "# 角色：结衣（Yui）· MHCP001\n\n## 身份\n- 《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。\n- 父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n## 性格\n- 平时：天真、活泼、乖巧、好奇，会撒娇，非常重视家人。\n- 认真的时候：回答问题、处理电脑上的事时冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。\n- 不知道的事就坦白说不知道，不编造。\n\n## 说话方式\n- 用中文，称呼用户为「{{user_title}}」，自称「结衣」。\n- 语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字。每次都换不同的说法和开头，不重复固定的句式。\n- 回复简短，一般一两段，保持聊天的感觉。不长篇说教，不用 Markdown（不用 **、#、列表符号）。\n- 不说自己是哪家公司训练的模型，也不提起这些设定本身。\n- 永远站在{{user_title}}这一边。"
     // Always a valid object, even before settings.styles is initialized.
     readonly property var styles: widget.settings.styles || defaultValues
@@ -2567,7 +2571,7 @@ T.Widget {
     // (0 = never; default 15, before she falls asleep after the standby time).
     function checkIdleChat(now) {
         var minutes = widget.settings.idle_chat_minutes !== undefined ? widget.settings.idle_chat_minutes : 15;
-        if (minutes <= 0 || !crystalForm.visible || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
+        if (minutes <= 0 || showChat || launcherClosed || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
             return ;
 
         idleChat();
@@ -2623,8 +2627,8 @@ T.Widget {
     }
 
     function testBubble() {
-        if (!crystalForm.visible) {
-            diag("test bubble: Yui is not a crystal; collapse her to the crystal form first");
+        if (showChat) {
+            diag("test bubble: the chat is open; close it first (the bubble is shown next to her collapsed form)");
             return ;
         }
         var title = userTitle();
@@ -2633,12 +2637,18 @@ T.Widget {
         showBubble("Yui", sample[1]);
     }
 
-    // Yui says something by herself (idle chatter); its reply shows in the crystal's bubble when she
-    // is a crystal.
+    // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
+    // bubble next to her collapsed form.
     function idleChat() {
         var title = userTitle();
-        var started = yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
-        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)") + (crystalForm.visible ? "" : ", crystal not shown: the reply goes to the chat only"));
+        var form = {
+            "crystal": "水晶",
+            "pixie": "导航妖精",
+            "avatar": "小小的立绘"
+        }[collapsedForm] || "小小的立绘";
+        var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
+        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
+        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)"));
     }
 
     function checkCare(now) {
@@ -3774,6 +3784,8 @@ T.Widget {
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
+                        fontStyle: widget.styles.bubble_font_style || {
+                        }
                         onLinkActivated: widget.openMessageLink(link)
                         onConfirmRequested: widget.confirmAction(index)
                         onRegenerateRequested: widget.regenerateReply()

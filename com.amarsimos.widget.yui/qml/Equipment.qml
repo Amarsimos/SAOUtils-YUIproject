@@ -4,17 +4,31 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 NVG.Window {
     id: styleSettingsWindow
 
     property var targetWidget
 
-    // The font is saved by name (font indexes shift when fonts are installed or removed),
-    // but SelectPreference works with indexes, so convert on load and save.
-    function fontIndexOf(value) {
-        var index = targetWidget.fonts.indexOf(targetWidget.fontFamilyOf(value));
-        return index >= 0 ? index : 0;
+    // Message Font is SAO Utils' own font preference (a whole font); the styles keep it apart as before
+    // (bubble_font_family, a name, and bubble_font_size, in px) and the rest in bubble_font_style
+    // ({weight, italic, underline, strikeout}), read by the widget.
+    readonly property font defaultMessageFont: Qt.font({
+        "family": targetWidget.defaultValues.bubble_font_family,
+        "pixelSize": targetWidget.defaultValues.bubble_font_size
+    })
+
+    function messageFontOf(styles) {
+        var style = styles.bubble_font_style || {};
+        return Qt.font({
+            "family": targetWidget.fontFamilyOf(styles.bubble_font_family),
+            "pixelSize": styles.bubble_font_size > 0 ? styles.bubble_font_size : targetWidget.defaultValues.bubble_font_size,
+            "weight": style.weight !== undefined ? style.weight : Font.Normal,
+            "italic": !!style.italic,
+            "underline": !!style.underline,
+            "strikeout": !!style.strikeout
+        });
     }
 
     // Collapsed forms, stored by id; the SelectPreference works with indexes.
@@ -22,19 +36,30 @@ NVG.Window {
 
     function toPreferences(styles) {
         var values = JSON.parse(JSON.stringify(styles));
-        values.bubble_font_family = fontIndexOf(styles.bubble_font_family);
+        values.message_font = messageFontOf(styles);
         values.collapsed_form = Math.max(0, collapsedFormIds.indexOf(styles.collapsed_form));
         return values;
     }
 
     function fromPreferences(values) {
-        values.bubble_font_family = targetWidget.fonts[values.bubble_font_family] || targetWidget.defaultValues.bubble_font_family;
+        var font = values.message_font;
+        delete values.message_font;
+        if (font && font.family) {
+            values.bubble_font_family = font.family;
+            values.bubble_font_size = Yui.fontPixels(font);
+            values.bubble_font_style = {
+                "weight": font.weight,
+                "italic": font.italic,
+                "underline": font.underline,
+                "strikeout": font.strikeout
+            };
+        }
         values.collapsed_form = collapsedFormIds[values.collapsed_form] || "pixie";
         return values;
     }
 
     // Every preference of this window with its style key and default (in preference terms). They are
-    // loaded and saved one by one, so a preference can sit in a row with its ↺ button.
+    // loaded and saved one by one.
     // (Filtered: a preference that does not exist yet is skipped.)
     function entries() {
         return entryList().filter(function(entry) {
@@ -55,14 +80,9 @@ NVG.Window {
                 "defaultValue": targetWidget.defaultValues.background_image_path
             },
             {
-                "key": "bubble_font_family",
+                "key": "message_font",
                 "preference": fontPreference,
-                "defaultValue": fontIndexOf(targetWidget.defaultValues.bubble_font_family)
-            },
-            {
-                "key": "bubble_font_size",
-                "preference": fontSizePreference,
-                "defaultValue": targetWidget.defaultValues.bubble_font_size
+                "defaultValue": defaultMessageFont
             },
             {
                 "key": "chat_opacity",
@@ -145,25 +165,7 @@ NVG.Window {
     // The settings of each tab, for its Reset This Tab button.
     readonly property var avatarTabPreferences: [avatarPreference, fieldPreference, standbyImagePreference, happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
     readonly property var formsTabPreferences: [formPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
-    readonly property var interfaceTabPreferences: [fontPreference, fontSizePreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
-
-    function anyChanged(preferences) {
-        return preferences.some(function(preference) {
-            return preference && JSON.stringify(preference.value) !== JSON.stringify(preference.defaultValue);
-        });
-    }
-
-    // Restores a tab's settings to their defaults (Preference.load() takes each one's defaultValue),
-    // after asking; each change is saved at once as usual.
-    function resetTab(tabTitle, preferences) {
-        targetWidget.confirmReset(qsTr("Equipment") + " · " + tabTitle, function() {
-            preferences.forEach(function(preference) {
-                if (preference)
-                    preference.load();
-
-            });
-        });
-    }
+    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
 
     // True while values are put into the preferences (not changes by the user).
     property bool loading: true
@@ -226,537 +228,337 @@ NVG.Window {
         // window, bubble, sounds). The last tab shown is remembered.
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
-            anchors.topMargin: 0
+            // Little room at the sides: the settings have their own 16 px padding.
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            anchors.bottomMargin: 16
             spacing: 10
 
-            TabBar {
+            // Wraps into a second row when the window is narrow (see WrapTabBar.qml).
+            WrapTabBar {
                 id: tabs
 
                 Layout.fillWidth: true
                 currentIndex: Math.max(0, Math.min(2, targetWidget.settings.equipment_tab || 0))
                 onCurrentIndexChanged: targetWidget.settings.equipment_tab = currentIndex
-
-                TabButton {
-                    text: qsTr("Avatar")
-                }
-
-                TabButton {
-                    text: qsTr("Forms")
-                }
-
-                TabButton {
-                    text: qsTr("Interface")
-                }
-
+                model: [qsTr("Avatar"), qsTr("Forms"), qsTr("Interface")]
             }
 
             StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: tabs.currentIndex
+                currentIndex: tabs.shownIndex
 
                 // ---------------------------------------------------------------- Avatar
-                ScrollView {
-                    id: avatarScroll
+                SettingsPage {
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
-                    clip: true
-                    // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll
-                    // bar (which is drawn over the page and covered the values at the right edge).
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    contentWidth: availableWidth
+                        P.ImagePreference {
+                            id: avatarPreference
 
-                    ColumnLayout {
-                        width: avatarScroll.availableWidth - avatarScroll.ScrollBar.vertical.width - 4
+                            name: "character_image_path"
+                            label: qsTr("Avatar")
+                            defaultValue: targetWidget.defaultValues.character_image_path
+                        }
 
-                        P.PreferenceGroup {
-                            Layout.fillWidth: true
-                            spacing: 10
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui's main image, shown next to the message window.")
+                        }
 
-                            RowLayout {
-                                Layout.fillWidth: true
+                        P.BackgroundPreference {
+                            id: fieldPreference
 
-                                P.ImagePreference {
-                                    id: avatarPreference
+                            visible: targetWidget.settingsAdvanced
 
-                                    Layout.fillWidth: true
+                            name: "background_image_path"
+                            label: qsTr("Field")
+                            defaultValue: targetWidget.defaultValues.background_image_path
+                        }
 
-                                    name: "character_image_path"
-                                    label: qsTr("Avatar")
-                                    defaultValue: targetWidget.defaultValues.character_image_path
-                                }
+                        SettingNote {
+                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
+                            besidePreferences: true
+                            text: qsTr("The background behind the whole widget.")
+                        }
 
-                                ResetButton {
-                                    preference: avatarPreference
-                                }
+                        P.ImagePreference {
+                            id: standbyImagePreference
 
+                            name: "sleep_image_path"
+                            label: qsTr("Standby Form")
+                            defaultValue: ""
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Shown while Yui is asleep. Without it, the avatar is dimmed instead.")
+                        }
+
+                        // ---------------------------------------------------------------- Emotion display
+                        // The five expression images, in a dialog of their own (they are set once and take room).
+                        P.DialogPreference {
+                            label: qsTr("Emotion Display")
+                            live: true
+                            displayValue: qsTr("%1 / 5 set").arg([happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference].filter(function(preference) {
+                                return preference && targetWidget.hasImage(preference.value);
+                            }).length)
+
+                            P.ImagePreference {
+                                id: happyPreference
+
+                                name: "expression_happy"
+                                label: qsTr("Happy")
+                                defaultValue: ""
                             }
 
-                            SettingNote {
-                                text: qsTr("Yui's main image, shown next to the message window.")
+                            P.ImagePreference {
+                                id: sadPreference
+
+                                name: "expression_sad"
+                                label: qsTr("Sad")
+                                defaultValue: ""
                             }
 
-                            RowLayout {
-                                Layout.fillWidth: true
+                            P.ImagePreference {
+                                id: surprisedPreference
 
-                                P.BackgroundPreference {
-                                    id: fieldPreference
-
-                                    Layout.fillWidth: true
-
-                                    name: "background_image_path"
-                                    label: qsTr("Field")
-                                    defaultValue: targetWidget.defaultValues.background_image_path
-                                }
-
-                                ResetButton {
-                                    preference: fieldPreference
-                                }
-
+                                name: "expression_surprised"
+                                label: qsTr("Surprised")
+                                defaultValue: ""
                             }
 
-                            SettingNote {
-                                text: qsTr("The background behind the whole widget.")
+                            P.ImagePreference {
+                                id: angryPreference
+
+                                name: "expression_angry"
+                                label: qsTr("Angry")
+                                defaultValue: ""
                             }
 
-                            RowLayout {
-                                Layout.fillWidth: true
+                            P.ImagePreference {
+                                id: shyPreference
 
-                                P.ImagePreference {
-                                    id: standbyImagePreference
-
-                                    Layout.fillWidth: true
-                                    name: "sleep_image_path"
-                                    label: qsTr("Standby Form")
-                                    defaultValue: ""
-                                }
-
-                                ResetButton {
-                                    preference: standbyImagePreference
-                                }
-
-                            }
-
-                            SettingNote {
-                                text: qsTr("Shown while Yui is asleep. Without it, the avatar is dimmed instead.")
-                            }
-
-                            // ---------------------------------------------------------------- Emotion display
-                            // The five expression images, in a dialog of their own (they are set once and take room); ↺
-                            // restores all five.
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.DialogPreference {
-                                    Layout.fillWidth: true
-                                    label: qsTr("Emotion Display")
-                                    live: true
-                                    displayValue: qsTr("%1 / 5 set").arg([happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference].filter(function(preference) {
-                                        return preference && targetWidget.hasImage(preference.value);
-                                    }).length)
-
-                                    P.ImagePreference {
-                                        id: happyPreference
-
-                                        name: "expression_happy"
-                                        label: qsTr("Happy")
-                                        defaultValue: ""
-                                    }
-
-                                    P.ImagePreference {
-                                        id: sadPreference
-
-                                        name: "expression_sad"
-                                        label: qsTr("Sad")
-                                        defaultValue: ""
-                                    }
-
-                                    P.ImagePreference {
-                                        id: surprisedPreference
-
-                                        name: "expression_surprised"
-                                        label: qsTr("Surprised")
-                                        defaultValue: ""
-                                    }
-
-                                    P.ImagePreference {
-                                        id: angryPreference
-
-                                        name: "expression_angry"
-                                        label: qsTr("Angry")
-                                        defaultValue: ""
-                                    }
-
-                                    P.ImagePreference {
-                                        id: shyPreference
-
-                                        name: "expression_shy"
-                                        label: qsTr("Shy")
-                                        defaultValue: ""
-                                    }
-                                }
-
-                                ResetButton {
-                                    preferences: [happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
-                                }
-
-                            }
-
-                            SettingNote {
-                                text: qsTr("Yui changes her expression with the mood of each reply. Empty slots use the avatar.")
+                                name: "expression_shy"
+                                label: qsTr("Shy")
+                                defaultValue: ""
                             }
                         }
 
-                        // Restores every setting of this tab (after asking).
-                        Button {
-                            Layout.alignment: Qt.AlignRight
-                            Layout.topMargin: 8
-                            flat: true
-                            text: qsTr("Reset This Tab")
-                            enabled: styleSettingsWindow.anyChanged(styleSettingsWindow.avatarTabPreferences)
-                            onClicked: styleSettingsWindow.resetTab(qsTr("Avatar"), styleSettingsWindow.avatarTabPreferences)
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui changes her expression with the mood of each reply. Empty slots use the avatar.")
                         }
 
+                    }
+
+                    ResetTabButton {
+                        yui: styleSettingsWindow.targetWidget
+                        windowTitle: styleSettingsWindow.title
+                        tabTitle: qsTr("Avatar")
+                        preferences: styleSettingsWindow.avatarTabPreferences
                     }
 
                 }
 
                 // ---------------------------------------------------------------- Forms
-                ScrollView {
-                    id: formsScroll
+                SettingsPage {
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
-                    clip: true
-                    // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll
-                    // bar (which is drawn over the page and covered the values at the right edge).
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    contentWidth: availableWidth
+                        P.SelectPreference {
+                            id: formPreference
 
-                    ColumnLayout {
-                        width: formsScroll.availableWidth - formsScroll.ScrollBar.vertical.width - 4
-
-                        P.PreferenceGroup {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SelectPreference {
-                                    id: formPreference
-
-                                    Layout.fillWidth: true
-
-                                    name: "collapsed_form"
-                                    label: qsTr("Collapsed Form")
-                                    model: [qsTr("Navigation Pixie"), qsTr("Yui's Heart Crystal")]
-                                    defaultValue: 0
-                                }
-
-                                ResetButton {
-                                    preference: formPreference
-                                }
-
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: crystalSizePreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "crystal_size"
-                                    label: qsTr("Crystal Size")
-                                    from: 60
-                                    to: 300
-                                    stepSize: 10
-                                    defaultValue: targetWidget.defaultValues.crystal_size
-                                    displayValue: qsTr("%1 px").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: crystalSizePreference
-                                }
-
-                            }
-
-                            SettingNote {
-                                text: qsTr("What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.")
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.ImagePreference {
-                                    id: pixieImagePreference
-
-                                    Layout.fillWidth: true
-                                    name: "pixie_image_path"
-                                    label: qsTr("Navigation Pixie Form")
-                                    defaultValue: targetWidget.defaultValues.pixie_image_path
-                                }
-
-                                ResetButton {
-                                    preference: pixieImagePreference
-                                }
-
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: pixieSizePreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "pixie_size"
-                                    label: qsTr("Pixie Size")
-                                    from: 80
-                                    to: 400
-                                    stepSize: 10
-                                    defaultValue: targetWidget.defaultValues.pixie_size
-                                    displayValue: qsTr("%1 px").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: pixieSizePreference
-                                }
-
-                            }
-
-                            SettingNote {
-                                text: qsTr("When set, Yui turns into a small pixie while the message window is hidden. Pixie Size is its height.")
-                            }
+                            name: "collapsed_form"
+                            label: qsTr("Collapsed Form")
+                            model: [qsTr("Navigation Pixie"), qsTr("Yui's Heart Crystal")]
+                            defaultValue: 0
                         }
 
-                        // Restores every setting of this tab (after asking).
-                        Button {
-                            Layout.alignment: Qt.AlignRight
-                            Layout.topMargin: 8
-                            flat: true
-                            text: qsTr("Reset This Tab")
-                            enabled: styleSettingsWindow.anyChanged(styleSettingsWindow.formsTabPreferences)
-                            onClicked: styleSettingsWindow.resetTab(qsTr("Forms"), styleSettingsWindow.formsTabPreferences)
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU, GPU and memory load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.")
                         }
 
+                        P.SliderPreference {
+                            id: crystalSizePreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+
+                            name: "crystal_size"
+                            label: qsTr("Crystal Size")
+                            from: 60
+                            to: 300
+                            stepSize: 10
+                            defaultValue: targetWidget.defaultValues.crystal_size
+                            displayValue: qsTr("%1 px").arg(value)
+                        }
+
+                        P.ImagePreference {
+                            id: pixieImagePreference
+
+                            name: "pixie_image_path"
+                            label: qsTr("Navigation Pixie Form")
+                            defaultValue: targetWidget.defaultValues.pixie_image_path
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When set, Yui turns into a small pixie while the message window is hidden. Pixie Size is its height.")
+                        }
+
+                        P.SliderPreference {
+                            id: pixieSizePreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+
+                            name: "pixie_size"
+                            label: qsTr("Pixie Size")
+                            from: 80
+                            to: 400
+                            stepSize: 10
+                            defaultValue: targetWidget.defaultValues.pixie_size
+                            displayValue: qsTr("%1 px").arg(value)
+                        }
+                    }
+
+                    ResetTabButton {
+                        yui: styleSettingsWindow.targetWidget
+                        windowTitle: styleSettingsWindow.title
+                        tabTitle: qsTr("Forms")
+                        preferences: styleSettingsWindow.formsTabPreferences
                     }
 
                 }
 
                 // ---------------------------------------------------------------- Interface
-                ScrollView {
-                    id: interfaceScroll
+                SettingsPage {
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
-                    clip: true
-                    // Only vertical scrolling: the page is as wide as the window, minus the vertical scroll
-                    // bar (which is drawn over the page and covered the values at the right edge).
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    contentWidth: availableWidth
-
-                    ColumnLayout {
-                        width: interfaceScroll.availableWidth - interfaceScroll.ScrollBar.vertical.width - 4
-
-                        P.PreferenceGroup {
-                            Layout.fillWidth: true
-                            spacing: 10
-
-                            // ---------------------------------------------------------------- Message window
-                            Heading {
-                                text: qsTr("Message Window")
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SelectPreference {
-                                    id: fontPreference
-
-                                    Layout.fillWidth: true
-
-                                    name: "bubble_font_family"
-                                    label: qsTr("Message Font")
-                                    model: targetWidget.fonts
-                                    defaultValue: fontIndexOf(targetWidget.defaultValues.bubble_font_family)
-                                }
-
-                                ResetButton {
-                                    preference: fontPreference
-                                }
-
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: fontSizePreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "bubble_font_size"
-                                    label: qsTr("Message Size")
-                                    from: 10
-                                    to: 32
-                                    stepSize: 1
-                                    defaultValue: targetWidget.defaultValues.bubble_font_size
-                                    displayValue: qsTr("%1 px").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: fontSizePreference
-                                }
-
-                            }
-
-                            // Message windows have the SAO colors; only the text's font and size are settings.
-                            SettingNote {
-                                text: qsTr("Font and size of the text in the message windows.")
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: chatOpacityPreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "chat_opacity"
-                                    label: qsTr("Chat Panel Opacity")
-                                    from: 0
-                                    to: 100
-                                    stepSize: 1
-                                    defaultValue: targetWidget.defaultValues.chat_opacity
-                                    displayValue: qsTr("%1 %").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: chatOpacityPreference
-                                }
-
-                            }
-
-                            // ---------------------------------------------------------------- Speech bubble
-                            Heading {
-                                text: qsTr("Speech Bubble")
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: bubbleSecondsPreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "bubble_seconds"
-                                    label: qsTr("Bubble Duration")
-                                    from: 3
-                                    to: 30
-                                    stepSize: 1
-                                    defaultValue: targetWidget.defaultValues.bubble_seconds
-                                    displayValue: qsTr("%1 s").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: bubbleSecondsPreference
-                                }
-
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SliderPreference {
-                                    id: bubbleOpacityPreference
-
-                                    // Updates (and shows its value) while being dragged.
-                                    live: true
-                                    Layout.fillWidth: true
-
-                                    name: "bubble_opacity"
-                                    label: qsTr("Bubble Opacity")
-                                    from: 0
-                                    to: 100
-                                    stepSize: 1
-                                    defaultValue: targetWidget.defaultValues.bubble_opacity
-                                    displayValue: qsTr("%1 %").arg(value)
-                                }
-
-                                ResetButton {
-                                    preference: bubbleOpacityPreference
-                                }
-
-                            }
-
-                            // ---------------------------------------------------------------- Sound
-                            Heading {
-                                text: qsTr("Sound")
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SwitchPreference {
-                                    id: messageSoundsPreference
-
-                                    Layout.fillWidth: true
-
-                                    name: "sound_messages"
-                                    label: qsTr("Message Sounds")
-                                    message: qsTr("The sound of Yui's messages in the chat and in her speech bubble.")
-                                    defaultValue: true
-                                }
-
-                                ResetButton {
-                                    preference: messageSoundsPreference
-                                }
-
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-
-                                P.SwitchPreference {
-                                    id: interfaceSoundsPreference
-
-                                    Layout.fillWidth: true
-
-                                    name: "sound_interface"
-                                    label: qsTr("Interface Sounds")
-                                    message: qsTr("The sounds of the chat panel opening and closing.")
-                                    defaultValue: true
-                                }
-
-                                ResetButton {
-                                    preference: interfaceSoundsPreference
-                                }
-
-                            }
+                        // ---------------------------------------------------------------- Message window
+                        Heading {
+                            text: qsTr("Message Window")
                         }
 
-                        // Restores every setting of this tab (after asking).
-                        Button {
-                            Layout.alignment: Qt.AlignRight
-                            Layout.topMargin: 8
-                            flat: true
-                            text: qsTr("Reset This Tab")
-                            enabled: styleSettingsWindow.anyChanged(styleSettingsWindow.interfaceTabPreferences)
-                            onClicked: styleSettingsWindow.resetTab(qsTr("Interface"), styleSettingsWindow.interfaceTabPreferences)
+                        // SAO Utils' own font preference (family and size in one).
+                        P.FontPreference {
+                            id: fontPreference
+
+                            label: qsTr("Message Font")
+                            defaultValue: styleSettingsWindow.defaultMessageFont
                         }
 
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Font and size of the text in the message windows.")
+                        }
+
+                        P.SliderPreference {
+                            id: chatOpacityPreference
+
+                            visible: targetWidget.settingsAdvanced
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+
+                            name: "chat_opacity"
+                            label: qsTr("Chat Panel Opacity")
+                            from: 0
+                            to: 100
+                            stepSize: 1
+                            defaultValue: targetWidget.defaultValues.chat_opacity
+                            displayValue: qsTr("%1 %").arg(value)
+                        }
+
+                        // ---------------------------------------------------------------- Speech bubble
+                        Heading {
+                            visible: targetWidget.settingsAdvanced
+                            text: qsTr("Speech Bubble")
+                        }
+
+                        P.SliderPreference {
+                            id: bubbleSecondsPreference
+
+                            visible: targetWidget.settingsAdvanced
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+
+                            name: "bubble_seconds"
+                            label: qsTr("Bubble Duration")
+                            from: 3
+                            to: 30
+                            stepSize: 1
+                            defaultValue: targetWidget.defaultValues.bubble_seconds
+                            displayValue: qsTr("%1 s").arg(value)
+                        }
+
+                        P.SliderPreference {
+                            id: bubbleOpacityPreference
+
+                            visible: targetWidget.settingsAdvanced
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+
+                            name: "bubble_opacity"
+                            label: qsTr("Bubble Opacity")
+                            from: 0
+                            to: 100
+                            stepSize: 1
+                            defaultValue: targetWidget.defaultValues.bubble_opacity
+                            displayValue: qsTr("%1 %").arg(value)
+                        }
+
+                        // ---------------------------------------------------------------- Sound
+                        Heading {
+                            text: qsTr("Sound")
+                        }
+
+                        P.SwitchPreference {
+                            id: messageSoundsPreference
+
+                            name: "sound_messages"
+                            label: qsTr("Message Sounds")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The sound of Yui's messages in the chat and in her speech bubble.")
+                        }
+
+                        P.SwitchPreference {
+                            id: interfaceSoundsPreference
+
+                            name: "sound_interface"
+                            label: qsTr("Interface Sounds")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The sounds of the chat panel opening and closing.")
+                        }
+                    }
+
+                    ResetTabButton {
+                        yui: styleSettingsWindow.targetWidget
+                        windowTitle: styleSettingsWindow.title
+                        tabTitle: qsTr("Interface")
+                        preferences: styleSettingsWindow.interfaceTabPreferences
                     }
 
                 }
@@ -765,17 +567,15 @@ NVG.Window {
 
         }
 
-        header: TitleBar {
-            // Every settings window has the same light title bar (as SAO Utils' own dialogs, e.g. the
-            // mail box composer); without this some came out in the theme's blue.
-            Style.primary: styleSettingsWindow.Style.dialogColor
-            text: qsTr("Equipment")
-            standardButtons: Dialog.Reset
-            onReset: targetWidget.confirmReset(qsTr("Equipment"), function() {
+        header: SettingsTitleBar {
+            yui: styleSettingsWindow.targetWidget
+            settingsWindow: styleSettingsWindow
+            hasAdvanced: true
+            onResetRequested: {
                 resetStyles();
                 // and saves the reset state right away
                 saveStyles();
-            })
+            }
         }
 
     }

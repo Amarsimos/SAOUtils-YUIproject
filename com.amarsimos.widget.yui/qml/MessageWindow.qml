@@ -29,6 +29,9 @@ Item {
     onThinkingChanged: thinkingHint = ""
     property string fontFamily
     property int fontSize: 14
+    // The rest of the message font: {weight, italic, underline, strikeout} (Equipment, Message Font).
+    property var fontStyle: ({
+    })
     // Widest the window may get.
     property real maximumWidth: 400
     // Side of the pointer toward the speaker: "left" (Yui), "right" (user) or "" (none). It sticks out
@@ -233,6 +236,10 @@ Item {
                         text: "YUI正在思考"
                         color: "#3A3A3A"
                         font.family: messageWindow.fontFamily
+                        font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
+                        font.italic: !!messageWindow.fontStyle.italic
+                        font.underline: !!messageWindow.fontStyle.underline
+                        font.strikeout: !!messageWindow.fontStyle.strikeout
                         font.pixelSize: messageWindow.fontSize
                     }
 
@@ -250,6 +257,10 @@ Item {
                                 text: "."
                                 color: "#3A3A3A"
                                 font.family: messageWindow.fontFamily
+                                font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
+                                font.italic: !!messageWindow.fontStyle.italic
+                                font.underline: !!messageWindow.fontStyle.underline
+                                font.strikeout: !!messageWindow.fontStyle.strikeout
                                 font.pixelSize: messageWindow.fontSize
 
                                 SequentialAnimation on y {
@@ -297,6 +308,10 @@ Item {
                     text: messageWindow.thinkingHint
                     color: "#888888"
                     font.family: messageWindow.fontFamily
+                    font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
+                    font.italic: !!messageWindow.fontStyle.italic
+                    font.underline: !!messageWindow.fontStyle.underline
+                    font.strikeout: !!messageWindow.fontStyle.strikeout
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     onTextChanged: if (text) hintFade.restart()
@@ -331,6 +346,10 @@ Item {
                 selectionColor: messageWindow.orange
                 color: "#3A3A3A"
                 font.family: messageWindow.fontFamily
+                font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
+                font.italic: !!messageWindow.fontStyle.italic
+                font.underline: !!messageWindow.fontStyle.underline
+                font.strikeout: !!messageWindow.fontStyle.strikeout
                 font.pixelSize: messageWindow.fontSize
                 onLinkActivated: messageWindow.linkActivated(link)
 
