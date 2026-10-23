@@ -402,4 +402,20 @@ test("Boss Raid focus tag", () => {
     assert.strictEqual(Yui.parseReply("没有标签").focus, null);
 });
 
+test("Col Ledger usage", () => {
+    assert.strictEqual(JSON.stringify(Yui.usageOf("openai", { usage: { prompt_tokens: 120, completion_tokens: 30 } })), JSON.stringify({ input: 120, output: 30 }));
+    assert.strictEqual(Yui.usageOf("openai", { choices: [] }), null);
+    let total = Yui.mergeUsage(null, Yui.usageOf("anthropic", { type: "message_start", message: { usage: { input_tokens: 500, output_tokens: 1 } } }));
+    total = Yui.mergeUsage(total, Yui.usageOf("anthropic", { type: "message_delta", usage: { output_tokens: 42 } }));
+    assert.strictEqual(JSON.stringify(total), JSON.stringify({ input: 500, output: 42 }));
+    total = Yui.mergeUsage(null, Yui.usageOf("gemini", { usageMetadata: { promptTokenCount: 80, candidatesTokenCount: 5 } }));
+    total = Yui.mergeUsage(total, Yui.usageOf("gemini", { usageMetadata: { promptTokenCount: 80, candidatesTokenCount: 20 } }));
+    assert.strictEqual(JSON.stringify(total), JSON.stringify({ input: 80, output: 20 }));
+    const oct = new Date(2026, 9, 24).getTime(), nov = new Date(2026, 10, 1).getTime();
+    let ledger = Yui.addToLedger(null, { input: 100, output: 10 }, oct);
+    ledger = Yui.addToLedger(Object.assign(ledger, { warned: true }), { input: 50, output: 5 }, oct);
+    assert.strictEqual(JSON.stringify(ledger), JSON.stringify({ month: "2026-10", input: 150, output: 15, requests: 2, warned: true }));
+    assert.strictEqual(JSON.stringify(Yui.addToLedger(ledger, { input: 1, output: 1 }, nov)), JSON.stringify({ month: "2026-11", input: 1, output: 1, requests: 1, warned: false }));
+});
+
 console.log(passed + " tests passed");

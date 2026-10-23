@@ -576,6 +576,8 @@ T.Widget {
         var toolCalls = [];
         // The same request sent again with tags, when the server rejected the tools.
         var retry = null;
+        // The tokens the reply reports (Col Ledger), or null when it reports none.
+        var usage = null;
         var finish = function(text, isError) {
             if (done)
                 return ;
@@ -583,6 +585,9 @@ T.Widget {
             done = true;
             timer.stop();
             timer.destroy();
+            if (usage)
+                recordUsage(usage);
+
             logReply(config, text, isError, Date.now() - sentAt, toolCalls);
             onFinished(text, isError, false, toolCalls);
         };
@@ -627,6 +632,10 @@ T.Widget {
 
                 try {
                     var event = JSON.parse(payload);
+                    var reported = Yui.usageOf(format, event);
+                    if (reported)
+                        usage = Yui.mergeUsage(usage, reported);
+
                     streamed += streamDeltaOf(format, event);
                     if (format === "openai" && event.choices && event.choices[0] && event.choices[0].delta)
                         addToolCalls(event.choices[0].delta.tool_calls);
@@ -739,6 +748,10 @@ T.Widget {
             data = {
                 "model": config.model,
                 "stream": true,
+                // The last event then reports the tokens used (Col Ledger).
+                "stream_options": {
+                    "include_usage": true
+                },
                 "messages": [{
                     "role": "system",
                     "content": systemPrompt
@@ -2586,6 +2599,24 @@ T.Widget {
             return "哔——！显卡负载一直在 " + percent + " 左右……" + title + "，是在玩游戏还是在渲染呢？注意别让电脑太热哦 (・_・;)";
 
         return "警告！内存使用率已经达到 " + percent + " 了！" + title + "，关掉一些不用的程序会比较好哦 (｀・ω・´)";
+    }
+
+    // Col Ledger (System Console): the tokens of this month's replies; past the Monthly Budget (in
+    // thousands of tokens, 0: none) Yui says so, once a month.
+    readonly property var colLedger: widget.settings.col_ledger || null
+
+    function recordUsage(usage) {
+        var ledger = Yui.addToLedger(widget.settings.col_ledger, usage, Date.now());
+        var budget = (widget.settings.col_budget || 0) * 1000;
+        var over = budget > 0 && ledger.input + ledger.output > budget && !ledger.warned;
+        if (over)
+            ledger.warned = true;
+
+        widget.settings.col_ledger = ledger;
+        diag("col ledger: +" + (usage.input || 0) + " / +" + (usage.output || 0) + " tokens, this month " + (ledger.input + ledger.output));
+        if (over)
+            statusWarning("警告！这个月的 Col 已经超出预算了……一共用掉了 " + Math.round((ledger.input + ledger.output) / 1000) + "k tokens。" + userTitle() + "，要不要省着点用呢？(・_・;)");
+
     }
 
     // Starts a Boss Raid of minutes; fromMenu: say it (when Yui starts it from a reply, she says it).

@@ -625,6 +625,73 @@ function toolCallToAction(name, args, userProtected, options) {
     };
 }
 
+// Col Ledger: the tokens a streamed event reports, {input, output} (either may be missing), or null.
+// OpenAI-compatible: the last event's usage (with stream_options.include_usage); Claude: message_start
+// (input) and message_delta (output); Gemini: usageMetadata in every event, adding up.
+function usageOf(format, event) {
+    var usage = null;
+    if (format === "gemini" && event.usageMetadata)
+        usage = {
+        "input": event.usageMetadata.promptTokenCount,
+        "output": event.usageMetadata.candidatesTokenCount
+    };
+    else if (format === "anthropic" && event.type === "message_start" && event.message && event.message.usage)
+        usage = {
+        "input": event.message.usage.input_tokens,
+        "output": event.message.usage.output_tokens
+    };
+    else if (format === "anthropic" && event.type === "message_delta" && event.usage)
+        usage = {
+        "output": event.usage.output_tokens
+    };
+    else if (format === "openai" && event.usage)
+        usage = {
+        "input": event.usage.prompt_tokens,
+        "output": event.usage.completion_tokens
+    };
+    return usage;
+}
+
+// The usage of a whole reply from its events' (the larger count of each kind wins: the reports add up).
+function mergeUsage(total, usage) {
+    total = total || {
+        "input": 0,
+        "output": 0
+    };
+    if (usage) {
+        if (usage.input > total.input)
+            total.input = usage.input;
+
+        if (usage.output > total.output)
+            total.output = usage.output;
+
+    }
+    return total;
+}
+
+// The ledger after a reply: {month: "2026-10", input, output, requests, warned}; a new month starts
+// from zero.
+function addToLedger(ledger, usage, now) {
+    var d = new Date(now);
+    var month = d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1);
+    if (!ledger || ledger.month !== month)
+        ledger = {
+        "month": month,
+        "input": 0,
+        "output": 0,
+        "requests": 0,
+        "warned": false
+    };
+
+    return {
+        "month": month,
+        "input": ledger.input + (usage.input || 0),
+        "output": ledger.output + (usage.output || 0),
+        "requests": ledger.requests + 1,
+        "warned": !!ledger.warned
+    };
+}
+
 // One line of the recollection log as text: "2026-10-24 21:05  爸爸: …" (author "user" is the user,
 // shown by title, anything else Yui). Line breaks in the message are kept, indented.
 function logLine(row, title) {

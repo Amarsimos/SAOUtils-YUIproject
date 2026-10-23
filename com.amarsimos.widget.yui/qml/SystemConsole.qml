@@ -32,8 +32,9 @@ NVG.Window {
         changedThresholds = thresholds;
     }
 
-    // Monitor: the crystal's thresholds and the report interval.
-    function resetMonitor() {
+    // Monitor: the crystal's thresholds, the report interval, storage and network, and (all, or while
+    // shown) the monthly budget.
+    function resetMonitor(all) {
         targetWidget.settings.load_thresholds = {};
         for (var i = 0; i < thresholdRows.count; i++)
             thresholdRows.itemAt(i).reset();
@@ -41,8 +42,12 @@ NVG.Window {
         reportPreference.load();
         storagePreference.load();
         networkPreference.load();
-        // load() is no edit, so the synced group writes the default to the settings by save().
+        if (all || budgetPreference.visible)
+            budgetPreference.load();
+
+        // load() is no edit, so the synced groups write the defaults to the settings by save().
         reportGroup.save();
+        ledgerGroup.save();
     }
 
     // Authority: the action switches. The es.exe path and the two process lists are the user's own
@@ -249,12 +254,63 @@ NVG.Window {
 
                     }
 
+                    // Col Ledger: the tokens of this month's replies, as the servers report them.
+                    Heading {
+                        level: 2
+                        text: qsTr("Col Ledger")
+                    }
+
+                    Label {
+                        readonly property var ledger: consoleWindow.targetWidget.colLedger
+
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        wrapMode: Text.Wrap
+                        text: ledger ? qsTr("%1: %2 tokens sent, %3 received, %4 replies").arg(ledger.month).arg(ledger.input.toLocaleString(Qt.locale(), "f", 0)).arg(ledger.output.toLocaleString(Qt.locale(), "f", 0)).arg(ledger.requests) : qsTr("No replies counted yet this month.")
+                    }
+
+                    SettingNote {
+                        visible: consoleWindow.targetWidget.settingsHelp
+                        besidePreferences: true
+                        text: qsTr("Counted from what the servers report with each reply (not every server does), and started afresh each month. Tokens only: prices differ between servers.")
+                    }
+
+                    P.ObjectPreferenceGroup {
+                        id: ledgerGroup
+
+                        Layout.fillWidth: true
+                        visible: consoleWindow.targetWidget.settingsAdvanced
+                        defaultValue: consoleWindow.targetWidget.settings
+                        syncProperties: true
+
+                        P.SpinPreference {
+                            id: budgetPreference
+
+                            name: "col_budget"
+                            label: qsTr("Monthly Budget (k tokens)")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 1000000
+                            stepSize: 100
+                            defaultValue: 0
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui tells you once a month when this month's tokens pass the budget, in thousands. 0: no budget.")
+                        }
+
+                    }
+
                     ResetTabButton {
                         yui: consoleWindow.targetWidget
                         windowTitle: consoleWindow.title
                         tabTitle: qsTr("Monitor")
-                        changed: consoleWindow.changedThresholds > 0 || Yui.anyChanged([reportPreference, storagePreference, networkPreference])
-                        onReset: consoleWindow.resetMonitor()
+                        changed: consoleWindow.changedThresholds > 0 || Yui.anyChanged([reportPreference, storagePreference, networkPreference].concat(budgetPreference.visible ? [budgetPreference] : []))
+                        onReset: consoleWindow.resetMonitor(false)
                     }
 
                 }
@@ -573,7 +629,7 @@ NVG.Window {
             yui: consoleWindow.targetWidget
             settingsWindow: consoleWindow
             onResetRequested: {
-                consoleWindow.resetMonitor();
+                consoleWindow.resetMonitor(true);
                 consoleWindow.resetAuthority();
             }
         }
