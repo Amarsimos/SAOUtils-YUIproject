@@ -886,6 +886,31 @@ function moodContext(title, recordedToday, recent) {
     return text;
 }
 
+// Bond (Yui's Heart): on the player's birthday ("MM-DD" or "yyyy-MM-dd") or the day of meeting
+// ("yyyy-MM-dd", its anniversary) Yui celebrates once; "" on other days. today is "yyyy-MM-dd".
+function bondContext(title, birthday, meetingDay, today, celebrated) {
+    if (celebrated === today)
+        return "";
+
+    var monthDay = today.slice(5);
+    var days = [];
+    var birth = String(birthday || "").trim();
+    if (birth && birth.slice(-5) === monthDay)
+        days.push("今天是" + title + "的生日");
+
+    var meeting = String(meetingDay || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting) && meeting.slice(5) === monthDay) {
+        var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
+        if (years > 0)
+            days.push("今天是结衣和" + title + "相遇 " + years + " 周年的纪念日");
+
+    }
+    if (days.length === 0)
+        return "";
+
+    return "\n\n（羁绊：" + days.join("，也") + "。请在这次回复里用结衣的方式真诚地祝贺，只在今天第一次说话时提一次。）";
+}
+
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
 // started but not finished yet ("<<emot") is hidden until it is complete.
 function displayText(partial) {

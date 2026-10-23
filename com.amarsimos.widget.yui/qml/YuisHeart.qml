@@ -8,7 +8,7 @@ import "yui.js" as Yui
 
 // "Yui's Heart" window (next to Cardinal System, Equipment and System Console), in pages: Memories
 // (view, add and edit them, YuisHeartPage.qml), Recall (what is remembered and sent with each request),
-// Mental Record (the daily moods) and Local Memory (export, import, backups, the recollection log,
+// Mental Record (the daily moods), Bond (birthday and the day of meeting) and Local Memory (export, import, backups, the recollection log,
 // forgetting all; always the last page).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never memories or the log.
@@ -43,6 +43,7 @@ NVG.Window {
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
+    readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshLogSize() {
         logSize = targetWidget.messageLogCount();
@@ -77,7 +78,7 @@ NVG.Window {
                         heartWindow.refreshLogSize();
 
                 }
-                model: [qsTr("Memories"), qsTr("Recall"), qsTr("Mental Record"), qsTr("Local Memory")]
+                model: [qsTr("Memories"), qsTr("Recall"), qsTr("Mental Record"), qsTr("Bond"), qsTr("Local Memory")]
             }
 
             StackLayout {
@@ -313,6 +314,57 @@ NVG.Window {
 
                 }
 
+                // ---------------------------------------------------------------- Bond
+                SettingsPage {
+                    P.ObjectPreferenceGroup {
+                        id: bondGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: heartWindow.targetWidget.settings
+                        syncProperties: true
+
+                        P.TextFieldPreference {
+                            id: birthdayPreference
+
+                            name: "player_birthday"
+                            label: qsTr("Player Birthday")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: "MM-DD"
+                        }
+
+                        SettingNote {
+                            visible: heartWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).")
+                        }
+
+                        P.TextFieldPreference {
+                            id: meetingPreference
+
+                            name: "meeting_day"
+                            label: qsTr("Meeting Day")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: "yyyy-MM-dd"
+                        }
+
+                        SettingNote {
+                            visible: heartWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.")
+                        }
+
+                    }
+
+                    ResetTabButton {
+                        yui: heartWindow.targetWidget
+                        windowTitle: heartWindow.title
+                        tabTitle: qsTr("Bond")
+                        preferences: heartWindow.bondPreferences
+                        groups: [bondGroup]
+                    }
+
+                }
+
                 // ---------------------------------------------------------------- Local Memory
                 SettingsPage {
                     SettingNote {
@@ -530,17 +582,18 @@ NVG.Window {
 
         }
 
-        // Reset: the settings of Recall and Backup Days, never the memories or the log.
+        // Reset: the settings of Recall, Bond and Backup Days, never the memories or the log.
         header: SettingsTitleBar {
             yui: heartWindow.targetWidget
             settingsWindow: heartWindow
             // load() is no edit, so the synced groups write the defaults to the settings by save().
             onResetRequested: {
-                heartWindow.recallPreferences.concat(heartWindow.localPreferences).forEach(function(preference) {
+                heartWindow.recallPreferences.concat(heartWindow.localPreferences, heartWindow.bondPreferences).forEach(function(preference) {
                     preference.load();
                 });
                 recallGroup.save();
                 localGroup.save();
+                bondGroup.save();
             }
         }
 

@@ -444,8 +444,21 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title);
     }
+
+    // Bond (Yui's Heart): the player's birthday and the day of meeting, celebrated once that day
+    // (marked when the reply comes, bond_celebrated).
+    function bondExtras(title) {
+        var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
+        var text = Yui.bondContext(title, widget.settings.player_birthday, widget.settings.meeting_day, today, widget.settings.bond_celebrated);
+        if (text)
+            bondPending = today;
+
+        return text;
+    }
+
+    property string bondPending: ""
 
     // Mental Record (Daily Mood Check, Pixie Functions): asking about today's mood, and care when the
     // last days were low (Yui.moodContext).
@@ -1114,6 +1127,11 @@ T.Widget {
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
                 note = applyMemoryTags(reply);
+                // Bond: today's celebration was asked for in this request, so it is done.
+                if (widget.bondPending) {
+                    widget.settings.bond_celebrated = widget.bondPending;
+                    widget.bondPending = "";
+                }
                 if (reply.mood && featureEnabled("daily_mood")) {
                     recordMood(reply.mood);
                     note = (note ? note + "\n" : "") + "📝 心情记录：" + reply.mood.score + "/5" + (reply.mood.note ? " " + reply.mood.note : "");
@@ -3222,6 +3240,10 @@ T.Widget {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
         }
+        // Bond: the day of meeting is the first day the widget ran, unless the player sets another.
+        if (!widget.settings.meeting_day)
+            widget.settings.meeting_day = Qt.formatDate(new Date(), "yyyy-MM-dd");
+
         // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
         if (styles.link_start !== false)
             linkStartAnimation.start();

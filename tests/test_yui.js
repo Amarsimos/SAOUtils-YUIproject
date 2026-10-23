@@ -430,4 +430,12 @@ test("Mental Record mood tag and context", () => {
     assert.ok(!Yui.moodContext("爸爸", true, low.slice(1)).includes("不太好"));
 });
 
+test("Bond birthday and anniversary", () => {
+    assert.ok(Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "").includes("生日"));
+    assert.ok(Yui.bondContext("爸爸", "2000-10-24", "2024-10-24", "2026-10-24", "").includes("2 周年"));
+    assert.strictEqual(Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "2026-10-24"), "");
+    assert.strictEqual(Yui.bondContext("爸爸", "", "2026-10-24", "2026-10-24", ""), "");
+    assert.strictEqual(Yui.bondContext("爸爸", "05-01", "2025-03-02", "2026-10-24", ""), "");
+});
+
 console.log(passed + " tests passed");

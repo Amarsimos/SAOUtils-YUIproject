@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mental Record (Yui's Heart): once a day Yui asks how you feel and records it; the last 30 days
   as a chart. After a few low days she cares more (Daily Mood Check in Pixie Functions).
 **Link Start** (Equipment, Interface): a short "Link Start!" ceremony of rainbow rings when the widget starts.
+**Bond** (Yui's Heart): Player Birthday and Meeting Day (the first day by default); Yui celebrates the birthday and each anniversary once that day.
 
 ### Changed
 

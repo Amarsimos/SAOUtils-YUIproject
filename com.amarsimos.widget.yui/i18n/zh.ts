@@ -1092,226 +1092,252 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>YuisHeart</name>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="51"/>
-        <location filename="../qml/YuisHeart.qml" line="305"/>
-        <location filename="../qml/YuisHeart.qml" line="418"/>
-        <location filename="../qml/YuisHeart.qml" line="494"/>
-        <location filename="../qml/YuisHeart.qml" line="495"/>
+        <location filename="../qml/YuisHeart.qml" line="52"/>
+        <location filename="../qml/YuisHeart.qml" line="306"/>
+        <location filename="../qml/YuisHeart.qml" line="470"/>
+        <location filename="../qml/YuisHeart.qml" line="546"/>
+        <location filename="../qml/YuisHeart.qml" line="547"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="80"/>
+        <location filename="../qml/YuisHeart.qml" line="81"/>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="80"/>
-        <location filename="../qml/YuisHeart.qml" line="195"/>
+        <location filename="../qml/YuisHeart.qml" line="81"/>
+        <location filename="../qml/YuisHeart.qml" line="196"/>
         <source>Recall</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="80"/>
+        <location filename="../qml/YuisHeart.qml" line="81"/>
         <source>Mental Record</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="106"/>
+        <location filename="../qml/YuisHeart.qml" line="81"/>
+        <location filename="../qml/YuisHeart.qml" line="361"/>
+        <source>Bond</source>
+        <translation>Bond</translation>
+    </message>
+    <message>
+        <location filename="../qml/YuisHeart.qml" line="107"/>
         <source>Auto Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="113"/>
+        <location filename="../qml/YuisHeart.qml" line="114"/>
         <source>Yui decides by herself what to remember and forget while chatting. When off, only the memories you add or edit here are kept (and the instructions for it are not sent).</source>
         <translation>聊天时由结衣自己决定记住和忘记什么。关闭后只保留你在这里添加或编辑的记忆（相关说明也不再发送给 AI）。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="120"/>
+        <location filename="../qml/YuisHeart.qml" line="121"/>
         <source>Heart Core Capacity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="131"/>
+        <location filename="../qml/YuisHeart.qml" line="132"/>
         <source>The heart core is sent with every request. When it is full, the memory used longest ago (unless pinned) becomes a fragment.</source>
         <translation>心核每次请求都会全部发送。满了以后，最久没用到的记忆（置顶的除外）会转为碎片。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="138"/>
+        <location filename="../qml/YuisHeart.qml" line="139"/>
         <source>Recalled Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="149"/>
+        <location filename="../qml/YuisHeart.qml" line="150"/>
         <source>How many memories related to the current topic are sent with each request (the heart core is always sent). Fewer use fewer tokens.</source>
         <translation>每次请求附带多少条和当前话题有关的记忆（心核总是会发送）。越少越省 token。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="156"/>
+        <location filename="../qml/YuisHeart.qml" line="157"/>
         <source>Conversation Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="168"/>
+        <location filename="../qml/YuisHeart.qml" line="169"/>
         <source>How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.</source>
         <translation>每次请求附带最近多少条消息。越少越省 token，越多结衣越记得前面聊过的内容。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="175"/>
+        <location filename="../qml/YuisHeart.qml" line="176"/>
         <source>Saved Chat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="187"/>
+        <location filename="../qml/YuisHeart.qml" line="188"/>
         <source>How many chat messages are still shown after a restart. Not sent to the AI.</source>
         <translation>重启后还能看到多少条聊天消息。不会发送给 AI。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="207"/>
+        <location filename="../qml/YuisHeart.qml" line="208"/>
         <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check in Cardinal System turns it on or off.</source>
         <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更加关心你。可以在 Cardinal System 的 Daily Mood Check 中开关。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="248"/>
+        <location filename="../qml/YuisHeart.qml" line="249"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="249"/>
+        <location filename="../qml/YuisHeart.qml" line="250"/>
         <source>today</source>
         <translation>今天</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="276"/>
+        <location filename="../qml/YuisHeart.qml" line="277"/>
         <source>No moods recorded in the last 30 days.</source>
         <translation>最近 30 天还没有心情记录。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="305"/>
+        <location filename="../qml/YuisHeart.qml" line="306"/>
         <source>Delete the mood of %1?</source>
         <translation>删除 %1 的心情记录吗？</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="321"/>
+        <location filename="../qml/YuisHeart.qml" line="330"/>
+        <source>Player Birthday</source>
+        <translation>Player Birthday</translation>
+    </message>
+    <message>
+        <location filename="../qml/YuisHeart.qml" line="338"/>
+        <source>On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).</source>
+        <translation>在你生日那天，结衣会祝你生日快乐（MM-DD 或 yyyy-MM-dd）。</translation>
+    </message>
+    <message>
+        <location filename="../qml/YuisHeart.qml" line="345"/>
+        <source>Meeting Day</source>
+        <translation>Meeting Day</translation>
+    </message>
+    <message>
+        <location filename="../qml/YuisHeart.qml" line="353"/>
+        <source>The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.</source>
+        <translation>你与结衣相遇的日子（默认是她第一次运行的那天，也可以自己设定，yyyy-MM-dd）；每年的纪念日她都会记得。</translation>
+    </message>
+    <message>
+        <location filename="../qml/YuisHeart.qml" line="373"/>
         <source>Export Yui&apos;s memories to a file to keep them or move them to another computer; importing adds the memories of such a file. A backup is also made once a day.</source>
         <translation>把结衣的记忆导出为文件，用于保存或迁移到另一台电脑；导入会把文件中的记忆加进来。每天还会自动备份一次。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="385"/>
+        <location filename="../qml/YuisHeart.qml" line="437"/>
         <source>Backup Days</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="396"/>
+        <location filename="../qml/YuisHeart.qml" line="448"/>
         <source>How many daily backups are kept (without the chat history).</source>
         <translation>保留多少天的每日备份（不含聊天记录）。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="402"/>
+        <location filename="../qml/YuisHeart.qml" line="454"/>
         <source>Recollection Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="412"/>
+        <location filename="../qml/YuisHeart.qml" line="464"/>
         <source>%1 messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="416"/>
+        <location filename="../qml/YuisHeart.qml" line="468"/>
         <source>Clear Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="418"/>
+        <location filename="../qml/YuisHeart.qml" line="470"/>
         <source>Delete the whole chat history kept in the recollection log? This cannot be undone.</source>
         <translation>要删除回忆日志中保存的全部聊天记录吗？此操作无法撤销。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="430"/>
+        <location filename="../qml/YuisHeart.qml" line="482"/>
         <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui&apos;s memories stay when it is cleared.</source>
         <translation>每条聊天消息都保存在这里，只用于导出和搜索，从不发送给 AI；清除它不会影响结衣的记忆。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="444"/>
+        <location filename="../qml/YuisHeart.qml" line="496"/>
         <source>Search the log</source>
         <translation>搜索回忆日志</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="449"/>
+        <location filename="../qml/YuisHeart.qml" line="501"/>
         <source>Export Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="469"/>
+        <location filename="../qml/YuisHeart.qml" line="521"/>
         <source>The latest 50 messages found</source>
         <translation>只显示找到的最近 50 条</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="469"/>
+        <location filename="../qml/YuisHeart.qml" line="521"/>
         <source>%1 messages found</source>
         <translation>找到 %1 条</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="487"/>
-        <location filename="../qml/YuisHeart.qml" line="492"/>
+        <location filename="../qml/YuisHeart.qml" line="539"/>
+        <location filename="../qml/YuisHeart.qml" line="544"/>
         <source>Forget Everything</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="494"/>
+        <location filename="../qml/YuisHeart.qml" line="546"/>
         <source>Delete all %1 memories of Yui&apos;s Heart?</source>
         <translation>要删除结衣之心的全部 %1 条记忆吗？</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="495"/>
+        <location filename="../qml/YuisHeart.qml" line="547"/>
         <source>Really forget everything? A backup file is written first.</source>
         <translation>真的要忘记一切吗？删除前会先写一份备份文件。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="506"/>
+        <location filename="../qml/YuisHeart.qml" line="558"/>
         <source>Deletes every memory (heart core and fragments). The recollection log stays. A backup is written first, so the memories can be imported again.</source>
         <translation>删除全部记忆（心核和碎片），回忆日志保留。删除前会先写一份备份，之后可以重新导入。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="80"/>
-        <location filename="../qml/YuisHeart.qml" line="522"/>
+        <location filename="../qml/YuisHeart.qml" line="81"/>
+        <location filename="../qml/YuisHeart.qml" line="574"/>
         <source>Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="328"/>
+        <location filename="../qml/YuisHeart.qml" line="380"/>
         <source>Include the chat history (private conversations)</source>
         <translation type="unfinished">包含聊天记录（私人对话）</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="339"/>
+        <location filename="../qml/YuisHeart.qml" line="391"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="341"/>
-        <location filename="../qml/YuisHeart.qml" line="452"/>
+        <location filename="../qml/YuisHeart.qml" line="393"/>
+        <location filename="../qml/YuisHeart.qml" line="504"/>
         <source>Exported to %1</source>
         <translation type="unfinished">已导出到 %1</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="341"/>
-        <location filename="../qml/YuisHeart.qml" line="452"/>
+        <location filename="../qml/YuisHeart.qml" line="393"/>
+        <location filename="../qml/YuisHeart.qml" line="504"/>
         <source>The export could not be written. See the log in System Console.</source>
         <translation>导出文件无法写入，请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="346"/>
+        <location filename="../qml/YuisHeart.qml" line="398"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="351"/>
+        <location filename="../qml/YuisHeart.qml" line="403"/>
         <source>The file picker is not available. See the log in System Console.</source>
         <translation>无法打开文件选择框，请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="368"/>
+        <location filename="../qml/YuisHeart.qml" line="420"/>
         <source>Open Backup Folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1428,182 +1454,182 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="1327"/>
+        <location filename="../qml/main-stand.qml" line="1345"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1326"/>
+        <location filename="../qml/main-stand.qml" line="1344"/>
         <source>Yui will open this page:</source>
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3174"/>
+        <location filename="../qml/main-stand.qml" line="3192"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1343"/>
-        <location filename="../qml/main-stand.qml" line="3275"/>
+        <location filename="../qml/main-stand.qml" line="1361"/>
+        <location filename="../qml/main-stand.qml" line="3297"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1328"/>
+        <location filename="../qml/main-stand.qml" line="1346"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1329"/>
+        <location filename="../qml/main-stand.qml" line="1347"/>
         <source>Yui will search your computer for:</source>
         <translation>结衣将在电脑里搜索：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1330"/>
+        <location filename="../qml/main-stand.qml" line="1348"/>
         <source>Yui will close this program:</source>
         <translation>结衣将关闭这个程序：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1373"/>
+        <location filename="../qml/main-stand.qml" line="1391"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1373"/>
+        <location filename="../qml/main-stand.qml" line="1391"/>
         <source>Restore all settings of %1 to their defaults?</source>
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1506"/>
+        <location filename="../qml/main-stand.qml" line="1524"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1544"/>
+        <location filename="../qml/main-stand.qml" line="1562"/>
         <source>%1 is a protected system process. Yui cannot close it.</source>
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1606"/>
+        <location filename="../qml/main-stand.qml" line="1624"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="1607"/>
+        <location filename="../qml/main-stand.qml" line="1625"/>
         <source>Close %1 without asking from now on?
 You can change this in System Console.</source>
         <translation>以后关闭 %1 时不再询问，直接关闭吗？
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2033"/>
+        <location filename="../qml/main-stand.qml" line="2051"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2038"/>
+        <location filename="../qml/main-stand.qml" line="2056"/>
         <source>All memories were deleted. Backup: %1</source>
         <translation>已删除全部记忆。备份：%1</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2302"/>
+        <location filename="../qml/main-stand.qml" line="2320"/>
         <source>Line %1, column %2: %3</source>
         <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2457"/>
+        <location filename="../qml/main-stand.qml" line="2475"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2460"/>
+        <location filename="../qml/main-stand.qml" line="2478"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2476"/>
+        <location filename="../qml/main-stand.qml" line="2494"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2720"/>
+        <location filename="../qml/main-stand.qml" line="2738"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2739"/>
-        <location filename="../qml/main-stand.qml" line="2906"/>
+        <location filename="../qml/main-stand.qml" line="2757"/>
+        <location filename="../qml/main-stand.qml" line="2924"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4561"/>
+        <location filename="../qml/main-stand.qml" line="4583"/>
         <source>End Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4561"/>
+        <location filename="../qml/main-stand.qml" line="4583"/>
         <source>Start Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4567"/>
+        <location filename="../qml/main-stand.qml" line="4589"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2906"/>
-        <location filename="../qml/main-stand.qml" line="2934"/>
-        <location filename="../qml/main-stand.qml" line="2940"/>
+        <location filename="../qml/main-stand.qml" line="2924"/>
+        <location filename="../qml/main-stand.qml" line="2952"/>
+        <location filename="../qml/main-stand.qml" line="2958"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4382"/>
+        <location filename="../qml/main-stand.qml" line="4404"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="225"/>
-        <location filename="../qml/main-stand.qml" line="4413"/>
+        <location filename="../qml/main-stand.qml" line="4435"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="218"/>
-        <location filename="../qml/main-stand.qml" line="4413"/>
+        <location filename="../qml/main-stand.qml" line="4435"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2794"/>
-        <location filename="../qml/main-stand.qml" line="3174"/>
+        <location filename="../qml/main-stand.qml" line="2812"/>
+        <location filename="../qml/main-stand.qml" line="3192"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4430"/>
+        <location filename="../qml/main-stand.qml" line="4452"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4545"/>
+        <location filename="../qml/main-stand.qml" line="4567"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4550"/>
+        <location filename="../qml/main-stand.qml" line="4572"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4555"/>
+        <location filename="../qml/main-stand.qml" line="4577"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4472"/>
-        <location filename="../qml/main-stand.qml" line="4535"/>
+        <location filename="../qml/main-stand.qml" line="4494"/>
+        <location filename="../qml/main-stand.qml" line="4557"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
