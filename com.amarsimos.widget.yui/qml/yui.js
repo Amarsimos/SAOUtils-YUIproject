@@ -77,13 +77,14 @@ function loadStep(state, value, pair) {
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
 //   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>  <<focus:25>> (Boss Raid)
+//   <<mood:4|passed the exam>> (Mental Record)
 // Any tag-like <<name:value>>, also misspelled ones (<<emphy:happy>>) and full-width brackets.
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -778,7 +779,9 @@ function parseReply(text, userProtected, options) {
         // Tags that were not understood (misspelled, full-width brackets), dropped from the text.
         "unknown": [],
         // <<focus:>> (Boss Raid): minutes to focus (1–180; -1 for the default), 0 to end it, null when none.
-        "focus": null
+        "focus": null,
+        // <<mood:>> (Mental Record): {score 1–5, note}, null when none.
+        "mood": null
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -806,6 +809,8 @@ function parseReply(text, userProtected, options) {
             result.forgets.push(value);
         } else if (kind === "focus") {
             result.focus = focusMinutes(value);
+        } else if (kind === "mood") {
+            result.mood = moodFrom(value) || result.mood;
         } else if (ACTION_KINDS[kind]) {
             var made = actionFrom(kind, value, userProtected, options);
             if (made.blocked)
@@ -840,6 +845,45 @@ function focusMinutes(value) {
         return -1;
 
     return minutes <= 0 ? 0 : Math.min(180, minutes);
+}
+
+// A <<mood:>> tag's value: "4|passed the exam" (or "4" alone) -> {score, note}; the score is kept
+// within 1–5; null without a score.
+function moodFrom(value) {
+    var parts = String(value).split(/[|｜]/);
+    var score = parseInt(parts[0], 10);
+    if (isNaN(score))
+        return null;
+
+    return {
+        "score": Math.max(1, Math.min(5, score)),
+        "note": parts.slice(1).join("|").trim()
+    };
+}
+
+// Mental Record (Daily Mood Check), added to the system prompt: when today's mood is not recorded yet,
+// Yui is asked to ask about it once at a fitting moment and record it; when the last recorded days
+// were low (an average of 2 or less over the last three), to care more. recent: [{day, score, note}],
+// oldest first; recordedToday: whether today's is among them.
+function moodContext(title, recordedToday, recent) {
+    var text = "";
+    if (!recordedToday)
+        text += "\n\n（心情记录：今天还没问过" + title + "的心情。在自然的时候（比如问候或聊到近况时）问一句今天心情怎么样，不要每句都问；" + title + "说了之后，在回复最后用 <<mood:1到5的分数|一句话概括>> 记下来（5 最好，1 最差）。）";
+    else
+        text += "\n\n（心情记录：今天的心情已经记下了。" + title + "的心情有明显变化时，可以用 <<mood:分数|一句话>> 更新。）";
+
+    var last = (recent || []).slice(-3);
+    if (last.length === 3) {
+        var average = last.reduce(function(sum, entry) {
+            return sum + entry.score;
+        }, 0) / last.length;
+        if (average <= 2)
+            text += "\n（" + title + "最近几天的心情都不太好（" + last.map(function(entry) {
+                return entry.day.slice(5) + " " + entry.score + "/5" + (entry.note ? " " + entry.note : "");
+            }).join("；") + "）。请多关心、多倾听，温柔地陪着，不要说教。）";
+
+    }
+    return text;
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has

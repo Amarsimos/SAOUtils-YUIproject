@@ -443,7 +443,72 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query));
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title);
+    }
+
+    // Mental Record (Daily Mood Check, Pixie Functions): asking about today's mood, and care when the
+    // last days were low (Yui.moodContext).
+    function moodExtras(title) {
+        if (!featureEnabled("daily_mood") || !database)
+            return "";
+
+        var recent = moodsSince(7);
+        var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
+        return Yui.moodContext(title, recent.some(function(entry) {
+            return entry.day === today;
+        }), recent);
+    }
+
+    // Bumped whenever a mood is recorded or deleted (Yui's Heart, Mental Record).
+    property int moodRevision: 0
+
+    // Records today's mood (a later one the same day replaces it).
+    function recordMood(mood) {
+        if (!database)
+            return ;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql("INSERT OR REPLACE INTO moods(day, score, note, created) VALUES(?, ?, ?, ?)", [Qt.formatDate(new Date(), "yyyy-MM-dd"), mood.score, mood.note, Date.now()]);
+            });
+            moodRevision++;
+            diag("mood: " + mood.score + "/5 " + mood.note);
+        } catch (e) {
+            diag("recording the mood failed: " + e);
+        }
+    }
+
+    // The moods of the last days (today included), oldest first: [{day, score, note}].
+    function moodsSince(days) {
+        var found = [];
+        if (!database)
+            return found;
+
+        var from = Qt.formatDate(new Date(Date.now() - (days - 1) * 86400000), "yyyy-MM-dd");
+        try {
+            database.readTransaction(function(tx) {
+                var rows = tx.executeSql("SELECT day, score, note FROM moods WHERE day >= ? ORDER BY day", [from]).rows;
+                for (var i = 0; i < rows.length; i++)
+                    found.push(rows.item(i));
+            });
+        } catch (e) {
+            diag("reading the moods failed: " + e);
+        }
+        return found;
+    }
+
+    function deleteMood(day) {
+        if (!database)
+            return ;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql("DELETE FROM moods WHERE day = ?", [day]);
+            });
+            moodRevision++;
+        } catch (e) {
+            diag("deleting the mood failed: " + e);
+        }
     }
 
     // Appended to the system prompt on every request, so Yui knows the current date and time.
@@ -1048,6 +1113,10 @@ T.Widget {
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
                 note = applyMemoryTags(reply);
+                if (reply.mood && featureEnabled("daily_mood")) {
+                    recordMood(reply.mood);
+                    note = (note ? note + "\n" : "") + "📝 心情记录：" + reply.mood.score + "/5" + (reply.mood.note ? " " + reply.mood.note : "");
+                }
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1707,6 +1776,8 @@ T.Widget {
             database.transaction(function(tx) {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS memories(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, created INTEGER)");
                 tx.executeSql("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, message TEXT, created INTEGER)");
+            // Mental Record: one mood a day (day "yyyy-MM-dd", score 1–5).
+            tx.executeSql("CREATE TABLE IF NOT EXISTS moods(day TEXT PRIMARY KEY, score INTEGER, note TEXT, created INTEGER)");
             });
             // Columns added with the heart core (1.1): every older memory was sent with every request,
             // so the oldest MAX_CORE become the core and the rest fragments.

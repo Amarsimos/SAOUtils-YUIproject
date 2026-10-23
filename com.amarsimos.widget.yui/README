@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   menu or ask her; meanwhile the crystal turns violet and she does not speak up by herself.
 - Col Ledger (System Console, Monitor): this month's tokens as the servers report them, with an
   optional Monthly Budget (Advanced) that Yui warns about once a month.
+- Mental Record (Yui's Heart): once a day Yui asks how you feel and records it; the last 30 days
+  as a chart. After a few low days she cares more (Daily Mood Check in Pixie Functions).
 
 ### Changed
 

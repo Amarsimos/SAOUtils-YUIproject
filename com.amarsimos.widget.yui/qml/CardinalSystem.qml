@@ -88,6 +88,7 @@ NVG.Window {
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
         targetWidget.settings.greet_on_start = !!greetPreference.value;
         targetWidget.settings.proactive_care = !!carePreference.value;
+        targetWidget.settings.daily_mood = !!moodPreference.value;
         targetWidget.settings.status_reports = !!statusPreference.value;
         targetWidget.settings.external_browser = !!externalBrowserPreference.value;
         targetWidget.settings.sleep_minutes = sleepPreference.value;
@@ -109,7 +110,7 @@ NVG.Window {
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
-    readonly property var pixieTabPreferences: [greetPreference, carePreference, statusPreference, sleepPreference, idleChatPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
+    readonly property var pixieTabPreferences: [greetPreference, carePreference, moodPreference, statusPreference, sleepPreference, idleChatPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -294,6 +295,7 @@ NVG.Window {
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
         greetPreference.value = settings.greet_on_start !== false;
         carePreference.value = settings.proactive_care !== false;
+        moodPreference.value = settings.daily_mood !== false;
         statusPreference.value = settings.status_reports !== false;
         externalBrowserPreference.value = settings.external_browser === true;
         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
@@ -309,7 +311,7 @@ NVG.Window {
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference, raidPreference, restPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, moodPreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -819,6 +821,20 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                        }
+
+                        P.SwitchPreference {
+                            id: moodPreference
+
+                            name: "daily_mood"
+                            defaultValue: true
+                            label: qsTr("Daily Mood Check")
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Once a day Yui asks how you feel and records it (Yui's Heart, Mental Record); after a few low days she cares more.")
                         }
 
                         P.SwitchPreference {

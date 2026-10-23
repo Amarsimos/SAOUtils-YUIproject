@@ -6,9 +6,10 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// "Yui's Heart" window (next to Cardinal System, Equipment and System Console), in three pages:
-// Memories (view, add and edit them, YuisHeartPage.qml), Recall (what is remembered and sent with
-// each request) and Local Memory (export, import, backups, the recollection log, forgetting all).
+// "Yui's Heart" window (next to Cardinal System, Equipment and System Console), in pages: Memories
+// (view, add and edit them, YuisHeartPage.qml), Recall (what is remembered and sent with each request),
+// Mental Record (the daily moods) and Local Memory (export, import, backups, the recollection log,
+// forgetting all; always the last page).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never memories or the log.
 NVG.Window {
@@ -20,6 +21,20 @@ NVG.Window {
     // Recollection Log search: the messages found (newest first, at most 50) for logQuery.
     property var logResults: []
     property string logQuery: ""
+
+    // Mental Record: the moods of the last 30 days, oldest first (refreshed when one is recorded).
+    property var moods: []
+
+    function refreshMoods() {
+        moods = targetWidget.moodsSince(30);
+    }
+
+    Connections {
+        target: heartWindow.targetWidget
+        onMoodRevisionChanged: heartWindow.refreshMoods()
+    }
+
+    Component.onCompleted: refreshMoods()
 
     function searchLog() {
         logQuery = logSearchField.text.trim();
@@ -58,11 +73,11 @@ NVG.Window {
                 id: tabs
 
                 onShownIndexChanged: {
-                    if (shownIndex === 2)
+                    if (shownIndex === model.length - 1)
                         heartWindow.refreshLogSize();
 
                 }
-                model: [qsTr("Memories"), qsTr("Recall"), qsTr("Local Memory")]
+                model: [qsTr("Memories"), qsTr("Recall"), qsTr("Mental Record"), qsTr("Local Memory")]
             }
 
             StackLayout {
@@ -180,6 +195,120 @@ NVG.Window {
                         tabTitle: qsTr("Recall")
                         preferences: heartWindow.recallPreferences
                         groups: [recallGroup]
+                    }
+
+                }
+
+                // ---------------------------------------------------------------- Mental Record
+                SettingsPage {
+                    SettingNote {
+                        visible: heartWindow.targetWidget.settingsHelp
+                        besidePreferences: true
+                        text: qsTr("Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check in Cardinal System turns it on or off.")
+                    }
+
+                    // The last 30 days: one point a recorded day (score 1–5), joined day by day.
+                    Canvas {
+                        id: moodChart
+
+                        readonly property var moods: heartWindow.moods
+
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.preferredHeight: 140
+                        onMoodsChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            var left = 18, top = 8, right = width - 4, bottom = height - 18;
+                            var y = function(score) {
+                                return bottom - (score - 1) / 4 * (bottom - top);
+                            };
+                            var day0 = new Date();
+                            day0.setHours(0, 0, 0, 0);
+                            var x = function(day) {
+                                var parts = day.split("-");
+                                var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                                var back = Math.round((day0 - date) / 86400000);
+                                return right - back / 29 * (right - left);
+                            };
+                            ctx.font = "10px sans-serif";
+                            ctx.fillStyle = "#88888888";
+                            ctx.strokeStyle = "#33888888";
+                            ctx.lineWidth = 1;
+                            for (var score = 1; score <= 5; score++) {
+                                ctx.beginPath();
+                                ctx.moveTo(left, y(score));
+                                ctx.lineTo(right, y(score));
+                                ctx.stroke();
+                                ctx.fillText(String(score), 4, y(score) + 3);
+                            }
+                            ctx.fillText(qsTr("30 days ago"), left, height - 4);
+                            ctx.fillText(qsTr("today"), right - 26, height - 4);
+                            if (moods.length === 0)
+                                return ;
+
+                            ctx.strokeStyle = "#F59B00";
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            moods.forEach(function(entry, i) {
+                                if (i === 0)
+                                    ctx.moveTo(x(entry.day), y(entry.score));
+                                else
+                                    ctx.lineTo(x(entry.day), y(entry.score));
+                            });
+                            ctx.stroke();
+                            ctx.fillStyle = "#F59B00";
+                            moods.forEach(function(entry) {
+                                ctx.beginPath();
+                                ctx.arc(x(entry.day), y(entry.score), 3, 0, Math.PI * 2);
+                                ctx.fill();
+                            });
+                        }
+                    }
+
+                    Label {
+                        Layout.leftMargin: 16
+                        visible: heartWindow.moods.length === 0
+                        opacity: 0.7
+                        text: qsTr("No moods recorded in the last 30 days.")
+                    }
+
+                    // Newest first; ✕ deletes a day's record.
+                    Repeater {
+                        model: heartWindow.moods.slice().reverse()
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+
+                            Label {
+                                text: modelData.day
+                            }
+
+                            Label {
+                                color: "#F59B00"
+                                text: "★★★★★".slice(0, modelData.score) + "☆☆☆☆☆".slice(0, 5 - modelData.score)
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: modelData.note || ""
+                            }
+
+                            ToolButton {
+                                text: "✕"
+                                onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete the mood of %1?").arg(modelData.day), function() {
+                                    heartWindow.targetWidget.deleteMood(modelData.day);
+                                }, true)
+                            }
+
+                        }
+
                     }
 
                 }

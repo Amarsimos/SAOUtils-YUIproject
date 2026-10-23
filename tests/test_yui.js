@@ -418,4 +418,16 @@ test("Col Ledger usage", () => {
     assert.strictEqual(JSON.stringify(Yui.addToLedger(ledger, { input: 1, output: 1 }, nov)), JSON.stringify({ month: "2026-11", input: 1, output: 1, requests: 1, warned: false }));
 });
 
+test("Mental Record mood tag and context", () => {
+    assert.strictEqual(JSON.stringify(Yui.parseReply("太好了！<<mood:4|考试通过了>>").mood), JSON.stringify({ score: 4, note: "考试通过了" }));
+    assert.strictEqual(JSON.stringify(Yui.moodFrom("9")), JSON.stringify({ score: 5, note: "" }));
+    assert.strictEqual(Yui.moodFrom("开心"), null);
+    assert.strictEqual(Yui.parseReply("<<mood:3>>好的").text, "好的");
+    assert.ok(Yui.moodContext("爸爸", false, []).includes("今天还没问过"));
+    assert.ok(Yui.moodContext("爸爸", true, []).includes("已经记下"));
+    const low = [{ day: "2026-10-22", score: 2, note: "" }, { day: "2026-10-23", score: 1, note: "加班" }, { day: "2026-10-24", score: 2, note: "" }];
+    assert.ok(Yui.moodContext("爸爸", true, low).includes("10-23 1/5 加班"));
+    assert.ok(!Yui.moodContext("爸爸", true, low.slice(1)).includes("不太好"));
+});
+
 console.log(passed + " tests passed");
