@@ -388,7 +388,7 @@
     <message>
         <location filename="../qml/CardinalSystem.qml" line="923"/>
         <source>Boss Raid: focus time with Yui, in minutes, then a rest. Start it from her menu or ask her (&quot;stay with me for 25 minutes&quot;); meanwhile the crystal turns violet and she does not speak up by herself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Boss Raid：和结衣一起专注的时间（分钟），之后是休息时间。可以从结衣的右键菜单开始，也可以直接对她说（例如「陪我专注 25 分钟」）；期间水晶变成紫色，结衣不会主动说话。</translation>
     </message>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="941"/>
