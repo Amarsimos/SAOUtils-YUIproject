@@ -268,7 +268,8 @@ T.Widget {
         "bubble_opacity": 80,
         "chat_opacity": 80,
         "sound_messages": true,
-        "sound_interface": true
+        "sound_interface": true,
+        "link_start": true
     }
     // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
     // sounds of Yui's messages and of the chat panel opening and closing.
@@ -3221,6 +3222,10 @@ T.Widget {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
         }
+        // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
+        if (styles.link_start !== false)
+            linkStartAnimation.start();
+
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
             welcomeBack();
@@ -3420,6 +3425,64 @@ T.Widget {
                     setChatVisible(true);
 
             }
+        }
+
+    }
+
+    // "Link Start!" when the widget starts (Equipment): rainbow rings spreading from Yui, as in the
+    // dive into the virtual world, and the words over them; then it fades away.
+    Item {
+        id: linkStartEffect
+
+        property real progress: 0
+
+        anchors.fill: parent
+        z: 200
+        visible: linkStartAnimation.running
+        opacity: 1
+
+        Repeater {
+            model: ["#FF5252", "#FFB74D", "#FFF176", "#69F0AE", "#40C4FF", "#B388FF"]
+
+            Rectangle {
+                readonly property real spread: Math.max(0, Math.min(1, linkStartEffect.progress * 1.6 - index * 0.12))
+
+                anchors.centerIn: parent
+                width: Math.max(linkStartEffect.width, linkStartEffect.height) * 1.4 * spread
+                height: width
+                radius: width / 2
+                color: "transparent"
+                border.color: modelData
+                border.width: 3
+                opacity: (1 - spread) * 0.9
+            }
+
+        }
+
+        Text {
+            anchors.centerIn: parent
+            width: parent.width * 0.9
+            horizontalAlignment: Text.AlignHCenter
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: 8
+            font.family: "SAO UI"
+            font.pixelSize: 28
+            color: "white"
+            style: Text.Outline
+            styleColor: "#66000000"
+            text: "Link Start!"
+            opacity: Math.min(1, linkStartEffect.progress * 3) * Math.min(1, (1 - linkStartEffect.progress) * 4)
+        }
+
+        NumberAnimation {
+            id: linkStartAnimation
+
+            target: linkStartEffect
+            property: "progress"
+            from: 0
+            to: 1
+            duration: 2200
+            easing.type: Easing.OutSine
         }
 
     }
