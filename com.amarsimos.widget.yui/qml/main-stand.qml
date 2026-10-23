@@ -176,6 +176,15 @@ T.Widget {
     property QtObject cpuLoad
     property QtObject gpuLoad
     property QtObject ramUsage
+    // System drive space (in %, read for systemDrive) and network traffic, for the Navigation Reports.
+    property QtObject diskSpace
+    property QtObject netDownload
+    property QtObject netUpload
+    readonly property string systemDrive: "C:\\"
+    // Checks (every 30 s) with no traffic at all; the network counts as lost after networkLostChecks.
+    property int networkIdleChecks: 0
+    property bool networkLost: false
+    readonly property int networkLostChecks: 4
     property int batteryWarnedAt: 101
     // Load reports: per metric, how many checks in a row were at the red threshold, and when it was
     // last reported (once an hour at most).
@@ -2434,15 +2443,57 @@ T.Widget {
         loadStates = states;
     }
 
-    function readData(source) {
+    // A data value now; configuration: the value's parameter, if it takes one (the drive of hdd space).
+    function readData(source, configuration) {
         if (!source)
             return NaN;
 
         try {
+            if (configuration !== undefined)
+                source.update.configuration = configuration;
+
             source.update.execute();
             return Number(source.current);
         } catch (e) {
             return NaN;
+        }
+    }
+
+    // Storage Capacity (System Console): the system drive's free space below this many % is reported, at
+    // most once a day (0: off). The hdd "space" value is the used space in %.
+    function checkStorage(now, title) {
+        var minimum = widget.settings.storage_free_min !== undefined ? widget.settings.storage_free_min : 10;
+        var used = readData(diskSpace, systemDrive);
+        if (minimum <= 0 || isNaN(used) || 100 - used >= minimum || now - (widget.settings.storage_reported || 0) < 86400000)
+            return ;
+
+        widget.settings.storage_reported = now;
+        statusWarning("警告！" + systemDrive.replace(/\\$/, "") + " 盘只剩下 " + Math.max(0, Math.round(100 - used)) + "% 的空间了……" + title + "，要不要清理一下呢？(・_・;)");
+    }
+
+    // Network Link (System Console): no traffic at all for two minutes counts as the network lost, and
+    // traffic again as it back; both are reported once.
+    function checkNetwork(title) {
+        if (widget.settings.network_watch === false)
+            return ;
+
+        var down = readData(netDownload);
+        var up = readData(netUpload);
+        if (isNaN(down) || isNaN(up))
+            return ;
+
+        if (down > 0 || up > 0) {
+            networkIdleChecks = 0;
+            if (networkLost) {
+                networkLost = false;
+                statusWarning("网络恢复连接了！" + title + "，结衣又能帮你上网查东西啦 (｡･ω･｡)");
+            }
+            return ;
+        }
+        networkIdleChecks++;
+        if (networkIdleChecks >= networkLostChecks && !networkLost) {
+            networkLost = true;
+            statusWarning("警告！网络连接好像断开了……" + title + "，要检查一下网线或 Wi-Fi 吗？(・_・;)");
         }
     }
 
@@ -2470,6 +2521,8 @@ T.Widget {
                 }
             }
         }
+        checkStorage(now, title);
+        checkNetwork(title);
         // CPU, GPU and memory, with the crystal's red thresholds (System Console): reported once a load
         // stays at or above it for these many checks (one every 30 s).
         var sources = {
@@ -3101,6 +3154,22 @@ T.Widget {
     Loader {
         source: Qt.resolvedUrl("nvg://system/data#ram")
         onLoaded: widget.ramUsage = item.query("physical")
+    }
+
+    Loader {
+        source: Qt.resolvedUrl("nvg://system/data#hdd")
+        onLoaded: {
+            widget.diskSpace = item.query("space");
+            widget.diag("storage: " + widget.systemDrive + " space " + widget.readData(widget.diskSpace, widget.systemDrive) + " %");
+        }
+    }
+
+    Loader {
+        source: Qt.resolvedUrl("nvg://system/data#network")
+        onLoaded: {
+            widget.netDownload = item.query("download");
+            widget.netUpload = item.query("upload");
+        }
     }
 
     ListModel {

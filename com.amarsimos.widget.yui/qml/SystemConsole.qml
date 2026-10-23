@@ -39,6 +39,8 @@ NVG.Window {
             thresholdRows.itemAt(i).reset();
 
         reportPreference.load();
+        storagePreference.load();
+        networkPreference.load();
         // load() is no edit, so the synced group writes the default to the settings by save().
         reportGroup.save();
     }
@@ -213,13 +215,45 @@ NVG.Window {
                             text: qsTr("Each load is reported at most once in this time.")
                         }
 
+                        P.SpinPreference {
+                            id: storagePreference
+
+                            name: "storage_free_min"
+                            label: qsTr("Storage Capacity (%)")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 50
+                            defaultValue: 10
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui warns you when the system drive (C:) has less free space than this, at most once a day. 0 turns it off.")
+                        }
+
+                        P.SwitchPreference {
+                            id: networkPreference
+
+                            name: "network_watch"
+                            label: qsTr("Network Link")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui tells you when the network seems lost (no traffic at all for two minutes) and when it is back.")
+                        }
+
                     }
 
                     ResetTabButton {
                         yui: consoleWindow.targetWidget
                         windowTitle: consoleWindow.title
                         tabTitle: qsTr("Monitor")
-                        changed: consoleWindow.changedThresholds > 0 || Yui.preferenceChanged(reportPreference)
+                        changed: consoleWindow.changedThresholds > 0 || Yui.anyChanged([reportPreference, storagePreference, networkPreference])
                         onReset: consoleWindow.resetMonitor()
                     }
 

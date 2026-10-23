@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Login Greeting: good morning on the first morning of a day, and long time no see after three days
   or more away.
 - Recollection Log (Yui's Heart, Local Memory): search it as you type, and export it as a text file.
+- Navigation Reports also warn about a nearly full system drive (System Console: Storage Capacity)
+  and a lost network (Network Link), and tell you when it is back.
 
 ### Changed
 
