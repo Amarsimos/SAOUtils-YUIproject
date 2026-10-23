@@ -145,7 +145,17 @@ T.Widget {
     property var loadStates: ({})
     property var loadValues: ({})
     readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
-    readonly property color crystalColor: levelColors[crystalLevel]
+    // During a Boss Raid the crystal has the raid's color instead of the load's.
+    readonly property color crystalColor: raidActive ? raidColor : levelColors[crystalLevel]
+    // Boss Raid (focus time, Pixie Functions): the raid ends at raidEnd (kept in the settings, so it
+    // goes on after a restart), then a rest ends at restEnd. Meanwhile Yui says nothing by herself.
+    readonly property color raidColor: "#B388FF"
+    readonly property int raidMinutes: widget.settings.raid_minutes > 0 ? widget.settings.raid_minutes : 25
+    readonly property int restMinutes: widget.settings.rest_minutes > 0 ? widget.settings.rest_minutes : 5
+    property double raidEnd: 0
+    property double restEnd: 0
+    property bool raidActive: false
+    property bool resting: false
     // The crystal turning red is reported in its bubble (and the chat).
     // The crystal turning red is reported in its bubble (and the chat), counting as the report of the
     // loads that are red, so the regular load reports do not repeat it within the hour.
@@ -1025,6 +1035,12 @@ T.Widget {
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
                 note = applyMemoryTags(reply);
+                if (reply.focus !== null) {
+                    if (reply.focus === 0)
+                        stopRaid();
+                    else
+                        startRaid(reply.focus > 0 ? reply.focus : raidMinutes, false);
+                }
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
@@ -2572,6 +2588,48 @@ T.Widget {
         return "警告！内存使用率已经达到 " + percent + " 了！" + title + "，关掉一些不用的程序会比较好哦 (｀・ω・´)";
     }
 
+    // Starts a Boss Raid of minutes; fromMenu: say it (when Yui starts it from a reply, she says it).
+    function startRaid(minutes, fromMenu) {
+        raidEnd = Date.now() + minutes * 60000;
+        widget.settings.raid_end = raidEnd;
+        raidActive = true;
+        resting = false;
+        diag("boss raid: " + minutes + " min");
+        if (fromMenu)
+            raidSay("Boss Raid 开始！✧ 结衣会安静地陪着" + userTitle() + " " + minutes + " 分钟，加油哦～ (ง •̀_•́)ง");
+
+    }
+
+    function stopRaid() {
+        if (!raidActive && !resting)
+            return ;
+
+        raidActive = false;
+        resting = false;
+        widget.settings.raid_end = 0;
+        diag("boss raid: ended early");
+    }
+
+    // What Yui says about a raid: in the chat, and in the bubble while it is closed.
+    function raidSay(text) {
+        appendMessage("ai", text, false, true);
+        setEmotion("happy");
+        announce(qsTr("Boss Raid"), text);
+    }
+
+    function checkRaid(now) {
+        if (raidActive && now >= raidEnd) {
+            raidActive = false;
+            widget.settings.raid_end = 0;
+            resting = true;
+            restEnd = now + restMinutes * 60000;
+            raidSay("Boss 讨伐成功！✧ " + userTitle() + "辛苦啦～休息 " + restMinutes + " 分钟吧，喝口水、看看远处 (｡･ω･｡)");
+        } else if (resting && now >= restEnd) {
+            resting = false;
+            raidSay("休息时间结束啦～" + userTitle() + "，准备好下一场战斗了吗？(・ω・)");
+        }
+    }
+
     function statusWarning(text) {
         appendMessage("ai", text, false, true);
         setEmotion("surprised");
@@ -2681,7 +2739,7 @@ T.Widget {
     // (0 = never; default 15, before she falls asleep after the standby time).
     function checkIdleChat(now) {
         var minutes = widget.settings.idle_chat_minutes !== undefined ? widget.settings.idle_chat_minutes : 15;
-        if (minutes <= 0 || showChat || launcherClosed || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
+        if (minutes <= 0 || showChat || launcherClosed || raidActive || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
             return ;
 
         idleChat();
@@ -2762,7 +2820,7 @@ T.Widget {
     }
 
     function checkCare(now) {
-        if (!featureEnabled("proactive_care") || sleeping || widget.busy || now - lastProactive < 3600000 || now - lastActivity > 15 * 60000)
+        if (!featureEnabled("proactive_care") || raidActive || sleeping || widget.busy || now - lastProactive < 3600000 || now - lastActivity > 15 * 60000)
             return ;
 
         var title = userTitle();
@@ -3057,6 +3115,10 @@ T.Widget {
         if (widget.settings.chat_hidden === false)
             Qt.callLater(openView);
 
+        if (widget.settings.raid_end > Date.now()) {
+            raidEnd = widget.settings.raid_end;
+            raidActive = true;
+        }
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
             welcomeBack();
@@ -3258,6 +3320,14 @@ T.Widget {
             }
         }
 
+    }
+
+    // Boss Raid's clock.
+    Timer {
+        interval: 1000
+        repeat: true
+        running: widget.raidActive || widget.resting
+        onTriggered: widget.checkRaid(Date.now())
     }
 
     // Keeps the crystal color current while it is shown.
@@ -4319,6 +4389,12 @@ T.Widget {
         Action {
             text: qsTr("Yui's Heart") + "..."
             onTriggered: showDialog(widget.yuisHeartDialog, "yuisHeartDialogInstance")
+        }
+
+        // Boss Raid: starts one of the set length, or ends the running one.
+        Action {
+            text: widget.raidActive || widget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
+            onTriggered: widget.raidActive || widget.resting ? widget.stopRaid() : widget.startRaid(widget.raidMinutes, true)
         }
 
         // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.

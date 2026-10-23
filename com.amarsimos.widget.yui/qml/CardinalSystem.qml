@@ -92,6 +92,8 @@ NVG.Window {
         targetWidget.settings.external_browser = !!externalBrowserPreference.value;
         targetWidget.settings.sleep_minutes = sleepPreference.value;
         targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
+        targetWidget.settings.raid_minutes = raidPreference.value;
+        targetWidget.settings.rest_minutes = restPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
         targetWidget.settings.thinking = !!thinkingPreference.value;
         targetWidget.settings.temperature = temperaturePreference.value;
@@ -107,7 +109,7 @@ NVG.Window {
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
-    readonly property var pixieTabPreferences: [greetPreference, carePreference, statusPreference, sleepPreference, idleChatPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
+    readonly property var pixieTabPreferences: [greetPreference, carePreference, statusPreference, sleepPreference, idleChatPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -296,6 +298,8 @@ NVG.Window {
         externalBrowserPreference.value = settings.external_browser === true;
         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
         idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
+        raidPreference.value = settings.raid_minutes > 0 ? settings.raid_minutes : 25;
+        restPreference.value = settings.rest_minutes > 0 ? settings.rest_minutes : 5;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
         thinkingPreference.value = settings.thinking !== false;
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
@@ -305,7 +309,7 @@ NVG.Window {
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -885,6 +889,38 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.")
+                        }
+
+                        P.SpinPreference {
+                            id: raidPreference
+
+                            name: "raid_minutes"
+                            defaultValue: 25
+                            label: qsTr("Raid Duration")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 5
+                            to: 180
+                            stepSize: 5
+                        }
+
+                        P.SpinPreference {
+                            id: restPreference
+
+                            name: "rest_minutes"
+                            defaultValue: 5
+                            label: qsTr("Rest Duration")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 1
+                            to: 60
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Boss Raid: focus time with Yui, in minutes, then a rest. Start it from her menu or ask her (\"stay with me for 25 minutes\"); meanwhile the crystal turns violet and she does not speak up by herself.")
                         }
 
                         P.SelectPreference {

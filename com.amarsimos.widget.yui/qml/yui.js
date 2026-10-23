@@ -76,14 +76,14 @@ function loadStep(state, value, pair) {
 
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
-//   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>
+//   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>  <<focus:25>> (Boss Raid)
 // Any tag-like <<name:value>>, also misspelled ones (<<emphy:happy>>) and full-width brackets.
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -709,7 +709,9 @@ function parseReply(text, userProtected, options) {
         // The type of an action tag dropped because the user forbade it ("" when none).
         "disabled": "",
         // Tags that were not understood (misspelled, full-width brackets), dropped from the text.
-        "unknown": []
+        "unknown": [],
+        // <<focus:>> (Boss Raid): minutes to focus (1–180; -1 for the default), 0 to end it, null when none.
+        "focus": null
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -735,6 +737,8 @@ function parseReply(text, userProtected, options) {
             result.cores.push(value);
         } else if (kind === "forget") {
             result.forgets.push(value);
+        } else if (kind === "focus") {
+            result.focus = focusMinutes(value);
         } else if (ACTION_KINDS[kind]) {
             var made = actionFrom(kind, value, userProtected, options);
             if (made.blocked)
@@ -755,6 +759,20 @@ function parseReply(text, userProtected, options) {
         return "";
     }).replace(/[ \t]+\n/g, "\n").trim();
     return result;
+}
+
+// The minutes of a <<focus:>> tag: "stop" (or 0) ends the raid (0), a number of minutes is kept within
+// 1–180, anything else is the default (-1).
+function focusMinutes(value) {
+    var text = String(value).trim().toLowerCase();
+    if (/^(stop|end|cancel|结束|停止|取消)$/.test(text))
+        return 0;
+
+    var minutes = parseInt(text, 10);
+    if (isNaN(minutes))
+        return -1;
+
+    return minutes <= 0 ? 0 : Math.min(180, minutes);
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
@@ -978,7 +996,7 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.kill !== false)
         desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe>>（系统关键进程不能关闭）");
 
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。", "- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。"];
     if (allowed.web !== false)
         lines.splice(5, 0, "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。");
 

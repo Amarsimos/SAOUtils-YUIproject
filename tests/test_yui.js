@@ -393,4 +393,13 @@ test("recollection log lines", () => {
     assert.strictEqual(Yui.logLine({ author: "ai", message: "a\nb", created }, "爸爸"), "2026-10-24 21:05  结衣: a\n                   b");
 });
 
+test("Boss Raid focus tag", () => {
+    assert.strictEqual(Yui.parseReply("好的～ <<focus:45>>").focus, 45);
+    assert.strictEqual(Yui.parseReply("好的～ <<focus:45>>").text, "好的～");
+    assert.strictEqual(Yui.parseReply("<<focus:stop>>").focus, 0);
+    assert.strictEqual(Yui.parseReply("<<focus:一会儿>>").focus, -1);
+    assert.strictEqual(Yui.parseReply("<<focus:999>>").focus, 180);
+    assert.strictEqual(Yui.parseReply("没有标签").focus, null);
+});
+
 console.log(passed + " tests passed");
