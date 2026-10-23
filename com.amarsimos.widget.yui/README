@@ -17,15 +17,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Small Model Mode: a short reminder with every message for small local models.
 - The System Console log can show every request to the AI (without the access key) and its raw reply.
 - Message windows show a little Markdown: bold, inline code, bullets, headings and code blocks.
+- MHCP Profile (Cardinal System, Personality): keep your own personalities (Save As…, Rename…,
+  Delete) and switch between them and the built-in MHCP001. An edited personality becomes the
+  profile "Custom".
 
 ### Changed
 
 - While the chat is closed, everything Yui says (replies, care reminders, load and battery warnings)
   appears in the speech bubble next to her collapsed form, pixie and avatar too, instead of SAO Utils
   notifications. While the chat is open it is only in the chat. The crystal's load tooltip is gone.
+- The chat, the speech bubble and Seedling widgets follow the widget's display settings: shown in the
+  launcher or on the desktop as the widget is (also when the launcher opens and closes), and on top
+  or not as the widget is. The chat remembers where it is relative to Yui, the same in both.
+- The speech bubble keeps clear of the widget's drag bar.
+- The settings windows are in tabs, with only the basic settings shown: Advanced in the title bar
+  shows the rest, Help the explanations, Reset restores the window and Reset This Tab one tab (the
+  ↺ beside each setting is gone). System Console has Monitor, Authority and Log tabs, the log filling
+  the window. All settings use SAO Utils' own controls: sliders show their value while dragged,
+  number boxes take typed values (Reply Length Limit, Standby Mode, Spontaneous Talk), and Message
+  Font is SAO Utils' font picker (family, size and style).
+- Chat panel and bubble opacity go down to 0 (only their background; the text stays).
+- Spontaneous Talk and the test bubble work in every collapsed form, not only the crystal.
 - New default personality: shorter, with the most important rules first and without example lines
-  that small models used to copy. **If you changed nothing in the personality, press ↺ next to it in
-  Cardinal System to switch to the new one** (a saved personality is kept as it is).
+  that small models used to copy. **If you changed nothing in the personality, choose MHCP001 in
+  Cardinal System's MHCP Profile to switch to the new one** (a saved personality is kept as it is).
 - Yui no longer makes up real-time information such as the weather; she searches instead.
 - Regenerating a reply asks for a different answer.
 - No reply limit by default (OpenAI gets max_completion_tokens when one is set).

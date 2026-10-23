@@ -625,6 +625,30 @@ function toolCallToAction(name, args, userProtected, options) {
     };
 }
 
+// A font's size in px (a font picked in a dialog may give it in points).
+function fontPixels(font) {
+    return font.pixelSize > 0 ? font.pixelSize : Math.round(font.pointSize * 4 / 3);
+}
+
+// Whether a setting (an SAO Utils preference) differs from its default: fonts by family, size and
+// style, anything else by its content. Used by the settings windows (Reset This Tab is grey while
+// none of a tab's settings changed).
+function preferenceChanged(preference) {
+    if (!preference)
+        return false;
+
+    var value = preference.value;
+    var fallback = preference.defaultValue;
+    if (value && fallback && value.family !== undefined && fallback.family !== undefined)
+        return !(value.family === fallback.family && fontPixels(value) === fontPixels(fallback) && value.weight === fallback.weight && !!value.italic === !!fallback.italic && !!value.underline === !!fallback.underline && !!value.strikeout === !!fallback.strikeout);
+
+    return JSON.stringify(value) !== JSON.stringify(fallback);
+}
+
+function anyChanged(preferences) {
+    return (preferences || []).some(preferenceChanged);
+}
+
 // A likely expression for a reply that names none (<<emotion:>> missing), from its kaomoji and words.
 function guessEmotion(text) {
     text = String(text || "");

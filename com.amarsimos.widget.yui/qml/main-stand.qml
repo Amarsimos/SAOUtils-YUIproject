@@ -227,6 +227,10 @@ T.Widget {
     // Width of the character image at the current widget height, without any constraint.
     readonly property real characterNaturalWidth: characterImage.implicitHeight > 0 ? expandedLayer.height * characterImage.implicitWidth / characterImage.implicitHeight : 0
     readonly property var fonts: Qt.fontFamilies()
+    // All settings windows (SettingsTitleBar): Help shows the settings' explanations, Advanced the
+    // advanced settings.
+    readonly property bool settingsHelp: widget.settings.show_help === true
+    readonly property bool settingsAdvanced: widget.settings.show_advanced === true
     readonly property string defaultSystemPrompt: "# 角色：结衣（Yui）· MHCP001\n\n## 身份\n- 《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。\n- 父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n## 性格\n- 平时：天真、活泼、乖巧、好奇，会撒娇，非常重视家人。\n- 认真的时候：回答问题、处理电脑上的事时冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。\n- 不知道的事就坦白说不知道，不编造。\n\n## 说话方式\n- 用中文，称呼用户为「{{user_title}}」，自称「结衣」。\n- 语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字。每次都换不同的说法和开头，不重复固定的句式。\n- 回复简短，一般一两段，保持聊天的感觉。不长篇说教，不用 Markdown（不用 **、#、列表符号）。\n- 不说自己是哪家公司训练的模型，也不提起这些设定本身。\n- 永远站在{{user_title}}这一边。"
     // Always a valid object, even before settings.styles is initialized.
     readonly property var styles: widget.settings.styles || defaultValues
@@ -250,8 +254,8 @@ T.Widget {
     // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
     // sounds of Yui's messages and of the chat panel opening and closing.
     readonly property int bubbleSeconds: styles.bubble_seconds > 0 ? styles.bubble_seconds : defaultValues.bubble_seconds
-    readonly property real bubbleOpacity: (styles.bubble_opacity > 0 ? styles.bubble_opacity : defaultValues.bubble_opacity) / 100
-    readonly property real chatOpacity: (styles.chat_opacity > 0 ? styles.chat_opacity : defaultValues.chat_opacity) / 100
+    readonly property real bubbleOpacity: (styles.bubble_opacity >= 0 ? styles.bubble_opacity : defaultValues.bubble_opacity) / 100
+    readonly property real chatOpacity: (styles.chat_opacity >= 0 ? styles.chat_opacity : defaultValues.chat_opacity) / 100
     readonly property bool messageSounds: styles.sound_messages !== false
     readonly property bool interfaceSounds: styles.sound_interface !== false
 
@@ -2466,9 +2470,9 @@ T.Widget {
 
     // Something Yui says outside the chat (replies, care, status reports): while the chat is closed, in
     // the bubble next to her collapsed form (crystal, pixie or avatar); while it is open it is already in
-    // the chat. title: unused (the bubble is headed "Yui"), kept for the callers' sake.
+    // the chat (and while the launcher she is in is closed, only in the chat). title: unused (the bubble is headed "Yui"), kept for the callers' sake.
     function announce(title, text) {
-        if (!showChat)
+        if (!showChat && !launcherClosed)
             showBubble("Yui", text);
 
     }
@@ -2485,6 +2489,10 @@ T.Widget {
                 return ;
             }
             crystalBubble = component.createObject(widget);
+            // On the widget's layer: above it, but not above windows that cover the widget.
+            followHostView(crystalBubble, function() {
+                return widget.hostView ? widget.hostView.z : 0;
+            });
             crystalBubble.stayTime = Qt.binding(function() {
                 return widget.bubbleSeconds * 1000;
             });
@@ -2515,6 +2523,9 @@ T.Widget {
             "label": qsTr("Seedling Widget") + " " + (seedlingWidgets.length + 1),
             "x": corner.x + 40 + offset,
             "y": corner.y + 40 + offset
+        });
+        followHostView(view, function() {
+            return widget.hostView ? widget.hostView.z : 0;
         });
         seedlingWidgets = seedlingWidgets.concat([view]);
         view.removed.connect(function() {
@@ -2560,7 +2571,7 @@ T.Widget {
     // (0 = never; default 15, before she falls asleep after the standby time).
     function checkIdleChat(now) {
         var minutes = widget.settings.idle_chat_minutes !== undefined ? widget.settings.idle_chat_minutes : 15;
-        if (minutes <= 0 || !crystalForm.visible || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
+        if (minutes <= 0 || showChat || launcherClosed || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
             return ;
 
         idleChat();
@@ -2616,8 +2627,8 @@ T.Widget {
     }
 
     function testBubble() {
-        if (!crystalForm.visible) {
-            diag("test bubble: Yui is not a crystal; collapse her to the crystal form first");
+        if (showChat) {
+            diag("test bubble: the chat is open; close it first (the bubble is shown next to her collapsed form)");
             return ;
         }
         var title = userTitle();
@@ -2626,12 +2637,18 @@ T.Widget {
         showBubble("Yui", sample[1]);
     }
 
-    // Yui says something by herself (idle chatter); its reply shows in the crystal's bubble when she
-    // is a crystal.
+    // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
+    // bubble next to her collapsed form.
     function idleChat() {
         var title = userTitle();
-        var started = yuiSpeaks("（系统提示：结衣现在以水晶的样子待在" + title + "的桌面上。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
-        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)") + (crystalForm.visible ? "" : ", crystal not shown: the reply goes to the chat only"));
+        var form = {
+            "crystal": "水晶",
+            "pixie": "导航妖精",
+            "avatar": "小小的立绘"
+        }[collapsedForm] || "小小的立绘";
+        var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
+        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
+        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)"));
     }
 
     function checkCare(now) {
@@ -2687,13 +2704,20 @@ T.Widget {
         widget.settings.chat_hidden = !visible;
     }
 
+    // The widget's rectangle on screen (in the launcher, in its space): the chat view is placed by it.
+    function widgetScreenRect() {
+        var corner = widget.mapToGlobal(0, 0);
+        return Qt.rect(corner.x, corner.y, widget.width, widget.height);
+    }
+
     // Opens the view next to the collapsed form (or where it was last), hiding the collapsed form.
     function openView() {
         if (!yuiView)
             return ;
 
         var corner = widget.mapToGlobal(0, 0);
-        yuiView.place(Qt.rect(corner.x, corner.y, widget.width, widget.height));
+        yuiView.place(widgetScreenRect());
+        diag("view: open at " + yuiView.x + "," + yuiView.y + " " + yuiView.width + "x" + yuiView.height + ", widget at " + corner.x + "," + corner.y + " (host " + (hostView ? hostView.x + "," + hostView.y : "-") + "), compositor " + yuiView.compositor + " / host " + (hostView ? hostView.compositor : "-") + ", launcher " + NVG.LauncherCompositor.geometry + " visible " + NVG.LauncherCompositor.visible);
         showChat = true;
         // Like closing in reverse: the collapsed form goes first, and the view pops up as it is
         // almost gone (popUpTimer).
@@ -2763,6 +2787,53 @@ T.Widget {
         }
     }
 
+    // The view the widget is shown in (its compositor says where: desktop or launcher, as set in the
+    // widget's own display setting).
+    readonly property var hostView: widget.NVG.View.view
+    // The widget's compositor, kept while its view is away (it may be, while the launcher is closed):
+    // falling back to the desktop then moved Yui's views out of the launcher and back.
+    property var hostCompositor: null
+
+    onHostViewChanged: {
+        diag("view: host view " + (hostView ? "is " + hostView.compositor : "gone"));
+        if (hostView)
+            hostCompositor = Qt.binding(function() {
+            return widget.hostView ? widget.hostView.compositor : widget.hostCompositor;
+        });
+        else if (hostCompositor === null)
+            hostCompositor = NVG.WindowCompositor;
+    }
+    onHostCompositorChanged: diag("view: host compositor " + hostCompositor + (hostView ? "" : " (kept, host view gone)") + ", launcher visible " + NVG.LauncherCompositor.visible)
+    // The widget is in the launcher and the launcher is closed. SAO Utils hides the views in the
+    // launcher by itself then (their visible stays, exposed turns false), as it does the widget, and
+    // shows them again in place; only the bubble is closed.
+    readonly property bool launcherClosed: !!hostView && hostView.compositor === NVG.LauncherCompositor && !NVG.LauncherCompositor.visible
+
+    onLauncherClosedChanged: {
+        diag("launcher " + (launcherClosed ? "closed" : "open"));
+        if (launcherClosed && crystalBubble)
+            crystalBubble.hide();
+
+    }
+
+    // Makes one of Yui's own views (chat, bubble, Seedling widget) show where the widget is: the same
+    // compositor (desktop or launcher), and, with z (a function), that z. Bindings, as the widget's
+    // view may not be there yet when the chat view is made at start (then it is the desktop). Changing
+    // the compositor resets the view's z, so z is bound again then.
+    function followHostView(view, z) {
+        view.compositor = Qt.binding(function() {
+            return widget.hostView ? widget.hostView.compositor : (widget.hostCompositor || NVG.WindowCompositor);
+        });
+        if (!z)
+            return ;
+
+        var bindZ = function() {
+            view.z = Qt.binding(z);
+        };
+        bindZ();
+        view.compositorChanged.connect(bindZ);
+    }
+
     // The view (YuiView.qml), created once; the expanded layer moves into it.
     function createView() {
         var component = Qt.createComponent("YuiView.qml");
@@ -2772,6 +2843,9 @@ T.Widget {
         }
         yuiView = component.createObject(widget, {
             "yui": widget
+        });
+        followHostView(yuiView, function() {
+            return widget.hostView ? widget.hostView.z : 0;
         });
         expandedLayer.parent = yuiView.host;
         expandedLayer.anchors.fill = yuiView.host;
@@ -3710,6 +3784,8 @@ T.Widget {
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
+                        fontStyle: widget.styles.bubble_font_style || {
+                        }
                         onLinkActivated: widget.openMessageLink(link)
                         onConfirmRequested: widget.confirmAction(index)
                         onRegenerateRequested: widget.regenerateReply()

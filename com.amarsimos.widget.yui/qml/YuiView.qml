@@ -1,16 +1,16 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import QtQuick.Shapes 1.12
+// For Qt.application.screens (empty without it), used to keep the view on a screen.
 import QtQuick.Window 2.12
 
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
 // its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
 // moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
-// It is a plain frameless Window opened and closed like the SAO Utils mail box message panel
-// (com.gpbeta.mail-box MessagePanel.qml), which is also a Window: with an NVG.View, SAO Utils' own
-// handling of the view's appearing delayed it and covered the open animation.
-Window {
+// It is an NVG.View so that it is shown where the widget is (desktop or launcher, see compositor),
+// opened and closed like the SAO Utils mail box message panel (com.gpbeta.mail-box MessagePanel.qml).
+NVG.View {
     id: view
 
     // The widget (main-stand.qml).
@@ -71,6 +71,50 @@ Window {
         aniClose.start();
     }
 
+    // Just after a compositor change (the widget moves between the launcher and the desktop, as SAO
+    // Utils does when the launcher opens and closes): SAO Utils resets the view's position, and the
+    // widget's position settles, after the change is announced; any such move puts the view back at
+    // once (onXChanged / onYChanged, and the widget's view moving), in the same frame.
+    property bool settling: false
+    // place() is moving the view (not SAO Utils).
+    property bool placing: false
+
+    function follow() {
+        if (shown && !hidePending)
+            place(yui.widgetScreenRect());
+
+    }
+
+    onXChanged: {
+        if (settling && !placing)
+            follow();
+
+    }
+    onYChanged: {
+        if (settling && !placing)
+            follow();
+
+    }
+
+    Connections {
+        target: view.settling ? view.yui.hostView : null
+        ignoreUnknownSignals: true
+        onXChanged: view.follow()
+        onYChanged: view.follow()
+    }
+
+    Timer {
+        id: settleTimer
+
+        interval: 400
+        onTriggered: {
+            view.settling = false;
+            if (view.shown)
+                view.yui.diag("view: settled at " + view.x + "," + view.y + " (" + (view.inLauncher ? "launcher" : "desktop") + ")");
+
+        }
+    }
+
     // Moving by the chat panel's title: global mouse positions.
     function beginMove(point) {
         moveStart = point;
@@ -86,18 +130,38 @@ Window {
         saveGeometry();
     }
 
-    // Remembers the geometry (after moving / resizing).
+    // In the launcher (rather than on the desktop): it has coordinates of its own (the launcher's
+    // space, see LauncherCompositor), and the widget has a place of its own there.
+    readonly property bool inLauncher: compositor === NVG.LauncherCompositor
+    // The widget's rectangle the view was last placed by (place()).
+    property rect anchorRect
+
+    // Remembers where the view is (after moving / resizing) relative to the widget, and its size: the
+    // same for the desktop and the launcher, so the chat opens at the same place next to Yui in both.
     function saveGeometry() {
-        yui.settings.view_geometry = {
-            "x": Math.round(x),
-            "y": Math.round(y),
+        yui.settings.view_offset = {
+            "dx": Math.round(x - anchorRect.x),
+            "dy": Math.round(y - anchorRect.y),
             "width": Math.round(width),
             "height": Math.round(height)
         };
     }
 
-    // The screen containing a point, or null.
-    function screenAt(px, py) {
+    // The area containing a point, as {virtualX, virtualY, width, height}, or null: in the launcher
+    // its space, on the desktop the screen there.
+    function areaAt(px, py) {
+        if (inLauncher) {
+            var g = NVG.LauncherCompositor.geometry;
+            if (g.width <= 0 || (px >= g.x && px < g.x + g.width && py >= g.y && py < g.y + g.height))
+                return {
+                "virtualX": g.x,
+                "virtualY": g.y,
+                "width": g.width > 0 ? g.width : 1920,
+                "height": g.height > 0 ? g.height : 1080
+            };
+
+            return null;
+        }
         var screens = Qt.application.screens;
         for (var i = 0; i < screens.length; i++) {
             var s = screens[i];
@@ -108,31 +172,55 @@ Window {
         return null;
     }
 
-    // Where to open: the remembered geometry while it is on a screen; otherwise (first time, or the
-    // screen is gone) next to the collapsed form, on the side with more room, on its screen.
-    // anchor: the collapsed form's rectangle on screen.
+    // Where to open: at the remembered offset from the widget (anchor: its rectangle, in the view's
+    // coordinates), kept in its area (screen or launcher); the first time next to it, on the side with
+    // more room. An old remembered desktop position (view_geometry) becomes the offset.
     function place(anchor) {
-        var saved = yui.settings.view_geometry;
+        placing = true;
+        anchorRect = anchor;
+        var saved = yui.settings.view_offset;
+        var old = yui.settings.view_geometry;
+        if (!saved && old && !inLauncher)
+            saved = {
+            "dx": old.x - anchor.x,
+            "dy": old.y - anchor.y,
+            "width": old.width,
+            "height": old.height
+        };
+
         width = Math.max(minimumViewWidth, saved ? saved.width : (yui.settings.expanded_width || 800));
         height = Math.max(minimumViewHeight, saved ? saved.height : (yui.settings.expanded_height || 420));
-        if (saved && screenAt(saved.x + 40, saved.y + 10)) {
-            x = saved.x;
-            y = saved.y;
-            return ;
-        }
-        var s = screenAt(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2) || Qt.application.screens[0];
+        var s = areaAt(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2) || areaAt(0, 0) || Qt.application.screens[0];
         var left = s.virtualX, top = s.virtualY, right = left + s.width, bottom = top + s.height;
-        var roomRight = right - (anchor.x + anchor.width);
-        var roomLeft = anchor.x - left;
-        x = roomRight >= width || roomRight >= roomLeft ? anchor.x + anchor.width : anchor.x - width;
-        y = anchor.y + anchor.height / 2 - height / 2;
+        if (saved) {
+            x = anchor.x + saved.dx;
+            y = anchor.y + saved.dy;
+        } else {
+            var roomRight = right - (anchor.x + anchor.width);
+            var roomLeft = anchor.x - left;
+            x = roomRight >= width || roomRight >= roomLeft ? anchor.x + anchor.width : anchor.x - width;
+            y = anchor.y + anchor.height / 2 - height / 2;
+        }
         x = Math.round(Math.max(left, Math.min(right - width, x)));
         y = Math.round(Math.max(top, Math.min(bottom - height, y)));
+        placing = false;
     }
 
+    // Where the widget is shown (desktop or launcher) and its z (on top, normal, at the bottom) are
+    // followed (main-stand.qml followHostView). Changing the compositor resets x and y, so an open view
+    // is placed again at once, and kept there while things settle.
+    onCompositorChanged: {
+        if (!shown || hidePending)
+            return ;
+
+        settling = true;
+        settleTimer.restart();
+        follow();
+    }
     color: "transparent"
-    // Frameless, always on top of every other window, no taskbar button.
-    flags: Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
+    // It takes the keyboard for the input box.
+    acceptFocus: true
+    acceptInput: true
     visible: false
 
     // The content (the animation acts on the widget's character and chat panel inside it).
@@ -359,15 +447,19 @@ Window {
 
     // Two frames drawn since then (so the blank one is on screen): hide on the next turn of the event loop (frameSwapped comes from
     // the render thread).
-    onFrameSwapped: {
-        if (!hidePending)
-            return ;
+    Connections {
+        target: view.window
+        ignoreUnknownSignals: true
+        onFrameSwapped: {
+            if (!view.hidePending)
+                return ;
 
-        // A still window draws no more frames by itself: ask for one more.
-        if (++blankFrames >= 2)
-            Qt.callLater(finishHide);
-        else
-            Qt.callLater(view.update);
+            // A still window draws no more frames by itself: ask for one more.
+            if (++view.blankFrames >= 2)
+                Qt.callLater(view.finishHide);
+            else if (view.window)
+                Qt.callLater(view.window.update);
+        }
     }
 
     // A transparent window's very first showing can draw one frame before its transparency takes

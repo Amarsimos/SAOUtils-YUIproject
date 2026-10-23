@@ -355,4 +355,15 @@ test("light markdown in messages", () => {
     assert.strictEqual(Yui.linkify("1 * 2 * 3 = 6", "#00f"), "");
 });
 
+test("settings differ from their defaults", () => {
+    assert.strictEqual(Yui.anyChanged([{ value: 3, defaultValue: 3 }, { value: "a", defaultValue: "a" }]), false);
+    assert.strictEqual(Yui.anyChanged([{ value: 3, defaultValue: 3 }, { value: true, defaultValue: false }]), true);
+    assert.strictEqual(Yui.anyChanged([null, undefined]), false);
+    const font = (o) => Object.assign({ family: "Source Han Sans SC", pixelSize: 14, pointSize: -1, weight: 50, italic: false, underline: false, strikeout: false }, o);
+    assert.strictEqual(Yui.preferenceChanged({ value: font({}), defaultValue: font({}) }), false);
+    assert.strictEqual(Yui.preferenceChanged({ value: font({ pixelSize: -1, pointSize: 10.5 }), defaultValue: font({}) }), false);
+    assert.strictEqual(Yui.preferenceChanged({ value: font({ weight: 75 }), defaultValue: font({}) }), true);
+    assert.strictEqual(Yui.preferenceChanged({ value: font({ family: "Arial" }), defaultValue: font({}) }), true);
+});
+
 console.log(passed + " tests passed");
