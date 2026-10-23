@@ -625,6 +625,18 @@ function toolCallToAction(name, args, userProtected, options) {
     };
 }
 
+// One line of the recollection log as text: "2026-10-24 21:05  爸爸: …" (author "user" is the user,
+// shown by title, anything else Yui). Line breaks in the message are kept, indented.
+function logLine(row, title) {
+    var d = new Date(row.created);
+    var pad = function(n) {
+        return (n < 10 ? "0" : "") + n;
+    };
+    var when = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    var who = row.author === "user" ? title : "结衣";
+    return when + "  " + who + ": " + String(row.message || "").replace(/\r?\n/g, "\n                   ");
+}
+
 // The greeting when the user comes back (Login Greeting): "long" after 3 days or more away, "morning"
 // for the first time on a new day in the morning (5–11 h), "back" after half an hour, else "".
 function greetingKind(lastActive, now) {

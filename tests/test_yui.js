@@ -387,4 +387,10 @@ test("login greeting kinds", () => {
     assert.strictEqual(Yui.greetingKind(at(20, 9), at(24, 9)), "long");
 });
 
+test("recollection log lines", () => {
+    const created = new Date(2026, 9, 24, 21, 5).getTime();
+    assert.strictEqual(Yui.logLine({ author: "user", message: "你好", created }, "爸爸"), "2026-10-24 21:05  爸爸: 你好");
+    assert.strictEqual(Yui.logLine({ author: "ai", message: "a\nb", created }, "爸爸"), "2026-10-24 21:05  结衣: a\n                   b");
+});
+
 console.log(passed + " tests passed");

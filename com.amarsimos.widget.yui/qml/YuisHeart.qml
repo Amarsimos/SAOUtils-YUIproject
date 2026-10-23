@@ -4,6 +4,7 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // "Yui's Heart" window (next to Cardinal System, Equipment and System Console), in three pages:
 // Memories (view, add and edit them, YuisHeartPage.qml), Recall (what is remembered and sent with
@@ -16,6 +17,14 @@ NVG.Window {
     property var targetWidget
     // Chat messages kept in the recollection log (refreshed when the Local Memory page opens).
     property int logSize: 0
+    // Recollection Log search: the messages found (newest first, at most 50) for logQuery.
+    property var logResults: []
+    property string logQuery: ""
+
+    function searchLog() {
+        logQuery = logSearchField.text.trim();
+        logResults = logQuery ? targetWidget.searchMessageLog(logQuery, 50) : [];
+    }
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
@@ -280,6 +289,7 @@ NVG.Window {
                             onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete the whole chat history kept in the recollection log? This cannot be undone."), function() {
                                 heartWindow.targetWidget.clearMessageLog();
                                 heartWindow.refreshLogSize();
+                                heartWindow.searchLog();
                             }, true)
                         }
 
@@ -288,7 +298,60 @@ NVG.Window {
                     SettingNote {
                         visible: heartWindow.targetWidget.settingsHelp
                         besidePreferences: true
-                        text: qsTr("Every chat message is kept here, only for exports. It is never sent to the AI, and Yui's memories stay when it is cleared.")
+                        text: qsTr("Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui's memories stay when it is cleared.")
+                    }
+
+                    // Searching the log (as you type) and exporting all of it as text.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+
+                        TextField {
+                            id: logSearchField
+
+                            Layout.fillWidth: true
+                            selectByMouse: true
+                            placeholderText: qsTr("Search the log")
+                            onTextChanged: logSearchTimer.restart()
+                        }
+
+                        Button {
+                            text: qsTr("Export Log")
+                            enabled: heartWindow.logSize > 0
+                            onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
+                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
+                            })
+                        }
+
+                        Timer {
+                            id: logSearchTimer
+
+                            interval: 300
+                            onTriggered: heartWindow.searchLog()
+                        }
+
+                    }
+
+                    Label {
+                        Layout.leftMargin: 16
+                        visible: heartWindow.logQuery !== ""
+                        opacity: 0.7
+                        text: heartWindow.logResults.length >= 50 ? qsTr("The latest 50 messages found") : qsTr("%1 messages found").arg(heartWindow.logResults.length)
+                    }
+
+                    Repeater {
+                        model: heartWindow.logResults
+
+                        Label {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            text: Yui.logLine(modelData, heartWindow.targetWidget.userTitle())
+                        }
+
                     }
 
                     Heading {

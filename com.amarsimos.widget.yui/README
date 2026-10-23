@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   her), Transfer Durability (she reports the computer's loads).
 - Login Greeting: good morning on the first morning of a day, and long time no see after three days
   or more away.
+- Recollection Log (Yui's Heart, Local Memory): search it as you type, and export it as a text file.
 
 ### Changed
 

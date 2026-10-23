@@ -1864,6 +1864,42 @@ T.Widget {
         return count;
     }
 
+    // The recollection log's messages containing query (all of them when empty), newest first, at most
+    // limit (0: no limit): [{author, message, created}].
+    function searchMessageLog(query, limit) {
+        var found = [];
+        if (!database)
+            return found;
+
+        try {
+            database.readTransaction(function(tx) {
+                var sql = "SELECT author, message, created FROM messages" + (query ? " WHERE message LIKE ? ESCAPE '\\'" : "") + " ORDER BY created DESC" + (limit > 0 ? " LIMIT " + Math.floor(limit) : "");
+                var rows = tx.executeSql(sql, query ? ["%" + String(query).replace(/[\\%_]/g, "\\$&") + "%"] : []).rows;
+                for (var i = 0; i < rows.length; i++)
+                    found.push(rows.item(i));
+            });
+        } catch (e) {
+            diag("log search failed: " + e);
+        }
+        return found;
+    }
+
+    // Yui's Heart "Export Log": the whole recollection log as text (oldest first), 回忆日志-<date>.txt in
+    // the heart folder, shown in File Explorer. onDone(path): the path written, or "".
+    function exportMessageLog(onDone) {
+        var title = userTitle();
+        var text = searchMessageLog("", 0).reverse().map(function(row) {
+            return Yui.logLine(row, title);
+        }).join("\r\n");
+        writeHeartFile("回忆日志-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".txt", text, function(path) {
+            diag("log export -> " + (path || "failed"));
+            if (path)
+                showInExplorer(path);
+
+            onDone(path);
+        });
+    }
+
     function clearMessageLog() {
         if (!database)
             return ;
