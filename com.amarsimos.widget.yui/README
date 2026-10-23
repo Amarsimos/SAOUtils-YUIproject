@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MHCP Profile (Cardinal System, Personality): keep your own personalities (Save As…, Rename…,
   Delete) and switch between them and the built-in MHCP001. An edited personality becomes the
   profile "Custom".
+- More System Call spells: Enhance Armament (Yui glows), Release Recollection (a burst that shakes
+  her), Transfer Durability (she reports the computer's loads).
 
 ### Changed
 

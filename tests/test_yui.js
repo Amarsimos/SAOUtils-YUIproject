@@ -366,4 +366,15 @@ test("settings differ from their defaults", () => {
     assert.strictEqual(Yui.preferenceChanged({ value: font({ family: "Arial" }), defaultValue: font({}) }), true);
 });
 
+test("more system calls", () => {
+    const armament = Yui.systemCall("System Call, Enhance Armament!", "爸爸");
+    assert.strictEqual(armament.effect.aura, true);
+    const recollection = Yui.systemCall("system call release recollection", "爸爸");
+    assert.ok(recollection.effect.burst && recollection.effect.shake);
+    const durability = Yui.systemCall("System Call, Transfer Durability", "爸爸", { cpu: 41.6, gpu: NaN, ram: 70 });
+    assert.ok(durability.reply.includes("CPU 42%") && durability.reply.includes("内存 70%") && !durability.reply.includes("GPU"));
+    assert.ok(!Yui.systemCall("System Call, Transfer Durability", "爸爸").reply.includes("消耗"));
+    assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Release Recollection"));
+});
+
 console.log(passed + " tests passed");

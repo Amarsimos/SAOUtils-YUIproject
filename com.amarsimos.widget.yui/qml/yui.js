@@ -1087,9 +1087,11 @@ var ELEMENTS = {
     "umbra": ["暗素", "#9575CD"]
 };
 
-// The "System Call" easter egg. Returns null when the text is not a system call, otherwise
-// { reply, effect } where effect is { color, burst } or null.
-function systemCall(text, title) {
+// The "System Call" easter egg (Sacred Arts of Alicization). Returns null when the text is not a
+// system call, otherwise { reply, effect } where effect is { color, burst, aura, shake } or null:
+// burst a burst instead of a floating element, aura a glow around Yui, shake Yui shaking.
+// loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
+function systemCall(text, title, loads) {
     var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(String(text));
     if (!match)
         return null;
@@ -1103,7 +1105,7 @@ function systemCall(text, title) {
 
     if (/inspect\s+entire\s+command\s+list/.test(command))
         return {
-            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n格式：System Call, Generate Luminous Element",
+            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n格式：System Call, Generate Luminous Element",
             "effect": null
         };
 
@@ -1126,6 +1128,46 @@ function systemCall(text, title) {
                 "burst": true
             }
         };
+
+    // Incarnation of the armament (武装完全支配术): a golden element and a glow around Yui.
+    if (/^enhance\s+armament/.test(command))
+        return {
+            "reply": "Enhance Armament——！✧ 武装完全支配术，发动！结衣感觉全身都充满了力量～ (ง •̀_•́)ง",
+            "effect": {
+                "color": "#FFD54F",
+                "burst": false,
+                "aura": true
+            }
+        };
+
+    // Release Recollection (记忆解放术): a violet burst, and Yui shakes with it.
+    if (/^release\s+recollection/.test(command))
+        return {
+            "reply": "Release Recollection——！！✧✧ 记忆解放术！呜哇，好、好强的力量……" + title + "，结衣快要站不稳了啦 (>_<)",
+            "effect": {
+                "color": "#B388FF",
+                "burst": true,
+                "shake": true
+            }
+        };
+
+    // Transfer Durability (天命转移): Yui reports the "durability" of the computer, its loads.
+    if (/^transfer\s+durability/.test(command)) {
+        var parts = [];
+        [["cpu", "CPU"], ["gpu", "GPU"], ["ram", "内存"]].forEach(function(metric) {
+            var value = loads && loads[metric[0]];
+            if (typeof value === "number" && isFinite(value))
+                parts.push(metric[1] + " " + Math.round(value) + "%");
+
+        });
+        return {
+            "reply": "天命转移——！✧ " + (parts.length > 0 ? "这台电脑的天命消耗：" + parts.join("、") + "。" : "") + "结衣把天命分给" + title + "一点点，要好好休息哦～ (｡･ω･｡)",
+            "effect": {
+                "color": "#69F0AE",
+                "burst": false
+            }
+        };
+    }
 
     return {
         "reply": "警告！无法识别的系统指令……" + title + "，是不是念错咒语了？试试 System Call, Inspect Entire Command List 吧 (・_・;)",

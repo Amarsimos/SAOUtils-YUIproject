@@ -1144,13 +1144,24 @@ T.Widget {
         noteActivity();
         sleeping = false;
         // "System Call, ..." easter egg: answered locally, then part of the conversation like any turn.
-        var call = Yui.systemCall(text, userTitle());
+        var call = Yui.systemCall(text, userTitle(), {
+            "cpu": readData(cpuLoad),
+            "gpu": readData(gpuLoad),
+            "ram": readData(ramUsage)
+        });
         if (call) {
             appendMessage("user", text, false, true);
             afterUserMessage(function() {
                 appendMessage("ai", call.reply, false, true);
-                if (call.effect)
+                if (call.effect) {
                     elementEffect.play(call.effect.color, call.effect.burst);
+                    if (call.effect.aura)
+                        auraAnimation.restart();
+
+                    if (call.effect.shake)
+                        shakeAnimation.restart();
+
+                }
 
                 setEmotion(call.effect ? "surprised" : "normal");
             });
@@ -3261,11 +3272,98 @@ T.Widget {
             // Like the navigation pixie: she floats gently up and down while awake (only upward, so the
             // bottom of the image is never cut off), and grows in from 80 % as the view opens.
             property real hover: 0
+            // System Call effects: Enhance Armament's glow (0 … 1) and Release Recollection's shaking (px).
+            property real aura: 0
+            property real shake: 0
 
             opacity: dim * widget.characterReveal
             scale: 0.8 + 0.2 * widget.characterReveal
             transform: Translate {
+                x: characterImage.shake
                 y: characterImage.hover
+            }
+            // The glow is drawn only while it is shown.
+            layer.enabled: aura > 0
+            layer.effect: Glow {
+                color: "#FFD54F"
+                radius: 24
+                samples: 49
+                spread: 0.35
+                opacity: characterImage.aura
+            }
+
+            // Enhance Armament: the glow rises, stays a moment and fades.
+            SequentialAnimation {
+                id: auraAnimation
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "aura"
+                    to: 1
+                    duration: 400
+                    easing.type: Easing.OutQuad
+                }
+
+                PauseAnimation {
+                    duration: 1200
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "aura"
+                    to: 0
+                    duration: 900
+                    easing.type: Easing.InQuad
+                }
+
+            }
+
+            // Release Recollection: a short shaking that dies down.
+            SequentialAnimation {
+                id: shakeAnimation
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: -8
+                    duration: 45
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: 8
+                    duration: 90
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: -6
+                    duration: 80
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: 6
+                    duration: 80
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: -3
+                    duration: 70
+                }
+
+                NumberAnimation {
+                    target: characterImage
+                    property: "shake"
+                    to: 0
+                    duration: 70
+                }
+
             }
             anchors.left: parent.left
             anchors.bottom: parent.bottom
