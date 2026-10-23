@@ -800,7 +800,7 @@ NVG.Window {
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui welcomes you back when you return after a while.")
+                            text: qsTr("Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.")
                         }
 
                         P.SwitchPreference {

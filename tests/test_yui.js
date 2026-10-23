@@ -377,4 +377,14 @@ test("more system calls", () => {
     assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Release Recollection"));
 });
 
+test("login greeting kinds", () => {
+    const at = (d, h, m) => new Date(2026, 9, d, h, m || 0).getTime();
+    assert.strictEqual(Yui.greetingKind(0, at(24, 9)), "");
+    assert.strictEqual(Yui.greetingKind(at(24, 8, 50), at(24, 9)), "");
+    assert.strictEqual(Yui.greetingKind(at(23, 23), at(24, 8)), "morning");
+    assert.strictEqual(Yui.greetingKind(at(24, 6), at(24, 9)), "back");
+    assert.strictEqual(Yui.greetingKind(at(23, 23), at(24, 14)), "back");
+    assert.strictEqual(Yui.greetingKind(at(20, 9), at(24, 9)), "long");
+});
+
 console.log(passed + " tests passed");

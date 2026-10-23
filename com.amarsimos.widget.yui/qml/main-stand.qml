@@ -1127,14 +1127,24 @@ T.Widget {
         return true;
     }
 
-    // On startup with a saved conversation: welcome the user back when they have been away a while.
+    // On startup with a saved conversation (Login Greeting): good morning on the first morning of a day,
+    // "long time no see" after days away, else a welcome back after a while (Yui.greetingKind).
     function welcomeBack() {
         var lastActive = widget.settings.last_active || 0;
-        var away = Date.now() - lastActive;
-        if (!featureEnabled("greet_on_start") || !lastActive || away < 30 * 60000)
+        var now = Date.now();
+        var kind = Yui.greetingKind(lastActive, now);
+        if (!featureEnabled("greet_on_start") || kind === "")
             return ;
 
-        yuiSpeaks("（系统提示：" + userTitle() + "回来了，距离上次聊天已经过了 " + Yui.formatDuration(away) + "。请以结衣的身份，用一两句话欢迎" + userTitle() + "回来，可以结合现在的时间和之前聊过的内容。）");
+        var title = userTitle();
+        var away = Yui.formatDuration(now - lastActive);
+        var how = {
+            "long": "已经 " + away + " 没见了。请以结衣的身份说一句「好久不见」，表达想念和开心，可以问问" + title + "这些天过得怎么样。",
+            "morning": "今天是第一次见面，现在是早上 " + Qt.formatTime(new Date(now), "HH:mm") + "。请以结衣的身份向" + title + "说早安，可以关心一下睡得好不好、今天的安排。",
+            "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
+        }[kind];
+        diag("login greeting: " + kind);
+        yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）");
     }
 
     function sendMessage(text) {

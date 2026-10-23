@@ -625,6 +625,24 @@ function toolCallToAction(name, args, userProtected, options) {
     };
 }
 
+// The greeting when the user comes back (Login Greeting): "long" after 3 days or more away, "morning"
+// for the first time on a new day in the morning (5–11 h), "back" after half an hour, else "".
+function greetingKind(lastActive, now) {
+    if (!lastActive || now - lastActive < 30 * 60000)
+        return "";
+
+    if (now - lastActive >= 3 * 86400000)
+        return "long";
+
+    var last = new Date(lastActive);
+    var today = new Date(now);
+    var newDay = last.getFullYear() !== today.getFullYear() || last.getMonth() !== today.getMonth() || last.getDate() !== today.getDate();
+    if (newDay && today.getHours() >= 5 && today.getHours() < 11)
+        return "morning";
+
+    return "back";
+}
+
 // A font's size in px (a font picked in a dialog may give it in points).
 function fontPixels(font) {
     return font.pixelSize > 0 ? font.pixelSize : Math.round(font.pointSize * 4 / 3);
