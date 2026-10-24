@@ -3466,7 +3466,8 @@ T.Widget {
                 readonly property real spread: Math.max(0, Math.min(1, linkStartEffect.progress * 1.6 - index * 0.12))
 
                 anchors.centerIn: parent
-                width: Math.max(linkStartEffect.width, linkStartEffect.height) * 1.4 * spread
+                // At most the widget's shorter side, so the whole ring stays inside it.
+                width: Math.max(0, Math.min(linkStartEffect.width, linkStartEffect.height) - border.width * 2) * spread
                 height: width
                 radius: width / 2
                 color: "transparent"
