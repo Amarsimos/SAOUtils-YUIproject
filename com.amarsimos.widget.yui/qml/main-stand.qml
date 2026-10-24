@@ -447,12 +447,13 @@ T.Widget {
         return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title);
     }
 
-    // Bond (Yui's Heart): the player's birthday and the day of meeting, celebrated once that day
+    // Bond (Yui's Heart): the player's birthday and the day of meeting, always known, celebrated once that day
     // (marked when the reply comes, bond_celebrated).
     function bondExtras(title) {
         var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
         var text = Yui.bondContext(title, widget.settings.player_birthday, widget.settings.meeting_day, today, widget.settings.bond_celebrated);
-        if (text)
+        // Asked to celebrate today: marked done when the reply comes.
+        if (text.indexOf("请在这次回复里") !== -1)
             bondPending = today;
 
         return text;

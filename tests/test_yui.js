@@ -431,11 +431,15 @@ test("Mental Record mood tag and context", () => {
 });
 
 test("Bond birthday and anniversary", () => {
-    assert.ok(Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "").includes("生日"));
+    const birthday = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "");
+    assert.ok(birthday.includes("10 月 24 日") && birthday.includes("请在这次回复里"));
     assert.ok(Yui.bondContext("爸爸", "2000-10-24", "2024-10-24", "2026-10-24", "").includes("2 周年"));
-    assert.strictEqual(Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "2026-10-24"), "");
-    assert.strictEqual(Yui.bondContext("爸爸", "", "2026-10-24", "2026-10-24", ""), "");
-    assert.strictEqual(Yui.bondContext("爸爸", "05-01", "2025-03-02", "2026-10-24", ""), "");
+    const done = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "2026-10-24");
+    assert.ok(done.includes("10 月 24 日") && done.includes("已经祝贺过") && !done.includes("请在这次回复里"));
+    assert.ok(!Yui.bondContext("爸爸", "", "2026-10-24", "2026-10-24", "").includes("周年"));
+    const other = Yui.bondContext("爸爸", "05-01", "2025-03-02", "2026-10-24", "");
+    assert.ok(other.includes("5 月 1 日") && other.includes("2025 年 3 月 2 日") && !other.includes("今天"));
+    assert.strictEqual(Yui.bondContext("爸爸", "生日", "", "2026-10-24", ""), "");
 });
 
 console.log(passed + " tests passed");

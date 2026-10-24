@@ -886,29 +886,38 @@ function moodContext(title, recordedToday, recent) {
     return text;
 }
 
-// Bond (Yui's Heart): on the player's birthday ("MM-DD" or "yyyy-MM-dd") or the day of meeting
-// ("yyyy-MM-dd", its anniversary) Yui celebrates once; "" on other days. today is "yyyy-MM-dd".
+// Bond (Yui's Heart): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of meeting
+// ("yyyy-MM-dd") are always told as facts; on the day itself (and its anniversary) Yui is also asked
+// to celebrate, once (celebrated is the day last celebrated). today is "yyyy-MM-dd".
 function bondContext(title, birthday, meetingDay, today, celebrated) {
-    if (celebrated === today)
-        return "";
-
-    var monthDay = today.slice(5);
+    var facts = [];
     var days = [];
+    var monthDay = today.slice(5);
     var birth = String(birthday || "").trim();
-    if (birth && birth.slice(-5) === monthDay)
-        days.push("今天是" + title + "的生日");
-
-    var meeting = String(meetingDay || "").trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting) && meeting.slice(5) === monthDay) {
-        var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
-        if (years > 0)
-            days.push("今天是结衣和" + title + "相遇 " + years + " 周年的纪念日");
+    if (/^(\d{4}-)?\d{2}-\d{2}$/.test(birth)) {
+        facts.push(title + "的生日是 " + Number(birth.slice(-5, -3)) + " 月 " + Number(birth.slice(-2)) + " 日");
+        if (birth.slice(-5) === monthDay)
+            days.push("今天就是" + title + "的生日");
 
     }
-    if (days.length === 0)
+    var meeting = String(meetingDay || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting)) {
+        var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
+        facts.push("结衣和" + title + "相遇的日子是 " + Number(meeting.slice(0, 4)) + " 年 " + Number(meeting.slice(5, 7)) + " 月 " + Number(meeting.slice(8)) + " 日");
+        if (years > 0 && meeting.slice(5) === monthDay)
+            days.push("今天是相遇 " + years + " 周年的纪念日");
+
+    }
+    if (facts.length === 0)
         return "";
 
-    return "\n\n（羁绊：" + days.join("，也") + "。请在这次回复里用结衣的方式真诚地祝贺，只在今天第一次说话时提一次。）";
+    var text = "\n\n（羁绊：" + facts.join("；") + "。被问到时以此为准。";
+    if (days.length > 0 && celebrated !== today)
+        text += days.join("，也") + "，请在这次回复里用结衣的方式真诚地祝贺（只在今天第一次说话时提一次）。";
+    else if (days.length > 0)
+        text += days.join("，也") + "，今天已经祝贺过了，不必再刻意重复。";
+
+    return text + "）";
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
