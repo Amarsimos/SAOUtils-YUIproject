@@ -442,4 +442,9 @@ test("Bond birthday and anniversary", () => {
     assert.strictEqual(Yui.bondContext("爸爸", "生日", "", "2026-10-24", ""), "");
 });
 
+test("Closing programs is left to the confirmation", () => {
+    const text = Yui.featureInstructions("爸爸", "", {}, "tags");
+    assert.ok(text.includes("Taskmgr.exe") && text.includes("不要自己判断危险"));
+});
+
 console.log(passed + " tests passed");
