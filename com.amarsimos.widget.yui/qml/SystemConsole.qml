@@ -32,13 +32,14 @@ NVG.Window {
         changedThresholds = thresholds;
     }
 
-    // Monitor: the crystal's thresholds, the report interval, storage and network, and (all, or while
+    // Monitor: the crystal's thresholds, Navigation Reports and their interval, storage and network, and (all, or while
     // shown) the monthly budget.
     function resetMonitor(all) {
         targetWidget.settings.load_thresholds = {};
         for (var i = 0; i < thresholdRows.count; i++)
             thresholdRows.itemAt(i).reset();
 
+        statusPreference.load();
         reportPreference.load();
         storagePreference.load();
         networkPreference.load();
@@ -202,6 +203,20 @@ NVG.Window {
                         defaultValue: consoleWindow.targetWidget.settings
                         syncProperties: true
 
+                        P.SwitchPreference {
+                            id: statusPreference
+
+                            name: "status_reports"
+                            defaultValue: true
+                            label: qsTr("Navigation Reports")
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui warns you about low battery and high CPU or memory usage.")
+                        }
+
                         P.SpinPreference {
                             id: reportPreference
 
@@ -309,7 +324,7 @@ NVG.Window {
                         yui: consoleWindow.targetWidget
                         windowTitle: consoleWindow.title
                         tabTitle: qsTr("Monitor")
-                        changed: consoleWindow.changedThresholds > 0 || Yui.anyChanged([reportPreference, storagePreference, networkPreference].concat(budgetPreference.visible ? [budgetPreference] : []))
+                        changed: consoleWindow.changedThresholds > 0 || Yui.anyChanged([statusPreference, reportPreference, storagePreference, networkPreference].concat(budgetPreference.visible ? [budgetPreference] : []))
                         onReset: consoleWindow.resetMonitor(false)
                     }
 
@@ -359,7 +374,7 @@ NVG.Window {
 
                             name: "action_kill"
                             label: qsTr("Close Programs")
-                            defaultValue: true
+                            defaultValue: false
                         }
 
                     }

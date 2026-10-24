@@ -440,7 +440,7 @@ T.Widget {
             "web": widget.settings.action_web !== false,
             "launch": widget.settings.action_launch !== false,
             "find": widget.settings.action_find !== false,
-            "kill": widget.settings.action_kill !== false,
+            "kill": widget.settings.action_kill === true,
             "memory": autoMemory
         };
     }

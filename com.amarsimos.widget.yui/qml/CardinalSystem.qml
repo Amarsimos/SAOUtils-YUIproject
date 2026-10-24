@@ -86,7 +86,6 @@ NVG.Window {
         targetWidget.settings.system_prompt = systemPromptPreference.value;
         targetWidget.settings.persona = profileNames[shownProfile] || builtInProfile;
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
-        targetWidget.settings.status_reports = !!statusPreference.value;
         targetWidget.settings.external_browser = !!externalBrowserPreference.value;
         targetWidget.settings.sleep_minutes = sleepPreference.value;
         targetWidget.settings.raid_minutes = raidPreference.value;
@@ -106,7 +105,7 @@ NVG.Window {
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
-    readonly property var pixieTabPreferences: [statusPreference, sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
+    readonly property var pixieTabPreferences: [sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -289,7 +288,6 @@ NVG.Window {
         profilePreference.value = shownProfile;
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
-        statusPreference.value = settings.status_reports !== false;
         externalBrowserPreference.value = settings.external_browser === true;
         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
         raidPreference.value = settings.raid_minutes > 0 ? settings.raid_minutes : 25;
@@ -303,7 +301,7 @@ NVG.Window {
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -786,20 +784,6 @@ NVG.Window {
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
-
-                        P.SwitchPreference {
-                            id: statusPreference
-
-                            name: "status_reports"
-                            defaultValue: true
-                            label: qsTr("Navigation Reports")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui warns you about low battery and high CPU or memory usage.")
-                        }
 
                         P.SwitchPreference {
                             id: externalBrowserPreference
