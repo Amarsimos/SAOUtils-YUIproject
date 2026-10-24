@@ -1231,6 +1231,114 @@ function priorityRules(title, allowed, mode) {
 // Small Model Mode: a short reminder added to the user's latest message.
 // It does not spell the tag out: with a repetition penalty, a tag written just before made models
 // misspell it (<<emphy:happy>>).
+// Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for Claude and Gemini.
+var THINKING_BUDGETS = {
+    "low": 1024,
+    "medium": 4096,
+    "high": 16384
+};
+
+// Core Tuning's values as the fields of a request (pure). format: "openai", "anthropic" or "gemini";
+// providerId: the server (top_k and the context window go only to "custom" servers such as Ollama,
+// since OpenAI's own rejects them). t: {maxTokens (0: none), temperature, topP, presencePenalty,
+// frequencyPenalty (each -1: the server's default), topK, seed, contextWindow (each 0: the default),
+// thinking: "off", "default", "low", "medium" or "high"}. Returns the fields to add to the request
+// body; for "gemini", the generationConfig.
+function tuningFields(format, providerId, t) {
+    var fields = {};
+    var thinking = t.thinking || "default";
+    var budget = THINKING_BUDGETS[thinking] || 0;
+    if (format === "anthropic") {
+        fields.max_tokens = t.maxTokens > 0 ? t.maxTokens : 1024;
+        // Thinking on: the budget comes on top of the reply, and Claude takes no sampling settings then.
+        if (budget > 0) {
+            fields.thinking = {
+                "type": "enabled",
+                "budget_tokens": budget
+            };
+            fields.max_tokens += budget;
+            return fields;
+        }
+        // Claude takes a temperature of at most 1.
+        if (t.temperature >= 0)
+            fields.temperature = Math.min(1, t.temperature);
+
+        if (t.topP >= 0)
+            fields.top_p = t.topP;
+
+        if (t.topK > 0)
+            fields.top_k = t.topK;
+
+        return fields;
+    }
+    if (format === "gemini") {
+        if (t.maxTokens > 0)
+            fields.maxOutputTokens = t.maxTokens;
+
+        if (t.temperature >= 0)
+            fields.temperature = t.temperature;
+
+        if (t.topP >= 0)
+            fields.topP = t.topP;
+
+        if (t.topK > 0)
+            fields.topK = t.topK;
+
+        if (t.presencePenalty >= 0)
+            fields.presencePenalty = t.presencePenalty;
+
+        if (t.frequencyPenalty >= 0)
+            fields.frequencyPenalty = t.frequencyPenalty;
+
+        if (t.seed > 0)
+            fields.seed = t.seed;
+
+        if (thinking === "off" || budget > 0)
+            fields.thinkingConfig = {
+                "thinkingBudget": budget
+            };
+
+        return fields;
+    }
+    // OpenAI's own server takes max_completion_tokens (its newer models reject max_tokens); compatible
+    // servers take max_tokens.
+    if (t.maxTokens > 0)
+        fields[providerId === "openai" ? "max_completion_tokens" : "max_tokens"] = t.maxTokens;
+
+    if (thinking === "off")
+        fields.reasoning_effort = "none";
+    else if (budget > 0)
+        fields.reasoning_effort = thinking;
+    if (t.temperature >= 0)
+        fields.temperature = t.temperature;
+
+    if (t.topP >= 0)
+        fields.top_p = t.topP;
+
+    if (t.presencePenalty >= 0)
+        fields.presence_penalty = t.presencePenalty;
+
+    if (t.frequencyPenalty >= 0)
+        fields.frequency_penalty = t.frequencyPenalty;
+
+    if (t.seed > 0)
+        fields.seed = t.seed;
+
+    if (providerId === "custom") {
+        if (t.topK > 0)
+            fields.top_k = t.topK;
+
+        // Ollama: the context window, both where its OpenAI-compatible endpoint and its own API read it.
+        if (t.contextWindow > 0) {
+            fields.num_ctx = t.contextWindow;
+            fields.options = {
+                "num_ctx": t.contextWindow
+            };
+        }
+    }
+    return fields;
+}
+
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;

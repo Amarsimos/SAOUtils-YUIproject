@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Bond** (Yui's Heart): Player Birthday and Meeting Day (the first day by default); Yui celebrates the birthday and each anniversary once that day.
 **Mental Health Counseling** window (Yui's task as MHCP-001), from her menu: Counseling (Login Greeting, Rest Reminders — formerly Mental Health Counseling —, Daily Mood Check, Spontaneous Talk, moved from Cardinal System's Pixie Functions), Mental Record and Bond (moved from Yui's Heart). Boss Raid stays in Pixie Functions for now.
 **Navigation Reports** moved to System Console's Monitor, next to the thresholds and Report Interval; **Close Programs** (Authority) is off by default.
+**Core Tuning**: Top P, Top K, Frequency Penalty, Seed and Context Window (Ollama's num_ctx), each sent only where the server takes it; **Thinking Depth** (Off / Default / Low / Medium / High) replaces the Thinking switch and now reaches Claude and Gemini too (thinking budget).
 
 ### Changed
 

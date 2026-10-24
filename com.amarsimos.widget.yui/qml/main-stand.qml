@@ -73,12 +73,18 @@ T.Widget {
     // Longest reply asked for, in tokens (Cardinal System); 0 (the default) sends no limit, except to
     // Claude, which requires one.
     readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
-    // Cardinal System: thinking on (the server's default) or off (reasoning_effort: none, understood by
-    // e.g. Ollama), and the sampling temperature / presence penalty (stored in tenths; -1 = the
-    // server's default, nothing is sent).
-    readonly property bool thinkingOn: widget.settings.thinking !== false
+    // Cardinal System: Thinking Depth ("default" leaves it to the server; the older Thinking switch
+    // turned off means "off"), and Core Tuning's sampling values: temperature, top p and the penalties
+    // stored in tenths (-1 = the server's default, nothing is sent), top k, seed and the context window
+    // (0 = the default). Sent as Yui.tuningFields makes them.
+    readonly property string thinkingDepth: widget.settings.thinking_depth || (widget.settings.thinking === false ? "off" : "default")
     readonly property real temperature: widget.settings.temperature >= 0 ? widget.settings.temperature / 10 : -1
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
+    readonly property real frequencyPenalty: widget.settings.frequency_penalty >= 0 ? widget.settings.frequency_penalty / 10 : -1
+    readonly property real topP: widget.settings.top_p >= 0 ? widget.settings.top_p / 10 : -1
+    readonly property int topK: widget.settings.top_k > 0 ? widget.settings.top_k : 0
+    readonly property int seed: widget.settings.seed > 0 ? widget.settings.seed : 0
+    readonly property int contextWindow: widget.settings.context_window > 0 ? widget.settings.context_window : 0
     // The next request regenerates a reply (regenerateReply): it asks for a different answer.
     property bool regenerating: false
     // Action Mode (Cardinal System): "tags" (default; local models follow them best) teaches
@@ -601,6 +607,17 @@ T.Widget {
         var regenerate = regenerating;
         regenerating = false;
         var temperatureNow = temperature >= 0 && regenerate ? Math.min(2, temperature + 0.3) : temperature;
+        var tuning = Yui.tuningFields(format, config.provider.id, {
+            "maxTokens": maxTokens,
+            "temperature": temperatureNow,
+            "topP": topP,
+            "topK": topK,
+            "presencePenalty": presencePenalty,
+            "frequencyPenalty": frequencyPenalty,
+            "seed": seed,
+            "contextWindow": contextWindow,
+            "thinking": thinkingDepth
+        });
         if (regenerate && messages.length > 0) {
             messages = messages.slice();
             var last = messages[messages.length - 1];
@@ -815,15 +832,10 @@ T.Widget {
             http.setRequestHeader("anthropic-version", "2023-06-01");
             data = {
                 "model": config.model,
-                "max_tokens": maxTokens > 0 ? maxTokens : 1024,
                 "stream": true,
                 "system": systemPrompt,
                 "messages": messages
             };
-            // Claude takes a temperature of at most 1.
-            if (temperatureNow >= 0)
-                data.temperature = Math.min(1, temperatureNow);
-
         } else {
             http.open("POST", config.endpoint);
             http.setRequestHeader("Authorization", "Bearer " + config.apiKey);
@@ -839,20 +851,6 @@ T.Widget {
                     "content": systemPrompt
                 }].concat(messages)
             };
-            // OpenAI's own server takes max_completion_tokens (its newer models reject max_tokens);
-            // compatible servers take max_tokens.
-            if (maxTokens > 0)
-                data[config.provider.id === "openai" ? "max_completion_tokens" : "max_tokens"] = maxTokens;
-
-            if (!thinkingOn)
-                data.reasoning_effort = "none";
-
-            if (temperatureNow >= 0)
-                data.temperature = temperatureNow;
-
-            if (presencePenalty >= 0)
-                data.presence_penalty = presencePenalty;
-
             if (tools.length > 0)
                 data.tools = tools.map(function(tool) {
                 return {
@@ -862,20 +860,15 @@ T.Widget {
             });
 
         }
+        // Core Tuning (Yui.tuningFields): Gemini's go into generationConfig, the others into the body.
         if (format === "gemini") {
-            var generation = {};
-            if (maxTokens > 0)
-                generation.maxOutputTokens = maxTokens;
+            if (Object.keys(tuning).length > 0)
+                data.generationConfig = tuning;
 
-            if (temperatureNow >= 0)
-                generation.temperature = temperatureNow;
-
-            if (presencePenalty >= 0)
-                generation.presencePenalty = presencePenalty;
-
-            if (Object.keys(generation).length > 0)
-                data.generationConfig = generation;
-
+        } else {
+            Object.keys(tuning).forEach(function(key) {
+                data[key] = tuning[key];
+            });
         }
 
         http.setRequestHeader("Content-Type", "application/json");

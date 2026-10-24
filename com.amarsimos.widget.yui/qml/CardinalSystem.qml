@@ -91,9 +91,14 @@ NVG.Window {
         targetWidget.settings.raid_minutes = raidPreference.value;
         targetWidget.settings.rest_minutes = restPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
-        targetWidget.settings.thinking = !!thinkingPreference.value;
+        targetWidget.settings.thinking_depth = thinkingPreference.ids[thinkingPreference.value] || "default";
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
+        targetWidget.settings.top_p = topPPreference.value;
+        targetWidget.settings.top_k = topKPreference.value;
+        targetWidget.settings.frequency_penalty = frequencyPreference.value;
+        targetWidget.settings.seed = seedPreference.value;
+        targetWidget.settings.context_window = contextPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
@@ -102,7 +107,7 @@ NVG.Window {
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
     // connection (Link) is never reset.
-    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference]
+    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, contextPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
     readonly property var pixieTabPreferences: [sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
@@ -293,15 +298,21 @@ NVG.Window {
         raidPreference.value = settings.raid_minutes > 0 ? settings.raid_minutes : 25;
         restPreference.value = settings.rest_minutes > 0 ? settings.rest_minutes : 5;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
-        thinkingPreference.value = settings.thinking !== false;
+        // The older Thinking switch turned off is the depth "off".
+        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || (settings.thinking === false ? "off" : "default")));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
+        topPPreference.value = settings.top_p !== undefined ? settings.top_p : -1;
+        topKPreference.value = settings.top_k > 0 ? settings.top_k : 0;
+        frequencyPreference.value = settings.frequency_penalty !== undefined ? settings.frequency_penalty : -1;
+        seedPreference.value = settings.seed > 0 ? settings.seed : 0;
+        contextPreference.value = settings.context_window > 0 ? settings.context_window : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === true;
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, contextPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -491,18 +502,21 @@ NVG.Window {
                             text: qsTr("The API key of this server. Each server keeps its own key.")
                         }
 
-                        P.SwitchPreference {
+                        P.SelectPreference {
                             id: thinkingPreference
 
-                            name: "thinking"
-                            defaultValue: true
-                            label: qsTr("Thinking")
+                            readonly property var ids: ["off", "default", "low", "medium", "high"]
+
+                            name: "thinking_depth"
+                            defaultValue: 1
+                            label: qsTr("Thinking Depth")
+                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
                         }
 
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Lets thinking models (e.g. Qwen 3.5 on Ollama) think before answering. Turning it off makes them much faster; it sends reasoning_effort: none, which only some servers understand.")
+                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
                         }
 
                         RowLayout {
@@ -614,6 +628,106 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                        }
+
+                        P.SliderPreference {
+                            id: topPPreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+                            name: "top_p"
+                            defaultValue: -1
+                            label: qsTr("Top P")
+                            from: -1
+                            to: 10
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: topKPreference
+
+                            name: "top_k"
+                            defaultValue: 0
+                            label: qsTr("Top K")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 500
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
+                        }
+
+                        P.SliderPreference {
+                            id: frequencyPreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+                            name: "frequency_penalty"
+                            defaultValue: -1
+                            label: qsTr("Frequency Penalty")
+                            from: -1
+                            to: 20
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: seedPreference
+
+                            name: "seed"
+                            defaultValue: 0
+                            label: qsTr("Seed")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 999999999
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: contextPreference
+
+                            name: "context_window"
+                            defaultValue: 0
+                            label: qsTr("Context Window")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 1048576
+                            stepSize: 1024
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("For Ollama (a custom server): how many tokens the model keeps in mind. Ollama's default is small, so Yui forgets long conversations; 8192 or more helps, using more memory. 0 (the default) leaves it to Ollama. Check with ollama ps.")
                         }
 
                         P.SelectPreference {
