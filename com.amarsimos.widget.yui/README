@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as a chart. After a few low days she cares more (Daily Mood Check in Pixie Functions).
 **Link Start** (Equipment, Interface): a short "Link Start!" ceremony of rainbow rings when the widget starts.
 **Bond** (Yui's Heart): Player Birthday and Meeting Day (the first day by default); Yui celebrates the birthday and each anniversary once that day.
+**Mental Health Counseling** window (Yui's task as MHCP-001), from her menu: Counseling (Login Greeting, Rest Reminders — formerly Mental Health Counseling —, Daily Mood Check, Spontaneous Talk, moved from Cardinal System's Pixie Functions), Mental Record and Bond (moved from Yui's Heart). Boss Raid stays in Pixie Functions for now.
 
 ### Changed
 

@@ -886,7 +886,7 @@ function moodContext(title, recordedToday, recent) {
     return text;
 }
 
-// Bond (Yui's Heart): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of meeting
+// Bond (Mental Health Counseling): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of meeting
 // ("yyyy-MM-dd") are always told as facts; on the day itself (and its anniversary) Yui is also asked
 // to celebrate, once (celebrated is the day last celebrated). today is "yyyy-MM-dd".
 function bondContext(title, birthday, meetingDay, today, celebrated) {

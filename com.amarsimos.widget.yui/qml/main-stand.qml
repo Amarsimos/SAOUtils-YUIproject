@@ -19,6 +19,8 @@ T.Widget {
     property var systemConsoleDialogInstance: null
     property Component yuisHeartDialog: Qt.createComponent("YuisHeart.qml")
     property var yuisHeartDialogInstance: null
+    property Component counselingDialog: Qt.createComponent("MentalHealthCounseling.qml")
+    property var counselingDialogInstance: null
     property Component seedlingDialog: Qt.createComponent("Seedling.qml")
     property var seedlingDialogInstance: null
     // Widgets popped out of the Seedling (SeedlingWidget.qml views), not saved.
@@ -447,7 +449,7 @@ T.Widget {
         return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title);
     }
 
-    // Bond (Yui's Heart): the player's birthday and the day of meeting, always known, celebrated once that day
+    // Bond (Mental Health Counseling): the player's birthday and the day of meeting, always known, celebrated once that day
     // (marked when the reply comes, bond_celebrated).
     function bondExtras(title) {
         var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
@@ -461,7 +463,7 @@ T.Widget {
 
     property string bondPending: ""
 
-    // Mental Record (Daily Mood Check, Pixie Functions): asking about today's mood, and care when the
+    // Mental Record (Daily Mood Check, Mental Health Counseling): asking about today's mood, and care when the
     // last days were low (Yui.moodContext).
     function moodExtras(title) {
         if (!featureEnabled("daily_mood") || !database)
@@ -474,7 +476,7 @@ T.Widget {
         }), recent);
     }
 
-    // Bumped whenever a mood is recorded or deleted (Yui's Heart, Mental Record).
+    // Bumped whenever a mood is recorded or deleted (Mental Health Counseling, Mental Record).
     property int moodRevision: 0
 
     // Records today's mood (a later one the same day replaces it).
@@ -4577,6 +4579,11 @@ T.Widget {
         Action {
             text: qsTr("Yui's Heart") + "..."
             onTriggered: showDialog(widget.yuisHeartDialog, "yuisHeartDialogInstance")
+        }
+
+        Action {
+            text: qsTr("Mental Health Counseling") + "..."
+            onTriggered: showDialog(widget.counselingDialog, "counselingDialogInstance")
         }
 
         // Boss Raid: starts one of the set length, or ends the running one.
