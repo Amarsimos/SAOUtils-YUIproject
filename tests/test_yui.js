@@ -366,4 +366,114 @@ test("settings differ from their defaults", () => {
     assert.strictEqual(Yui.preferenceChanged({ value: font({ family: "Arial" }), defaultValue: font({}) }), true);
 });
 
+test("more system calls", () => {
+    const armament = Yui.systemCall("System Call, Enhance Armament!", "爸爸");
+    assert.strictEqual(armament.effect.aura, true);
+    const recollection = Yui.systemCall("system call release recollection", "爸爸");
+    assert.ok(recollection.effect.burst && recollection.effect.shake);
+    const durability = Yui.systemCall("System Call, Transfer Durability", "爸爸", { cpu: 41.6, gpu: NaN, ram: 70 });
+    assert.ok(durability.reply.includes("CPU 42%") && durability.reply.includes("内存 70%") && !durability.reply.includes("GPU"));
+    assert.ok(!Yui.systemCall("System Call, Transfer Durability", "爸爸").reply.includes("消耗"));
+    assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Release Recollection"));
+});
+
+test("login greeting kinds", () => {
+    const at = (d, h, m) => new Date(2026, 9, d, h, m || 0).getTime();
+    assert.strictEqual(Yui.greetingKind(0, at(24, 9)), "");
+    assert.strictEqual(Yui.greetingKind(at(24, 8, 50), at(24, 9)), "");
+    assert.strictEqual(Yui.greetingKind(at(23, 23), at(24, 8)), "morning");
+    assert.strictEqual(Yui.greetingKind(at(24, 6), at(24, 9)), "back");
+    assert.strictEqual(Yui.greetingKind(at(23, 23), at(24, 14)), "back");
+    assert.strictEqual(Yui.greetingKind(at(20, 9), at(24, 9)), "long");
+});
+
+test("recollection log lines", () => {
+    const created = new Date(2026, 9, 24, 21, 5).getTime();
+    assert.strictEqual(Yui.logLine({ author: "user", message: "你好", created }, "爸爸"), "2026-10-24 21:05  爸爸: 你好");
+    assert.strictEqual(Yui.logLine({ author: "ai", message: "a\nb", created }, "爸爸"), "2026-10-24 21:05  结衣: a\n                   b");
+});
+
+test("Boss Raid focus tag", () => {
+    assert.strictEqual(Yui.parseReply("好的～ <<focus:45>>").focus, 45);
+    assert.strictEqual(Yui.parseReply("好的～ <<focus:45>>").text, "好的～");
+    assert.strictEqual(Yui.parseReply("<<focus:stop>>").focus, 0);
+    assert.strictEqual(Yui.parseReply("<<focus:一会儿>>").focus, -1);
+    assert.strictEqual(Yui.parseReply("<<focus:999>>").focus, 180);
+    assert.strictEqual(Yui.parseReply("没有标签").focus, null);
+});
+
+test("Col Ledger usage", () => {
+    assert.strictEqual(JSON.stringify(Yui.usageOf("openai", { usage: { prompt_tokens: 120, completion_tokens: 30 } })), JSON.stringify({ input: 120, output: 30 }));
+    assert.strictEqual(Yui.usageOf("openai", { choices: [] }), null);
+    let total = Yui.mergeUsage(null, Yui.usageOf("anthropic", { type: "message_start", message: { usage: { input_tokens: 500, output_tokens: 1 } } }));
+    total = Yui.mergeUsage(total, Yui.usageOf("anthropic", { type: "message_delta", usage: { output_tokens: 42 } }));
+    assert.strictEqual(JSON.stringify(total), JSON.stringify({ input: 500, output: 42 }));
+    total = Yui.mergeUsage(null, Yui.usageOf("gemini", { usageMetadata: { promptTokenCount: 80, candidatesTokenCount: 5 } }));
+    total = Yui.mergeUsage(total, Yui.usageOf("gemini", { usageMetadata: { promptTokenCount: 80, candidatesTokenCount: 20 } }));
+    assert.strictEqual(JSON.stringify(total), JSON.stringify({ input: 80, output: 20 }));
+    const oct = new Date(2026, 9, 24).getTime(), nov = new Date(2026, 10, 1).getTime();
+    let ledger = Yui.addToLedger(null, { input: 100, output: 10 }, oct);
+    ledger = Yui.addToLedger(Object.assign(ledger, { warned: true }), { input: 50, output: 5 }, oct);
+    assert.strictEqual(JSON.stringify(ledger), JSON.stringify({ month: "2026-10", input: 150, output: 15, requests: 2, warned: true }));
+    assert.strictEqual(JSON.stringify(Yui.addToLedger(ledger, { input: 1, output: 1 }, nov)), JSON.stringify({ month: "2026-11", input: 1, output: 1, requests: 1, warned: false }));
+});
+
+test("Mental Record mood tag and context", () => {
+    assert.strictEqual(JSON.stringify(Yui.parseReply("太好了！<<mood:4|考试通过了>>").mood), JSON.stringify({ score: 4, note: "考试通过了" }));
+    assert.strictEqual(JSON.stringify(Yui.moodFrom("9")), JSON.stringify({ score: 5, note: "" }));
+    assert.strictEqual(Yui.moodFrom("开心"), null);
+    assert.strictEqual(Yui.parseReply("<<mood:3>>好的").text, "好的");
+    assert.ok(Yui.moodContext("爸爸", false, []).includes("今天还没问过"));
+    assert.ok(Yui.moodContext("爸爸", true, []).includes("已经记下"));
+    const low = [{ day: "2026-10-22", score: 2, note: "" }, { day: "2026-10-23", score: 1, note: "加班" }, { day: "2026-10-24", score: 2, note: "" }];
+    assert.ok(Yui.moodContext("爸爸", true, low).includes("10-23 1/5 加班"));
+    assert.ok(!Yui.moodContext("爸爸", true, low.slice(1)).includes("不太好"));
+});
+
+test("Bond birthday and anniversary", () => {
+    const birthday = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "");
+    assert.ok(birthday.includes("10 月 24 日") && birthday.includes("请在这次回复里"));
+    assert.ok(Yui.bondContext("爸爸", "2000-10-24", "2024-10-24", "2026-10-24", "").includes("2 周年"));
+    const done = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "2026-10-24");
+    assert.ok(done.includes("10 月 24 日") && done.includes("已经祝贺过") && !done.includes("请在这次回复里"));
+    assert.ok(!Yui.bondContext("爸爸", "", "2026-10-24", "2026-10-24", "").includes("周年"));
+    const other = Yui.bondContext("爸爸", "05-01", "2025-03-02", "2026-10-24", "");
+    assert.ok(other.includes("5 月 1 日") && other.includes("2025 年 3 月 2 日") && !other.includes("今天"));
+    assert.strictEqual(Yui.bondContext("爸爸", "生日", "", "2026-10-24", ""), "");
+});
+
+test("Closing programs is left to the confirmation", () => {
+    const text = Yui.featureInstructions("爸爸", "", {}, "tags");
+    assert.ok(text.includes("Taskmgr.exe") && text.includes("不要自己判断危险"));
+});
+
+test("Core Tuning fields per server", () => {
+    const none = { maxTokens: 0, temperature: -1, topP: -1, presencePenalty: -1, frequencyPenalty: -1, topK: 0, seed: 0, thinking: "default" };
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("openai", "deepseek", none)), "{}");
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("gemini", "google", none)), "{}");
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", none)), JSON.stringify({ max_tokens: 1024 }));
+    const all = Object.assign({}, none, { maxTokens: 800, temperature: 0.7, topP: 0.9, presencePenalty: 0.5, frequencyPenalty: 0.3, topK: 40, seed: 7, thinking: "low" });
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("openai", "openai", all)), JSON.stringify({ max_completion_tokens: 800, reasoning_effort: "low", temperature: 0.7, top_p: 0.9, presence_penalty: 0.5, frequency_penalty: 0.3, seed: 7 }));
+    const ollama = Yui.tuningFields("openai", "custom", Object.assign({}, all, { thinking: "off" }));
+    assert.strictEqual(ollama.reasoning_effort, "none");
+    assert.strictEqual(ollama.top_k, 40);
+    assert.ok(!("options" in ollama));
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", all)), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
+    assert.strictEqual(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { temperature: 1.5, thinking: "default" })).temperature, 1);
+    const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off" }));
+    assert.strictEqual(gemini.thinkingConfig.thinkingBudget, 0);
+    assert.strictEqual(gemini.topK, 40);
+});
+
+test("Tags without a value", () => {
+    const reply = Yui.parseReply("最满足了～ ✨\n<<happy>>");
+    assert.strictEqual(reply.text, "最满足了～ ✨");
+    assert.strictEqual(reply.emotion, "happy");
+    const odd = Yui.parseReply("好的<<wave>>");
+    assert.strictEqual(odd.text, "好的");
+    assert.strictEqual(odd.unknown.length, 1);
+    assert.strictEqual(Yui.displayText("嗯<<shy>>"), "嗯");
+    assert.strictEqual(Yui.parseReply("读了《三体》").text, "读了《三体》");
+});
+
 console.log(passed + " tests passed");

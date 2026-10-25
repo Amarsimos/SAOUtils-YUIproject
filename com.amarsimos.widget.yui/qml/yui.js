@@ -76,14 +76,20 @@ function loadStep(state, value, pair) {
 
 // Control tags the AI may append to a reply:
 //   <<emotion:happy>>  <<memory:Papa likes cats>>  <<open:https://...>>  <<search:words>>
-//   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>
+//   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>  <<focus:25>> (Boss Raid)
+//   <<mood:4|passed the exam>> (Mental Record)
 // Any tag-like <<name:value>>, also misspelled ones (<<emphy:happy>>) and full-width brackets.
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
 }
 
+// A tag without a value, such as <<happy>> for <<emotion:happy>> (models sometimes shorten them).
+function bareTagPattern() {
+    return /(?:<<|＜＜|《《)\s*([^<>＜＞《》:：\n]{1,40}?)\s*(?:>>|＞＞|》》)/g;
+}
+
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -489,7 +495,7 @@ var TOOLS = [{
     "kind": "kill",
     "allow": "kill",
     "arg": "process",
-    "description": "关闭电脑上正在运行的程序。只有当用户明确要求关闭某个程序时才使用；执行前会先请用户确认，系统关键进程不能关闭。",
+    "description": "关闭电脑上正在运行的程序。只有当用户明确要求关闭某个程序时才使用；执行前会先请用户确认，Windows 核心进程由程序自动拦下，所以用户要求关闭任何程序（包括任务管理器 Taskmgr.exe）都直接调用，不要自己判断危险而拒绝。",
     "parameters": {
         "type": "object",
         "properties": {
@@ -625,6 +631,103 @@ function toolCallToAction(name, args, userProtected, options) {
     };
 }
 
+// Col Ledger: the tokens a streamed event reports, {input, output} (either may be missing), or null.
+// OpenAI-compatible: the last event's usage (with stream_options.include_usage); Claude: message_start
+// (input) and message_delta (output); Gemini: usageMetadata in every event, adding up.
+function usageOf(format, event) {
+    var usage = null;
+    if (format === "gemini" && event.usageMetadata)
+        usage = {
+        "input": event.usageMetadata.promptTokenCount,
+        "output": event.usageMetadata.candidatesTokenCount
+    };
+    else if (format === "anthropic" && event.type === "message_start" && event.message && event.message.usage)
+        usage = {
+        "input": event.message.usage.input_tokens,
+        "output": event.message.usage.output_tokens
+    };
+    else if (format === "anthropic" && event.type === "message_delta" && event.usage)
+        usage = {
+        "output": event.usage.output_tokens
+    };
+    else if (format === "openai" && event.usage)
+        usage = {
+        "input": event.usage.prompt_tokens,
+        "output": event.usage.completion_tokens
+    };
+    return usage;
+}
+
+// The usage of a whole reply from its events' (the larger count of each kind wins: the reports add up).
+function mergeUsage(total, usage) {
+    total = total || {
+        "input": 0,
+        "output": 0
+    };
+    if (usage) {
+        if (usage.input > total.input)
+            total.input = usage.input;
+
+        if (usage.output > total.output)
+            total.output = usage.output;
+
+    }
+    return total;
+}
+
+// The ledger after a reply: {month: "2026-10", input, output, requests, warned}; a new month starts
+// from zero.
+function addToLedger(ledger, usage, now) {
+    var d = new Date(now);
+    var month = d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1);
+    if (!ledger || ledger.month !== month)
+        ledger = {
+        "month": month,
+        "input": 0,
+        "output": 0,
+        "requests": 0,
+        "warned": false
+    };
+
+    return {
+        "month": month,
+        "input": ledger.input + (usage.input || 0),
+        "output": ledger.output + (usage.output || 0),
+        "requests": ledger.requests + 1,
+        "warned": !!ledger.warned
+    };
+}
+
+// One line of the recollection log as text: "2026-10-24 21:05  爸爸: …" (author "user" is the user,
+// shown by title, anything else Yui). Line breaks in the message are kept, indented.
+function logLine(row, title) {
+    var d = new Date(row.created);
+    var pad = function(n) {
+        return (n < 10 ? "0" : "") + n;
+    };
+    var when = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    var who = row.author === "user" ? title : "结衣";
+    return when + "  " + who + ": " + String(row.message || "").replace(/\r?\n/g, "\n                   ");
+}
+
+// The greeting when the user comes back (Login Greeting): "long" after 3 days or more away, "morning"
+// for the first time on a new day in the morning (5–11 h), "back" after half an hour, else "".
+function greetingKind(lastActive, now) {
+    if (!lastActive || now - lastActive < 30 * 60000)
+        return "";
+
+    if (now - lastActive >= 3 * 86400000)
+        return "long";
+
+    var last = new Date(lastActive);
+    var today = new Date(now);
+    var newDay = last.getFullYear() !== today.getFullYear() || last.getMonth() !== today.getMonth() || last.getDate() !== today.getDate();
+    if (newDay && today.getHours() >= 5 && today.getHours() < 11)
+        return "morning";
+
+    return "back";
+}
+
 // A font's size in px (a font picked in a dialog may give it in points).
 function fontPixels(font) {
     return font.pixelSize > 0 ? font.pixelSize : Math.round(font.pointSize * 4 / 3);
@@ -679,7 +782,11 @@ function parseReply(text, userProtected, options) {
         // The type of an action tag dropped because the user forbade it ("" when none).
         "disabled": "",
         // Tags that were not understood (misspelled, full-width brackets), dropped from the text.
-        "unknown": []
+        "unknown": [],
+        // <<focus:>> (Boss Raid): minutes to focus (1–180; -1 for the default), 0 to end it, null when none.
+        "focus": null,
+        // <<mood:>> (Mental Record): {score 1–5, note}, null when none.
+        "mood": null
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -705,6 +812,10 @@ function parseReply(text, userProtected, options) {
             result.cores.push(value);
         } else if (kind === "forget") {
             result.forgets.push(value);
+        } else if (kind === "focus") {
+            result.focus = focusMinutes(value);
+        } else if (kind === "mood") {
+            result.mood = moodFrom(value) || result.mood;
         } else if (ACTION_KINDS[kind]) {
             var made = actionFrom(kind, value, userProtected, options);
             if (made.blocked)
@@ -723,8 +834,102 @@ function parseReply(text, userProtected, options) {
 
         result.unknown.push(all);
         return "";
+    }).replace(bareTagPattern(), function(all, word) {
+        var emotion = String(word).trim().toLowerCase();
+        if (!result.emotion && EMOTIONS.indexOf(emotion) !== -1)
+            result.emotion = emotion;
+        else
+            result.unknown.push(all);
+        return "";
     }).replace(/[ \t]+\n/g, "\n").trim();
     return result;
+}
+
+// The minutes of a <<focus:>> tag: "stop" (or 0) ends the raid (0), a number of minutes is kept within
+// 1–180, anything else is the default (-1).
+function focusMinutes(value) {
+    var text = String(value).trim().toLowerCase();
+    if (/^(stop|end|cancel|结束|停止|取消)$/.test(text))
+        return 0;
+
+    var minutes = parseInt(text, 10);
+    if (isNaN(minutes))
+        return -1;
+
+    return minutes <= 0 ? 0 : Math.min(180, minutes);
+}
+
+// A <<mood:>> tag's value: "4|passed the exam" (or "4" alone) -> {score, note}; the score is kept
+// within 1–5; null without a score.
+function moodFrom(value) {
+    var parts = String(value).split(/[|｜]/);
+    var score = parseInt(parts[0], 10);
+    if (isNaN(score))
+        return null;
+
+    return {
+        "score": Math.max(1, Math.min(5, score)),
+        "note": parts.slice(1).join("|").trim()
+    };
+}
+
+// Mental Record (Daily Mood Check), added to the system prompt: when today's mood is not recorded yet,
+// Yui is asked to ask about it once at a fitting moment and record it; when the last recorded days
+// were low (an average of 2 or less over the last three), to care more. recent: [{day, score, note}],
+// oldest first; recordedToday: whether today's is among them.
+function moodContext(title, recordedToday, recent) {
+    var text = "";
+    if (!recordedToday)
+        text += "\n\n（心情记录：今天还没问过" + title + "的心情。在自然的时候（比如问候或聊到近况时）问一句今天心情怎么样，不要每句都问；" + title + "说了之后，在回复最后用 <<mood:1到5的分数|一句话概括>> 记下来（5 最好，1 最差）。）";
+    else
+        text += "\n\n（心情记录：今天的心情已经记下了。" + title + "的心情有明显变化时，可以用 <<mood:分数|一句话>> 更新。）";
+
+    var last = (recent || []).slice(-3);
+    if (last.length === 3) {
+        var average = last.reduce(function(sum, entry) {
+            return sum + entry.score;
+        }, 0) / last.length;
+        if (average <= 2)
+            text += "\n（" + title + "最近几天的心情都不太好（" + last.map(function(entry) {
+                return entry.day.slice(5) + " " + entry.score + "/5" + (entry.note ? " " + entry.note : "");
+            }).join("；") + "）。请多关心、多倾听，温柔地陪着，不要说教。）";
+
+    }
+    return text;
+}
+
+// Bond (Mental Health Counseling): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of meeting
+// ("yyyy-MM-dd") are always told as facts; on the day itself (and its anniversary) Yui is also asked
+// to celebrate, once (celebrated is the day last celebrated). today is "yyyy-MM-dd".
+function bondContext(title, birthday, meetingDay, today, celebrated) {
+    var facts = [];
+    var days = [];
+    var monthDay = today.slice(5);
+    var birth = String(birthday || "").trim();
+    if (/^(\d{4}-)?\d{2}-\d{2}$/.test(birth)) {
+        facts.push(title + "的生日是 " + Number(birth.slice(-5, -3)) + " 月 " + Number(birth.slice(-2)) + " 日");
+        if (birth.slice(-5) === monthDay)
+            days.push("今天就是" + title + "的生日");
+
+    }
+    var meeting = String(meetingDay || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting)) {
+        var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
+        facts.push("结衣和" + title + "相遇的日子是 " + Number(meeting.slice(0, 4)) + " 年 " + Number(meeting.slice(5, 7)) + " 月 " + Number(meeting.slice(8)) + " 日");
+        if (years > 0 && meeting.slice(5) === monthDay)
+            days.push("今天是相遇 " + years + " 周年的纪念日");
+
+    }
+    if (facts.length === 0)
+        return "";
+
+    var text = "\n\n（羁绊：" + facts.join("；") + "。被问到时以此为准。";
+    if (days.length > 0 && celebrated !== today)
+        text += days.join("，也") + "，请在这次回复里用结衣的方式真诚地祝贺（只在今天第一次说话时提一次）。";
+    else if (days.length > 0)
+        text += days.join("，也") + "，今天已经祝贺过了，不必再刻意重复。";
+
+    return text + "）";
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
@@ -735,7 +940,7 @@ function displayText(partial) {
     if (cut !== -1 && text.indexOf(">>", cut) === -1)
         text = text.substring(0, cut);
 
-    return text.replace(tagPattern(), "").replace(anyTagPattern(), "").trim();
+    return text.replace(tagPattern(), "").replace(anyTagPattern(), "").replace(bareTagPattern(), "").trim();
 }
 
 // Keywords of a text for recall and dedupe: Latin words and numbers whole, Chinese / Japanese runs
@@ -946,9 +1151,9 @@ function featureInstructions(title, core, allowed, mode) {
         desktop.push("在电脑里找文件用 <<find:文件名或关键词>>");
 
     if (allowed.kill !== false)
-        desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe>>（系统关键进程不能关闭）");
+        desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe，任务管理器是 Taskmgr.exe>>。执行前程序会先请" + title + "确认，Windows 核心进程也会由程序自动拦下，所以" + title + "要求关闭什么就照做，不要自己判断危险而拒绝或说教");
 
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。", "- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。"];
     if (allowed.web !== false)
         lines.splice(5, 0, "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。");
 
@@ -1038,6 +1243,107 @@ function priorityRules(title, allowed, mode) {
 // Small Model Mode: a short reminder added to the user's latest message.
 // It does not spell the tag out: with a repetition penalty, a tag written just before made models
 // misspell it (<<emphy:happy>>).
+// Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for Claude and Gemini.
+var THINKING_BUDGETS = {
+    "low": 1024,
+    "medium": 4096,
+    "high": 16384
+};
+
+// Core Tuning's values as the fields of a request (pure). format: "openai", "anthropic" or "gemini";
+// providerId: the server (top_k goes only to "custom" servers such as Ollama,
+// since OpenAI's own rejects them). t: {maxTokens (0: none), temperature, topP, presencePenalty,
+// frequencyPenalty (each -1: the server's default), topK, seed (each 0: the default),
+// thinking: "off", "default", "low", "medium" or "high"}. Returns the fields to add to the request
+// body; for "gemini", the generationConfig.
+function tuningFields(format, providerId, t) {
+    var fields = {};
+    var thinking = t.thinking || "default";
+    var budget = THINKING_BUDGETS[thinking] || 0;
+    if (format === "anthropic") {
+        fields.max_tokens = t.maxTokens > 0 ? t.maxTokens : 1024;
+        // Thinking on: the budget comes on top of the reply, and Claude takes no sampling settings then.
+        if (budget > 0) {
+            fields.thinking = {
+                "type": "enabled",
+                "budget_tokens": budget
+            };
+            fields.max_tokens += budget;
+            return fields;
+        }
+        // Claude takes a temperature of at most 1.
+        if (t.temperature >= 0)
+            fields.temperature = Math.min(1, t.temperature);
+
+        if (t.topP >= 0)
+            fields.top_p = t.topP;
+
+        if (t.topK > 0)
+            fields.top_k = t.topK;
+
+        return fields;
+    }
+    if (format === "gemini") {
+        if (t.maxTokens > 0)
+            fields.maxOutputTokens = t.maxTokens;
+
+        if (t.temperature >= 0)
+            fields.temperature = t.temperature;
+
+        if (t.topP >= 0)
+            fields.topP = t.topP;
+
+        if (t.topK > 0)
+            fields.topK = t.topK;
+
+        if (t.presencePenalty >= 0)
+            fields.presencePenalty = t.presencePenalty;
+
+        if (t.frequencyPenalty >= 0)
+            fields.frequencyPenalty = t.frequencyPenalty;
+
+        if (t.seed > 0)
+            fields.seed = t.seed;
+
+        if (thinking === "off" || budget > 0)
+            fields.thinkingConfig = {
+                "thinkingBudget": budget
+            };
+
+        return fields;
+    }
+    // OpenAI's own server takes max_completion_tokens (its newer models reject max_tokens); compatible
+    // servers take max_tokens.
+    if (t.maxTokens > 0)
+        fields[providerId === "openai" ? "max_completion_tokens" : "max_tokens"] = t.maxTokens;
+
+    if (thinking === "off")
+        fields.reasoning_effort = "none";
+    else if (budget > 0)
+        fields.reasoning_effort = thinking;
+    if (t.temperature >= 0)
+        fields.temperature = t.temperature;
+
+    if (t.topP >= 0)
+        fields.top_p = t.topP;
+
+    if (t.presencePenalty >= 0)
+        fields.presence_penalty = t.presencePenalty;
+
+    if (t.frequencyPenalty >= 0)
+        fields.frequency_penalty = t.frequencyPenalty;
+
+    if (t.seed > 0)
+        fields.seed = t.seed;
+
+    if (providerId === "custom") {
+        if (t.topK > 0)
+            fields.top_k = t.topK;
+
+    }
+    return fields;
+}
+
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
@@ -1087,9 +1393,11 @@ var ELEMENTS = {
     "umbra": ["暗素", "#9575CD"]
 };
 
-// The "System Call" easter egg. Returns null when the text is not a system call, otherwise
-// { reply, effect } where effect is { color, burst } or null.
-function systemCall(text, title) {
+// The "System Call" easter egg (Sacred Arts of Alicization). Returns null when the text is not a
+// system call, otherwise { reply, effect } where effect is { color, burst, aura, shake } or null:
+// burst a burst instead of a floating element, aura a glow around Yui, shake Yui shaking.
+// loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
+function systemCall(text, title, loads) {
     var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(String(text));
     if (!match)
         return null;
@@ -1103,7 +1411,7 @@ function systemCall(text, title) {
 
     if (/inspect\s+entire\s+command\s+list/.test(command))
         return {
-            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n格式：System Call, Generate Luminous Element",
+            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n格式：System Call, Generate Luminous Element",
             "effect": null
         };
 
@@ -1126,6 +1434,46 @@ function systemCall(text, title) {
                 "burst": true
             }
         };
+
+    // Incarnation of the armament (武装完全支配术): a golden element and a glow around Yui.
+    if (/^enhance\s+armament/.test(command))
+        return {
+            "reply": "Enhance Armament——！✧ 武装完全支配术，发动！结衣感觉全身都充满了力量～ (ง •̀_•́)ง",
+            "effect": {
+                "color": "#FFD54F",
+                "burst": false,
+                "aura": true
+            }
+        };
+
+    // Release Recollection (记忆解放术): a violet burst, and Yui shakes with it.
+    if (/^release\s+recollection/.test(command))
+        return {
+            "reply": "Release Recollection——！！✧✧ 记忆解放术！呜哇，好、好强的力量……" + title + "，结衣快要站不稳了啦 (>_<)",
+            "effect": {
+                "color": "#B388FF",
+                "burst": true,
+                "shake": true
+            }
+        };
+
+    // Transfer Durability (天命转移): Yui reports the "durability" of the computer, its loads.
+    if (/^transfer\s+durability/.test(command)) {
+        var parts = [];
+        [["cpu", "CPU"], ["gpu", "GPU"], ["ram", "内存"]].forEach(function(metric) {
+            var value = loads && loads[metric[0]];
+            if (typeof value === "number" && isFinite(value))
+                parts.push(metric[1] + " " + Math.round(value) + "%");
+
+        });
+        return {
+            "reply": "天命转移——！✧ " + (parts.length > 0 ? "这台电脑的天命消耗：" + parts.join("、") + "。" : "") + "结衣把天命分给" + title + "一点点，要好好休息哦～ (｡･ω･｡)",
+            "effect": {
+                "color": "#69F0AE",
+                "burst": false
+            }
+        };
+    }
 
     return {
         "reply": "警告！无法识别的系统指令……" + title + "，是不是念错咒语了？试试 System Call, Inspect Entire Command List 吧 (・_・;)",

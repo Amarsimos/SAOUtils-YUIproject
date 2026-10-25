@@ -86,16 +86,18 @@ NVG.Window {
         targetWidget.settings.system_prompt = systemPromptPreference.value;
         targetWidget.settings.persona = profileNames[shownProfile] || builtInProfile;
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
-        targetWidget.settings.greet_on_start = !!greetPreference.value;
-        targetWidget.settings.proactive_care = !!carePreference.value;
-        targetWidget.settings.status_reports = !!statusPreference.value;
         targetWidget.settings.external_browser = !!externalBrowserPreference.value;
         targetWidget.settings.sleep_minutes = sleepPreference.value;
-        targetWidget.settings.idle_chat_minutes = idleChatPreference.value;
+        targetWidget.settings.raid_minutes = raidPreference.value;
+        targetWidget.settings.rest_minutes = restPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
-        targetWidget.settings.thinking = !!thinkingPreference.value;
+        targetWidget.settings.thinking_depth = thinkingPreference.ids[thinkingPreference.value] || "default";
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
+        targetWidget.settings.top_p = topPPreference.value;
+        targetWidget.settings.top_k = topKPreference.value;
+        targetWidget.settings.frequency_penalty = frequencyPreference.value;
+        targetWidget.settings.seed = seedPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
@@ -104,10 +106,10 @@ NVG.Window {
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
     // connection (Link) is never reset.
-    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference]
+    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
-    readonly property var pixieTabPreferences: [greetPreference, carePreference, statusPreference, sleepPreference, idleChatPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
+    readonly property var pixieTabPreferences: [sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -290,22 +292,25 @@ NVG.Window {
         profilePreference.value = shownProfile;
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
-        greetPreference.value = settings.greet_on_start !== false;
-        carePreference.value = settings.proactive_care !== false;
-        statusPreference.value = settings.status_reports !== false;
         externalBrowserPreference.value = settings.external_browser === true;
         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
-        idleChatPreference.value = settings.idle_chat_minutes !== undefined ? settings.idle_chat_minutes : 15;
+        raidPreference.value = settings.raid_minutes > 0 ? settings.raid_minutes : 25;
+        restPreference.value = settings.rest_minutes > 0 ? settings.rest_minutes : 5;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
-        thinkingPreference.value = settings.thinking !== false;
+        // The older Thinking switch turned off is the depth "off".
+        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || (settings.thinking === false ? "off" : "default")));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
+        topPPreference.value = settings.top_p !== undefined ? settings.top_p : -1;
+        topKPreference.value = settings.top_k > 0 ? settings.top_k : 0;
+        frequencyPreference.value = settings.frequency_penalty !== undefined ? settings.frequency_penalty : -1;
+        seedPreference.value = settings.seed > 0 ? settings.seed : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === true;
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, greetPreference, carePreference, statusPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, idleChatPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -495,18 +500,21 @@ NVG.Window {
                             text: qsTr("The API key of this server. Each server keeps its own key.")
                         }
 
-                        P.SwitchPreference {
+                        P.SelectPreference {
                             id: thinkingPreference
 
-                            name: "thinking"
-                            defaultValue: true
-                            label: qsTr("Thinking")
+                            readonly property var ids: ["off", "default", "low", "medium", "high"]
+
+                            name: "thinking_depth"
+                            defaultValue: 1
+                            label: qsTr("Thinking Depth")
+                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
                         }
 
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Lets thinking models (e.g. Qwen 3.5 on Ollama) think before answering. Turning it off makes them much faster; it sends reasoning_effort: none, which only some servers understand.")
+                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
                         }
 
                         RowLayout {
@@ -618,6 +626,86 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                        }
+
+                        P.SliderPreference {
+                            id: topPPreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+                            name: "top_p"
+                            defaultValue: -1
+                            label: qsTr("Top P")
+                            from: -1
+                            to: 10
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: topKPreference
+
+                            name: "top_k"
+                            defaultValue: 0
+                            label: qsTr("Top K")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 500
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
+                        }
+
+                        P.SliderPreference {
+                            id: frequencyPreference
+
+                            // Updates (and shows its value) while being dragged.
+                            live: true
+                            name: "frequency_penalty"
+                            defaultValue: -1
+                            label: qsTr("Frequency Penalty")
+                            from: -1
+                            to: 20
+                            stepSize: 1
+                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: seedPreference
+
+                            name: "seed"
+                            defaultValue: 0
+                            label: qsTr("Seed")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 999999999
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
                         }
 
                         P.SelectPreference {
@@ -790,48 +878,6 @@ NVG.Window {
                         spacing: 10
 
                         P.SwitchPreference {
-                            id: greetPreference
-
-                            name: "greet_on_start"
-                            defaultValue: true
-                            label: qsTr("Login Greeting")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui welcomes you back when you return after a while.")
-                        }
-
-                        P.SwitchPreference {
-                            id: carePreference
-
-                            name: "proactive_care"
-                            defaultValue: true
-                            label: qsTr("Mental Health Counseling")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
-                        }
-
-                        P.SwitchPreference {
-                            id: statusPreference
-
-                            name: "status_reports"
-                            defaultValue: true
-                            label: qsTr("Navigation Reports")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui warns you about low battery and high CPU or memory usage.")
-                        }
-
-                        P.SwitchPreference {
                             id: externalBrowserPreference
 
                             visible: targetWidget.settingsAdvanced
@@ -867,24 +913,36 @@ NVG.Window {
                             text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
                         }
 
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
                         P.SpinPreference {
-                            id: idleChatPreference
+                            id: raidPreference
 
-                            name: "idle_chat_minutes"
-                            defaultValue: 15
-                            label: qsTr("Spontaneous Talk")
+                            name: "raid_minutes"
+                            defaultValue: 25
+                            label: qsTr("Raid Duration")
                             display: P.TextFieldPreference.ExpandLabel
                             editable: true
-                            from: 0
-                            to: 1440
+                            from: 5
+                            to: 180
+                            stepSize: 5
+                        }
+
+                        P.SpinPreference {
+                            id: restPreference
+
+                            name: "rest_minutes"
+                            defaultValue: 5
+                            label: qsTr("Rest Duration")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 1
+                            to: 60
                             stepSize: 1
                         }
 
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.")
+                            text: qsTr("Boss Raid: focus time with Yui, in minutes, then a rest. Start it from her menu or ask her (\"stay with me for 25 minutes\"); meanwhile the crystal turns violet and she does not speak up by herself.")
                         }
 
                         P.SelectPreference {

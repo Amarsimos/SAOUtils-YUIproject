@@ -105,6 +105,11 @@ NVG.Window {
                 "defaultValue": true
             },
             {
+                "key": "link_start",
+                "preference": linkStartPreference,
+                "defaultValue": true
+            },
+            {
                 "key": "sound_interface",
                 "preference": interfaceSoundsPreference,
                 "defaultValue": true
@@ -165,7 +170,7 @@ NVG.Window {
     // The settings of each tab, for its Reset This Tab button.
     readonly property var avatarTabPreferences: [avatarPreference, fieldPreference, standbyImagePreference, happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
     readonly property var formsTabPreferences: [formPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
-    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
+    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference, linkStartPreference]
 
     // True while values are put into the preferences (not changes by the user).
     property bool loading: true
@@ -551,6 +556,20 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The sounds of the chat panel opening and closing.")
+                        }
+
+                        P.SwitchPreference {
+                            id: linkStartPreference
+
+                            name: "link_start"
+                            label: qsTr("Link Start")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When SAO Utils starts, Yui appears with a short \"Link Start!\" ceremony.")
                         }
                     }
 

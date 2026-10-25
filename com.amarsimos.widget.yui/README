@@ -20,6 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MHCP Profile (Cardinal System, Personality): keep your own personalities (Save As…, Rename…,
   Delete) and switch between them and the built-in MHCP001. An edited personality becomes the
   profile "Custom".
+- More System Call spells: Enhance Armament (Yui glows), Release Recollection (a burst that shakes
+  her), Transfer Durability (she reports the computer's loads).
+- Login Greeting: good morning on the first morning of a day, and long time no see after three days
+  or more away.
+- Recollection Log (Yui's Heart, Local Memory): search it as you type, and export it as a text file.
+- Navigation Reports also warn about a nearly full system drive (System Console: Storage Capacity)
+  and a lost network (Network Link), and tell you when it is back.
+- Boss Raid: focus time with Yui (25 minutes by default, then a 5-minute rest). Start it from her
+  menu or ask her; meanwhile the crystal turns violet and she does not speak up by herself.
+- Col Ledger (System Console, Monitor): this month's tokens as the servers report them, with an
+  optional Monthly Budget (Advanced) that Yui warns about once a month.
+- Mental Record (Yui's Heart): once a day Yui asks how you feel and records it; the last 30 days
+  as a chart. After a few low days she cares more (Daily Mood Check in Pixie Functions).
+**Link Start** (Equipment, Interface): a short "Link Start!" ceremony of rainbow rings when the widget starts.
+**Bond** (Yui's Heart): Player Birthday and Meeting Day (the first day by default); Yui celebrates the birthday and each anniversary once that day.
+**Mental Health Counseling** window (Yui's task as MHCP-001), from her menu: Counseling (Login Greeting, Rest Reminders — formerly Mental Health Counseling —, Daily Mood Check, Spontaneous Talk, moved from Cardinal System's Pixie Functions), Mental Record and Bond (moved from Yui's Heart). Boss Raid stays in Pixie Functions for now.
+**Navigation Reports** moved to System Console's Monitor, next to the thresholds and Report Interval; **Close Programs** (Authority) is off by default.
+**Core Tuning**: Top P, Top K, Frequency Penalty and Seed, each sent only where the server takes it; **Thinking Depth** (Off / Default / Low / Medium / High) replaces the Thinking switch and now reaches Claude and Gemini too (thinking budget).
+Tags without a value (<<happy>>) are no longer shown; an expression name counts as the expression.
 
 ### Changed
 
