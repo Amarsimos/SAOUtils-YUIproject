@@ -8,6 +8,7 @@ import QtQuick.Shapes 1.12
 import QtGraphicalEffects 1.0
 import QtQuick.LocalStorage 2.12
 import "yui.js" as Yui
+import "link" 1.0 as Link
 
 T.Widget {
     id: widget
@@ -2703,6 +2704,75 @@ T.Widget {
 
     }
 
+    // The SAO Utils action (YuiAction.qml): opens the chat (sending text, if any), lets Yui speak up,
+    // starts or ends a Boss Raid, or opens one of her windows. False when the command is unknown.
+    function runCommand(command, text) {
+        diag("action: " + command);
+        var windows = {
+            "cardinal": [cardinalSystemDialog, "cardinalSystemDialogInstance"],
+            "equipment": [equipmentDialog, "equipmentDialogInstance"],
+            "heart": [yuisHeartDialog, "yuisHeartDialogInstance"],
+            "counseling": [counselingDialog, "counselingDialogInstance"],
+            "console": [systemConsoleDialog, "systemConsoleDialogInstance"]
+        };
+        if (windows[command]) {
+            showDialog(windows[command][0], windows[command][1]);
+        } else if (command === "chat") {
+            if (!showChat)
+                openView();
+
+            if (text && text.trim())
+                Qt.callLater(sendMessage, text);
+
+        } else if (command === "speak") {
+            idleChat();
+        } else if (command === "raid") {
+            if (raidActive || resting)
+                stopRaid();
+            else
+                startRaid(raidMinutes, true);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one.
+    function linkValue(name) {
+        if (name === "companion_days") {
+            var met = Date.parse(widget.settings.meeting_day || "");
+            return {
+                "current": isNaN(met) ? 0 : Math.max(0, Math.floor((Date.now() - met) / 86400000)) + 1
+            };
+        }
+        if (name === "mood") {
+            var today = moodsSince(1);
+            return {
+                "current": today.length > 0 ? today[0].score : 0
+            };
+        }
+        if (name === "col_ledger") {
+            var ledger = Yui.addToLedger(widget.settings.col_ledger, {}, Date.now());
+            return {
+                "current": Math.round((ledger.input + ledger.output) / 1000),
+                "maximum": widget.settings.col_budget || 0
+            };
+        }
+        if (name === "boss_raid")
+            return {
+                "current": raidActive ? Math.max(0, Math.ceil((raidEnd - Date.now()) / 60000)) : 0,
+                "maximum": raidActive ? raidMinutes : 0
+            };
+
+        if (name === "heart_core")
+            return {
+                "current": Yui.coreMemories(heartCache).length,
+                "maximum": heartCoreCapacity
+            };
+
+        return null;
+    }
+
     // Starts a Boss Raid of minutes; fromMenu: say it (when Yui starts it from a reply, she says it).
     function startRaid(minutes, fromMenu) {
         raidEnd = Date.now() + minutes * 60000;
@@ -3190,6 +3260,7 @@ T.Widget {
     implicitWidth: 60
     implicitHeight: 400
     visible: true
+    Component.onDestruction: Link.Server.unregister(widget)
     Component.onCompleted: {
         if (Yui.migrateSeedlingKeys(widget.settings))
             console.log("migrated: lab_* settings renamed to seedling_*");
@@ -3210,6 +3281,8 @@ T.Widget {
             });
             console.log("repaired: Seedling editor text moved out of seedling_code");
         }
+        // The SAO Utils action and data (YuiAction.qml, YuiData.qml) reach this Yui through Link.Server.
+        Link.Server.register(widget);
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;
         widget.settings.initialized = true;

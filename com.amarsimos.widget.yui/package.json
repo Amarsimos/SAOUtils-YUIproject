@@ -39,6 +39,22 @@
             "preview": "Presets/widget-yui.png",
             "entry": "qml/main-stand.qml"
         }, {
+            "location": "/action",
+            "catalog": "action",
+            "title": {
+                "en": "MHCP-YUI",
+                "zh": "MHCP-YUI 结衣"
+            },
+            "entry": "qml/YuiAction.qml"
+        }, {
+            "location": "/data",
+            "catalog": "data",
+            "title": {
+                "en": "MHCP-YUI",
+                "zh": "MHCP-YUI 结衣"
+            },
+            "entry": "qml/YuiData.qml"
+        }, {
             "location": "/preset/yui-pixie",
             "catalog": "preset/widget",
             "title": {

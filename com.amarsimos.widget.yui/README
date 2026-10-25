@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Navigation Reports** moved to System Console's Monitor, next to the thresholds and Report Interval; **Close Programs** (Authority) is off by default.
 **Core Tuning**: Top P, Top K, Frequency Penalty and Seed, each sent only where the server takes it; **Thinking Depth** (Off / Default / Low / Medium / High) replaces the Thinking switch and now reaches Claude and Gemini too (thinking budget).
 Tags without a value (<<happy>>) are no longer shown; an expression name counts as the expression.
+**SAO Utils action and data**: MHCP-YUI can be bound in the launcher, menus, other widgets' buttons and shortcuts (Open Chat with an optional message, Spontaneous Talk, Start / End Boss Raid, open each window), and her values (Companion Days, Today's Mood, Col Ledger, Boss Raid minutes left, Heart Core) can be shown by HP bars and HUD widgets.
 
 ### Changed
 
