@@ -448,22 +448,32 @@ test("Closing programs is left to the confirmation", () => {
 });
 
 test("Core Tuning fields per server", () => {
-    const none = { maxTokens: 0, temperature: -1, topP: -1, presencePenalty: -1, frequencyPenalty: -1, topK: 0, seed: 0, contextWindow: 0, thinking: "default" };
+    const none = { maxTokens: 0, temperature: -1, topP: -1, presencePenalty: -1, frequencyPenalty: -1, topK: 0, seed: 0, thinking: "default" };
     assert.strictEqual(JSON.stringify(Yui.tuningFields("openai", "deepseek", none)), "{}");
     assert.strictEqual(JSON.stringify(Yui.tuningFields("gemini", "google", none)), "{}");
     assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", none)), JSON.stringify({ max_tokens: 1024 }));
-    const all = Object.assign({}, none, { maxTokens: 800, temperature: 0.7, topP: 0.9, presencePenalty: 0.5, frequencyPenalty: 0.3, topK: 40, seed: 7, contextWindow: 8192, thinking: "low" });
+    const all = Object.assign({}, none, { maxTokens: 800, temperature: 0.7, topP: 0.9, presencePenalty: 0.5, frequencyPenalty: 0.3, topK: 40, seed: 7, thinking: "low" });
     assert.strictEqual(JSON.stringify(Yui.tuningFields("openai", "openai", all)), JSON.stringify({ max_completion_tokens: 800, reasoning_effort: "low", temperature: 0.7, top_p: 0.9, presence_penalty: 0.5, frequency_penalty: 0.3, seed: 7 }));
     const ollama = Yui.tuningFields("openai", "custom", Object.assign({}, all, { thinking: "off" }));
     assert.strictEqual(ollama.reasoning_effort, "none");
     assert.strictEqual(ollama.top_k, 40);
-    assert.strictEqual(JSON.stringify(ollama.options), JSON.stringify({ num_ctx: 8192 }));
+    assert.ok(!("options" in ollama));
     assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", all)), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
     assert.strictEqual(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { temperature: 1.5, thinking: "default" })).temperature, 1);
     const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off" }));
     assert.strictEqual(gemini.thinkingConfig.thinkingBudget, 0);
     assert.strictEqual(gemini.topK, 40);
-    assert.ok(!("num_ctx" in gemini));
+});
+
+test("Tags without a value", () => {
+    const reply = Yui.parseReply("最满足了～ ✨\n<<happy>>");
+    assert.strictEqual(reply.text, "最满足了～ ✨");
+    assert.strictEqual(reply.emotion, "happy");
+    const odd = Yui.parseReply("好的<<wave>>");
+    assert.strictEqual(odd.text, "好的");
+    assert.strictEqual(odd.unknown.length, 1);
+    assert.strictEqual(Yui.displayText("嗯<<shy>>"), "嗯");
+    assert.strictEqual(Yui.parseReply("读了《三体》").text, "读了《三体》");
 });
 
 console.log(passed + " tests passed");

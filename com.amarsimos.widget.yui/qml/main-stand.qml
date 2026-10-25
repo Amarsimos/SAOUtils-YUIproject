@@ -75,8 +75,8 @@ T.Widget {
     readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
     // Cardinal System: Thinking Depth ("default" leaves it to the server; the older Thinking switch
     // turned off means "off"), and Core Tuning's sampling values: temperature, top p and the penalties
-    // stored in tenths (-1 = the server's default, nothing is sent), top k, seed and the context window
-    // (0 = the default). Sent as Yui.tuningFields makes them.
+    // stored in tenths (-1 = the server's default, nothing is sent), top k and seed (0 = the
+    // default). Sent as Yui.tuningFields makes them.
     readonly property string thinkingDepth: widget.settings.thinking_depth || (widget.settings.thinking === false ? "off" : "default")
     readonly property real temperature: widget.settings.temperature >= 0 ? widget.settings.temperature / 10 : -1
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
@@ -84,7 +84,6 @@ T.Widget {
     readonly property real topP: widget.settings.top_p >= 0 ? widget.settings.top_p / 10 : -1
     readonly property int topK: widget.settings.top_k > 0 ? widget.settings.top_k : 0
     readonly property int seed: widget.settings.seed > 0 ? widget.settings.seed : 0
-    readonly property int contextWindow: widget.settings.context_window > 0 ? widget.settings.context_window : 0
     // The next request regenerates a reply (regenerateReply): it asks for a different answer.
     property bool regenerating: false
     // Action Mode (Cardinal System): "tags" (default; local models follow them best) teaches
@@ -615,7 +614,6 @@ T.Widget {
             "presencePenalty": presencePenalty,
             "frequencyPenalty": frequencyPenalty,
             "seed": seed,
-            "contextWindow": contextWindow,
             "thinking": thinkingDepth
         });
         if (regenerate && messages.length > 0) {

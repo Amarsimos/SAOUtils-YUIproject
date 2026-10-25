@@ -98,7 +98,6 @@ NVG.Window {
         targetWidget.settings.top_k = topKPreference.value;
         targetWidget.settings.frequency_penalty = frequencyPreference.value;
         targetWidget.settings.seed = seedPreference.value;
-        targetWidget.settings.context_window = contextPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
         targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
@@ -107,7 +106,7 @@ NVG.Window {
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
     // connection (Link) is never reset.
-    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, contextPreference, actionModePreference, smallModelPreference]
+    readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
     readonly property var pixieTabPreferences: [sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
@@ -306,13 +305,12 @@ NVG.Window {
         topKPreference.value = settings.top_k > 0 ? settings.top_k : 0;
         frequencyPreference.value = settings.frequency_penalty !== undefined ? settings.frequency_penalty : -1;
         seedPreference.value = settings.seed > 0 ? settings.seed : 0;
-        contextPreference.value = settings.context_window > 0 ? settings.context_window : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === true;
         searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
         searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, contextPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -708,26 +706,6 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: contextPreference
-
-                            name: "context_window"
-                            defaultValue: 0
-                            label: qsTr("Context Window")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1048576
-                            stepSize: 1024
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("For Ollama (a custom server): how many tokens the model keeps in mind. Ollama's default is small, so Yui forgets long conversations; 8192 or more helps, using more memory. 0 (the default) leaves it to Ollama. Check with ollama ps.")
                         }
 
                         P.SelectPreference {

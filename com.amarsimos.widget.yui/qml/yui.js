@@ -83,6 +83,11 @@ function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
 }
 
+// A tag without a value, such as <<happy>> for <<emotion:happy>> (models sometimes shorten them).
+function bareTagPattern() {
+    return /(?:<<|＜＜|《《)\s*([^<>＜＞《》:：\n]{1,40}?)\s*(?:>>|＞＞|》》)/g;
+}
+
 function tagPattern() {
     return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
@@ -829,6 +834,13 @@ function parseReply(text, userProtected, options) {
 
         result.unknown.push(all);
         return "";
+    }).replace(bareTagPattern(), function(all, word) {
+        var emotion = String(word).trim().toLowerCase();
+        if (!result.emotion && EMOTIONS.indexOf(emotion) !== -1)
+            result.emotion = emotion;
+        else
+            result.unknown.push(all);
+        return "";
     }).replace(/[ \t]+\n/g, "\n").trim();
     return result;
 }
@@ -928,7 +940,7 @@ function displayText(partial) {
     if (cut !== -1 && text.indexOf(">>", cut) === -1)
         text = text.substring(0, cut);
 
-    return text.replace(tagPattern(), "").replace(anyTagPattern(), "").trim();
+    return text.replace(tagPattern(), "").replace(anyTagPattern(), "").replace(bareTagPattern(), "").trim();
 }
 
 // Keywords of a text for recall and dedupe: Latin words and numbers whole, Chinese / Japanese runs
@@ -1239,9 +1251,9 @@ var THINKING_BUDGETS = {
 };
 
 // Core Tuning's values as the fields of a request (pure). format: "openai", "anthropic" or "gemini";
-// providerId: the server (top_k and the context window go only to "custom" servers such as Ollama,
+// providerId: the server (top_k goes only to "custom" servers such as Ollama,
 // since OpenAI's own rejects them). t: {maxTokens (0: none), temperature, topP, presencePenalty,
-// frequencyPenalty (each -1: the server's default), topK, seed, contextWindow (each 0: the default),
+// frequencyPenalty (each -1: the server's default), topK, seed (each 0: the default),
 // thinking: "off", "default", "low", "medium" or "high"}. Returns the fields to add to the request
 // body; for "gemini", the generationConfig.
 function tuningFields(format, providerId, t) {
@@ -1328,13 +1340,6 @@ function tuningFields(format, providerId, t) {
         if (t.topK > 0)
             fields.top_k = t.topK;
 
-        // Ollama: the context window, both where its OpenAI-compatible endpoint and its own API read it.
-        if (t.contextWindow > 0) {
-            fields.num_ctx = t.contextWindow;
-            fields.options = {
-                "num_ctx": t.contextWindow
-            };
-        }
     }
     return fields;
 }
