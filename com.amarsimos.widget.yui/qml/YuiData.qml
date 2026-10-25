@@ -20,7 +20,7 @@ T.Data {
         interval: 60000
         current: 0
         minimum: 0
-        maximum: 3650
+        maximum: 365
         update.execute: function() {
             root.read(companionDaysValue, "companion_days");
         }

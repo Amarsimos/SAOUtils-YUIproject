@@ -2737,12 +2737,16 @@ T.Widget {
         return true;
     }
 
-    // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one.
+    // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one. The
+    // maximum is never 0, so bars (which show current / maximum) always have something to show.
     function linkValue(name) {
         if (name === "companion_days") {
             var met = Date.parse(widget.settings.meeting_day || "");
+            var days = isNaN(met) ? 0 : Math.max(0, Math.floor((Date.now() - met) / 86400000)) + 1;
+            // As a bar: the way to the next anniversary.
             return {
-                "current": isNaN(met) ? 0 : Math.max(0, Math.floor((Date.now() - met) / 86400000)) + 1
+                "current": days,
+                "maximum": Math.max(1, Math.ceil(days / 365)) * 365
             };
         }
         if (name === "mood") {
@@ -2755,13 +2759,14 @@ T.Widget {
             var ledger = Yui.addToLedger(widget.settings.col_ledger, {}, Date.now());
             return {
                 "current": Math.round((ledger.input + ledger.output) / 1000),
-                "maximum": widget.settings.col_budget || 0
+                // Without a Monthly Budget the bar is simply full.
+                "maximum": widget.settings.col_budget || Math.max(1, Math.round((ledger.input + ledger.output) / 1000))
             };
         }
         if (name === "boss_raid")
             return {
                 "current": raidActive ? Math.max(0, Math.ceil((raidEnd - Date.now()) / 60000)) : 0,
-                "maximum": raidActive ? raidMinutes : 0
+                "maximum": raidMinutes
             };
 
         if (name === "heart_core")
