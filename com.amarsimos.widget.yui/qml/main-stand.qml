@@ -554,7 +554,7 @@ T.Widget {
         return open.concat(readSql("reading the notes", "SELECT id, text, done, created FROM notes WHERE done = 1 ORDER BY updated DESC"));
     }
 
-    function addNote(text) {
+    function addQuestNote(text) {
         text = String(text || "").trim();
         if (text && writeSql("adding a note", "INSERT INTO notes(text, done, created, updated) VALUES(?, 0, ?, ?)", [text, Date.now(), Date.now()]))
             notesRevision++;
@@ -1267,7 +1267,7 @@ T.Widget {
                     note = (note ? note + "\n" : "") + "⏰ 已设提醒：" + (reminder.daily ? "每天 " + Qt.formatDateTime(new Date(reminder.due), "HH:mm") : Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm")) + " " + reminder.text;
                 });
                 reply.notes.forEach(function(text) {
-                    addNote(text);
+                    addQuestNote(text);
                     note = (note ? note + "\n" : "") + "📜 已记下：" + text;
                 });
                 reply.dones.forEach(function(text) {

@@ -508,4 +508,15 @@ test("Quest Log notes", () => {
     assert.ok(text.includes("<<note:") && !text.includes("<<remind:"));
 });
 
+// A QML file with two functions or properties of the same name does not load at all (the widget
+// shows as unknown), and qmllint does not catch it.
+test("No duplicate members in the QML files", () => {
+    const dir = require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml");
+    fs.readdirSync(dir).filter((name) => name.endsWith(".qml")).forEach((name) => {
+        const names = [...fs.readFileSync(require("path").join(dir, name), "utf8").matchAll(/^    (?:function (\w+)|(?:readonly )?property \w+ (\w+))/gm)].map((m) => m[1] || m[2]);
+        const twice = names.filter((n, i) => names.indexOf(n) !== i);
+        assert.strictEqual(twice.join(", "), "", name);
+    });
+});
+
 console.log(passed + " tests passed");

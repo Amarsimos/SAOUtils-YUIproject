@@ -50,7 +50,7 @@ NVG.Window {
         if (!noteField.text.trim())
             return ;
 
-        targetWidget.addNote(noteField.text);
+        targetWidget.addQuestNote(noteField.text);
         noteField.text = "";
     }
 
