@@ -458,6 +458,7 @@ test("Core Tuning fields per server", () => {
     assert.strictEqual(ollama.reasoning_effort, "none");
     assert.strictEqual(ollama.top_k, 40);
     assert.ok(!("options" in ollama));
+    assert.strictEqual(Yui.tuningFields("openai", "ollama", all).top_k, 40);
     assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", all)), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
     assert.strictEqual(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { temperature: 1.5, thinking: "default" })).temperature, 1);
     const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off" }));
