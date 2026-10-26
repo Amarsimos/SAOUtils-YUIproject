@@ -6,23 +6,24 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
-// Yui's own task as MHCP-001, caring for the player, in pages: Counseling (greetings, rest reminders,
-// the daily mood check, speaking up by herself, the weather), Mental Record (the daily moods), Bond (birthday and
-// the day of meeting) and Weekly Report (Yui's look back on the week).
+// Yui's own task as MHCP-001, caring for the player. The settings are grouped by what they do:
+// Companion (greetings, speaking up by herself, the weather), Care (rest reminders, the daily mood
+// check, the Sunday report) and Bond (birthday and the day of meeting); Records holds no settings, only
+// what was recorded (the daily moods, Yui's weekly reports), to become a window of its own later.
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
-// taking effect at once; Reset restores the settings only, never the recorded moods.
+// taking effect at once; Reset restores the settings only, never the moods or the reports.
 NVG.Window {
     id: counselingWindow
 
     property var targetWidget
-    // Mental Record: the moods of the last 30 days, oldest first (refreshed when one is recorded).
+    // Records: the moods of the last 30 days, oldest first (refreshed when one is recorded), and the
+    // reports written, newest first.
     property var moods: []
-    // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var counselingPreferences: [greetPreference, carePreference, moodPreference, idleChatPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
-    readonly property var bondPreferences: [birthdayPreference, meetingPreference]
-    readonly property var reportPreferences: [weeklyPreference]
-    // Weekly Report: the reports written, newest first.
     property var reports: []
+    // The settings of each tab, for Reset This Tab and the title bar's Reset.
+    readonly property var companionPreferences: [greetPreference, idleChatPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
+    readonly property var carePreferences: [carePreference, moodPreference, weeklyPreference]
+    readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshReports() {
         reports = targetWidget.reportsList();
@@ -66,7 +67,7 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                model: [qsTr("Counseling"), qsTr("Mental Record"), qsTr("Bond"), qsTr("Weekly Report")]
+                model: [qsTr("Companion"), qsTr("Care"), qsTr("Bond"), qsTr("Records")]
             }
 
             StackLayout {
@@ -74,10 +75,10 @@ NVG.Window {
                 Layout.fillHeight: true
                 currentIndex: tabs.shownIndex
 
-                // ---------------------------------------------------------------- Counseling
+                // ---------------------------------------------------------------- Companion
                 SettingsPage {
                     P.ObjectPreferenceGroup {
-                        id: counselingGroup
+                        id: companionGroup
 
                         Layout.fillWidth: true
                         defaultValue: counselingWindow.targetWidget.settings
@@ -95,34 +96,6 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.")
-                        }
-
-                        P.SwitchPreference {
-                            id: carePreference
-
-                            name: "proactive_care"
-                            defaultValue: true
-                            label: qsTr("Rest Reminders")
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
-                        }
-
-                        P.SwitchPreference {
-                            id: moodPreference
-
-                            name: "daily_mood"
-                            defaultValue: true
-                            label: qsTr("Daily Mood Check")
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.")
                         }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
@@ -180,19 +153,139 @@ NVG.Window {
                     ResetTabButton {
                         yui: counselingWindow.targetWidget
                         windowTitle: counselingWindow.title
-                        tabTitle: qsTr("Counseling")
-                        preferences: counselingWindow.counselingPreferences
-                        groups: [counselingGroup]
+                        tabTitle: qsTr("Companion")
+                        preferences: counselingWindow.companionPreferences
+                        groups: [companionGroup]
                     }
 
                 }
 
-                // ---------------------------------------------------------------- Mental Record
+                // ---------------------------------------------------------------- Care
                 SettingsPage {
+                    P.ObjectPreferenceGroup {
+                        id: careGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: counselingWindow.targetWidget.settings
+                        syncProperties: true
+
+                        P.SwitchPreference {
+                            id: carePreference
+
+                            name: "proactive_care"
+                            defaultValue: true
+                            label: qsTr("Rest Reminders")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                        }
+
+                        P.SwitchPreference {
+                            id: moodPreference
+
+                            name: "daily_mood"
+                            defaultValue: true
+                            label: qsTr("Daily Mood Check")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.")
+                        }
+
+                        P.SwitchPreference {
+                            id: weeklyPreference
+
+                            name: "weekly_report"
+                            label: qsTr("Sunday Report")
+                            defaultValue: false
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.")
+                        }
+
+                    }
+
+                    ResetTabButton {
+                        yui: counselingWindow.targetWidget
+                        windowTitle: counselingWindow.title
+                        tabTitle: qsTr("Care")
+                        preferences: counselingWindow.carePreferences
+                        groups: [careGroup]
+                    }
+
+                }
+
+                // ---------------------------------------------------------------- Bond
+                SettingsPage {
+                    P.ObjectPreferenceGroup {
+                        id: bondGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: counselingWindow.targetWidget.settings
+                        syncProperties: true
+
+                        P.TextFieldPreference {
+                            id: birthdayPreference
+
+                            name: "player_birthday"
+                            label: qsTr("Player Birthday")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: "MM-DD"
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).")
+                        }
+
+                        P.TextFieldPreference {
+                            id: meetingPreference
+
+                            name: "meeting_day"
+                            label: qsTr("Meeting Day")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: "yyyy-MM-dd"
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.")
+                        }
+
+                    }
+
+                    ResetTabButton {
+                        yui: counselingWindow.targetWidget
+                        windowTitle: counselingWindow.title
+                        tabTitle: qsTr("Bond")
+                        preferences: counselingWindow.bondPreferences
+                        groups: [bondGroup]
+                    }
+
+                }
+
+                // ---------------------------------------------------------------- Records
+                // No settings: what Yui recorded (moods) and wrote (weekly reports).
+                SettingsPage {
+                    Heading {
+                        level: 2
+                        text: qsTr("Mental Record")
+                    }
+
                     SettingNote {
                         visible: counselingWindow.targetWidget.settingsHelp
                         besidePreferences: true
-                        text: qsTr("Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Counseling tab turns it on or off.")
+                        text: qsTr("Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Care tab turns it on or off.")
                     }
 
                     // The last 30 days: one point a recorded day (score 1–5), joined day by day.
@@ -299,83 +392,9 @@ NVG.Window {
 
                     }
 
-                }
-
-                // ---------------------------------------------------------------- Bond
-                SettingsPage {
-                    P.ObjectPreferenceGroup {
-                        id: bondGroup
-
-                        Layout.fillWidth: true
-                        defaultValue: counselingWindow.targetWidget.settings
-                        syncProperties: true
-
-                        P.TextFieldPreference {
-                            id: birthdayPreference
-
-                            name: "player_birthday"
-                            label: qsTr("Player Birthday")
-                            display: P.TextFieldPreference.ExpandLabel
-                            hint: "MM-DD"
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).")
-                        }
-
-                        P.TextFieldPreference {
-                            id: meetingPreference
-
-                            name: "meeting_day"
-                            label: qsTr("Meeting Day")
-                            display: P.TextFieldPreference.ExpandLabel
-                            hint: "yyyy-MM-dd"
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.")
-                        }
-
-                    }
-
-                    ResetTabButton {
-                        yui: counselingWindow.targetWidget
-                        windowTitle: counselingWindow.title
-                        tabTitle: qsTr("Bond")
-                        preferences: counselingWindow.bondPreferences
-                        groups: [bondGroup]
-                    }
-
-                }
-
-
-                // ---------------------------------------------------------------- Weekly Report
-                SettingsPage {
-                    P.ObjectPreferenceGroup {
-                        id: reportGroup
-
-                        Layout.fillWidth: true
-                        defaultValue: counselingWindow.targetWidget.settings
-                        syncProperties: true
-
-                        P.SwitchPreference {
-                            id: weeklyPreference
-
-                            name: "weekly_report"
-                            label: qsTr("Sunday Report")
-                            defaultValue: false
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.")
-                        }
-
+                    Heading {
+                        level: 2
+                        text: qsTr("Weekly Report")
                     }
 
                     RowLayout {
@@ -451,32 +470,24 @@ NVG.Window {
 
                     }
 
-                    ResetTabButton {
-                        yui: counselingWindow.targetWidget
-                        windowTitle: counselingWindow.title
-                        tabTitle: qsTr("Weekly Report")
-                        preferences: counselingWindow.reportPreferences
-                        groups: [reportGroup]
-                    }
-
                 }
 
             }
 
         }
 
-        // Reset: the settings of Counseling, Bond and Weekly Report, never the recorded moods or reports.
+        // Reset: the settings of every tab, never the moods or the reports.
         header: SettingsTitleBar {
             yui: counselingWindow.targetWidget
             settingsWindow: counselingWindow
             // load() is no edit, so the synced groups write the defaults to the settings by save().
             onResetRequested: {
-                counselingWindow.counselingPreferences.concat(counselingWindow.bondPreferences, counselingWindow.reportPreferences).forEach(function(preference) {
+                counselingWindow.companionPreferences.concat(counselingWindow.carePreferences, counselingWindow.bondPreferences).forEach(function(preference) {
                     preference.load();
                 });
-                counselingGroup.save();
+                companionGroup.save();
+                careGroup.save();
                 bondGroup.save();
-                reportGroup.save();
             }
         }
 

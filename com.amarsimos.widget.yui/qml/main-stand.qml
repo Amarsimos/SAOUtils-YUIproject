@@ -3138,7 +3138,7 @@ T.Widget {
                 reportRevision++;
 
             if (announceIt) {
-                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 Mental Health Counseling 的 Weekly Report 里，有空看看哦 (｡･ω･｡)", false, true);
+                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 Mental Health Counseling 的 Records 里，有空看看哦 (｡･ω･｡)", false, true);
                 announce(qsTr("Weekly Report"), "📊 这周的小结写好啦～");
             }
             onDone("");

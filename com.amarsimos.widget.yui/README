@@ -44,6 +44,7 @@ Tags without a value (<<happy>>) are no longer shown; an expression name counts 
 **Weekly Report** (Mental Health Counseling): Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes a few words about the week, on request or by herself on Sunday evenings (Sunday Report); reports are kept.
 **Ollama (local)** server preset: the local address filled in, no access key needed, Scan Cores lists the installed models.
 **Sword Skills** (Skill Slots): five slots, each a name and any SAO Utils action (a Script Action chains several steps); Yui runs one when you ask for it by name (<<skill:>>), after you confirm. **Weather Report** (Mental Health Counseling): weather and temperature from a SAO Utils data source (e.g. Weather Data), mentioned in the morning greeting (umbrella when it rains) and used for weather questions.
+Settings grouped by what they do: Mental Health Counseling in Companion (Login Greeting, Spontaneous Talk, Weather Report), Care (Rest Reminders, Daily Mood Check, Sunday Report), Bond and Records (moods and weekly reports, no settings); Skill Slots tabs show their settings first, then the status or lists under a heading.
 
 ### Changed
 

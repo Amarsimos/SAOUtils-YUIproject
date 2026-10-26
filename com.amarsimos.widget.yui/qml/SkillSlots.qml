@@ -8,7 +8,8 @@ import "yui.js" as Yui
 
 // "Skill Slots" window (next to Mental Health Counseling): Yui's small tools, each a skill in a slot:
 // Boss Raid (focus time, then a rest), Alarm (reminders, <<remind:>>), Quest Log (notes and to-dos,
-// <<note:>> / <<done:>>) and Sword Skills (named SAO Utils actions Yui runs, <<skill:>>). The settings are SAO Utils' own preferences synced with the widget's settings
+// <<note:>> / <<done:>>) and Sword Skills (named SAO Utils actions Yui runs, <<skill:>>). Each tab has its
+// settings first; below a heading comes what is not a setting (status, lists), to become a window later. The settings are SAO Utils' own preferences synced with the widget's settings
 // (ObjectPreferenceGroup); Reset restores the settings only, never the reminders or the notes.
 NVG.Window {
     id: skillsWindow
@@ -106,33 +107,6 @@ NVG.Window {
 
                 // ---------------------------------------------------------------- Boss Raid
                 SettingsPage {
-                    Label {
-                        Layout.leftMargin: 16
-                        font.pixelSize: 16
-                        text: {
-                            var yui = skillsWindow.targetWidget;
-                            if (yui.raidActive)
-                                return qsTr("In a raid: %1 min left").arg(Math.max(0, Math.ceil((yui.raidEnd - skillsWindow.now) / 60000)));
-
-                            if (yui.resting)
-                                return qsTr("Resting: %1 min left").arg(Math.max(0, Math.ceil((yui.restEnd - skillsWindow.now) / 60000)));
-
-                            return qsTr("No raid now.");
-                        }
-                    }
-
-                    Button {
-                        Layout.leftMargin: 16
-                        text: skillsWindow.targetWidget.raidActive || skillsWindow.targetWidget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
-                        onClicked: {
-                            var yui = skillsWindow.targetWidget;
-                            if (yui.raidActive || yui.resting)
-                                yui.stopRaid();
-                            else
-                                yui.startRaid(yui.raidMinutes, true);
-                        }
-                    }
-
                     P.ObjectPreferenceGroup {
                         id: raidGroup
 
@@ -174,6 +148,39 @@ NVG.Window {
 
                     }
 
+                    // Below: not settings (a window of its own later).
+                    Heading {
+                        level: 2
+                        text: qsTr("Status")
+                    }
+
+                    Label {
+                        Layout.leftMargin: 16
+                        font.pixelSize: 16
+                        text: {
+                            var yui = skillsWindow.targetWidget;
+                            if (yui.raidActive)
+                                return qsTr("In a raid: %1 min left").arg(Math.max(0, Math.ceil((yui.raidEnd - skillsWindow.now) / 60000)));
+
+                            if (yui.resting)
+                                return qsTr("Resting: %1 min left").arg(Math.max(0, Math.ceil((yui.restEnd - skillsWindow.now) / 60000)));
+
+                            return qsTr("No raid now.");
+                        }
+                    }
+
+                    Button {
+                        Layout.leftMargin: 16
+                        text: skillsWindow.targetWidget.raidActive || skillsWindow.targetWidget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
+                        onClicked: {
+                            var yui = skillsWindow.targetWidget;
+                            if (yui.raidActive || yui.resting)
+                                yui.stopRaid();
+                            else
+                                yui.startRaid(yui.raidMinutes, true);
+                        }
+                    }
+
                     ResetTabButton {
                         yui: skillsWindow.targetWidget
                         windowTitle: skillsWindow.title
@@ -207,6 +214,12 @@ NVG.Window {
                             text: qsTr("Ask Yui to remind you (\"remind me of the meeting in 30 minutes\", \"every day at 23:00, time to sleep\") or add a reminder here. She tells you when it is time, and missed ones when SAO Utils starts again.")
                         }
 
+                    }
+
+                    // Below: not settings (a window of its own later).
+                    Heading {
+                        level: 2
+                        text: qsTr("Reminders")
                     }
 
                     RowLayout {
@@ -324,6 +337,12 @@ NVG.Window {
                             text: qsTr("Ask Yui to note something down (\"note that I need milk\") and tell her when it is done. The notes are kept apart from Yui's Heart and are sent to her only when you ask about them.")
                         }
 
+                    }
+
+                    // Below: not settings (a window of its own later).
+                    Heading {
+                        level: 2
+                        text: qsTr("Notes")
                     }
 
                     RowLayout {
@@ -509,6 +528,12 @@ NVG.Window {
                             label: qsTr("Action")
                         }
 
+                    }
+
+                    // Below: not settings (a window of its own later).
+                    Heading {
+                        level: 2
+                        text: qsTr("Test")
                     }
 
                     RowLayout {

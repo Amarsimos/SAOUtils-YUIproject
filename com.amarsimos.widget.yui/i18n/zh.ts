@@ -694,167 +694,177 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="35"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="293"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="433"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="36"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="386"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="452"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="183"/>
-        <source>Counseling</source>
-        <translation>Counseling</translation>
-    </message>
-    <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="282"/>
         <source>Mental Record</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="348"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="70"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="270"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="457"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="397"/>
         <source>Weekly Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="91"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="92"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="97"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="70"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="156"/>
+        <source>Companion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="70"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="219"/>
+        <source>Care</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="70"/>
+        <source>Records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="98"/>
         <source>Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.</source>
         <translation>你回来时结衣会打招呼：每天第一次在早上见面时说早安，隔三天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="105"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="177"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="111"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="183"/>
         <source>Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).</source>
         <translation>深夜提醒你早点睡，长时间使用后提醒你休息（每小时最多一次）。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="119"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="191"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="125"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="197"/>
         <source>Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.</source>
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="134"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="107"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="145"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="118"/>
         <source>While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.</source>
         <translation>对话框收起时，超过这么多分钟没有互动，结衣会主动说话（调用 API），0 为关闭。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="152"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="125"/>
         <source>Weather Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="159"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="132"/>
         <source>Yui mentions the weather in her morning greeting (and an umbrella when it rains) and answers weather questions with it. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.</source>
         <translation>结衣会在早安问候里提一句天气（下雨时提醒带伞），回答天气问题时也以它为准。在下面选择数据，例如 Weather Data → General Data → Weather Forecast 和 Current Temperature，地点在那里设置。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="166"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="139"/>
         <source>Weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="174"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="147"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="195"/>
-        <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Counseling tab turns it on or off.</source>
-        <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更加关心你。可以在 Counseling 标签的 Daily Mood Check 中开关。</translation>
-    </message>
-    <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="236"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="329"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="237"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="330"/>
         <source>today</source>
         <translation>今天</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="264"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="357"/>
         <source>No moods recorded in the last 30 days.</source>
         <translation>最近 30 天还没有心情记录。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="293"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="386"/>
         <source>Delete the mood of %1?</source>
         <translation>删除 %1 的心情记录吗？</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="317"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="239"/>
         <source>Player Birthday</source>
         <translation>Player Birthday</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="325"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="247"/>
         <source>On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).</source>
         <translation>在你生日那天，结衣会祝你生日快乐（MM-DD 或 yyyy-MM-dd）。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="332"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="254"/>
         <source>Meeting Day</source>
         <translation>Meeting Day</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="340"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="262"/>
         <source>The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.</source>
         <translation>你与结衣相遇的日子（默认是她第一次运行的那天，也可以自己设定，yyyy-MM-dd）；每年的纪念日她都会记得。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="369"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="204"/>
         <source>Sunday Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="376"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="211"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="386"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="288"/>
+        <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Care tab turns it on or off.</source>
+        <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更加关心你。可以在 Care 标签的 Daily Mood Check 中开关。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="405"/>
         <source>Writing...</source>
         <translation>正在写……</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="386"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="405"/>
         <source>Write This Week&apos;s Report</source>
         <translation>写本周小结</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="410"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="429"/>
         <source>No reports yet.</source>
         <translation>还没有小结。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="433"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="452"/>
         <source>Delete the report of %1?</source>
         <translation>删除 %1 的小结吗？</translation>
     </message>
@@ -1002,197 +1012,217 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SkillSlots</name>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="41"/>
+        <location filename="../qml/SkillSlots.qml" line="42"/>
         <source>Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.</source>
         <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="58"/>
+        <location filename="../qml/SkillSlots.qml" line="59"/>
         <source>Skill Slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="99"/>
-        <location filename="../qml/SkillSlots.qml" line="180"/>
+        <location filename="../qml/SkillSlots.qml" line="100"/>
+        <location filename="../qml/SkillSlots.qml" line="187"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="99"/>
-        <location filename="../qml/SkillSlots.qml" line="200"/>
-        <location filename="../qml/SkillSlots.qml" line="297"/>
+        <location filename="../qml/SkillSlots.qml" line="100"/>
+        <location filename="../qml/SkillSlots.qml" line="207"/>
+        <location filename="../qml/SkillSlots.qml" line="310"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="99"/>
-        <location filename="../qml/SkillSlots.qml" line="317"/>
-        <location filename="../qml/SkillSlots.qml" line="411"/>
+        <location filename="../qml/SkillSlots.qml" line="100"/>
+        <location filename="../qml/SkillSlots.qml" line="330"/>
+        <location filename="../qml/SkillSlots.qml" line="430"/>
         <source>Quest Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="99"/>
-        <location filename="../qml/SkillSlots.qml" line="533"/>
+        <location filename="../qml/SkillSlots.qml" line="100"/>
+        <location filename="../qml/SkillSlots.qml" line="558"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="115"/>
+        <location filename="../qml/SkillSlots.qml" line="163"/>
         <source>In a raid: %1 min left</source>
         <translation>专注中：还剩 %1 分钟</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="118"/>
+        <location filename="../qml/SkillSlots.qml" line="166"/>
         <source>Resting: %1 min left</source>
         <translation>休息中：还剩 %1 分钟</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="120"/>
+        <location filename="../qml/SkillSlots.qml" line="168"/>
         <source>No raid now.</source>
         <translation>当前没有 Boss Raid。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="126"/>
+        <location filename="../qml/SkillSlots.qml" line="174"/>
         <source>End Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="126"/>
+        <location filename="../qml/SkillSlots.qml" line="174"/>
         <source>Start Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="148"/>
+        <location filename="../qml/SkillSlots.qml" line="122"/>
         <source>Raid Duration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="161"/>
+        <location filename="../qml/SkillSlots.qml" line="135"/>
         <source>Rest Duration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="172"/>
+        <location filename="../qml/SkillSlots.qml" line="146"/>
         <source>Boss Raid: focus time with Yui, in minutes, then a rest. Start it here, from her menu or ask her (&quot;stay with me for 25 minutes&quot;); meanwhile the crystal turns violet and she does not speak up by herself.</source>
         <translation>Boss Raid：结衣陪你专注一段时间（分钟），之后休息。可以在这里、她的右键菜单开始，也可以直接跟她说（「陪我专注 25 分钟」）；期间水晶变成紫色，她不会主动说话。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="207"/>
+        <location filename="../qml/SkillSlots.qml" line="154"/>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SkillSlots.qml" line="214"/>
         <source>Ask Yui to remind you (&quot;remind me of the meeting in 30 minutes&quot;, &quot;every day at 23:00, time to sleep&quot;) or add a reminder here. She tells you when it is time, and missed ones when SAO Utils starts again.</source>
         <translation>让结衣提醒你（「30 分钟后提醒我开会」「每天晚上 11 点提醒我睡觉」），或在这里手动添加。到时间她会告诉你；SAO Utils 关闭期间错过的提醒，下次启动时补上。</translation>
     </message>
     <message>
         <location filename="../qml/SkillSlots.qml" line="222"/>
+        <source>Reminders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SkillSlots.qml" line="235"/>
         <source>HH:mm / +30</source>
         <translation>HH:mm / +30</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="229"/>
+        <location filename="../qml/SkillSlots.qml" line="242"/>
         <source>Daily</source>
         <translation>每天</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="236"/>
+        <location filename="../qml/SkillSlots.qml" line="249"/>
         <source>Remind me of…</source>
         <translation>提醒内容…</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="242"/>
-        <location filename="../qml/SkillSlots.qml" line="345"/>
+        <location filename="../qml/SkillSlots.qml" line="255"/>
+        <location filename="../qml/SkillSlots.qml" line="364"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="263"/>
+        <location filename="../qml/SkillSlots.qml" line="276"/>
         <source>No reminders.</source>
         <translation>没有提醒。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="276"/>
+        <location filename="../qml/SkillSlots.qml" line="289"/>
         <source>Daily %1</source>
         <translation>每天 %1</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="324"/>
+        <location filename="../qml/SkillSlots.qml" line="337"/>
         <source>Ask Yui to note something down (&quot;note that I need milk&quot;) and tell her when it is done. The notes are kept apart from Yui&apos;s Heart and are sent to her only when you ask about them.</source>
         <translation>让结衣帮你记下事情（「帮我记一下，要买牛奶」），办完了告诉她就行。笔记和结衣之心分开保存，只有你问起时才发给她。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="339"/>
+        <location filename="../qml/SkillSlots.qml" line="345"/>
+        <source>Notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SkillSlots.qml" line="358"/>
         <source>Something to note down</source>
         <translation>要记下的事</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="350"/>
+        <location filename="../qml/SkillSlots.qml" line="369"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="353"/>
+        <location filename="../qml/SkillSlots.qml" line="372"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="353"/>
+        <location filename="../qml/SkillSlots.qml" line="372"/>
         <source>The export could not be written. See the log in System Console.</source>
         <translation>导出失败，请查看 System Console 的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="374"/>
+        <location filename="../qml/SkillSlots.qml" line="393"/>
         <source>No notes.</source>
         <translation>没有笔记。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="429"/>
+        <location filename="../qml/SkillSlots.qml" line="448"/>
         <source>Give a name and a SAO Utils action to a slot; when you tell Yui to do it (&quot;start work&quot;), she runs it after you confirm. To chain several steps (open programs, close a game, start a Boss Raid...), choose a Script Action and put them in its Input Actions.</source>
         <translation>给槽位起个名字并选一个 SAO Utils 动作；你跟结衣说要做这件事时（「开始工作」），她会在你确认后执行。想串起多个步骤（打开程序、关闭游戏、开始 Boss Raid……），就选 Script Action，把这些步骤放进它的 Input Actions。</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="436"/>
+        <location filename="../qml/SkillSlots.qml" line="455"/>
         <source>Sword Skill 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="438"/>
-        <location filename="../qml/SkillSlots.qml" line="454"/>
-        <location filename="../qml/SkillSlots.qml" line="470"/>
-        <location filename="../qml/SkillSlots.qml" line="486"/>
-        <location filename="../qml/SkillSlots.qml" line="502"/>
+        <location filename="../qml/SkillSlots.qml" line="457"/>
+        <location filename="../qml/SkillSlots.qml" line="473"/>
+        <location filename="../qml/SkillSlots.qml" line="489"/>
+        <location filename="../qml/SkillSlots.qml" line="505"/>
+        <location filename="../qml/SkillSlots.qml" line="521"/>
         <source>Name, e.g. Start Work</source>
         <translation>名字，例如 开始工作</translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="445"/>
-        <location filename="../qml/SkillSlots.qml" line="461"/>
-        <location filename="../qml/SkillSlots.qml" line="477"/>
-        <location filename="../qml/SkillSlots.qml" line="493"/>
-        <location filename="../qml/SkillSlots.qml" line="509"/>
+        <location filename="../qml/SkillSlots.qml" line="464"/>
+        <location filename="../qml/SkillSlots.qml" line="480"/>
+        <location filename="../qml/SkillSlots.qml" line="496"/>
+        <location filename="../qml/SkillSlots.qml" line="512"/>
+        <location filename="../qml/SkillSlots.qml" line="528"/>
         <source>Action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="452"/>
+        <location filename="../qml/SkillSlots.qml" line="471"/>
         <source>Sword Skill 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="468"/>
+        <location filename="../qml/SkillSlots.qml" line="487"/>
         <source>Sword Skill 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="484"/>
+        <location filename="../qml/SkillSlots.qml" line="503"/>
         <source>Sword Skill 4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="500"/>
+        <location filename="../qml/SkillSlots.qml" line="519"/>
         <source>Sword Skill 5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="522"/>
+        <location filename="../qml/SkillSlots.qml" line="536"/>
+        <source>Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SkillSlots.qml" line="547"/>
         <source>Test %1</source>
         <translation>测试 %1</translation>
     </message>
