@@ -87,6 +87,9 @@ NVG.View {
         celebration.restart();
     }
 
+    // A view is drawn only on a compositor (Yui's other views follow hers); the banner is always on
+    // the desktop, above everything.
+    compositor: NVG.WindowCompositor
     color: "transparent"
     solid: true
     acceptFocus: false
