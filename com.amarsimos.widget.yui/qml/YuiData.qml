@@ -172,6 +172,21 @@ T.Data {
         }
     }
 
+    // 1 for a few seconds after a Boss Raid is won, else 0 (for a "Congratulations!!" shown by data).
+    T.Value {
+        id: raidClearedValue
+
+        name: "raid_cleared"
+        title: qsTr("Raid Cleared")
+        interval: 500
+        current: 0
+        minimum: 0
+        maximum: 1
+        update.execute: function() {
+            root.read(raidClearedValue, "raid_cleared");
+        }
+    }
+
     // Updates a value from Yui ({current, maximum}); Null while she is not running.
     function read(value, name) {
         var yui = Link.Server.yui;

@@ -76,6 +76,15 @@
             "preview": "Presets/widget-yui-menu.png",
             "entry": "Presets/widget-yui-menu.json"
         }, {
+            "location": "/preset/yui-raid",
+            "catalog": "preset/widget",
+            "title": {
+                "en": "Yui · Boss Raid Banner",
+                "zh": "结衣 · Boss Raid 横幅"
+            },
+            "preview": "Presets/widget-yui-raid.png",
+            "entry": "Presets/widget-yui-raid.json"
+        }, {
             "location": "/preset/yui-pixie",
             "catalog": "preset/widget",
             "title": {

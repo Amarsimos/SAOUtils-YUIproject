@@ -3150,7 +3150,7 @@ T.Widget {
             var seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
             var clock = Math.floor(seconds / 60) + ":" + ("0" + seconds % 60).slice(-2);
             return {
-                "current": raidActive ? clock : (resting ? "休息 " + clock : "")
+                "current": raidActive ? clock : (resting ? "REST " + clock : "")
             };
         }
         if (name === "mood_text") {
@@ -3165,6 +3165,12 @@ T.Widget {
                 "current": report ? report.text : ""
             };
         }
+        if (name === "raid_cleared")
+            return {
+                "current": Date.now() < raidClearedUntil ? 1 : 0,
+                "maximum": 1
+            };
+
         if (name === "heart_core")
             return {
                 "current": Yui.coreMemories(heartCache).length,
@@ -3303,6 +3309,8 @@ T.Widget {
 
     // Boss Raid's banner (RaidBanner.qml), created on first use: the time left, then "Congratulations!".
     property var raidBanner: null
+    // The data value Raid Cleared is 1 until then (a few seconds after a raid is won), for a HUD banner.
+    property double raidClearedUntil: 0
 
     function showRaidBanner() {
         if (!raidBanner) {
@@ -3334,6 +3342,7 @@ T.Widget {
             resting = true;
             restEnd = now + restMinutes * 60000;
             logRaid(raidMinutes);
+            raidClearedUntil = now + 6000;
             if (raidBanner && raidBanner.visible)
                 raidBanner.celebrate();
 

@@ -50,6 +50,7 @@ The MHCP-YUI action is split into categories like other extensions' actions: Cha
 **Quick input** at the cursor for actions that need something each time: Add Reminder... (text, +10 / +30 / +60 or a time such as 明天 8:00, 周五 15:00), Add Note..., Record Mood... (stars and a note), Start Boss Raid with 0 minutes (15 / 25 / 45 / 60); Ask Yui hands it to the chat. The actions no longer have text settings. Reminder times also take 明天 / 后天 / 周X.
 Fewer action categories: Yui (Open Chat, Spontaneous Talk, Record Mood..., Write Weekly Report), Skill Slots (Boss Raid, reminders, notes, sword skills) and Windows.
 **Raid Banner** (Skill Slots, Boss Raid): the time left in big white SAO letters over a notched white bar, on top of the screen and dragged anywhere; when the raid is won, "Congratulations!!" across the screen as when a floor boss falls, then the rest the same way; Show Raid Banner in the Skill Slots action.
+**Yui · Boss Raid Banner** HUD preset: the raid countdown and "Congratulations!!" built from HUD elements shown by Yui's data (Boss Raid Timer, new Raid Cleared), restyled in the HUD editor; the rest timer reads REST m:ss.
 
 ### Changed
 

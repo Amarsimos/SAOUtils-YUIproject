@@ -1785,6 +1785,11 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <source>Latest Weekly Report (text)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../qml/YuiData.qml" line="180"/>
+        <source>Raid Cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>YuisHeart</name>
@@ -2104,13 +2109,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3785"/>
+        <location filename="../qml/main-stand.qml" line="3794"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="1585"/>
-        <location filename="../qml/main-stand.qml" line="3901"/>
+        <location filename="../qml/main-stand.qml" line="3910"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2220,85 +2225,85 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3284"/>
+        <location filename="../qml/main-stand.qml" line="3290"/>
         <source>Weekly Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3327"/>
+        <location filename="../qml/main-stand.qml" line="3335"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3350"/>
-        <location filename="../qml/main-stand.qml" line="3517"/>
+        <location filename="../qml/main-stand.qml" line="3359"/>
+        <location filename="../qml/main-stand.qml" line="3526"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5268"/>
+        <location filename="../qml/main-stand.qml" line="5277"/>
         <source>Skill Slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5274"/>
+        <location filename="../qml/main-stand.qml" line="5283"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3517"/>
-        <location filename="../qml/main-stand.qml" line="3545"/>
-        <location filename="../qml/main-stand.qml" line="3551"/>
-        <location filename="../qml/main-stand.qml" line="5263"/>
+        <location filename="../qml/main-stand.qml" line="3526"/>
+        <location filename="../qml/main-stand.qml" line="3554"/>
+        <location filename="../qml/main-stand.qml" line="3560"/>
+        <location filename="../qml/main-stand.qml" line="5272"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5085"/>
+        <location filename="../qml/main-stand.qml" line="5094"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="246"/>
-        <location filename="../qml/main-stand.qml" line="5116"/>
+        <location filename="../qml/main-stand.qml" line="5125"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="239"/>
-        <location filename="../qml/main-stand.qml" line="5116"/>
+        <location filename="../qml/main-stand.qml" line="5125"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3405"/>
-        <location filename="../qml/main-stand.qml" line="3785"/>
+        <location filename="../qml/main-stand.qml" line="3414"/>
+        <location filename="../qml/main-stand.qml" line="3794"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5133"/>
+        <location filename="../qml/main-stand.qml" line="5142"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5248"/>
+        <location filename="../qml/main-stand.qml" line="5257"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5253"/>
+        <location filename="../qml/main-stand.qml" line="5262"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5258"/>
+        <location filename="../qml/main-stand.qml" line="5267"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="5175"/>
-        <location filename="../qml/main-stand.qml" line="5238"/>
+        <location filename="../qml/main-stand.qml" line="5184"/>
+        <location filename="../qml/main-stand.qml" line="5247"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
