@@ -1940,6 +1940,8 @@ T.Widget {
             // Skill Slots: Alarm reminders (due in ms; daily ones move on a day when they ring) and
             // Quest Log notes.
             tx.executeSql("CREATE TABLE IF NOT EXISTS reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, due REAL, text TEXT, daily INTEGER, created INTEGER)");
+            // Weekly Report (Mental Health Counseling): what Yui wrote, by the week's first day.
+            tx.executeSql("CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY AUTOINCREMENT, week TEXT, text TEXT, created INTEGER)");
             tx.executeSql("CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, done INTEGER NOT NULL DEFAULT 0, created INTEGER, updated INTEGER)");
             });
             // Columns added with the heart core (1.1): every older memory was sent with every request,
@@ -2967,10 +2969,112 @@ T.Widget {
         if (!raidActive && !resting)
             return ;
 
+        // The minutes actually spent count too (Weekly Report).
+        if (raidActive)
+            logRaid(Math.round((raidMinutes * 60000 - Math.max(0, raidEnd - Date.now())) / 60000));
+
         raidActive = false;
         resting = false;
         widget.settings.raid_end = 0;
         diag("boss raid: ended early");
+    }
+
+    // Weekly Report: the raids of the last weeks ({end, minutes}, at most 100).
+    function logRaid(minutes) {
+        if (minutes <= 0)
+            return ;
+
+        widget.settings.raid_log = (widget.settings.raid_log || []).concat([{
+            "end": Date.now(),
+            "minutes": minutes
+        }]).slice(-100);
+    }
+
+    // ---------------------------------------------------------------- Weekly Report
+    // Bumped when a report is written or deleted (Mental Health Counseling lists them).
+    property int reportRevision: 0
+    property bool writingReport: false
+
+    // Reports, newest first: [{id, week, text, created}].
+    function reportsList() {
+        return readSql("reading the reports", "SELECT id, week, text, created FROM reports ORDER BY created DESC");
+    }
+
+    function deleteReport(id) {
+        if (writeSql("deleting a report", "DELETE FROM reports WHERE id = ?", [id]))
+            reportRevision++;
+
+    }
+
+    // The last seven days, today included: Yui writes the report (one request, not in the chat) and
+    // it is kept; announce: she says it is ready (the automatic one). onDone(error text or "").
+    function writeWeeklyReport(announceIt, onDone) {
+        if (writingReport)
+            return ;
+
+        var now = Date.now();
+        var from = new Date(now - 6 * 86400000);
+        from.setHours(0, 0, 0, 0);
+        var raids = (widget.settings.raid_log || []).filter(function(raid) {
+            return raid.end >= from.getTime();
+        });
+        var ledger = Yui.addToLedger(widget.settings.col_ledger, {}, now);
+        var stats = {
+            "from": Qt.formatDate(from, "yyyy-MM-dd"),
+            "to": Qt.formatDate(new Date(now), "yyyy-MM-dd"),
+            "messages": (readSql("counting the messages", "SELECT COUNT(*) AS n FROM messages WHERE author = 'user' AND created >= ?", [from.getTime()])[0] || {
+                "n": 0
+            }).n,
+            "moods": moodsSince(7),
+            "raids": {
+                "count": raids.length,
+                "minutes": raids.reduce(function(sum, raid) {
+                    return sum + raid.minutes;
+                }, 0)
+            },
+            "notesDone": readSql("reading the notes", "SELECT text FROM notes WHERE done = 1 AND updated >= ?", [from.getTime()]).map(function(note) {
+                return note.text;
+            }),
+            "notesOpen": notesList(false).length,
+            "tokens": Math.round((ledger.input + ledger.output) / 1000)
+        };
+        writingReport = true;
+        diag("weekly report: requested (" + stats.from + " – " + stats.to + ")");
+        requestCompletion([{
+            "role": "user",
+            "content": Yui.weeklyReportPrompt(userTitle(), stats)
+        }], function(text, isError) {
+            writingReport = false;
+            if (isError) {
+                diag("weekly report failed: " + text);
+                onDone(text);
+                return ;
+            }
+            var report = Yui.parseReply(text, [], {}).text;
+            widget.settings.report_week = stats.from;
+            if (writeSql("saving the report", "INSERT INTO reports(week, text, created) VALUES(?, ?, ?)", [stats.from + " – " + stats.to, report, Date.now()]))
+                reportRevision++;
+
+            if (announceIt) {
+                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 Mental Health Counseling 的 Weekly Report 里，有空看看哦 (｡･ω･｡)", false, true);
+                announce(qsTr("Weekly Report"), "📊 这周的小结写好啦～");
+            }
+            onDone("");
+        });
+    }
+
+    // Weekly Report on Sunday evenings (from 20:00), once a week, when it is turned on.
+    function checkWeeklyReport() {
+        var now = new Date();
+        if (widget.settings.weekly_report !== true || now.getDay() !== 0 || now.getHours() < 20 || widget.busy || !activeConfig().apiKey)
+            return ;
+
+        var from = new Date(now.getTime() - 6 * 86400000);
+        if (widget.settings.report_week === Qt.formatDate(from, "yyyy-MM-dd"))
+            return ;
+
+        writeWeeklyReport(true, function() {
+        });
     }
 
     // What Yui says about a raid: in the chat, and in the bubble while it is closed.
@@ -2986,6 +3090,7 @@ T.Widget {
             widget.settings.raid_end = 0;
             resting = true;
             restEnd = now + restMinutes * 60000;
+            logRaid(raidMinutes);
             raidSay("Boss 讨伐成功！✧ " + userTitle() + "辛苦啦～休息 " + restMinutes + " 分钟吧，喝口水、看看远处 (｡･ω･｡)");
         } else if (resting && now >= restEnd) {
             resting = false;
@@ -3761,6 +3866,14 @@ T.Widget {
         repeat: true
         running: widget.raidActive || widget.resting
         onTriggered: widget.checkRaid(Date.now())
+    }
+
+    // Weekly Report (automatic, Sunday evenings), checked every 10 minutes.
+    Timer {
+        interval: 600000
+        repeat: true
+        running: widget.chatReady && !widget.seedlingMode
+        onTriggered: widget.checkWeeklyReport()
     }
 
     // Alarm (Skill Slots): rings the due reminders, checked every 15 s (and once at start, for the

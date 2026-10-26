@@ -7,8 +7,8 @@ import QtQuick.Layouts 1.12
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
 // Yui's own task as MHCP-001, caring for the player, in pages: Counseling (greetings, rest reminders,
-// the daily mood check, speaking up by herself), Mental Record (the daily moods) and Bond (birthday and
-// the day of meeting).
+// the daily mood check, speaking up by herself), Mental Record (the daily moods), Bond (birthday and
+// the day of meeting) and Weekly Report (Yui's look back on the week).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never the recorded moods.
 NVG.Window {
@@ -20,6 +20,13 @@ NVG.Window {
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var counselingPreferences: [greetPreference, carePreference, moodPreference, idleChatPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
+    readonly property var reportPreferences: [weeklyPreference]
+    // Weekly Report: the reports written, newest first.
+    property var reports: []
+
+    function refreshReports() {
+        reports = targetWidget.reportsList();
+    }
 
     function refreshMoods() {
         moods = targetWidget.moodsSince(30);
@@ -33,11 +40,15 @@ NVG.Window {
     height: 720
     transientParent: widget.NVG.View.window
     onClosing: destroy()
-    Component.onCompleted: refreshMoods()
+    Component.onCompleted: {
+        refreshMoods();
+        refreshReports();
+    }
 
     Connections {
         target: counselingWindow.targetWidget
         onMoodRevisionChanged: counselingWindow.refreshMoods()
+        onReportRevisionChanged: counselingWindow.refreshReports()
     }
 
     Page {
@@ -55,7 +66,7 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                model: [qsTr("Counseling"), qsTr("Mental Record"), qsTr("Bond")]
+                model: [qsTr("Counseling"), qsTr("Mental Record"), qsTr("Bond"), qsTr("Weekly Report")]
             }
 
             StackLayout {
@@ -311,21 +322,131 @@ NVG.Window {
 
                 }
 
+
+                // ---------------------------------------------------------------- Weekly Report
+                SettingsPage {
+                    P.ObjectPreferenceGroup {
+                        id: reportGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: counselingWindow.targetWidget.settings
+                        syncProperties: true
+
+                        P.SwitchPreference {
+                            id: weeklyPreference
+
+                            name: "weekly_report"
+                            label: qsTr("Sunday Report")
+                            defaultValue: false
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.")
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+
+                        Button {
+                            text: counselingWindow.targetWidget.writingReport ? qsTr("Writing...") : qsTr("Write This Week's Report")
+                            enabled: !counselingWindow.targetWidget.writingReport
+                            onClicked: counselingWindow.targetWidget.writeWeeklyReport(false, function(error) {
+                                reportMessage.text = error;
+                            })
+                        }
+
+                    }
+
+                    Label {
+                        id: reportMessage
+
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        visible: text !== ""
+                        wrapMode: Text.Wrap
+                        color: "#E53935"
+                    }
+
+                    Label {
+                        Layout.leftMargin: 16
+                        visible: counselingWindow.reports.length === 0
+                        opacity: 0.7
+                        text: qsTr("No reports yet.")
+                    }
+
+                    Repeater {
+                        model: counselingWindow.reports
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+                            spacing: 4
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    font.bold: true
+                                    text: modelData.week
+                                }
+
+                                ToolButton {
+                                    text: "✕"
+                                    onClicked: counselingWindow.targetWidget.askConfirm(qsTr("Mental Health Counseling"), qsTr("Delete the report of %1?").arg(modelData.week), function() {
+                                        counselingWindow.targetWidget.deleteReport(modelData.id);
+                                    }, true)
+                                }
+
+                            }
+
+                            // Read-only but selectable, so a part can be copied.
+                            TextArea {
+                                Layout.fillWidth: true
+                                readOnly: true
+                                selectByMouse: true
+                                wrapMode: Text.Wrap
+                                background: null
+                                text: modelData.text
+                            }
+
+                        }
+
+                    }
+
+                    ResetTabButton {
+                        yui: counselingWindow.targetWidget
+                        windowTitle: counselingWindow.title
+                        tabTitle: qsTr("Weekly Report")
+                        preferences: counselingWindow.reportPreferences
+                        groups: [reportGroup]
+                    }
+
+                }
+
             }
 
         }
 
-        // Reset: the settings of Counseling and Bond, never the recorded moods.
+        // Reset: the settings of Counseling, Bond and Weekly Report, never the recorded moods or reports.
         header: SettingsTitleBar {
             yui: counselingWindow.targetWidget
             settingsWindow: counselingWindow
             // load() is no edit, so the synced groups write the defaults to the settings by save().
             onResetRequested: {
-                counselingWindow.counselingPreferences.concat(counselingWindow.bondPreferences).forEach(function(preference) {
+                counselingWindow.counselingPreferences.concat(counselingWindow.bondPreferences, counselingWindow.reportPreferences).forEach(function(preference) {
                     preference.load();
                 });
                 counselingGroup.save();
                 bondGroup.save();
+                reportGroup.save();
             }
         }
 

@@ -694,112 +694,149 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="28"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="252"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="35"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="263"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="403"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="58"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="142"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="153"/>
         <source>Counseling</source>
         <translation>Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="58"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
         <source>Mental Record</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="58"/>
-        <location filename="../qml/MentalHealthCounseling.qml" line="307"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="318"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="80"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="69"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="427"/>
+        <source>Weekly Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="91"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="86"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="97"/>
         <source>Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.</source>
         <translation>你回来时结衣会打招呼：每天第一次在早上见面时说早安，隔三天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="94"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="105"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="100"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="111"/>
         <source>Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).</source>
         <translation>深夜提醒你早点睡，长时间使用后提醒你休息（每小时最多一次）。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="108"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="119"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="114"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="125"/>
         <source>Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.</source>
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="123"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="134"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="134"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="145"/>
         <source>While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.</source>
         <translation>对话框收起时，超过这么多分钟没有互动，结衣会主动说话（调用 API），0 为关闭。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="154"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="165"/>
         <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Counseling tab turns it on or off.</source>
         <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更加关心你。可以在 Counseling 标签的 Daily Mood Check 中开关。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="195"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="206"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="196"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="207"/>
         <source>today</source>
         <translation>今天</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="223"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="234"/>
         <source>No moods recorded in the last 30 days.</source>
         <translation>最近 30 天还没有心情记录。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="252"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="263"/>
         <source>Delete the mood of %1?</source>
         <translation>删除 %1 的心情记录吗？</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="276"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="287"/>
         <source>Player Birthday</source>
         <translation>Player Birthday</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="284"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="295"/>
         <source>On your birthday Yui wishes you a happy birthday (MM-DD, or yyyy-MM-dd).</source>
         <translation>在你生日那天，结衣会祝你生日快乐（MM-DD 或 yyyy-MM-dd）。</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="291"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="302"/>
         <source>Meeting Day</source>
         <translation>Meeting Day</translation>
     </message>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="299"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="310"/>
         <source>The day you met Yui (the first day she ran, unless you set another, yyyy-MM-dd); she remembers each anniversary.</source>
         <translation>你与结衣相遇的日子（默认是她第一次运行的那天，也可以自己设定，yyyy-MM-dd）；每年的纪念日她都会记得。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="339"/>
+        <source>Sunday Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="346"/>
+        <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
+        <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="356"/>
+        <source>Writing...</source>
+        <translation>正在写……</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="356"/>
+        <source>Write This Week&apos;s Report</source>
+        <translation>写本周小结</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="380"/>
+        <source>No reports yet.</source>
+        <translation>还没有小结。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MentalHealthCounseling.qml" line="403"/>
+        <source>Delete the report of %1?</source>
+        <translation>删除 %1 的小结吗？</translation>
     </message>
 </context>
 <context>
@@ -1781,13 +1818,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3434"/>
+        <location filename="../qml/main-stand.qml" line="3539"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="1501"/>
-        <location filename="../qml/main-stand.qml" line="3542"/>
+        <location filename="../qml/main-stand.qml" line="3647"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1844,120 +1881,125 @@ You can change this in System Console.</source>
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2210"/>
+        <location filename="../qml/main-stand.qml" line="2212"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2215"/>
+        <location filename="../qml/main-stand.qml" line="2217"/>
         <source>All memories were deleted. Backup: %1</source>
         <translation>已删除全部记忆。备份：%1</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2479"/>
+        <location filename="../qml/main-stand.qml" line="2481"/>
         <source>Line %1, column %2: %3</source>
         <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2634"/>
+        <location filename="../qml/main-stand.qml" line="2636"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2637"/>
+        <location filename="../qml/main-stand.qml" line="2639"/>
         <source>This file is not a Yui&apos;s Heart export.</source>
         <translation>这个文件不是结衣之心的导出文件。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2653"/>
+        <location filename="../qml/main-stand.qml" line="2655"/>
         <source>Imported %1 new memories and %2 chat messages.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2980"/>
+        <location filename="../qml/main-stand.qml" line="3060"/>
+        <source>Weekly Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/main-stand.qml" line="3084"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="2999"/>
-        <location filename="../qml/main-stand.qml" line="3166"/>
+        <location filename="../qml/main-stand.qml" line="3104"/>
+        <location filename="../qml/main-stand.qml" line="3271"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4843"/>
+        <location filename="../qml/main-stand.qml" line="4956"/>
         <source>Skill Slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4849"/>
+        <location filename="../qml/main-stand.qml" line="4962"/>
         <source>End Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4849"/>
+        <location filename="../qml/main-stand.qml" line="4962"/>
         <source>Start Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4855"/>
+        <location filename="../qml/main-stand.qml" line="4968"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3166"/>
-        <location filename="../qml/main-stand.qml" line="3194"/>
-        <location filename="../qml/main-stand.qml" line="3200"/>
-        <location filename="../qml/main-stand.qml" line="4838"/>
+        <location filename="../qml/main-stand.qml" line="3271"/>
+        <location filename="../qml/main-stand.qml" line="3299"/>
+        <location filename="../qml/main-stand.qml" line="3305"/>
+        <location filename="../qml/main-stand.qml" line="4951"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4660"/>
+        <location filename="../qml/main-stand.qml" line="4773"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="235"/>
-        <location filename="../qml/main-stand.qml" line="4691"/>
+        <location filename="../qml/main-stand.qml" line="4804"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/main-stand.qml" line="228"/>
-        <location filename="../qml/main-stand.qml" line="4691"/>
+        <location filename="../qml/main-stand.qml" line="4804"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="3054"/>
-        <location filename="../qml/main-stand.qml" line="3434"/>
+        <location filename="../qml/main-stand.qml" line="3159"/>
+        <location filename="../qml/main-stand.qml" line="3539"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4708"/>
+        <location filename="../qml/main-stand.qml" line="4821"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4823"/>
+        <location filename="../qml/main-stand.qml" line="4936"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4828"/>
+        <location filename="../qml/main-stand.qml" line="4941"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4833"/>
+        <location filename="../qml/main-stand.qml" line="4946"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/main-stand.qml" line="4750"/>
-        <location filename="../qml/main-stand.qml" line="4813"/>
+        <location filename="../qml/main-stand.qml" line="4863"/>
+        <location filename="../qml/main-stand.qml" line="4926"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>

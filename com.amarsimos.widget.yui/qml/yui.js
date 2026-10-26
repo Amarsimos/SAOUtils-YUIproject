@@ -1013,6 +1013,34 @@ function notesContext(title, notes) {
     }).join("\n") + "\n）";
 }
 
+// Weekly Report (Mental Health Counseling): the request asking Yui to write it (pure). stats: {from,
+// to ("yyyy-MM-dd"), messages (the user's chat messages), moods [{day, score, note}], raids {count,
+// minutes}, notesDone [texts], notesOpen (count), tokens (k, this month)}.
+function weeklyReportPrompt(title, stats) {
+    var lines = ["（系统提示：请结衣为" + title + "写一份本周的小结，时间是 " + stats.from + " 到 " + stats.to + "。下面是这一周的记录：）"];
+    lines.push("- 和结衣聊天：" + title + "发了 " + stats.messages + " 条消息");
+    if (stats.moods.length > 0) {
+        var average = stats.moods.reduce(function(sum, mood) {
+            return sum + mood.score;
+        }, 0) / stats.moods.length;
+        lines.push("- 心情（5 最好，1 最差）：" + stats.moods.map(function(mood) {
+            return mood.day.slice(5) + " " + mood.score + (mood.note ? "（" + mood.note + "）" : "");
+        }).join("；") + "，平均 " + average.toFixed(1));
+    } else {
+        lines.push("- 心情：这周没有记录");
+    }
+    lines.push("- Boss Raid（专注）：" + (stats.raids.count > 0 ? stats.raids.count + " 次，共 " + stats.raids.minutes + " 分钟" : "没有"));
+    if (stats.notesDone.length > 0)
+        lines.push("- 完成的待办：" + stats.notesDone.join("、"));
+
+    if (stats.notesOpen > 0)
+        lines.push("- 还没完成的待办：" + stats.notesOpen + " 件");
+
+    lines.push("- 这个月用掉的 token：约 " + stats.tokens + "k");
+    lines.push("", "（要求：以结衣的口吻写给" + title + "，三到五段，不用 Markdown 和列表。先说说这一周整体怎么样，重点关心" + title + "的心情和状态（心情低落的日子要温柔地提到），肯定做到的事，最后给下周一两条小小的建议或鼓励。不要逐条复述数字，没有记录的部分就不提。不要加任何标签。）");
+    return lines.join("\n");
+}
+
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
 // started but not finished yet ("<<emot") is hidden until it is complete.
 function displayText(partial) {

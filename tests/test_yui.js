@@ -519,4 +519,12 @@ test("No duplicate members in the QML files", () => {
     });
 });
 
+test("Weekly Report prompt", () => {
+    const stats = { from: "2026-10-20", to: "2026-10-26", messages: 42, moods: [{ day: "2026-10-21", score: 2, note: "加班" }, { day: "2026-10-22", score: 4, note: "" }], raids: { count: 3, minutes: 75 }, notesDone: ["交作业"], notesOpen: 2, tokens: 120 };
+    const text = Yui.weeklyReportPrompt("爸爸", stats);
+    assert.ok(text.includes("42 条") && text.includes("10-21 2（加班）") && text.includes("平均 3.0") && text.includes("3 次，共 75 分钟") && text.includes("交作业") && text.includes("2 件"));
+    const empty = Yui.weeklyReportPrompt("爸爸", Object.assign({}, stats, { moods: [], raids: { count: 0, minutes: 0 }, notesDone: [], notesOpen: 0 }));
+    assert.ok(empty.includes("这周没有记录") && !empty.includes("完成的待办"));
+});
+
 console.log(passed + " tests passed");
