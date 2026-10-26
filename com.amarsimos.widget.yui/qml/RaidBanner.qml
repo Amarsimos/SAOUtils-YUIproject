@@ -6,7 +6,8 @@ import QtQuick.Shapes 1.12
 // Boss Raid's banner, after the "Congratulations!!" of the anime when a floor boss falls: big white
 // letters with a soft shadow over a thick white bar notched in the middle. During the raid it is a
 // small banner (dragged anywhere, kept there) with the time left; when the raid is won it shows
-// "Congratulations!!" large across the screen for a few seconds, then the rest the same way as the
+// "Congratulations!!" large across the screen for a few seconds (a flash, the letters lighting one
+// by one, light motes drifting up and a sound), then the rest the same way as the
 // raid. It goes away when the raid and the rest are over (or by its ×; the raid goes on).
 NVG.View {
     id: banner
@@ -23,6 +24,11 @@ NVG.View {
         var seconds = Math.ceil(left / 1000);
         return Math.floor(seconds / 60) + ":" + ("0" + seconds % 60).slice(-2);
     }
+    readonly property string cheer: "Congratulations!!"
+    // The celebration: how many letters of cheer are lit (one after another), and the light motes
+    // drifting up (0 while none).
+    property int revealed: 0
+    property int motes: 0
     // The small banner's size; the celebration takes the screen's width.
     readonly property int compactWidth: 360
     readonly property int compactHeight: 130
@@ -68,6 +74,12 @@ NVG.View {
         var s = currentScreen();
         celebrating = true;
         visible = true;
+        revealed = 0;
+        motes = 0;
+        motes = 48;
+        if (yui.interfaceSounds)
+            NVG.SystemCall.playSound(NVG.SFX.PopupMessage);
+
         width = s.width;
         height = 300;
         x = s.virtualX;
@@ -128,8 +140,46 @@ NVG.View {
                 font.pixelSize: banner.celebrating ? 112 : 64
                 font.letterSpacing: 2
                 // The last ten seconds of a raid turn warm.
-                color: !banner.celebrating && banner.yui.raidActive && banner.left <= 10000 ? "#FFE2CF" : "#F4F4F4"
-                text: banner.celebrating ? "Congratulations!!" : banner.clock
+                // While celebrating it only gives the size; the letters light up one by one over it.
+                color: banner.celebrating ? "transparent" : (banner.yui.raidActive && banner.left <= 10000 ? "#FFE2CF" : "#F4F4F4")
+                text: banner.celebrating ? banner.cheer : banner.clock
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: bigText.font.letterSpacing
+                    visible: banner.celebrating
+
+                    Repeater {
+                        model: banner.cheer.split("")
+
+                        Text {
+                            font.family: "SAO UI"
+                            font.pixelSize: bigText.font.pixelSize
+                            color: "#F4F4F4"
+                            text: modelData
+                            opacity: index < banner.revealed ? 1 : 0
+                            scale: index < banner.revealed ? 1 : 1.8
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 180
+                                }
+
+                            }
+
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 260
+                                    easing.type: Easing.OutBack
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
 
                 transform: Scale {
                     id: pulse
@@ -221,6 +271,111 @@ NVG.View {
 
         }
 
+    }
+
+    // A white flash across as the letters start to light.
+    Rectangle {
+        id: flash
+
+        anchors.centerIn: parent
+        width: parent.width
+        height: 160
+        opacity: 0
+
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+
+            GradientStop {
+                position: 0
+                color: "#00FFFFFF"
+            }
+
+            GradientStop {
+                position: 0.5
+                color: "#CCFFFFFF"
+            }
+
+            GradientStop {
+                position: 1
+                color: "#00FFFFFF"
+            }
+
+        }
+
+    }
+
+    // Light motes drifting up around the letters, as in the boss room (each its own place, size,
+    // speed and delay).
+    Item {
+        anchors.fill: parent
+        visible: banner.celebrating
+
+        Repeater {
+            model: banner.motes
+
+            Rectangle {
+                id: mote
+
+                readonly property real size: 2 + Math.random() * 5
+
+                x: Math.random() * banner.width
+                width: size
+                height: size
+                radius: size / 2
+                color: Math.random() < 0.5 ? "#D8ECFF" : "#9CD3FF"
+                opacity: 0
+
+                SequentialAnimation {
+                    running: true
+
+                    PauseAnimation {
+                        duration: Math.random() * 1800
+                    }
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: mote
+                            property: "y"
+                            from: banner.height * (0.55 + Math.random() * 0.45)
+                            to: banner.height * Math.random() * 0.4
+                            duration: 2200 + Math.random() * 1800
+                            easing.type: Easing.OutQuad
+                        }
+
+                        SequentialAnimation {
+                            NumberAnimation {
+                                target: mote
+                                property: "opacity"
+                                to: 0.9
+                                duration: 400
+                            }
+
+                            NumberAnimation {
+                                target: mote
+                                property: "opacity"
+                                to: 0
+                                duration: 1800 + Math.random() * 1200
+                                easing.type: Easing.InQuad
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    // One letter more every 45 ms while celebrating.
+    Timer {
+        interval: 45
+        repeat: true
+        running: banner.celebrating && banner.revealed < banner.cheer.length
+        onTriggered: banner.revealed++
     }
 
     // The soft dark shadow that keeps the white readable on any background.
@@ -319,6 +474,25 @@ NVG.View {
                 duration: 450
             }
 
+            SequentialAnimation {
+                NumberAnimation {
+                    target: flash
+                    property: "opacity"
+                    from: 0
+                    to: 0.6
+                    duration: 120
+                }
+
+                NumberAnimation {
+                    target: flash
+                    property: "opacity"
+                    to: 0
+                    duration: 500
+                    easing.type: Easing.OutQuad
+                }
+
+            }
+
             NumberAnimation {
                 target: pulse
                 properties: "xScale,yScale"
@@ -359,6 +533,7 @@ NVG.View {
         ScriptAction {
             script: {
                 banner.celebrating = false;
+                banner.motes = 0;
                 if (banner.running)
                     banner.open();
                 else
