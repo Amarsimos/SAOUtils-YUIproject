@@ -42,6 +42,7 @@ Tags without a value (<<happy>>) are no longer shown; an expression name counts 
 **SAO Utils action and data**: MHCP-YUI can be bound in the launcher, menus, other widgets' buttons and shortcuts (Open Chat with an optional message, Spontaneous Talk, Start / End Boss Raid, open each window), and her values (Companion Days, Today's Mood, Col Ledger, Boss Raid minutes left, Heart Core) can be shown by HP bars and HUD widgets.
 **Skill Slots** window: Boss Raid (moved from Pixie Functions, with its status and a start / end button), **Alarm** (reminders by <<remind:time|text>> or by hand, once or daily, kept across restarts, missed ones told at start) and **Quest Log** (notes and to-dos by <<note:>> / <<done:>> or by hand, sent to Yui only when asked about, exportable); in the action (Skill Slots) and the data (Next Alarm).
 **Weekly Report** (Mental Health Counseling): Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes a few words about the week, on request or by herself on Sunday evenings (Sunday Report); reports are kept.
+**Ollama (local)** server preset: the local address filled in, no access key needed, Scan Cores lists the installed models.
 
 ### Changed
 

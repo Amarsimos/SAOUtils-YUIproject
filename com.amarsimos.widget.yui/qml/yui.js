@@ -1366,7 +1366,7 @@ var THINKING_BUDGETS = {
 };
 
 // Core Tuning's values as the fields of a request (pure). format: "openai", "anthropic" or "gemini";
-// providerId: the server (top_k goes only to "custom" servers such as Ollama,
+// providerId: the server (top_k goes only to local and "custom" servers such as Ollama,
 // since OpenAI's own rejects them). t: {maxTokens (0: none), temperature, topP, presencePenalty,
 // frequencyPenalty (each -1: the server's default), topK, seed (each 0: the default),
 // thinking: "off", "default", "low", "medium" or "high"}. Returns the fields to add to the request
@@ -1451,7 +1451,7 @@ function tuningFields(format, providerId, t) {
     if (t.seed > 0)
         fields.seed = t.seed;
 
-    if (providerId === "custom") {
+    if (providerId === "custom" || providerId === "ollama") {
         if (t.topK > 0)
             fields.top_k = t.topK;
 

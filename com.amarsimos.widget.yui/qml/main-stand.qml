@@ -31,7 +31,8 @@ T.Widget {
     property var cardinalSystemDialogInstance: null
     // Shared with CardinalSystem.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
-    // format: "openai" (Chat Completions), "gemini" (generateContent), "anthropic" (Messages)
+    // format: "openai" (Chat Completions), "gemini" (generateContent), "anthropic" (Messages);
+    // keyOptional: the server needs no access key.
     readonly property var providers: [{
         "id": "openai",
         "title": "OpenAI",
@@ -62,6 +63,14 @@ T.Widget {
         "format": "anthropic",
         "endpoint": "https://api.anthropic.com/v1/messages",
         "models": ["claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
+    }, {
+        // Local models: Ollama's OpenAI-compatible endpoint; it needs no access key (keyOptional).
+        "id": "ollama",
+        "title": "Ollama (local)",
+        "format": "openai",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "keyOptional": true,
+        "models": ["qwen3.5:9b", "qwen3:30b-a3b", "gemma4:e4b"]
     }, {
         "id": "custom",
         "title": "Custom (OpenAI-compatible)",
@@ -334,7 +343,8 @@ T.Widget {
         var customModel = (saved.custom_model || "").trim();
         return {
             "provider": provider,
-            "apiKey": (saved.api_key || "").trim(),
+            // A server without keys (Ollama) still gets one, so it counts as set up.
+            "apiKey": (saved.api_key || "").trim() || (provider.keyOptional ? "ollama" : ""),
             "endpoint": (saved.api_endpoint || "").trim() || provider.endpoint,
             "model": customModel || saved.model || provider.models[0] || ""
         };
