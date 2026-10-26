@@ -29,5 +29,8 @@ YuiActionBase {
             "id": "sword_skill",
             "name": qsTr("Run Sword Skill"),
             "uses": ["slot"]
+        }, {
+            "id": "raid_banner",
+            "name": qsTr("Show Raid Banner")
         }]
 }

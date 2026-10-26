@@ -2990,6 +2990,8 @@ T.Widget {
 
         } else if (command === "end_raid") {
             stopRaid();
+        } else if (command === "raid_banner") {
+            showRaidBanner();
         } else if (command === "add_reminder") {
             openQuickInput("alarm");
         } else if (command === "dismiss_reminder") {
@@ -3178,6 +3180,9 @@ T.Widget {
         widget.settings.raid_end = raidEnd;
         raidActive = true;
         resting = false;
+        if (widget.settings.raid_banner !== false)
+            showRaidBanner();
+
         diag("boss raid: " + minutes + " min");
         if (fromMenu)
             raidSay("Boss Raid 开始！✧ 结衣会安静地陪着" + userTitle() + " " + minutes + " 分钟，加油哦～ (ง •̀_•́)ง");
@@ -3296,6 +3301,25 @@ T.Widget {
         });
     }
 
+    // Boss Raid's banner (RaidBanner.qml), created on first use: the time left, then "Congratulations!".
+    property var raidBanner: null
+
+    function showRaidBanner() {
+        if (!raidBanner) {
+            var component = Qt.createComponent("RaidBanner.qml");
+            if (component.status !== Component.Ready) {
+                diag("raid banner unavailable: " + component.errorString());
+                return ;
+            }
+            raidBanner = component.createObject(widget, {
+                "yui": widget
+            });
+        }
+        if (raidActive || resting)
+            raidBanner.open();
+
+    }
+
     // What Yui says about a raid: in the chat, and in the bubble while it is closed.
     function raidSay(text) {
         appendMessage("ai", text, false, true);
@@ -3310,6 +3334,9 @@ T.Widget {
             resting = true;
             restEnd = now + restMinutes * 60000;
             logRaid(raidMinutes);
+            if (raidBanner && raidBanner.visible)
+                raidBanner.celebrate();
+
             raidSay("Boss 讨伐成功！✧ " + userTitle() + "辛苦啦～休息 " + restMinutes + " 分钟吧，喝口水、看看远处 (｡･ω･｡)");
         } else if (resting && now >= restEnd) {
             resting = false;
@@ -3808,6 +3835,9 @@ T.Widget {
         if (widget.settings.raid_end > Date.now()) {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
+            if (widget.settings.raid_banner !== false)
+                Qt.callLater(showRaidBanner);
+
         }
         // Bond: the day of meeting is the first day the widget ran, unless the player sets another.
         if (!widget.settings.meeting_day)

@@ -21,7 +21,7 @@ NVG.Window {
     // The time now, for the Boss Raid status (ticks while the window is open).
     property double now: Date.now()
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var raidPreferences: [raidPreference, restPreference]
+    readonly property var raidPreferences: [raidPreference, restPreference, bannerPreference]
     readonly property var alarmPreferences: [alarmPreference]
     readonly property var notesPreferences: [notesPreference]
     readonly property var swordPreferences: [skillName1, skillAction1, skillName2, skillAction2, skillName3, skillAction3, skillName4, skillAction4, skillName5, skillAction5]
@@ -146,6 +146,20 @@ NVG.Window {
                             text: qsTr("Boss Raid: focus time with Yui, in minutes, then a rest. Start it here, from her menu or ask her (\"stay with me for 25 minutes\"); meanwhile the crystal turns violet and she does not speak up by herself.")
                         }
 
+                        P.SwitchPreference {
+                            id: bannerPreference
+
+                            name: "raid_banner"
+                            label: qsTr("Raid Banner")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: skillsWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("A banner on top of the screen shows the time left (drag it anywhere); when the raid is won it says \"Congratulations!\" across the screen, as when a floor boss falls.")
+                        }
+
                     }
 
                     // Below: not settings (a window of its own later).
@@ -167,6 +181,13 @@ NVG.Window {
 
                             return qsTr("No raid now.");
                         }
+                    }
+
+                    Button {
+                        Layout.leftMargin: 16
+                        visible: skillsWindow.targetWidget.raidActive || skillsWindow.targetWidget.resting
+                        text: qsTr("Show Raid Banner")
+                        onClicked: skillsWindow.targetWidget.showRaidBanner()
                     }
 
                     Button {
