@@ -3188,6 +3188,8 @@ T.Widget {
         resting = false;
         if (widget.settings.raid_banner !== false)
             showRaidBanner();
+        else
+            diag("raid banner: off (Skill Slots, Raid Banner)");
 
         diag("boss raid: " + minutes + " min");
         if (fromMenu)
@@ -3326,6 +3328,7 @@ T.Widget {
         if (raidActive || resting)
             raidBanner.open();
 
+        diag("raid banner: " + (raidBanner.visible ? "shown" : "hidden") + " at " + raidBanner.x + "," + raidBanner.y + " " + raidBanner.width + "x" + raidBanner.height + ", compositor " + raidBanner.compositor + ", z " + raidBanner.z);
     }
 
     // What Yui says about a raid: in the chat, and in the bubble while it is closed.
@@ -3343,8 +3346,10 @@ T.Widget {
             restEnd = now + restMinutes * 60000;
             logRaid(raidMinutes);
             raidClearedUntil = now + 6000;
-            if (raidBanner && raidBanner.visible)
+            if (raidBanner && raidBanner.visible) {
                 raidBanner.celebrate();
+                diag("raid banner: congratulations at " + raidBanner.x + "," + raidBanner.y + " " + raidBanner.width + "x" + raidBanner.height);
+            }
 
             raidSay("Boss 讨伐成功！✧ " + userTitle() + "辛苦啦～休息 " + restMinutes + " 分钟吧，喝口水、看看远处 (｡･ω･｡)");
         } else if (resting && now >= restEnd) {
