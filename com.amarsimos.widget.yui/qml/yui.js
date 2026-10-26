@@ -89,7 +89,7 @@ function bareTagPattern() {
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -791,7 +791,9 @@ function parseReply(text, userProtected, options) {
         "reminders": [],
         // <<note:>> / <<done:>> (Skill Slots, Quest Log): texts to note, and texts of notes done.
         "notes": [],
-        "dones": []
+        "dones": [],
+        // <<skill:>> (Skill Slots, Sword Skills): the name of the sword skill to run, "" when none.
+        "skill": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -831,6 +833,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "note") {
             if (allowed.notes !== false)
                 result.notes.push(value);
+
+        } else if (kind === "skill") {
+            if (allowed.skills && allowed.skills.length > 0)
+                result.skill = value;
 
         } else if (kind === "done") {
             if (allowed.notes !== false)
@@ -1039,6 +1045,35 @@ function weeklyReportPrompt(title, stats) {
     lines.push("- 这个月用掉的 token：约 " + stats.tokens + "k");
     lines.push("", "（要求：以结衣的口吻写给" + title + "，三到五段，不用 Markdown 和列表。先说说这一周整体怎么样，重点关心" + title + "的心情和状态（心情低落的日子要温柔地提到），肯定做到的事，最后给下周一两条小小的建议或鼓励。不要逐条复述数字，没有记录的部分就不提。不要加任何标签。）");
     return lines.join("\n");
+}
+
+// Sword Skills: the index in names of the sword skill a <<skill:>> names (the same name, ignoring
+// case and spaces, else one containing the other), -1 when none.
+function swordSkillIndex(name, names) {
+    var plain = function(text) {
+        return String(text || "").replace(/\s+/g, "").toLowerCase();
+    };
+    var wanted = plain(name);
+    if (!wanted)
+        return -1;
+
+    for (var i = 0; i < names.length; i++) {
+        if (plain(names[i]) === wanted)
+            return i;
+
+    }
+    for (var j = 0; j < names.length; j++) {
+        var other = plain(names[j]);
+        if (other && (other.indexOf(wanted) !== -1 || wanted.indexOf(other) !== -1))
+            return j;
+
+    }
+    return -1;
+}
+
+// Weather Report: whether the user's message is about the weather, so it is sent with it.
+function weatherWanted(query) {
+    return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
@@ -1265,6 +1300,9 @@ function featureInstructions(title, core, allowed, mode) {
     var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。", "- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。"];
     if (allowed.alarm !== false)
         lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
+
+    if (allowed.skills && allowed.skills.length > 0)
+        lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
     if (allowed.notes !== false)
         lines.push("- 笔记（Quest Log）：当" + title + "请你帮忙记下某件事、待办或备忘时，在回复最后加上 <<note:要记的事>>（和结衣之心分开，不要再用 memory 记一遍）；" + title + "说某件记下的事已经办完时，加 <<done:那件事>>。");

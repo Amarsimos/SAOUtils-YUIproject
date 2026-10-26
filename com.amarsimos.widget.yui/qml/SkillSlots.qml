@@ -7,8 +7,8 @@ import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
 // "Skill Slots" window (next to Mental Health Counseling): Yui's small tools, each a skill in a slot:
-// Boss Raid (focus time, then a rest), Alarm (reminders, <<remind:>>) and Quest Log (notes and to-dos,
-// <<note:>> / <<done:>>). The settings are SAO Utils' own preferences synced with the widget's settings
+// Boss Raid (focus time, then a rest), Alarm (reminders, <<remind:>>), Quest Log (notes and to-dos,
+// <<note:>> / <<done:>>) and Sword Skills (named SAO Utils actions Yui runs, <<skill:>>). The settings are SAO Utils' own preferences synced with the widget's settings
 // (ObjectPreferenceGroup); Reset restores the settings only, never the reminders or the notes.
 NVG.Window {
     id: skillsWindow
@@ -23,6 +23,7 @@ NVG.Window {
     readonly property var raidPreferences: [raidPreference, restPreference]
     readonly property var alarmPreferences: [alarmPreference]
     readonly property var notesPreferences: [notesPreference]
+    readonly property var swordPreferences: [skillName1, skillAction1, skillName2, skillAction2, skillName3, skillAction3, skillName4, skillAction4, skillName5, skillAction5]
 
     function refreshReminders() {
         reminders = targetWidget.remindersList();
@@ -95,7 +96,7 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                model: [qsTr("Boss Raid"), qsTr("Alarm"), qsTr("Quest Log")]
+                model: [qsTr("Boss Raid"), qsTr("Alarm"), qsTr("Quest Log"), qsTr("Sword Skills")]
             }
 
             StackLayout {
@@ -414,6 +415,128 @@ NVG.Window {
 
                 }
 
+                // ---------------------------------------------------------------- Sword Skills
+                SettingsPage {
+                    P.ObjectPreferenceGroup {
+                        id: swordGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: skillsWindow.targetWidget.settings
+                        syncProperties: true
+
+                        SettingNote {
+                            visible: skillsWindow.targetWidget.settingsHelp
+                            text: qsTr("Give a name and a SAO Utils action to a slot; when you tell Yui to do it (\"start work\"), she runs it after you confirm. To chain several steps (open programs, close a game, start a Boss Raid...), choose a Script Action and put them in its Input Actions.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: skillName1
+
+                            name: "sword_skill_1_name"
+                            label: qsTr("Sword Skill 1")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: qsTr("Name, e.g. Start Work")
+                        }
+
+                        P.ActionPreference {
+                            id: skillAction1
+
+                            name: "sword_skill_1_action"
+                            label: qsTr("Action")
+                        }
+
+                        P.TextFieldPreference {
+                            id: skillName2
+
+                            name: "sword_skill_2_name"
+                            label: qsTr("Sword Skill 2")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: qsTr("Name, e.g. Start Work")
+                        }
+
+                        P.ActionPreference {
+                            id: skillAction2
+
+                            name: "sword_skill_2_action"
+                            label: qsTr("Action")
+                        }
+
+                        P.TextFieldPreference {
+                            id: skillName3
+
+                            name: "sword_skill_3_name"
+                            label: qsTr("Sword Skill 3")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: qsTr("Name, e.g. Start Work")
+                        }
+
+                        P.ActionPreference {
+                            id: skillAction3
+
+                            name: "sword_skill_3_action"
+                            label: qsTr("Action")
+                        }
+
+                        P.TextFieldPreference {
+                            id: skillName4
+
+                            name: "sword_skill_4_name"
+                            label: qsTr("Sword Skill 4")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: qsTr("Name, e.g. Start Work")
+                        }
+
+                        P.ActionPreference {
+                            id: skillAction4
+
+                            name: "sword_skill_4_action"
+                            label: qsTr("Action")
+                        }
+
+                        P.TextFieldPreference {
+                            id: skillName5
+
+                            name: "sword_skill_5_name"
+                            label: qsTr("Sword Skill 5")
+                            display: P.TextFieldPreference.ExpandLabel
+                            hint: qsTr("Name, e.g. Start Work")
+                        }
+
+                        P.ActionPreference {
+                            id: skillAction5
+
+                            name: "sword_skill_5_action"
+                            label: qsTr("Action")
+                        }
+
+                    }
+
+                    RowLayout {
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+
+                        Repeater {
+                            model: 5
+
+                            Button {
+                                text: qsTr("Test %1").arg(index + 1)
+                                onClicked: skillsWindow.targetWidget.runSwordSkill(index + 1)
+                            }
+
+                        }
+
+                    }
+
+                    ResetTabButton {
+                        yui: skillsWindow.targetWidget
+                        windowTitle: skillsWindow.title
+                        tabTitle: qsTr("Sword Skills")
+                        preferences: skillsWindow.swordPreferences
+                        groups: [swordGroup]
+                    }
+
+                }
+
             }
 
         }
@@ -424,12 +547,13 @@ NVG.Window {
             settingsWindow: skillsWindow
             // load() is no edit, so the synced groups write the defaults to the settings by save().
             onResetRequested: {
-                skillsWindow.raidPreferences.concat(skillsWindow.alarmPreferences, skillsWindow.notesPreferences).forEach(function(preference) {
+                skillsWindow.raidPreferences.concat(skillsWindow.alarmPreferences, skillsWindow.notesPreferences, skillsWindow.swordPreferences).forEach(function(preference) {
                     preference.load();
                 });
                 raidGroup.save();
                 alarmGroup.save();
                 notesGroup.save();
+                swordGroup.save();
             }
         }
 

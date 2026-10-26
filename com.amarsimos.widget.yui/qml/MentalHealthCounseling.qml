@@ -7,7 +7,7 @@ import QtQuick.Layouts 1.12
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
 // Yui's own task as MHCP-001, caring for the player, in pages: Counseling (greetings, rest reminders,
-// the daily mood check, speaking up by herself), Mental Record (the daily moods), Bond (birthday and
+// the daily mood check, speaking up by herself, the weather), Mental Record (the daily moods), Bond (birthday and
 // the day of meeting) and Weekly Report (Yui's look back on the week).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never the recorded moods.
@@ -18,7 +18,7 @@ NVG.Window {
     // Mental Record: the moods of the last 30 days, oldest first (refreshed when one is recorded).
     property var moods: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var counselingPreferences: [greetPreference, carePreference, moodPreference, idleChatPreference]
+    readonly property var counselingPreferences: [greetPreference, carePreference, moodPreference, idleChatPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
     readonly property var reportPreferences: [weeklyPreference]
     // Weekly Report: the reports written, newest first.
@@ -143,6 +143,36 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.")
+                        }
+
+                        P.SwitchPreference {
+                            id: weatherPreference
+
+                            name: "weather_report"
+                            label: qsTr("Weather Report")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui mentions the weather in her morning greeting (and an umbrella when it rains) and answers weather questions with it. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.")
+                        }
+
+                        P.DataPreference {
+                            id: weatherDataPreference
+
+                            name: "weather_data"
+                            label: qsTr("Weather")
+                            visible: weatherPreference.value
+                        }
+
+                        P.DataPreference {
+                            id: temperatureDataPreference
+
+                            name: "weather_temperature"
+                            label: qsTr("Temperature")
+                            visible: weatherPreference.value
                         }
 
                     }

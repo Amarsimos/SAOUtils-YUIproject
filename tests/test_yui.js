@@ -528,4 +528,18 @@ test("Weekly Report prompt", () => {
     assert.ok(empty.includes("这周没有记录") && !empty.includes("完成的待办"));
 });
 
+test("Sword Skills and Weather Report", () => {
+    const names = ["开始工作", "Game Time", ""];
+    assert.strictEqual(Yui.swordSkillIndex("开始工作", names), 0);
+    assert.strictEqual(Yui.swordSkillIndex("game time", names), 1);
+    assert.strictEqual(Yui.swordSkillIndex("工作", names), 0);
+    assert.strictEqual(Yui.swordSkillIndex("睡觉", names), -1);
+    assert.strictEqual(Yui.parseReply("好的<<skill:开始工作>>", [], { allowed: { skills: ["开始工作"] } }).skill, "开始工作");
+    assert.strictEqual(Yui.parseReply("好的<<skill:开始工作>>", [], { allowed: {} }).skill, "");
+    assert.ok(Yui.featureInstructions("爸爸", "", { skills: ["开始工作"] }, "tags").includes("<<skill:名字>>"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<skill:"));
+    assert.ok(Yui.weatherWanted("明天要带伞吗"));
+    assert.ok(!Yui.weatherWanted("帮我开一下浏览器"));
+});
+
 console.log(passed + " tests passed");

@@ -462,12 +462,16 @@ T.Widget {
             "memory": autoMemory,
             // Skill Slots: Alarm and Quest Log.
             "alarm": widget.settings.alarm_enabled !== false,
-            "notes": widget.settings.notes_enabled !== false
+            "notes": widget.settings.notes_enabled !== false,
+            // Sword Skills: the names of the slots set up.
+            "skills": swordSkills().map(function(skill) {
+                return skill.name;
+            })
         };
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query);
     }
 
     // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
@@ -476,6 +480,70 @@ T.Widget {
             return "";
 
         return Yui.notesContext(title, notesList(false));
+    }
+
+    // ---------------------------------------------------------------- Weather Report
+    // Mental Health Counseling: the weather from a SAO Utils data source (e.g. Weather Data's Weather
+    // Forecast and Current Temperature, with the place chosen there), "" when none is set or ready.
+    function weatherLine() {
+        if (widget.settings.weather_report === false || !weatherSource.configuration)
+            return "";
+
+        var text = weatherSource.value && weatherSource.value.status === 1 ? weatherText.result : "";
+        var temperature = temperatureSource.configuration && temperatureSource.value && temperatureSource.value.status === 1 ? temperatureText.result + (temperatureSource.suffix || temperatureText.unit || "") : "";
+        return [text, temperature].filter(function(part) {
+            return part;
+        }).join("，");
+    }
+
+    // Sent when the message is about the weather.
+    function weatherExtras(title, query) {
+        var line = Yui.weatherWanted(query) ? weatherLine() : "";
+        return line ? "\n\n（天气数据：现在 " + line + "。回答天气相关的问题时以此为准，不要编造。）" : "";
+    }
+
+    // ---------------------------------------------------------------- Sword Skills
+    // Skill Slots: up to five named SAO Utils actions (usually a Script Action chaining several), run
+    // when Yui says <<skill:name>> and the user confirms. Only slots with both a name and an action.
+    function swordSkills() {
+        var found = [];
+        for (var i = 1; i <= 5; i++) {
+            var name = String(widget.settings["sword_skill_" + i + "_name"] || "").trim();
+            if (name && widget.settings["sword_skill_" + i + "_action"])
+                found.push({
+                "slot": i,
+                "name": name
+            });
+
+        }
+        return found;
+    }
+
+    function runSwordSkill(slot) {
+        var source = swordSkillSources.objectAt(slot - 1);
+        if (!source || !source.configuration) {
+            diag("sword skill " + slot + ": no action");
+            return false;
+        }
+        diag("sword skill " + slot + ": " + source.title);
+        source.trigger();
+        return true;
+    }
+
+    // <<skill:>>: asks first, then runs it.
+    function askSwordSkill(name) {
+        var skills = swordSkills();
+        var index = Yui.swordSkillIndex(name, skills.map(function(skill) {
+            return skill.name;
+        }));
+        if (index === -1)
+            return "";
+
+        var skill = skills[index];
+        askConfirm(qsTr("Sword Skills"), qsTr("Run the sword skill \"%1\"?").arg(skill.name), function() {
+            runSwordSkill(skill.slot);
+        });
+        return skill.name;
     }
 
     // ---------------------------------------------------------------- Skill Slots: Alarm and Quest Log
@@ -1280,6 +1348,10 @@ T.Widget {
                     addQuestNote(text);
                     note = (note ? note + "\n" : "") + "📜 已记下：" + text;
                 });
+                if (reply.skill) {
+                    var skillName = askSwordSkill(reply.skill);
+                    note = (note ? note + "\n" : "") + (skillName ? "⚔ 剑技：" + skillName : "⚔ 没有叫「" + reply.skill + "」的剑技");
+                }
                 reply.dones.forEach(function(text) {
                     var finished = finishNote(text);
                     if (finished)
@@ -1416,7 +1488,7 @@ T.Widget {
         var away = Yui.formatDuration(now - lastActive);
         var how = {
             "long": "已经 " + away + " 没见了。请以结衣的身份说一句「好久不见」，表达想念和开心，可以问问" + title + "这些天过得怎么样。",
-            "morning": "今天是第一次见面，现在是早上 " + Qt.formatTime(new Date(now), "HH:mm") + "。请以结衣的身份向" + title + "说早安，可以关心一下睡得好不好、今天的安排。",
+            "morning": "今天是第一次见面，现在是早上 " + Qt.formatTime(new Date(now), "HH:mm") + "。请以结衣的身份向" + title + "说早安，可以关心一下睡得好不好、今天的安排。" + (weatherLine() ? "今天的天气是：" + weatherLine() + "，顺带提一句，会下雨的话提醒带伞。" : ""),
             "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
         }[kind];
         diag("login greeting: " + kind);
@@ -3876,6 +3948,64 @@ T.Widget {
         repeat: true
         running: widget.raidActive || widget.resting
         onTriggered: widget.checkRaid(Date.now())
+    }
+
+    // Weather Report: the chosen weather values (Mental Health Counseling), as text.
+    NVG.DataSource {
+        id: weatherSource
+
+        configuration: widget.settings.weather_report === false ? null : (widget.settings.weather_data || null)
+    }
+
+    NVG.DataSourceTextOutput {
+        id: weatherText
+
+        source: weatherSource
+        nullText: ""
+        undefinedText: ""
+    }
+
+    NVG.DataSource {
+        id: temperatureSource
+
+        configuration: widget.settings.weather_report === false ? null : (widget.settings.weather_temperature || null)
+    }
+
+    NVG.DataSourceTextOutput {
+        id: temperatureText
+
+        source: temperatureSource
+        nullText: ""
+        undefinedText: ""
+        fixedDecimalDigits: 0
+    }
+
+    // The weather values are read now and every 10 minutes (whatever their own update interval).
+    Timer {
+        interval: 600000
+        repeat: true
+        triggeredOnStart: true
+        running: !!weatherSource.configuration || !!temperatureSource.configuration
+        onTriggered: {
+            if (weatherSource.configuration)
+                weatherSource.update();
+
+            if (temperatureSource.configuration)
+                temperatureSource.update();
+
+        }
+    }
+
+    // Sword Skills (Skill Slots): the action of each slot, loaded ahead so it runs at once.
+    Instantiator {
+        id: swordSkillSources
+
+        model: 5
+
+        delegate: NVG.ActionSource {
+            configuration: widget.settings["sword_skill_" + (index + 1) + "_action"] || null
+        }
+
     }
 
     // Weekly Report (automatic, Sunday evenings), checked every 10 minutes.
