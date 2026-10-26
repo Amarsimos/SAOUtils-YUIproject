@@ -8,7 +8,8 @@ import "link" 1.0 as Link
 T.Action {
     id: action
 
-    readonly property var commands: ["chat", "speak", "raid", "cardinal", "equipment", "heart", "counseling", "console"]
+    // New commands go at the end: a bound action keeps the index of its command.
+    readonly property var commands: ["chat", "speak", "raid", "cardinal", "equipment", "heart", "counseling", "console", "skills"]
 
     title: qsTr("MHCP-YUI")
     description: qsTr("Talk to Yui, start a Boss Raid or open her windows.")
@@ -16,7 +17,7 @@ T.Action {
         var index = configuration && configuration.command !== undefined ? configuration.command : 0;
         return title + " · " + commandNames[index];
     }
-    readonly property var commandNames: [qsTr("Open Chat"), qsTr("Spontaneous Talk"), qsTr("Start / End Boss Raid"), qsTr("Cardinal System"), qsTr("Equipment"), qsTr("Yui's Heart"), qsTr("Mental Health Counseling"), qsTr("System Console")]
+    readonly property var commandNames: [qsTr("Open Chat"), qsTr("Spontaneous Talk"), qsTr("Start / End Boss Raid"), qsTr("Cardinal System"), qsTr("Equipment"), qsTr("Yui's Heart"), qsTr("Mental Health Counseling"), qsTr("System Console"), qsTr("Skill Slots")]
     execute: function() {
         return new Promise(function(resolve, reject) {
             var yui = Link.Server.yui;

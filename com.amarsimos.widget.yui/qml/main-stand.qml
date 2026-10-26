@@ -22,6 +22,8 @@ T.Widget {
     property var yuisHeartDialogInstance: null
     property Component counselingDialog: Qt.createComponent("MentalHealthCounseling.qml")
     property var counselingDialogInstance: null
+    property Component skillSlotsDialog: Qt.createComponent("SkillSlots.qml")
+    property var skillSlotsDialogInstance: null
     property Component seedlingDialog: Qt.createComponent("Seedling.qml")
     property var seedlingDialogInstance: null
     // Widgets popped out of the Seedling (SeedlingWidget.qml views), not saved.
@@ -155,7 +157,7 @@ T.Widget {
     readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
     // During a Boss Raid the crystal has the raid's color instead of the load's.
     readonly property color crystalColor: raidActive ? raidColor : levelColors[crystalLevel]
-    // Boss Raid (focus time, Pixie Functions): the raid ends at raidEnd (kept in the settings, so it
+    // Boss Raid (focus time, Skill Slots): the raid ends at raidEnd (kept in the settings, so it
     // goes on after a restart), then a rest ends at restEnd. Meanwhile Yui says nothing by herself.
     readonly property color raidColor: "#B388FF"
     readonly property int raidMinutes: widget.settings.raid_minutes > 0 ? widget.settings.raid_minutes : 25
@@ -447,12 +449,141 @@ T.Widget {
             "launch": widget.settings.action_launch !== false,
             "find": widget.settings.action_find !== false,
             "kill": widget.settings.action_kill === true,
-            "memory": autoMemory
+            "memory": autoMemory,
+            // Skill Slots: Alarm and Quest Log.
+            "alarm": widget.settings.alarm_enabled !== false,
+            "notes": widget.settings.notes_enabled !== false
         };
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query);
+    }
+
+    // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
+    function notesExtras(title, query) {
+        if (widget.settings.notes_enabled === false || !Yui.notesWanted(query))
+            return "";
+
+        return Yui.notesContext(title, notesList(false));
+    }
+
+    // ---------------------------------------------------------------- Skill Slots: Alarm and Quest Log
+    // Bumped whenever a reminder or a note changes (the Skill Slots window lists them).
+    property int alarmRevision: 0
+    property int notesRevision: 0
+
+    // Runs a statement on the database; false when it failed (logged).
+    function writeSql(what, sql, args) {
+        if (!database)
+            return false;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql(sql, args || []);
+            });
+            return true;
+        } catch (e) {
+            diag(what + " failed: " + e);
+            return false;
+        }
+    }
+
+    function readSql(what, sql, args) {
+        var found = [];
+        if (!database)
+            return found;
+
+        try {
+            database.readTransaction(function(tx) {
+                var rows = tx.executeSql(sql, args || []).rows;
+                for (var i = 0; i < rows.length; i++)
+                    found.push(rows.item(i));
+            });
+        } catch (e) {
+            diag(what + " failed: " + e);
+        }
+        return found;
+    }
+
+    // Reminders by time: [{id, due, text, daily}].
+    function remindersList() {
+        return readSql("reading the reminders", "SELECT id, due, text, daily FROM reminders ORDER BY due");
+    }
+
+    function addReminder(reminder) {
+        if (writeSql("adding a reminder", "INSERT INTO reminders(due, text, daily, created) VALUES(?, ?, ?, ?)", [reminder.due, reminder.text, reminder.daily ? 1 : 0, Date.now()]))
+            alarmRevision++;
+
+    }
+
+    function deleteReminder(id) {
+        if (writeSql("deleting a reminder", "DELETE FROM reminders WHERE id = ?", [id]))
+            alarmRevision++;
+
+    }
+
+    // Rings the reminders that are due (missed ones while SAO Utils was closed too, once): Yui says
+    // them without the API; a daily one moves on to its next time, the others are removed.
+    function checkAlarms(now) {
+        var due = readSql("reading the reminders", "SELECT id, due, text, daily FROM reminders WHERE due <= ? ORDER BY due", [now]);
+        if (due.length === 0)
+            return ;
+
+        due.forEach(function(reminder) {
+            var late = now - reminder.due > 120000 ? "（刚才 " + Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm") + " 的提醒）" : "";
+            appendMessage("ai", "⏰ " + userTitle() + "，" + reminder.text + "！" + late + " 结衣提醒你啦～ (｡･ω･｡)", false, true);
+            announce(qsTr("Alarm"), "⏰ " + reminder.text);
+            if (reminder.daily)
+                writeSql("moving a daily reminder", "UPDATE reminders SET due = ? WHERE id = ?", [Yui.nextTimeOfDay(Qt.formatDateTime(new Date(reminder.due), "HH:mm"), now), reminder.id]);
+            else
+                writeSql("removing a reminder", "DELETE FROM reminders WHERE id = ?", [reminder.id]);
+        });
+        setEmotion("surprised");
+        diag("alarm: " + due.length + " reminder(s)");
+        alarmRevision++;
+    }
+
+    // Quest Log notes, open first (oldest first), then the done ones (latest first); open only when
+    // withDone is false.
+    function notesList(withDone) {
+        var open = readSql("reading the notes", "SELECT id, text, done, created FROM notes WHERE done = 0 ORDER BY id");
+        if (!withDone)
+            return open;
+
+        return open.concat(readSql("reading the notes", "SELECT id, text, done, created FROM notes WHERE done = 1 ORDER BY updated DESC"));
+    }
+
+    function addNote(text) {
+        text = String(text || "").trim();
+        if (text && writeSql("adding a note", "INSERT INTO notes(text, done, created, updated) VALUES(?, 0, ?, ?)", [text, Date.now(), Date.now()]))
+            notesRevision++;
+
+    }
+
+    function editNote(id, text, done) {
+        if (writeSql("editing a note", "UPDATE notes SET text = ?, done = ?, updated = ? WHERE id = ?", [String(text).trim(), done ? 1 : 0, Date.now(), id]))
+            notesRevision++;
+
+    }
+
+    function deleteNote(id) {
+        if (writeSql("deleting a note", "DELETE FROM notes WHERE id = ?", [id]))
+            notesRevision++;
+
+    }
+
+    // <<done:>>: the open note that contains the text (or is contained in it); its text, or "".
+    function finishNote(text) {
+        var wanted = String(text).trim();
+        var found = notesList(false).filter(function(note) {
+            return note.text.indexOf(wanted) !== -1 || wanted.indexOf(note.text) !== -1;
+        })[0];
+        if (!found)
+            return "";
+
+        editNote(found.id, found.text, true);
+        return found.text;
     }
 
     // Bond (Mental Health Counseling): the player's birthday and the day of meeting, always known, celebrated once that day
@@ -1131,6 +1262,20 @@ T.Widget {
                     recordMood(reply.mood);
                     note = (note ? note + "\n" : "") + "📝 心情记录：" + reply.mood.score + "/5" + (reply.mood.note ? " " + reply.mood.note : "");
                 }
+                reply.reminders.forEach(function(reminder) {
+                    addReminder(reminder);
+                    note = (note ? note + "\n" : "") + "⏰ 已设提醒：" + (reminder.daily ? "每天 " + Qt.formatDateTime(new Date(reminder.due), "HH:mm") : Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm")) + " " + reminder.text;
+                });
+                reply.notes.forEach(function(text) {
+                    addNote(text);
+                    note = (note ? note + "\n" : "") + "📜 已记下：" + text;
+                });
+                reply.dones.forEach(function(text) {
+                    var finished = finishNote(text);
+                    if (finished)
+                        note = (note ? note + "\n" : "") + "✅ 已完成：" + finished;
+
+                });
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1792,6 +1937,10 @@ T.Widget {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, message TEXT, created INTEGER)");
             // Mental Record: one mood a day (day "yyyy-MM-dd", score 1–5).
             tx.executeSql("CREATE TABLE IF NOT EXISTS moods(day TEXT PRIMARY KEY, score INTEGER, note TEXT, created INTEGER)");
+            // Skill Slots: Alarm reminders (due in ms; daily ones move on a day when they ring) and
+            // Quest Log notes.
+            tx.executeSql("CREATE TABLE IF NOT EXISTS reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, due REAL, text TEXT, daily INTEGER, created INTEGER)");
+            tx.executeSql("CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, done INTEGER NOT NULL DEFAULT 0, created INTEGER, updated INTEGER)");
             });
             // Columns added with the heart core (1.1): every older memory was sent with every request,
             // so the oldest MAX_CORE become the core and the rest fragments.
@@ -2016,6 +2165,21 @@ T.Widget {
         }).join("\r\n");
         writeHeartFile("回忆日志-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".txt", text, function(path) {
             diag("log export -> " + (path || "failed"));
+            if (path)
+                showInExplorer(path);
+
+            onDone(path);
+        });
+    }
+
+    // Quest Log (Skill Slots): the notes as a text file next to the log exports ([ ] open, [x] done).
+    function exportNotes(onDone) {
+        var text = notesList(true).map(function(note) {
+            return (note.done ? "[x] " : "[ ] ") + note.text;
+        }).join("
+");
+        writeHeartFile("Quest-Log-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".txt", text, function(path) {
+            diag("notes export -> " + (path || "failed"));
             if (path)
                 showInExplorer(path);
 
@@ -2713,6 +2877,7 @@ T.Widget {
             "equipment": [equipmentDialog, "equipmentDialogInstance"],
             "heart": [yuisHeartDialog, "yuisHeartDialogInstance"],
             "counseling": [counselingDialog, "counselingDialogInstance"],
+            "skills": [skillSlotsDialog, "skillSlotsDialogInstance"],
             "console": [systemConsoleDialog, "systemConsoleDialogInstance"]
         };
         if (windows[command]) {
@@ -2769,6 +2934,14 @@ T.Widget {
                 "maximum": raidMinutes
             };
 
+        if (name === "next_alarm") {
+            var next = remindersList()[0];
+            var left = next ? Math.max(0, Math.ceil((next.due - Date.now()) / 60000)) : 0;
+            return {
+                "current": left,
+                "maximum": Math.max(1, left)
+            };
+        }
         if (name === "heart_core")
             return {
                 "current": Yui.coreMemories(heartCache).length,
@@ -3588,6 +3761,16 @@ T.Widget {
         repeat: true
         running: widget.raidActive || widget.resting
         onTriggered: widget.checkRaid(Date.now())
+    }
+
+    // Alarm (Skill Slots): rings the due reminders, checked every 15 s (and once at start, for the
+    // ones missed while SAO Utils was closed).
+    Timer {
+        interval: 15000
+        repeat: true
+        triggeredOnStart: true
+        running: widget.chatReady && !widget.seedlingMode && widget.settings.alarm_enabled !== false
+        onTriggered: widget.checkAlarms(Date.now())
     }
 
     // Keeps the crystal color current while it is shown.
@@ -4654,6 +4837,11 @@ T.Widget {
         Action {
             text: qsTr("Mental Health Counseling") + "..."
             onTriggered: showDialog(widget.counselingDialog, "counselingDialogInstance")
+        }
+
+        Action {
+            text: qsTr("Skill Slots") + "..."
+            onTriggered: showDialog(widget.skillSlotsDialog, "skillSlotsDialogInstance")
         }
 
         // Boss Raid: starts one of the set length, or ends the running one.

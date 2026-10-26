@@ -8,7 +8,7 @@ T.Data {
     id: root
 
     title: qsTr("MHCP-YUI")
-    description: qsTr("Yui's companion days, today's mood, this month's tokens, the Boss Raid and the heart core.")
+    description: qsTr("Yui's companion days, today's mood, this month's tokens, the Boss Raid, the next alarm and the heart core.")
 
     T.Value {
         id: companionDaysValue
@@ -69,6 +69,22 @@ T.Data {
         maximum: 0
         update.execute: function() {
             root.read(bossRaidValue, "boss_raid");
+        }
+    }
+
+    T.Value {
+        id: nextAlarmValue
+
+        name: "next_alarm"
+        title: qsTr("Next Alarm (minutes)")
+        unit: "min"
+        units: ["min"]
+        interval: 15000
+        current: 0
+        minimum: 0
+        maximum: 1
+        update.execute: function() {
+            root.read(nextAlarmValue, "next_alarm");
         }
     }
 

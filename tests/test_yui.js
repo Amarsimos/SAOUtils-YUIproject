@@ -476,4 +476,36 @@ test("Tags without a value", () => {
     assert.strictEqual(Yui.parseReply("读了《三体》").text, "读了《三体》");
 });
 
+test("Alarm reminder times", () => {
+    const now = new Date(2026, 9, 26, 21, 0).getTime();
+    const at = Yui.remindFrom("2026-10-27 08:00|交作业", now);
+    assert.strictEqual(at.due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(at.text, "交作业");
+    assert.strictEqual(at.daily, false);
+    assert.strictEqual(Yui.remindFrom("+30|开会", now).due, now + 30 * 60000);
+    assert.strictEqual(Yui.remindFrom("08:00|起床", now).due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("22:30|洗澡", now).due, new Date(2026, 9, 26, 22, 30).getTime());
+    const daily = Yui.remindFrom("每天 23:00|该睡觉了", now);
+    assert.strictEqual(daily.daily, true);
+    assert.strictEqual(daily.due, new Date(2026, 9, 26, 23, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("2026-10-25 08:00|过去的", now), null);
+    assert.strictEqual(Yui.remindFrom("明天|没有时间", now), null);
+    assert.strictEqual(Yui.remindFrom("+5", now), null);
+    const reply = Yui.parseReply("好的～<<remind:+10|喝水>>", [], { now: now });
+    assert.strictEqual(reply.reminders.length, 1);
+    assert.strictEqual(reply.text, "好的～");
+    assert.strictEqual(Yui.parseReply("<<remind:+10|喝水>>", [], { now: now, allowed: { alarm: false } }).reminders.length, 0);
+});
+
+test("Quest Log notes", () => {
+    const reply = Yui.parseReply("记下啦<<note:买牛奶>><<done:交水费>>");
+    assert.strictEqual(JSON.stringify(reply.notes), JSON.stringify(["买牛奶"]));
+    assert.strictEqual(JSON.stringify(reply.dones), JSON.stringify(["交水费"]));
+    assert.ok(Yui.notesWanted("我记了哪些待办？"));
+    assert.ok(!Yui.notesWanted("今天天气怎么样"));
+    assert.ok(Yui.notesContext("爸爸", [{ text: "买牛奶" }]).includes("- 买牛奶"));
+    const text = Yui.featureInstructions("爸爸", "", { alarm: false, notes: true }, "tags");
+    assert.ok(text.includes("<<note:") && !text.includes("<<remind:"));
+});
+
 console.log(passed + " tests passed");

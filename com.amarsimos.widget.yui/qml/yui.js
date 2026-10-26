@@ -89,7 +89,7 @@ function bareTagPattern() {
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -786,7 +786,12 @@ function parseReply(text, userProtected, options) {
         // <<focus:>> (Boss Raid): minutes to focus (1–180; -1 for the default), 0 to end it, null when none.
         "focus": null,
         // <<mood:>> (Mental Record): {score 1–5, note}, null when none.
-        "mood": null
+        "mood": null,
+        // <<remind:>> (Skill Slots, Alarm): {due, text, daily} each.
+        "reminders": [],
+        // <<note:>> / <<done:>> (Skill Slots, Quest Log): texts to note, and texts of notes done.
+        "notes": [],
+        "dones": []
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -816,6 +821,21 @@ function parseReply(text, userProtected, options) {
             result.focus = focusMinutes(value);
         } else if (kind === "mood") {
             result.mood = moodFrom(value) || result.mood;
+        } else if (kind === "remind") {
+            if (allowed.alarm !== false) {
+                var reminder = remindFrom(value, options.now || Date.now());
+                if (reminder)
+                    result.reminders.push(reminder);
+
+            }
+        } else if (kind === "note") {
+            if (allowed.notes !== false)
+                result.notes.push(value);
+
+        } else if (kind === "done") {
+            if (allowed.notes !== false)
+                result.dones.push(value);
+
         } else if (ACTION_KINDS[kind]) {
             var made = actionFrom(kind, value, userProtected, options);
             if (made.blocked)
@@ -930,6 +950,67 @@ function bondContext(title, birthday, meetingDay, today, celebrated) {
         text += days.join("，也") + "，今天已经祝贺过了，不必再刻意重复。";
 
     return text + "）";
+}
+
+// The next time of day "HH:mm" after now (today, or tomorrow when it has passed), in ms; NaN when
+// the time is not one.
+function nextTimeOfDay(time, now) {
+    var match = /^(\d{1,2})[:：](\d{2})$/.exec(String(time).trim());
+    if (!match || Number(match[1]) > 23 || Number(match[2]) > 59)
+        return NaN;
+
+    var due = new Date(now);
+    due.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    if (due.getTime() <= now)
+        due.setDate(due.getDate() + 1);
+
+    return due.getTime();
+}
+
+// A <<remind:>> tag's value (Alarm): "yyyy-MM-dd HH:mm|text", "HH:mm|text" (the next such time),
+// "+30|text" (in 30 minutes) or "每天 HH:mm|text" / "daily HH:mm|text" (every day) -> {due (ms),
+// text, daily}; null when the time is not understood, already past, or there is no text.
+function remindFrom(value, now) {
+    var parts = String(value).split(/[|｜]/);
+    var time = parts[0].trim();
+    var text = parts.slice(1).join("|").trim();
+    if (!text)
+        return null;
+
+    var daily = /^(每天|每日|daily)\s*/i.test(time);
+    time = time.replace(/^(每天|每日|daily)\s*/i, "");
+    var due = NaN;
+    var minutes = /^\+\s*(\d+)$/.exec(time);
+    var date = /^(\d{4})-(\d{1,2})-(\d{1,2})[ T]+(\d{1,2})[:：](\d{2})$/.exec(time);
+    if (minutes && !daily)
+        due = now + Number(minutes[1]) * 60000;
+    else if (date && !daily)
+        due = new Date(Number(date[1]), Number(date[2]) - 1, Number(date[3]), Number(date[4]), Number(date[5])).getTime();
+    else
+        due = nextTimeOfDay(time, now);
+    if (isNaN(due) || due <= now)
+        return null;
+
+    return {
+        "due": due,
+        "text": text,
+        "daily": daily
+    };
+}
+
+// Quest Log: whether the user's message is about the notes, so they are sent with it.
+function notesWanted(query) {
+    return /笔记|备忘|待办|记了|记下|记过|记的|清单|to-?do|notes?\b|quest log/i.test(String(query || ""));
+}
+
+// Quest Log, added to the system prompt when notesWanted: the notes not done yet, oldest first.
+function notesContext(title, notes) {
+    if (!notes || notes.length === 0)
+        return "\n\n（Quest Log：现在没有未完成的笔记。）";
+
+    return "\n\n（Quest Log：" + title + "让结衣记下、还没完成的事：\n" + notes.map(function(note) {
+        return "- " + note.text;
+    }).join("\n") + "\n）";
 }
 
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
@@ -1154,6 +1235,12 @@ function featureInstructions(title, core, allowed, mode) {
         desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe，任务管理器是 Taskmgr.exe>>。执行前程序会先请" + title + "确认，Windows 核心进程也会由程序自动拦下，所以" + title + "要求关闭什么就照做，不要自己判断危险而拒绝或说教");
 
     var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。", "- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。"];
+    if (allowed.alarm !== false)
+        lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
+
+    if (allowed.notes !== false)
+        lines.push("- 笔记（Quest Log）：当" + title + "请你帮忙记下某件事、待办或备忘时，在回复最后加上 <<note:要记的事>>（和结衣之心分开，不要再用 memory 记一遍）；" + title + "说某件记下的事已经办完时，加 <<done:那件事>>。");
+
     if (allowed.web !== false)
         lines.splice(5, 0, "- 导航：只有当" + title + "明确请你打开某个网站时，才在回复最后加上 <<open:完整的 https 网址>>；明确请你搜索时，加上 <<search:搜索词>>。");
 
