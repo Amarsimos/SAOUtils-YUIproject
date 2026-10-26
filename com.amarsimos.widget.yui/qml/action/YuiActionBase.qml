@@ -4,9 +4,10 @@ import QtQml 2.12
 import "../link" 1.0 as Link
 
 // One category of MHCP-YUI's SAO Utils actions (ChatAction.qml, RaidAction.qml...): talks to the
-// running Yui through Link.Server. commands: [{id, name, uses, hint}]; uses: the settings shown for
-// it ("text", "minutes", "score", "slot"), hint: for its text. configuration: {command (index into
-// commands), text, minutes, score, slot}.
+// running Yui through Link.Server. commands: [{id, name, uses}]; uses: the settings shown for it
+// ("minutes", "slot"). configuration: {command (index into commands), minutes, slot}. What changes
+// each time (a reminder, a note, a mood) is not set here: Yui asks for it when the action runs
+// (QuickInput.qml).
 T.Action {
     id: action
 
@@ -42,16 +43,9 @@ T.Action {
             defaultValue: 0
         }
 
-        TextFieldPreference {
-            name: "text"
-            label: qsTr("Text")
-            hint: action.commands[commandPreference.value] && action.commands[commandPreference.value].hint || ""
-            visible: commandPreference.uses.indexOf("text") !== -1
-        }
-
         SpinPreference {
             name: "minutes"
-            label: qsTr("Minutes")
+            label: qsTr("Minutes (0: ask)")
             display: TextFieldPreference.ExpandLabel
             editable: true
             from: 0
@@ -59,17 +53,6 @@ T.Action {
             stepSize: 5
             defaultValue: 0
             visible: commandPreference.uses.indexOf("minutes") !== -1
-        }
-
-        SpinPreference {
-            name: "score"
-            label: qsTr("Mood (1–5)")
-            display: TextFieldPreference.ExpandLabel
-            from: 1
-            to: 5
-            stepSize: 1
-            defaultValue: 3
-            visible: commandPreference.uses.indexOf("score") !== -1
         }
 
         SpinPreference {

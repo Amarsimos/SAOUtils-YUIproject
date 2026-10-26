@@ -974,8 +974,9 @@ function nextTimeOfDay(time, now) {
 }
 
 // A <<remind:>> tag's value (Alarm): "yyyy-MM-dd HH:mm|text", "HH:mm|text" (the next such time),
-// "+30|text" (in 30 minutes) or "每天 HH:mm|text" / "daily HH:mm|text" (every day) -> {due (ms),
-// text, daily}; null when the time is not understood, already past, or there is no text.
+// "+30|text" (in 30 minutes), "明天 / 后天 HH:mm|text", "周一 … 周日 HH:mm|text" (the next such day;
+// 星期 and 礼拜 too) or "每天 HH:mm|text" / "daily HH:mm|text" (every day) -> {due (ms), text,
+// daily}; null when the time is not understood, already past, or there is no text.
 function remindFrom(value, now) {
     var parts = String(value).split(/[|｜]/);
     var time = parts[0].trim();
@@ -988,12 +989,28 @@ function remindFrom(value, now) {
     var due = NaN;
     var minutes = /^\+\s*(\d+)$/.exec(time);
     var date = /^(\d{4})-(\d{1,2})-(\d{1,2})[ T]+(\d{1,2})[:：](\d{2})$/.exec(time);
-    if (minutes && !daily)
+    var relative = /^(明天|后天|(?:周|星期|礼拜)([一二三四五六日天]))\s*(.+)$/.exec(time);
+    if (relative && !daily) {
+        var day = new Date(now);
+        day.setHours(0, 0, 0, 0);
+        if (relative[2]) {
+            // The next such weekday, a week on when it is today.
+            var wanted = "日一二三四五六".indexOf(relative[2] === "天" ? "日" : relative[2]);
+            day.setDate(day.getDate() + ((wanted - day.getDay() + 7) % 7 || 7));
+        } else {
+            day.setDate(day.getDate() + (relative[1] === "明天" ? 1 : 2));
+        }
+        var clock = /^(\d{1,2})[:：](\d{2})$/.exec(relative[3].trim());
+        if (clock && Number(clock[1]) <= 23 && Number(clock[2]) <= 59)
+            due = day.getTime() + (Number(clock[1]) * 60 + Number(clock[2])) * 60000;
+
+    } else if (minutes && !daily) {
         due = now + Number(minutes[1]) * 60000;
-    else if (date && !daily)
+    } else if (date && !daily) {
         due = new Date(Number(date[1]), Number(date[2]) - 1, Number(date[3]), Number(date[4]), Number(date[5])).getTime();
-    else
+    } else {
         due = nextTimeOfDay(time, now);
+    }
     if (isNaN(due) || due <= now)
         return null;
 

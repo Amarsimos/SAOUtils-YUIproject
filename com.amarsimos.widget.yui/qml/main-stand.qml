@@ -22,6 +22,8 @@ T.Widget {
     property var yuisHeartDialogInstance: null
     property Component counselingDialog: Qt.createComponent("MentalHealthCounseling.qml")
     property var counselingDialogInstance: null
+    property Component quickInputDialog: Qt.createComponent("QuickInput.qml")
+    property var quickInputDialogInstance: null
     property Component skillSlotsDialog: Qt.createComponent("SkillSlots.qml")
     property var skillSlotsDialogInstance: null
     property Component seedlingDialog: Qt.createComponent("Seedling.qml")
@@ -2978,18 +2980,18 @@ T.Widget {
         } else if (command === "speak") {
             idleChat();
         } else if (command === "start_raid") {
-            if (!raidActive)
-                startRaid(config.minutes > 0 ? config.minutes : raidMinutes, true);
+            if (raidActive)
+                return true;
+
+            if (config.minutes > 0)
+                startRaid(config.minutes, true);
+            else
+                openQuickInput("raid");
 
         } else if (command === "end_raid") {
             stopRaid();
         } else if (command === "add_reminder") {
-            var reminder = Yui.remindFrom(text, Date.now());
-            if (!reminder)
-                return false;
-
-            addReminder(reminder);
-            actionSay(qsTr("Alarm"), "⏰ 已设提醒：" + Qt.formatDateTime(new Date(reminder.due), reminder.daily ? "每天 HH:mm" : "MM-dd HH:mm") + " " + reminder.text);
+            openQuickInput("alarm");
         } else if (command === "dismiss_reminder") {
             var next = remindersList()[0];
             if (!next)
@@ -2998,11 +3000,7 @@ T.Widget {
             deleteReminder(next.id);
             actionSay(qsTr("Alarm"), "⏰ 已取消提醒：" + next.text);
         } else if (command === "add_note") {
-            if (!text.trim())
-                return false;
-
-            addQuestNote(text);
-            actionSay(qsTr("Quest Log"), "📜 已记下：" + text.trim());
+            openQuickInput("note");
         } else if (command === "finish_note") {
             var first = notesList(false)[0];
             if (!first)
@@ -3011,11 +3009,7 @@ T.Widget {
             editNote(first.id, first.text, true);
             actionSay(qsTr("Quest Log"), "✅ 已完成：" + first.text);
         } else if (command === "record_mood") {
-            recordMood({
-                "score": Math.max(1, Math.min(5, Number(config.score) || 3)),
-                "note": text.trim()
-            });
-            actionSay(qsTr("Mental Record"), "📝 心情记录：" + (Number(config.score) || 3) + "/5" + (text.trim() ? " " + text.trim() : ""));
+            openQuickInput("mood");
         } else if (command === "weekly_report") {
             writeWeeklyReport(true, function() {
             });
@@ -3031,6 +3025,61 @@ T.Widget {
             return false;
         }
         return true;
+    }
+
+    // QuickInput.qml at the cursor: what an action needs each time (mode "alarm", "note", "mood" or
+    // "raid"); one at a time, a new one replaces it.
+    function openQuickInput(mode) {
+        if (quickInputDialogInstance)
+            quickInputDialogInstance.close();
+
+        showDialog(quickInputDialog, "quickInputDialogInstance");
+        if (quickInputDialogInstance)
+            quickInputDialogInstance.start(mode);
+
+    }
+
+    // Done from the quick input (the same as an action with its setting filled in): false when the
+    // input is not understood.
+    function quickAlarm(time, text) {
+        var reminder = Yui.remindFrom(time + "|" + text, Date.now());
+        if (!reminder)
+            return false;
+
+        addReminder(reminder);
+        actionSay(qsTr("Alarm"), "⏰ 已设提醒：" + Qt.formatDateTime(new Date(reminder.due), reminder.daily ? "每天 HH:mm" : "MM-dd HH:mm") + " " + reminder.text);
+        return true;
+    }
+
+    function quickNote(text) {
+        if (!String(text).trim())
+            return false;
+
+        addQuestNote(text);
+        actionSay(qsTr("Quest Log"), "📜 已记下：" + String(text).trim());
+        return true;
+    }
+
+    function quickMood(score, note) {
+        recordMood({
+            "score": score,
+            "note": String(note || "").trim()
+        });
+        actionSay(qsTr("Mental Record"), "📝 心情记录：" + score + "/5" + (String(note || "").trim() ? " " + String(note).trim() : ""));
+        return true;
+    }
+
+    // "Ask Yui" from the quick input: the chat opens with the start of a message written, for her to
+    // understand what is harder to type into the boxes.
+    function prefillChat(text) {
+        if (!showChat)
+            openView();
+
+        Qt.callLater(function() {
+            textInput.text = text;
+            textInput.cursorPosition = text.length;
+            textInput.forceActiveFocus();
+        });
     }
 
     // What an action did, said like Yui's other local messages: in the chat, and in the bubble while

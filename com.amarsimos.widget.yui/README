@@ -47,6 +47,7 @@ Tags without a value (<<happy>>) are no longer shown; an expression name counts 
 Settings grouped by what they do: Mental Health Counseling in Companion (Login Greeting, Spontaneous Talk, Weather Report), Care (Rest Reminders, Daily Mood Check, Sunday Report), Bond and Records (moods and weekly reports, no settings); Skill Slots tabs show their settings first, then the status or lists under a heading.
 Entry points: the right-click menu holds the settings windows only; the MHCP-YUI action gains Start / End Boss Raid, Add Reminder, Remove Next Reminder, Add Note, Finish First Note, Record Mood, Write Weekly Report and Run Sword Skill; the data gains text values (Quest Log, Next Alarm, Boss Raid Timer, Today's Mood, Latest Weekly Report) for HUD text; **Yui · Menu** Quick Menu preset (crystal icon, SAO style); Link Start plays SAO Utils' Link Start voice.
 The MHCP-YUI action is split into categories like other extensions' actions: Chat, Boss Raid, Alarm, Quest Log, Mental Record, Sword Skills and Windows (nvg://yui.widget.amarsimos.com/action#chat…); each shows only its own settings.
+**Quick input** at the cursor for actions that need something each time: Add Reminder... (text, +10 / +30 / +60 or a time such as 明天 8:00, 周五 15:00), Add Note..., Record Mood... (stars and a note), Start Boss Raid with 0 minutes (15 / 25 / 45 / 60); Ask Yui hands it to the chat. The actions no longer have text settings. Reminder times also take 明天 / 后天 / 周X.
 
 ### Changed
 

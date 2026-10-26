@@ -5,9 +5,7 @@ YuiActionBase {
     title: qsTr("Alarm")
     commands: [{
             "id": "add_reminder",
-            "name": qsTr("Add Reminder"),
-            "uses": ["text"],
-            "hint": qsTr("time|text, e.g. +30|Drink water, 08:00|Meeting, 每天 23:00|Sleep")
+            "name": qsTr("Add Reminder...")
         }, {
             "id": "dismiss_reminder",
             "name": qsTr("Remove Next Reminder")

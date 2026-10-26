@@ -542,4 +542,14 @@ test("Sword Skills and Weather Report", () => {
     assert.ok(!Yui.weatherWanted("帮我开一下浏览器"));
 });
 
+test("Alarm days in words", () => {
+    const now = new Date(2026, 9, 26, 21, 0).getTime(); // a Monday
+    assert.strictEqual(Yui.remindFrom("明天 08:00|交作业", now).due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("后天 9:30|体检", now).due, new Date(2026, 9, 28, 9, 30).getTime());
+    assert.strictEqual(Yui.remindFrom("周五 15:00|开会", now).due, new Date(2026, 9, 30, 15, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("星期一 10:00|周会", now).due, new Date(2026, 10, 2, 10, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("周日 10:00|休息", now).due, new Date(2026, 10, 1, 10, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("明天|没有时间", now), null);
+});
+
 console.log(passed + " tests passed");

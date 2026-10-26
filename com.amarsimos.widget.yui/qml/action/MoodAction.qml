@@ -5,9 +5,7 @@ YuiActionBase {
     title: qsTr("Mental Record")
     commands: [{
             "id": "record_mood",
-            "name": qsTr("Record Mood"),
-            "uses": ["score", "text"],
-            "hint": qsTr("A note (optional)")
+            "name": qsTr("Record Mood...")
         }, {
             "id": "weekly_report",
             "name": qsTr("Write Weekly Report")

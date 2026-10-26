@@ -5,9 +5,7 @@ YuiActionBase {
     title: qsTr("Quest Log")
     commands: [{
             "id": "add_note",
-            "name": qsTr("Add Note"),
-            "uses": ["text"],
-            "hint": qsTr("What to note down")
+            "name": qsTr("Add Note...")
         }, {
             "id": "finish_note",
             "name": qsTr("Finish First Note")
