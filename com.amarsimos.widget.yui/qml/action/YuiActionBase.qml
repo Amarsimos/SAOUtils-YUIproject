@@ -50,7 +50,7 @@ T.Action {
             editable: true
             from: 0
             to: 180
-            stepSize: 5
+            stepSize: 1
             defaultValue: 0
             visible: commandPreference.uses.indexOf("minutes") !== -1
         }

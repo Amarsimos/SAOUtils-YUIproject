@@ -122,9 +122,9 @@ NVG.Window {
                             label: qsTr("Raid Duration")
                             display: P.TextFieldPreference.ExpandLabel
                             editable: true
-                            from: 5
+                            from: 1
                             to: 180
-                            stepSize: 5
+                            stepSize: 1
                         }
 
                         P.SpinPreference {
