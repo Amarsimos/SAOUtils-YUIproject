@@ -2954,7 +2954,9 @@ T.Widget {
 
     // The SAO Utils action (YuiAction.qml): opens the chat (sending text, if any), lets Yui speak up,
     // starts or ends a Boss Raid, or opens one of her windows. False when the command is unknown.
-    function runCommand(command, text) {
+    // config: the action's whole configuration (minutes, score, slot), for the commands that use more.
+    function runCommand(command, text, config) {
+        config = config || {};
         diag("action: " + command);
         var windows = {
             "cardinal": [cardinalSystemDialog, "cardinalSystemDialogInstance"],
@@ -2975,6 +2977,51 @@ T.Widget {
 
         } else if (command === "speak") {
             idleChat();
+        } else if (command === "start_raid") {
+            if (!raidActive)
+                startRaid(config.minutes > 0 ? config.minutes : raidMinutes, true);
+
+        } else if (command === "end_raid") {
+            stopRaid();
+        } else if (command === "add_reminder") {
+            var reminder = Yui.remindFrom(text, Date.now());
+            if (!reminder)
+                return false;
+
+            addReminder(reminder);
+            actionSay(qsTr("Alarm"), "⏰ 已设提醒：" + Qt.formatDateTime(new Date(reminder.due), reminder.daily ? "每天 HH:mm" : "MM-dd HH:mm") + " " + reminder.text);
+        } else if (command === "dismiss_reminder") {
+            var next = remindersList()[0];
+            if (!next)
+                return false;
+
+            deleteReminder(next.id);
+            actionSay(qsTr("Alarm"), "⏰ 已取消提醒：" + next.text);
+        } else if (command === "add_note") {
+            if (!text.trim())
+                return false;
+
+            addQuestNote(text);
+            actionSay(qsTr("Quest Log"), "📜 已记下：" + text.trim());
+        } else if (command === "finish_note") {
+            var first = notesList(false)[0];
+            if (!first)
+                return false;
+
+            editNote(first.id, first.text, true);
+            actionSay(qsTr("Quest Log"), "✅ 已完成：" + first.text);
+        } else if (command === "record_mood") {
+            recordMood({
+                "score": Math.max(1, Math.min(5, Number(config.score) || 3)),
+                "note": text.trim()
+            });
+            actionSay(qsTr("Mental Record"), "📝 心情记录：" + (Number(config.score) || 3) + "/5" + (text.trim() ? " " + text.trim() : ""));
+        } else if (command === "weekly_report") {
+            writeWeeklyReport(true, function() {
+            });
+        } else if (command === "sword_skill") {
+            // Chosen by the user's own button, so no confirmation.
+            return runSwordSkill(Number(config.slot) || 1);
         } else if (command === "raid") {
             if (raidActive || resting)
                 stopRaid();
@@ -2984,6 +3031,13 @@ T.Widget {
             return false;
         }
         return true;
+    }
+
+    // What an action did, said like Yui's other local messages: in the chat, and in the bubble while
+    // it is closed.
+    function actionSay(title, text) {
+        appendMessage("ai", text, false, true);
+        announce(title, text);
     }
 
     // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one. The
@@ -3024,6 +3078,40 @@ T.Widget {
             return {
                 "current": left,
                 "maximum": Math.max(1, left)
+            };
+        }
+        // Text values (for HUD text elements).
+        if (name === "quest_log")
+            return {
+                "current": notesList(false).map(function(note) {
+                    return "· " + note.text;
+                }).join("\n")
+            };
+
+        if (name === "next_alarm_text") {
+            var upcoming = remindersList()[0];
+            return {
+                "current": upcoming ? Qt.formatDateTime(new Date(upcoming.due), new Date(upcoming.due).toDateString() === new Date().toDateString() ? "HH:mm" : "MM-dd HH:mm") + " " + upcoming.text : ""
+            };
+        }
+        if (name === "raid_timer") {
+            var end = raidActive ? raidEnd : (resting ? restEnd : 0);
+            var seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+            var clock = Math.floor(seconds / 60) + ":" + ("0" + seconds % 60).slice(-2);
+            return {
+                "current": raidActive ? clock : (resting ? "休息 " + clock : "")
+            };
+        }
+        if (name === "mood_text") {
+            var mood = moodsSince(1)[0];
+            return {
+                "current": mood ? "★★★★★".slice(0, mood.score) + "☆☆☆☆☆".slice(0, 5 - mood.score) + (mood.note ? " " + mood.note : "") : ""
+            };
+        }
+        if (name === "latest_report") {
+            var report = reportsList()[0];
+            return {
+                "current": report ? report.text : ""
             };
         }
         if (name === "heart_core")
@@ -3677,8 +3765,13 @@ T.Widget {
             widget.settings.meeting_day = Qt.formatDate(new Date(), "yyyy-MM-dd");
 
         // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
-        if (styles.link_start !== false)
+        if (styles.link_start !== false) {
             linkStartAnimation.start();
+            // SAO Utils' own "Link Start!" voice (the one chosen in its sound settings).
+            if (interfaceSounds)
+                NVG.SystemCall.playSound(NVG.SFX.LinkStart);
+
+        }
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
@@ -5095,12 +5188,6 @@ T.Widget {
         Action {
             text: qsTr("Skill Slots") + "..."
             onTriggered: showDialog(widget.skillSlotsDialog, "skillSlotsDialogInstance")
-        }
-
-        // Boss Raid: starts one of the set length, or ends the running one.
-        Action {
-            text: widget.raidActive || widget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
-            onTriggered: widget.raidActive || widget.resting ? widget.stopRaid() : widget.startRaid(widget.raidMinutes, true)
         }
 
         // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.

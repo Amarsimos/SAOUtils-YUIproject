@@ -8,7 +8,7 @@ T.Data {
     id: root
 
     title: qsTr("MHCP-YUI")
-    description: qsTr("Yui's companion days, today's mood, this month's tokens, the Boss Raid, the next alarm and the heart core.")
+    description: qsTr("Yui's companion days, today's mood, this month's tokens, the Boss Raid, the next alarm and the heart core; as text, the open to-dos, the next alarm, the Boss Raid timer, today's mood and the latest weekly report.")
 
     T.Value {
         id: companionDaysValue
@@ -99,6 +99,76 @@ T.Data {
         maximum: 0
         update.execute: function() {
             root.read(heartCoreValue, "heart_core");
+        }
+    }
+
+    T.Value {
+        id: questLogValue
+
+        name: "quest_log"
+        title: qsTr("Quest Log (text)")
+        interval: 10000
+        current: ""
+        minimum: ""
+        maximum: ""
+        update.execute: function() {
+            root.read(questLogValue, "quest_log");
+        }
+    }
+
+    T.Value {
+        id: alarmTextValue
+
+        name: "next_alarm_text"
+        title: qsTr("Next Alarm (text)")
+        interval: 15000
+        current: ""
+        minimum: ""
+        maximum: ""
+        update.execute: function() {
+            root.read(alarmTextValue, "next_alarm_text");
+        }
+    }
+
+    T.Value {
+        id: raidTimerValue
+
+        name: "raid_timer"
+        title: qsTr("Boss Raid Timer (text)")
+        interval: 1000
+        current: ""
+        minimum: ""
+        maximum: ""
+        update.execute: function() {
+            root.read(raidTimerValue, "raid_timer");
+        }
+    }
+
+    T.Value {
+        id: moodTextValue
+
+        name: "mood_text"
+        title: qsTr("Today's Mood (text)")
+        interval: 60000
+        current: ""
+        minimum: ""
+        maximum: ""
+        update.execute: function() {
+            root.read(moodTextValue, "mood_text");
+        }
+    }
+
+    T.Value {
+        id: latestReportValue
+
+        name: "latest_report"
+        title: qsTr("Latest Weekly Report (text)")
+        interval: 60000
+        current: ""
+        minimum: ""
+        maximum: ""
+        update.execute: function() {
+            root.read(latestReportValue, "latest_report");
         }
     }
 
