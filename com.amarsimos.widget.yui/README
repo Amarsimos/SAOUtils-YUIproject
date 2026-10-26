@@ -51,6 +51,7 @@ The MHCP-YUI action is split into categories like other extensions' actions: Cha
 Fewer action categories: Yui (Open Chat, Spontaneous Talk, Record Mood..., Write Weekly Report), Skill Slots (Boss Raid, reminders, notes, sword skills) and Windows.
 **Raid Banner** (Skill Slots, Boss Raid): the time left in big white SAO letters over a notched white bar, on top of the screen and dragged anywhere; when the raid is won, "Congratulations!!" across the screen as when a floor boss falls, then the rest the same way; Show Raid Banner in the Skill Slots action.
 **Raid Banner** effects: a white flash, "Congratulations!!" lighting letter by letter, light motes drifting up and a sound (the HUD preset is gone again; the Raid Cleared data stays).
+The small tools (Skill Slots: Boss Raid, Alarm, Quest Log, Sword Skills, with their actions, data, tags and the Raid Banner) are set aside until they become extensions of their own; their data is kept.
 
 ### Changed
 

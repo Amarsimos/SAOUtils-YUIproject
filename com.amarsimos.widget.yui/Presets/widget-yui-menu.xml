@@ -8,24 +8,9 @@
             <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#yui"}</value>
         </map>
         <map>
-            <value name="label">"Boss Raid"</value>
-            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#skills.png"}</value>
-            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#skills"}</value>
-        </map>
-        <map>
-            <value name="label">"Skill Slots"</value>
-            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#items.png"}</value>
-            <value name="action">{"data":{"command":4},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
-        </map>
-        <map>
             <value name="label">"Weekly Report"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#modify.png"}</value>
             <value name="action">{"data":{"command":3},"source":"nvg://yui.widget.amarsimos.com/action#yui"}</value>
-        </map>
-        <map>
-            <value name="label">"Sword Skill 1"</value>
-            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#run.png"}</value>
-            <value name="action">{"data":{"command":7,"slot":1},"source":"nvg://yui.widget.amarsimos.com/action#skills"}</value>
         </map>
         <map>
             <value name="label">"Mental Health Counseling"</value>

@@ -47,7 +47,6 @@
             },
             "entry": {
                 "yui": "qml/action/YuiAction.qml",
-                "skills": "qml/action/SkillsAction.qml",
                 "window": "qml/action/WindowAction.qml"
             }
         }, {

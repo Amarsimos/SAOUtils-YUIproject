@@ -1,11 +1,19 @@
 import NERvGear.Templates 1.0 as T
 import QtQml 2.12
 import "link" 1.0 as Link
+import "yui.js" as Yui
 
 // MHCP-YUI as a SAO Utils data source, for HP bars, HUD widgets and the like: each value is read from
 // the running Yui (Link.Server, see her linkValue) and is empty while she is not running.
 T.Data {
     id: root
+
+    // The tools' values, not listed while the tools are set aside (Yui.TOOLS_ENABLED).
+    readonly property var toolValues: ["boss_raid", "raid_timer", "raid_cleared", "next_alarm", "next_alarm_text", "quest_log"]
+
+    function shown(value) {
+        return Yui.TOOLS_ENABLED || toolValues.indexOf(value.name) === -1;
+    }
 
     title: qsTr("MHCP-YUI")
     description: qsTr("Yui's companion days, today's mood, this month's tokens, the Boss Raid, the next alarm and the heart core; as text, the open to-dos, the next alarm, the Boss Raid timer, today's mood and the latest weekly report.")
@@ -185,6 +193,15 @@ T.Data {
         update.execute: function() {
             root.read(raidClearedValue, "raid_cleared");
         }
+    }
+
+    list: function() {
+        return root.values.filter(root.shown);
+    }
+    query: function(name) {
+        return root.values.filter(function(value) {
+            return value.name === name && root.shown(value);
+        })[0] || null;
     }
 
     // Updates a value from Yui ({current, maximum}); Null while she is not running.

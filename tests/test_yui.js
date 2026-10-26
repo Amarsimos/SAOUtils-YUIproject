@@ -552,4 +552,15 @@ test("Alarm days in words", () => {
     assert.strictEqual(Yui.remindFrom("明天|没有时间", now), null);
 });
 
+test("Tools set aside", () => {
+    assert.strictEqual(Yui.TOOLS_ENABLED, false);
+    const off = { focus: false, alarm: false, notes: false, skills: [] };
+    const text = Yui.featureInstructions("爸爸", "", off, "tags");
+    assert.ok(!text.includes("<<focus:") && !text.includes("<<remind:") && !text.includes("<<note:") && !text.includes("<<skill:"));
+    assert.strictEqual(Yui.parseReply("好<<focus:25>>", [], { allowed: off }).focus, null);
+    assert.strictEqual(Yui.parseReply("好<<focus:25>>", [], { allowed: off }).text, "好");
+    const report = Yui.weeklyReportPrompt("爸爸", { from: "2026-10-20", to: "2026-10-26", messages: 3, moods: [], raids: null, notesDone: null, notesOpen: 0, tokens: 1 });
+    assert.ok(!report.includes("Boss Raid") && !report.includes("待办"));
+});
+
 console.log(passed + " tests passed");

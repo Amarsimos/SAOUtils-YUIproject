@@ -3,7 +3,7 @@ import QtQml 2.12
 
 YuiActionBase {
     title: qsTr("Skill Slots")
-    commands: [{
+    allCommands: [{
             "id": "raid",
             "name": qsTr("Start / End Boss Raid")
         }, {

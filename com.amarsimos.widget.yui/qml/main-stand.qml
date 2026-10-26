@@ -128,6 +128,8 @@ T.Widget {
     // Seedling is set aside for now: not in Yui's menu, and its item is not shown in Yui at start.
     // Seedling widgets already saved to "My Widgets" still work and keep their own menu.
     readonly property bool seedlingEnabled: false
+    // The small tools (Skill Slots) are set aside for now (Yui.TOOLS_ENABLED).
+    readonly property bool toolsEnabled: Yui.TOOLS_ENABLED
     readonly property int maxSavedMessages: widget.settings.saved_messages > 0 ? widget.settings.saved_messages : 50
     readonly property bool autoMemory: widget.settings.auto_memory !== false
     readonly property int heartCoreCapacity: widget.settings.heart_core_capacity > 0 ? widget.settings.heart_core_capacity : Yui.MAX_CORE
@@ -462,13 +464,14 @@ T.Widget {
             "find": widget.settings.action_find !== false,
             "kill": widget.settings.action_kill === true,
             "memory": autoMemory,
-            // Skill Slots: Alarm and Quest Log.
-            "alarm": widget.settings.alarm_enabled !== false,
-            "notes": widget.settings.notes_enabled !== false,
-            // Sword Skills: the names of the slots set up.
-            "skills": swordSkills().map(function(skill) {
+            // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
+            // (none of them while the tools are set aside).
+            "focus": toolsEnabled,
+            "alarm": toolsEnabled && widget.settings.alarm_enabled !== false,
+            "notes": toolsEnabled && widget.settings.notes_enabled !== false,
+            "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
-            })
+            }) : []
         };
     }
 
@@ -478,7 +481,7 @@ T.Widget {
 
     // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
     function notesExtras(title, query) {
-        if (widget.settings.notes_enabled === false || !Yui.notesWanted(query))
+        if (!toolsEnabled || widget.settings.notes_enabled === false || !Yui.notesWanted(query))
             return "";
 
         return Yui.notesContext(title, notesList(false));
@@ -2959,6 +2962,9 @@ T.Widget {
     // config: the action's whole configuration (minutes, score, slot), for the commands that use more.
     function runCommand(command, text, config) {
         config = config || {};
+        if (!toolsEnabled && ["skills", "raid", "start_raid", "end_raid", "raid_banner", "add_reminder", "dismiss_reminder", "add_note", "finish_note", "sword_skill"].indexOf(command) !== -1)
+            return false;
+
         diag("action: " + command);
         var windows = {
             "cardinal": [cardinalSystemDialog, "cardinalSystemDialogInstance"],
@@ -3094,6 +3100,9 @@ T.Widget {
     // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one. The
     // maximum is never 0, so bars (which show current / maximum) always have something to show.
     function linkValue(name) {
+        if (!toolsEnabled && ["boss_raid", "raid_timer", "raid_cleared", "next_alarm", "next_alarm_text", "quest_log"].indexOf(name) !== -1)
+            return null;
+
         if (name === "companion_days") {
             var met = Date.parse(widget.settings.meeting_day || "");
             var days = isNaN(met) ? 0 : Math.max(0, Math.floor((Date.now() - met) / 86400000)) + 1;
@@ -3258,16 +3267,16 @@ T.Widget {
                 "n": 0
             }).n,
             "moods": moodsSince(7),
-            "raids": {
+            "raids": toolsEnabled ? {
                 "count": raids.length,
                 "minutes": raids.reduce(function(sum, raid) {
                     return sum + raid.minutes;
                 }, 0)
-            },
-            "notesDone": readSql("reading the notes", "SELECT text FROM notes WHERE done = 1 AND updated >= ?", [from.getTime()]).map(function(note) {
+            } : null,
+            "notesDone": toolsEnabled ? readSql("reading the notes", "SELECT text FROM notes WHERE done = 1 AND updated >= ?", [from.getTime()]).map(function(note) {
                 return note.text;
-            }),
-            "notesOpen": notesList(false).length,
+            }) : null,
+            "notesOpen": toolsEnabled ? notesList(false).length : 0,
             "tokens": Math.round((ledger.input + ledger.output) / 1000)
         };
         writingReport = true;
@@ -3856,7 +3865,7 @@ T.Widget {
         if (widget.settings.chat_hidden === false)
             Qt.callLater(openView);
 
-        if (widget.settings.raid_end > Date.now()) {
+        if (toolsEnabled && widget.settings.raid_end > Date.now()) {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
             if (widget.settings.raid_banner !== false)
@@ -4218,7 +4227,7 @@ T.Widget {
         interval: 15000
         repeat: true
         triggeredOnStart: true
-        running: widget.chatReady && !widget.seedlingMode && widget.settings.alarm_enabled !== false
+        running: widget.toolsEnabled && widget.chatReady && !widget.seedlingMode && widget.settings.alarm_enabled !== false
         onTriggered: widget.checkAlarms(Date.now())
     }
 
@@ -5288,10 +5297,8 @@ T.Widget {
             onTriggered: showDialog(widget.counselingDialog, "counselingDialogInstance")
         }
 
-        Action {
-            text: qsTr("Skill Slots") + "..."
-            onTriggered: showDialog(widget.skillSlotsDialog, "skillSlotsDialogInstance")
-        }
+        // Skill Slots (set aside, see toolsEnabled): its menu entry goes back here, after Mental Health
+        // Counseling.
 
         // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.
         Action {

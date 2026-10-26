@@ -3,7 +3,7 @@ import QtQml 2.12
 
 YuiActionBase {
     title: qsTr("Windows")
-    commands: [{
+    allCommands: [{
             "id": "cardinal",
             "name": qsTr("Cardinal System")
         }, {
@@ -16,10 +16,11 @@ YuiActionBase {
             "id": "counseling",
             "name": qsTr("Mental Health Counseling")
         }, {
-            "id": "skills",
-            "name": qsTr("Skill Slots")
-        }, {
             "id": "console",
             "name": qsTr("System Console")
+        }, {
+            "id": "skills",
+            "name": qsTr("Skill Slots"),
+            "tool": true
         }]
 }

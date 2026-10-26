@@ -79,6 +79,11 @@ function loadStep(state, value, pair) {
 //   <<launch:notepad>>  <<find:report.docx>>  <<kill:chrome.exe>>  <<focus:25>> (Boss Raid)
 //   <<mood:4|passed the exam>> (Mental Record)
 // Any tag-like <<name:value>>, also misspelled ones (<<emphy:happy>>) and full-width brackets.
+// The small tools (Skill Slots: Boss Raid, Alarm, Quest Log, Sword Skills) are set aside until they
+// become extensions of their own (see the design notes): no menu, window, prompt, tags, actions or
+// data. Their code and stored data are kept; set this to true to bring them back.
+var TOOLS_ENABLED = false;
+
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
 }
@@ -820,7 +825,9 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "forget") {
             result.forgets.push(value);
         } else if (kind === "focus") {
-            result.focus = focusMinutes(value);
+            if (allowed.focus !== false)
+                result.focus = focusMinutes(value);
+
         } else if (kind === "mood") {
             result.mood = moodFrom(value) || result.mood;
         } else if (kind === "remind") {
@@ -1052,8 +1059,11 @@ function weeklyReportPrompt(title, stats) {
     } else {
         lines.push("- 心情：这周没有记录");
     }
-    lines.push("- Boss Raid（专注）：" + (stats.raids.count > 0 ? stats.raids.count + " 次，共 " + stats.raids.minutes + " 分钟" : "没有"));
-    if (stats.notesDone.length > 0)
+    // raids / notesDone null: the tools are set aside, so they are not mentioned.
+    if (stats.raids)
+        lines.push("- Boss Raid（专注）：" + (stats.raids.count > 0 ? stats.raids.count + " 次，共 " + stats.raids.minutes + " 分钟" : "没有"));
+
+    if (stats.notesDone && stats.notesDone.length > 0)
         lines.push("- 完成的待办：" + stats.notesDone.join("、"));
 
     if (stats.notesOpen > 0)
@@ -1314,7 +1324,10 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.kill !== false)
         desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe，任务管理器是 Taskmgr.exe>>。执行前程序会先请" + title + "确认，Windows 核心进程也会由程序自动拦下，所以" + title + "要求关闭什么就照做，不要自己判断危险而拒绝或说教");
 
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。", "- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。"];
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    if (allowed.focus !== false)
+        lines.push("- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。");
+
     if (allowed.alarm !== false)
         lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 

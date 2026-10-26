@@ -3,7 +3,7 @@ import QtQml 2.12
 
 YuiActionBase {
     title: qsTr("Yui")
-    commands: [{
+    allCommands: [{
             "id": "chat",
             "name": qsTr("Open Chat")
         }, {
