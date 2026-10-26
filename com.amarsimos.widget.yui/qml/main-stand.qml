@@ -3314,6 +3314,15 @@ T.Widget {
     // The data value Raid Cleared is 1 until then (a few seconds after a raid is won), for a HUD banner.
     property double raidClearedUntil: 0
 
+    // A point on Yui's screen for the banner: the middle of her open chat, else of the widget.
+    function bannerScreenPoint() {
+        if (showChat && yuiView)
+            return Qt.point(yuiView.x + yuiView.width / 2, yuiView.y + yuiView.height / 2);
+
+        var rect = widgetScreenRect();
+        return Qt.point(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    }
+
     function showRaidBanner() {
         if (!raidBanner) {
             var component = Qt.createComponent("RaidBanner.qml");
@@ -3346,7 +3355,8 @@ T.Widget {
             restEnd = now + restMinutes * 60000;
             logRaid(raidMinutes);
             raidClearedUntil = now + 6000;
-            if (raidBanner && raidBanner.visible) {
+            // Also when the banner was hidden by its ×: the win is shown either way.
+            if (raidBanner && widget.settings.raid_banner !== false) {
                 raidBanner.celebrate();
                 diag("raid banner: congratulations at " + raidBanner.x + "," + raidBanner.y + " " + raidBanner.width + "x" + raidBanner.height);
             }

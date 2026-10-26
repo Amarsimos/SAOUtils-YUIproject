@@ -33,17 +33,27 @@ NVG.View {
     readonly property int compactWidth: 360
     readonly property int compactHeight: 130
 
-    // The screen the banner is on (from Qt.application.screens), for the celebration.
-    function currentScreen() {
+    // The screen holding a point (from Qt.application.screens).
+    function screenAt(middleX, middleY) {
         var screens = Qt.application.screens;
-        var middleX = x + width / 2, middleY = y + height / 2;
         for (var i = 0; i < screens.length; i++) {
             var s = screens[i];
             if (middleX >= s.virtualX && middleX < s.virtualX + s.width && middleY >= s.virtualY && middleY < s.virtualY + s.height)
                 return s;
 
         }
+        // Not on any screen (a widget partly off it): the screen of that column, else the first.
+        for (var j = 0; j < screens.length; j++) {
+            if (middleX >= screens[j].virtualX && middleX < screens[j].virtualX + screens[j].width)
+                return screens[j];
+
+        }
         return screens[0];
+    }
+
+    // The screen the banner is on, for the celebration.
+    function currentScreen() {
+        return screenAt(x + width / 2, y + height / 2);
     }
 
     function placeCompact() {
@@ -54,7 +64,9 @@ NVG.View {
             x = saved.x;
             y = saved.y;
         } else {
-            var s = currentScreen();
+            // Yui's screen (where she or her chat is), at the top in the middle.
+            var at = yui.bannerScreenPoint();
+            var s = screenAt(at.x, at.y);
             x = s.virtualX + (s.width - width) / 2;
             y = s.virtualY + 40;
         }
