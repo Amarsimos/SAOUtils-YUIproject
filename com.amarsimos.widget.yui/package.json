@@ -45,7 +45,15 @@
                 "en": "MHCP-YUI",
                 "zh": "MHCP-YUI 结衣"
             },
-            "entry": "qml/YuiAction.qml"
+            "entry": {
+                "chat": "qml/action/ChatAction.qml",
+                "raid": "qml/action/RaidAction.qml",
+                "alarm": "qml/action/AlarmAction.qml",
+                "notes": "qml/action/NotesAction.qml",
+                "mood": "qml/action/MoodAction.qml",
+                "skill": "qml/action/SkillAction.qml",
+                "window": "qml/action/WindowAction.qml"
+            }
         }, {
             "location": "/data",
             "catalog": "data",

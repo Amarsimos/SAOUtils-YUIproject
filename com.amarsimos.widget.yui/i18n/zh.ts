@@ -2,6 +2,29 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN" sourcelanguage="en">
 <context>
+    <name>AlarmAction</name>
+    <message>
+        <location filename="../qml/action/AlarmAction.qml" line="5"/>
+        <source>Alarm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/AlarmAction.qml" line="8"/>
+        <source>Add Reminder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/AlarmAction.qml" line="10"/>
+        <source>time|text, e.g. +30|Drink water, 08:00|Meeting, 每天 23:00|Sleep</source>
+        <translation>时间|内容，例如 +30|喝水、08:00|开会、每天 23:00|睡觉</translation>
+    </message>
+    <message>
+        <location filename="../qml/action/AlarmAction.qml" line="13"/>
+        <source>Remove Next Reminder</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CardinalSystem</name>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="52"/>
@@ -442,6 +465,29 @@
         <location filename="../qml/CardinalSystem.qml" line="909"/>
         <source>Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.</source>
         <translation>超过这么多分钟没有互动，结衣会进入待机睡眠；点击她即可唤醒。0 为关闭。</translation>
+    </message>
+</context>
+<context>
+    <name>ChatAction</name>
+    <message>
+        <location filename="../qml/action/ChatAction.qml" line="5"/>
+        <source>Chat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/ChatAction.qml" line="8"/>
+        <source>Open Chat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/ChatAction.qml" line="10"/>
+        <source>Sent to Yui when the chat opens (optional)</source>
+        <translation>打开聊天时发给结衣的话（可不填）</translation>
+    </message>
+    <message>
+        <location filename="../qml/action/ChatAction.qml" line="13"/>
+        <source>Spontaneous Talk</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -893,10 +939,79 @@
     </message>
 </context>
 <context>
+    <name>MoodAction</name>
+    <message>
+        <location filename="../qml/action/MoodAction.qml" line="5"/>
+        <source>Mental Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/MoodAction.qml" line="8"/>
+        <source>Record Mood</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/MoodAction.qml" line="10"/>
+        <source>A note (optional)</source>
+        <translation>备注（可不填）</translation>
+    </message>
+    <message>
+        <location filename="../qml/action/MoodAction.qml" line="13"/>
+        <source>Write Weekly Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NotesAction</name>
+    <message>
+        <location filename="../qml/action/NotesAction.qml" line="5"/>
+        <source>Quest Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/NotesAction.qml" line="8"/>
+        <source>Add Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/NotesAction.qml" line="10"/>
+        <source>What to note down</source>
+        <translation>要记下的事</translation>
+    </message>
+    <message>
+        <location filename="../qml/action/NotesAction.qml" line="13"/>
+        <source>Finish First Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ProcessListEditor</name>
     <message>
         <location filename="../qml/ProcessListEditor.qml" line="119"/>
         <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RaidAction</name>
+    <message>
+        <location filename="../qml/action/RaidAction.qml" line="5"/>
+        <source>Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/RaidAction.qml" line="8"/>
+        <source>Start / End Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/RaidAction.qml" line="11"/>
+        <source>Start Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/RaidAction.qml" line="15"/>
+        <source>End Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1006,6 +1121,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/Seedling.qml" line="186"/>
         <source>Close All (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SkillAction</name>
+    <message>
+        <location filename="../qml/action/SkillAction.qml" line="5"/>
+        <source>Sword Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillAction.qml" line="8"/>
+        <source>Run Sword Skill</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1494,151 +1622,69 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
 </context>
 <context>
-    <name>YuiAction</name>
+    <name>WindowAction</name>
     <message>
-        <location filename="../qml/YuiAction.qml" line="81"/>
-        <source>MHCP-YUI</source>
+        <location filename="../qml/action/WindowAction.qml" line="5"/>
+        <source>Windows</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="16"/>
-        <source>Open Chat</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="21"/>
-        <source>Spontaneous Talk</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="24"/>
-        <source>Start / End Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="27"/>
+        <location filename="../qml/action/WindowAction.qml" line="8"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="30"/>
+        <location filename="../qml/action/WindowAction.qml" line="11"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="33"/>
+        <location filename="../qml/action/WindowAction.qml" line="14"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="36"/>
+        <location filename="../qml/action/WindowAction.qml" line="17"/>
         <source>Mental Health Counseling</source>
         <translation type="unfinished">Mental Health Counseling</translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="39"/>
-        <source>System Console</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="42"/>
+        <location filename="../qml/action/WindowAction.qml" line="20"/>
         <source>Skill Slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="45"/>
-        <source>Start Boss Raid</source>
+        <location filename="../qml/action/WindowAction.qml" line="23"/>
+        <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>YuiActionBase</name>
     <message>
-        <location filename="../qml/YuiAction.qml" line="49"/>
-        <source>End Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="52"/>
-        <source>Add Reminder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="54"/>
-        <source>time|text, e.g. +30|Drink water, 08:00|Meeting, 每天 23:00|Sleep</source>
-        <translation>时间|内容，例如 +30|喝水、08:00|开会、每天 23:00|睡觉</translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="57"/>
-        <source>Remove Next Reminder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="60"/>
-        <source>Add Note</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="62"/>
-        <source>What to note down</source>
-        <translation>要记下的事</translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="65"/>
-        <source>Finish First Note</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="68"/>
-        <source>Record Mood</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="70"/>
-        <source>A note (optional)</source>
-        <translation>备注（可不填）</translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="73"/>
-        <source>Write Weekly Report</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="76"/>
-        <source>Run Sword Skill</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="82"/>
-        <source>Talk to Yui, start a Boss Raid, add reminders and notes, record your mood or open her windows.</source>
-        <translation>和结衣说话、开始 Boss Raid、添加提醒和笔记、记录心情，或打开她的窗口。</translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="102"/>
+        <location filename="../qml/action/YuiActionBase.qml" line="37"/>
         <source>Command</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="111"/>
+        <location filename="../qml/action/YuiActionBase.qml" line="47"/>
         <source>Text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="118"/>
+        <location filename="../qml/action/YuiActionBase.qml" line="54"/>
         <source>Minutes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="130"/>
+        <location filename="../qml/action/YuiActionBase.qml" line="66"/>
         <source>Mood (1–5)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuiAction.qml" line="141"/>
+        <location filename="../qml/action/YuiActionBase.qml" line="77"/>
         <source>Slot</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/YuiAction.qml" line="18"/>
-        <source>Sent to Yui when the chat opens (optional)</source>
-        <translation>打开聊天时发给结衣的话（可不填）</translation>
     </message>
 </context>
 <context>

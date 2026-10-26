@@ -5,37 +5,37 @@
         <map>
             <value name="label">"Open Chat"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#guide.png"}</value>
-            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#chat"}</value>
         </map>
         <map>
             <value name="label">"Boss Raid"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#skills.png"}</value>
-            <value name="action">{"data":{"command":2},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#raid"}</value>
         </map>
         <map>
             <value name="label">"Skill Slots"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#items.png"}</value>
-            <value name="action">{"data":{"command":8},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":4},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
         </map>
         <map>
             <value name="label">"Weekly Report"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#modify.png"}</value>
-            <value name="action">{"data":{"command":16},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":1},"source":"nvg://yui.widget.amarsimos.com/action#mood"}</value>
         </map>
         <map>
             <value name="label">"Sword Skill 1"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#run.png"}</value>
-            <value name="action">{"data":{"command":17,"slot":1},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":0,"slot":1},"source":"nvg://yui.widget.amarsimos.com/action#skill"}</value>
         </map>
         <map>
             <value name="label">"Mental Health Counseling"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#help.png"}</value>
-            <value name="action">{"data":{"command":6},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":3},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
         </map>
         <map>
             <value name="label">"Cardinal System"</value>
             <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#option.png"}</value>
-            <value name="action">{"data":{"command":3},"source":"nvg://yui.widget.amarsimos.com/action"}</value>
+            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
         </map>
     </list>
     <value name="style">"nvg://sao.theme.gpbeta.com/shortcut-menu"</value>
