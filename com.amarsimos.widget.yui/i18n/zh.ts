@@ -2,24 +2,6 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN" sourcelanguage="en">
 <context>
-    <name>AlarmAction</name>
-    <message>
-        <location filename="../qml/action/AlarmAction.qml" line="5"/>
-        <source>Alarm</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/AlarmAction.qml" line="8"/>
-        <source>Add Reminder...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/AlarmAction.qml" line="11"/>
-        <source>Remove Next Reminder</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>CardinalSystem</name>
     <message>
         <location filename="../qml/CardinalSystem.qml" line="52"/>
@@ -460,24 +442,6 @@
         <location filename="../qml/CardinalSystem.qml" line="909"/>
         <source>Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.</source>
         <translation>超过这么多分钟没有互动，结衣会进入待机睡眠；点击她即可唤醒。0 为关闭。</translation>
-    </message>
-</context>
-<context>
-    <name>ChatAction</name>
-    <message>
-        <location filename="../qml/action/ChatAction.qml" line="5"/>
-        <source>Chat</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/ChatAction.qml" line="8"/>
-        <source>Open Chat</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/ChatAction.qml" line="11"/>
-        <source>Spontaneous Talk</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -929,42 +893,6 @@
     </message>
 </context>
 <context>
-    <name>MoodAction</name>
-    <message>
-        <location filename="../qml/action/MoodAction.qml" line="5"/>
-        <source>Mental Record</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/MoodAction.qml" line="8"/>
-        <source>Record Mood...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/MoodAction.qml" line="11"/>
-        <source>Write Weekly Report</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>NotesAction</name>
-    <message>
-        <location filename="../qml/action/NotesAction.qml" line="5"/>
-        <source>Quest Log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/NotesAction.qml" line="8"/>
-        <source>Add Note...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/NotesAction.qml" line="11"/>
-        <source>Finish First Note</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ProcessListEditor</name>
     <message>
         <location filename="../qml/ProcessListEditor.qml" line="119"/>
@@ -1042,30 +970,7 @@
     <message>
         <location filename="../qml/QuickInput.qml" line="216"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>RaidAction</name>
-    <message>
-        <location filename="../qml/action/RaidAction.qml" line="5"/>
-        <source>Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/RaidAction.qml" line="8"/>
-        <source>Start / End Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/RaidAction.qml" line="11"/>
-        <source>Start Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/RaidAction.qml" line="15"/>
-        <source>End Boss Raid</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
 </context>
 <context>
@@ -1174,19 +1079,6 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/Seedling.qml" line="186"/>
         <source>Close All (%1)</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SkillAction</name>
-    <message>
-        <location filename="../qml/action/SkillAction.qml" line="5"/>
-        <source>Sword Skills</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/action/SkillAction.qml" line="8"/>
-        <source>Run Sword Skill</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1302,7 +1194,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <location filename="../qml/SkillSlots.qml" line="255"/>
         <location filename="../qml/SkillSlots.qml" line="364"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
     <message>
         <location filename="../qml/SkillSlots.qml" line="276"/>
@@ -1406,6 +1298,54 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <location filename="../qml/SkillSlots.qml" line="547"/>
         <source>Test %1</source>
         <translation>测试 %1</translation>
+    </message>
+</context>
+<context>
+    <name>SkillsAction</name>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="5"/>
+        <source>Skill Slots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="8"/>
+        <source>Start / End Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="11"/>
+        <source>Start Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="15"/>
+        <source>End Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="18"/>
+        <source>Add Reminder...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="21"/>
+        <source>Remove Next Reminder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="24"/>
+        <source>Add Note...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="27"/>
+        <source>Finish First Note</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/SkillsAction.qml" line="30"/>
+        <source>Run Sword Skill</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1709,6 +1649,34 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/action/WindowAction.qml" line="23"/>
         <source>System Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>YuiAction</name>
+    <message>
+        <location filename="../qml/action/YuiAction.qml" line="5"/>
+        <source>Yui</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/YuiAction.qml" line="8"/>
+        <source>Open Chat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/YuiAction.qml" line="11"/>
+        <source>Spontaneous Talk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/YuiAction.qml" line="14"/>
+        <source>Record Mood...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/action/YuiAction.qml" line="17"/>
+        <source>Write Weekly Report</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2050,7 +2018,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/YuisHeartPage.qml" line="83"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
     <message>
         <location filename="../qml/YuisHeartPage.qml" line="162"/>
