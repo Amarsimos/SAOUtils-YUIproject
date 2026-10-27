@@ -79,13 +79,18 @@ ColumnLayout {
     spacing: 10
 
     // ---------------------------------------------------------------- Through Yui's Eyes
+    // Each Card takes its height from its content laid out at the card's width (with anchors.fill
+    // the wrapped text was measured as one line, and the card came out too short).
     Card {
         id: portraitCard
 
         Layout.fillWidth: true
+        contentHeight: portraitRow.implicitHeight
 
         RowLayout {
-            anchors.fill: parent
+            id: portraitRow
+
+            width: portraitCard.availableWidth
             spacing: 10
 
             Rectangle {
@@ -156,7 +161,9 @@ ColumnLayout {
                         text: page.portrait ? Qt.formatDateTime(new Date(page.portrait.created), "yyyy-MM-dd HH:mm") : ""
                     }
 
-                    SmallButton {
+                    // With text, so an ordinary (flat) Button: SmallButton is sized for an icon alone.
+                    Button {
+                        flat: true
                         enabled: !page.yui.writingPortrait && page.yui.heartCache.length > 0
                         icon.name: "regular:"
                         display: AbstractButton.TextBesideIcon
@@ -295,13 +302,16 @@ ColumnLayout {
             }
 
             width: list.width - 12
+            contentHeight: cardRow.implicitHeight
 
             HoverHandler {
                 id: hover
             }
 
             RowLayout {
-                anchors.fill: parent
+                id: cardRow
+
+                width: card.availableWidth
                 spacing: 10
 
                 Rectangle {
@@ -382,10 +392,15 @@ ColumnLayout {
 
     // ---------------------------------------------------------------- adding, always at the bottom
     Card {
+        id: addCard
+
         Layout.fillWidth: true
+        contentHeight: addRow.implicitHeight
 
         RowLayout {
-            anchors.fill: parent
+            id: addRow
+
+            width: addCard.availableWidth
             spacing: 6
 
             TextField {
