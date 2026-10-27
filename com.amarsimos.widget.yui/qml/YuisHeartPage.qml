@@ -54,40 +54,6 @@ ColumnLayout {
 
     spacing: 8
 
-    // Through Yui's Eyes: what Yui makes of the user from all her memories (written on request).
-    Label {
-        text: qsTr("Through Yui's Eyes")
-        font.pixelSize: 13
-        font.bold: true
-    }
-
-    // Read-only but selectable, so a part can be copied.
-    TextArea {
-        Layout.fillWidth: true
-        visible: !!(yui.settings.heart_portrait && yui.settings.heart_portrait.text)
-        readOnly: true
-        selectByMouse: true
-        wrapMode: Text.Wrap
-        text: yui.settings.heart_portrait ? yui.settings.heart_portrait.text : ""
-    }
-
-    Label {
-        Layout.alignment: Qt.AlignHCenter
-        visible: !!yui.settings.heart_portrait
-        opacity: 0.6
-        font.pixelSize: 11
-        text: yui.settings.heart_portrait ? Qt.formatDateTime(new Date(yui.settings.heart_portrait.created), "yyyy-MM-dd HH:mm") : ""
-    }
-
-    Button {
-        Layout.alignment: Qt.AlignHCenter
-        enabled: !yui.writingPortrait && yui.heartCache.length > 0
-        text: yui.writingPortrait ? qsTr("Writing...") : (yui.settings.heart_portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
-        onClicked: yui.writePortrait(function(error) {
-            page.message = error;
-        })
-    }
-
     Label {
         text: "♥ " + qsTr("Yui's Heart") + "  (" + yui.heartCache.length + ")"
         font.pixelSize: 13
@@ -152,6 +118,48 @@ ColumnLayout {
         }], page.shown(page.fragments))
 
         ScrollBar.vertical: SaoScrollBar {
+        }
+
+        // Through Yui's Eyes: what Yui makes of the user from all her memories (written on request),
+        // at the top of the list, so it scrolls with the memories however long it is.
+        header: Column {
+            width: list.width - 12
+            spacing: 6
+            bottomPadding: 10
+
+            Label {
+                text: qsTr("Through Yui's Eyes")
+                font.pixelSize: 13
+                font.bold: true
+            }
+
+            // Read-only but selectable, so a part can be copied.
+            TextArea {
+                width: parent.width
+                visible: !!(page.yui.settings.heart_portrait && page.yui.settings.heart_portrait.text)
+                readOnly: true
+                selectByMouse: true
+                wrapMode: Text.Wrap
+                text: page.yui.settings.heart_portrait ? page.yui.settings.heart_portrait.text : ""
+            }
+
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: !!page.yui.settings.heart_portrait
+                opacity: 0.6
+                font.pixelSize: 11
+                text: page.yui.settings.heart_portrait ? Qt.formatDateTime(new Date(page.yui.settings.heart_portrait.created), "yyyy-MM-dd HH:mm") : ""
+            }
+
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                enabled: !page.yui.writingPortrait && page.yui.heartCache.length > 0
+                text: page.yui.writingPortrait ? qsTr("Writing...") : (page.yui.settings.heart_portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
+                onClicked: page.yui.writePortrait(function(error) {
+                    page.message = error;
+                })
+            }
+
         }
 
         delegate: Column {
