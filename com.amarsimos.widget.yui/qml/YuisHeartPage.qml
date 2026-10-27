@@ -82,7 +82,7 @@ ColumnLayout {
     Button {
         Layout.alignment: Qt.AlignHCenter
         enabled: !yui.writingPortrait && yui.heartCache.length > 0
-        text: yui.writingPortrait ? qsTr("Writing...") : (yui.settings.heart_portrait ? qsTr("Ask Again") : qsTr("Ask Yui"))
+        text: yui.writingPortrait ? qsTr("Writing...") : (yui.settings.heart_portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
         onClicked: yui.writePortrait(function(error) {
             page.message = error;
         })

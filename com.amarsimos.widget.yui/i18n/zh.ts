@@ -1040,7 +1040,7 @@
     <message>
         <location filename="../qml/QuickInput.qml" line="205"/>
         <source>Ask Yui</source>
-        <translation>问问结衣</translation>
+        <translation>交给结衣</translation>
     </message>
     <message>
         <location filename="../qml/QuickInput.qml" line="216"/>
@@ -2105,6 +2105,11 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>要删除这条记忆吗？</translation>
     </message>
     <message>
+        <location filename="../qml/YuisHeartPage.qml" line="85"/>
+        <source>Hear from Yui</source>
+        <translation>听听结衣怎么说</translation>
+    </message>
+    <message>
         <location filename="../qml/YuisHeartPage.qml" line="127"/>
         <source>Search memories</source>
         <translation>搜索记忆</translation>
@@ -2129,11 +2134,6 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <location filename="../qml/YuisHeartPage.qml" line="85"/>
         <source>Ask Again</source>
         <translation>重新问问</translation>
-    </message>
-    <message>
-        <location filename="../qml/YuisHeartPage.qml" line="85"/>
-        <source>Ask Yui</source>
-        <translation type="unfinished">交给结衣</translation>
     </message>
     <message>
         <location filename="../qml/YuisHeartPage.qml" line="106"/>
