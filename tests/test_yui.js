@@ -600,4 +600,18 @@ test("Memories keep their dates", () => {
     assert.ok(Yui.featureInstructions("爸爸", [{ text: "名字叫小明", kind: "core", created: new Date(2026, 9, 1).getTime() }], {}, "tags").includes("- [10-01] 名字叫小明"));
 });
 
+test("Replies of small models", () => {
+    const raw = "爸爸回来了！想听故事吗？<<mood:8|情绪正在回升。>\n<<suggest:好温暖/继续休息/不想动>\n\n\n</think>\n\n爸爸回来了！想听故事吗？\n\n<<forget:上次误用了sad表情>\n</think>\n\n爸爸回来了！想听故事吗？\n\n<<mood:8|情绪正在回升。>\n\n\n<<suggest:好温暖啊/继续休息吧/不想动>";
+    const reply = Yui.parseReply(raw, [], { allowed: { suggest: true } });
+    assert.strictEqual(reply.text, "爸爸回来了！想听故事吗？");
+    assert.strictEqual(reply.mood.score, 5);
+    assert.strictEqual(JSON.stringify(reply.suggestions), JSON.stringify(["好温暖啊", "继续休息吧", "不想动"]));
+    assert.strictEqual(Yui.cleanReply("<think>想一想</think>你好"), "你好");
+    assert.strictEqual(Yui.cleanReply("一\n\n二\n\n一"), "一\n\n二");
+    assert.strictEqual(Yui.displayText("<think>正在想"), "");
+    assert.strictEqual(Yui.displayText("想了很多</think>\n你好"), "你好");
+    // a ">" inside the text is no tag end
+    assert.strictEqual(Yui.parseReply("3 > 2 是对的<<emotion:happy>>").text, "3 > 2 是对的");
+});
+
 console.log(passed + " tests passed");

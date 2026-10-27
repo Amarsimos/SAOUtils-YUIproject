@@ -85,7 +85,7 @@ function loadStep(state, value, pair) {
 var TOOLS_ENABLED = false;
 
 function anyTagPattern() {
-    return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》)/g;
+    return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》|[>＞》](?=\s|$|<|＜|《))/g;
 }
 
 // A tag without a value, such as <<happy>> for <<emotion:happy>> (models sometimes shorten them).
@@ -94,7 +94,8 @@ function bareTagPattern() {
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -771,8 +772,30 @@ function guessEmotion(text) {
 // options (optional): {searchEngine, searchCustom} for the address of <<search:>> (see searchUrl), and
 // allowed: {web, launch, find, kill}, false for actions the user forbade (their tags are dropped and
 // result.disabled names the first one).
+// What a model wrote before </think> is its thinking, not the reply (some local models write it into
+// the reply, at times with the reply repeated in between): only what follows the last </think> is
+// kept, a <think> block is dropped, and a paragraph written twice is kept once (pure).
+function cleanReply(text) {
+    var value = String(text || "");
+    var end = value.lastIndexOf("</think>");
+    if (end !== -1)
+        value = value.slice(end + "</think>".length);
+
+    value = value.replace(/<think>[\s\S]*?(<\/think>|$)/g, "");
+    var seen = [];
+    return value.split(/\n\s*\n/).filter(function(paragraph) {
+        var key = paragraph.trim();
+        if (key && seen.indexOf(key) !== -1)
+            return false;
+
+        seen.push(key);
+        return true;
+    }).join("\n\n").trim();
+}
+
 function parseReply(text, userProtected, options) {
     options = options || {};
+    text = cleanReply(text);
     var allowed = options.allowed || {};
     var result = {
         "text": "",
@@ -1134,7 +1157,10 @@ function datedMemory(text, now) {
 // Quick Replies: a <<suggest:>> tag's value ("a|b|c") -> up to three different short replies.
 function suggestionsFrom(value) {
     var found = [];
-    String(value).split(/[|｜]/).forEach(function(part) {
+    var text = String(value);
+    // "|" as asked; small models write "/" or "、" too.
+    var parts = /[|｜]/.test(text) ? text.split(/[|｜]/) : text.split(/[/／、]/);
+    parts.forEach(function(part) {
         var text = part.trim().slice(0, 30);
         if (text && found.indexOf(text) === -1 && found.length < 3)
             found.push(text);
@@ -1227,6 +1253,11 @@ function portraitPrompt(title, entries) {
 // started but not finished yet ("<<emot") is hidden until it is complete.
 function displayText(partial) {
     var text = String(partial);
+    // Thinking written into the reply: nothing of it is shown (see cleanReply).
+    if (text.indexOf("</think>") !== -1)
+        text = text.slice(text.lastIndexOf("</think>") + "</think>".length);
+    else if (text.indexOf("<think>") !== -1)
+        text = text.slice(0, text.indexOf("<think>"));
     var cut = text.lastIndexOf("<<");
     if (cut !== -1 && text.indexOf(">>", cut) === -1)
         text = text.substring(0, cut);
