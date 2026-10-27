@@ -2088,154 +2088,154 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>YuisHeartPage</name>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="47"/>
-        <location filename="../qml/YuisHeartPage.qml" line="57"/>
+        <location filename="../qml/YuisHeartPage.qml" line="46"/>
+        <location filename="../qml/YuisHeartPage.qml" line="56"/>
         <source>The heart core is full (%1). Move a memory out of it first.</source>
         <translation>心核已满（%1 条）。请先把一条记忆移出心核。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="63"/>
+        <location filename="../qml/YuisHeartPage.qml" line="62"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="63"/>
+        <location filename="../qml/YuisHeartPage.qml" line="62"/>
         <source>Delete this memory?</source>
         <translation>要删除这条记忆吗？</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="178"/>
+        <location filename="../qml/YuisHeartPage.qml" line="163"/>
         <source>Hear from Yui</source>
         <translation>听听结衣怎么说</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="245"/>
+        <location filename="../qml/YuisHeartPage.qml" line="224"/>
         <source>Search memories</source>
         <translation>搜索记忆</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="204"/>
-        <location filename="../qml/YuisHeartPage.qml" line="464"/>
+        <location filename="../qml/YuisHeartPage.qml" line="183"/>
+        <location filename="../qml/YuisHeartPage.qml" line="404"/>
         <source>Heart Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="72"/>
+        <location filename="../qml/YuisHeartPage.qml" line="71"/>
         <source>noted %1</source>
         <translation>%1 记下</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="75"/>
+        <location filename="../qml/YuisHeartPage.qml" line="74"/>
         <source>recalled %1 times</source>
         <translation>想起过 %1 次</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="113"/>
+        <location filename="../qml/YuisHeartPage.qml" line="107"/>
         <source>Through Yui&apos;s Eyes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="122"/>
+        <location filename="../qml/YuisHeartPage.qml" line="117"/>
         <source>Fold</source>
         <translation>收起</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="122"/>
+        <location filename="../qml/YuisHeartPage.qml" line="117"/>
         <source>Unfold</source>
         <translation>展开</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="158"/>
+        <location filename="../qml/YuisHeartPage.qml" line="145"/>
         <source>Ask Yui what she makes of you from her memories.</source>
         <translation>问问结衣，从她的记忆里看，你是个怎样的人。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="158"/>
+        <location filename="../qml/YuisHeartPage.qml" line="145"/>
         <source>No memories yet: chat with Yui a little first.</source>
         <translation>还没有记忆，先和结衣多聊聊吧。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="178"/>
+        <location filename="../qml/YuisHeartPage.qml" line="163"/>
         <source>Writing...</source>
         <translation type="unfinished">正在写……</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="178"/>
+        <location filename="../qml/YuisHeartPage.qml" line="163"/>
         <source>Ask Again</source>
         <translation>重新问问</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="204"/>
+        <location filename="../qml/YuisHeartPage.qml" line="183"/>
         <source>Fragments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="282"/>
+        <location filename="../qml/YuisHeartPage.qml" line="261"/>
         <source>No memory contains this.</source>
         <translation>没有找到包含这些字的记忆。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="282"/>
+        <location filename="../qml/YuisHeartPage.qml" line="261"/>
         <source>The heart core is empty: what matters most about you goes here.</source>
         <translation>心核还是空的：关于你最重要的事会放在这里。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="282"/>
+        <location filename="../qml/YuisHeartPage.qml" line="261"/>
         <source>No memory fragments yet: chat with Yui and she will remember.</source>
         <translation>还没有记忆碎片：和结衣聊天，她会自己记下来。</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="456"/>
+        <location filename="../qml/YuisHeartPage.qml" line="396"/>
         <source>Something Yui should remember</source>
         <translation>想让结衣记住的事</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="464"/>
+        <location filename="../qml/YuisHeartPage.qml" line="404"/>
         <source>Fragment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="469"/>
+        <location filename="../qml/YuisHeartPage.qml" line="409"/>
         <source>Add</source>
         <translation type="unfinished">添加</translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Edit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Unpin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Pin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>To Fragments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>To Core</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/YuisHeartPage.qml" line="396"/>
+        <location filename="../qml/YuisHeartPage.qml" line="363"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>

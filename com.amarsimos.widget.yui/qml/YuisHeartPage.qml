@@ -1,4 +1,5 @@
 import NERvGear 1.0 as NVG
+import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
@@ -9,7 +10,8 @@ import "yui.js" as Yui
 // makes of the user, folded to three lines), the core / fragments switch with the search, the
 // memories as cards (orange stripe: core, grey: fragment; edit, pin (core only: never moved out of a
 // full core), move between core and fragments and delete appear on hover), and adding a memory at
-// the bottom, always in reach.
+// the bottom, always in reach. Cards and small buttons are SAO Utils' own (Card, SmallButton with
+// Font Awesome icons), so they follow its theme.
 ColumnLayout {
     id: page
 
@@ -26,9 +28,6 @@ ColumnLayout {
     readonly property color orange: "#F59B00"
     readonly property color line: "#E3E3E3"
     readonly property color muted: "#8A8A8A"
-    // Text on the white cards: set, not taken from the theme (a theme with light text left it white
-    // on white).
-    readonly property color ink: "#2B2B2B"
     readonly property var portrait: yui.settings.heart_portrait || null
     readonly property var core: Yui.coreMemories(yui.heartCache)
     readonly property var fragments: yui.heartCache.filter(function(entry) {
@@ -80,108 +79,88 @@ ColumnLayout {
     spacing: 10
 
     // ---------------------------------------------------------------- Through Yui's Eyes
-    Rectangle {
+    Card {
+        id: portraitCard
+
         Layout.fillWidth: true
-        implicitHeight: portraitColumn.implicitHeight + 24
-        radius: 6
-        color: "#FFFFFF"
-        border.color: page.line
 
-        Rectangle {
-            anchors.left: parent.left
-            anchors.leftMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            width: 4
-            height: parent.height - 16
-            radius: 2
-            color: page.orange
-        }
-
-        ColumnLayout {
-            id: portraitColumn
-
+        RowLayout {
             anchors.fill: parent
-            anchors.margins: 12
-            anchors.leftMargin: 22
-            spacing: 6
+            spacing: 10
 
-            RowLayout {
+            Rectangle {
+                Layout.fillHeight: true
+                implicitWidth: 4
+                radius: 2
+                color: page.orange
+            }
+
+            ColumnLayout {
                 Layout.fillWidth: true
+                spacing: 6
 
-                Label {
+                RowLayout {
                     Layout.fillWidth: true
-                    text: "“ " + qsTr("Through Yui's Eyes")
-                    color: page.ink
-                    font.pixelSize: 13
-                    font.bold: true
-                }
 
-                // Folded to three lines; the whole text when open.
-                Label {
-                    visible: !!(page.portrait && page.portrait.text)
-                    text: page.portraitOpen ? qsTr("Fold") + " ▴" : qsTr("Unfold") + " ▾"
-                    color: page.orange
-                    font.pixelSize: 11
+                    Label {
+                        Layout.fillWidth: true
+                        text: "“ " + qsTr("Through Yui's Eyes")
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        cursorShape: Qt.PointingHandCursor
+                    // Folded to three lines; the whole text when open.
+                    SmallButton {
+                        visible: !!(page.portrait && page.portrait.text)
+                        icon.name: page.portraitOpen ? "regular:" : "regular:"
+                        ToolTip.visible: hovered
+                        ToolTip.text: page.portraitOpen ? qsTr("Fold") : qsTr("Unfold")
                         onClicked: page.portraitOpen = !page.portraitOpen
                     }
 
                 }
 
-            }
-
-            // Read-only but selectable, so a part can be copied.
-            TextEdit {
-                Layout.fillWidth: true
-                // Three lines while folded (TextEdit has no maximumLineCount).
-                Layout.maximumHeight: page.portraitOpen ? -1 : 3 * (font.pixelSize * 1.5) + 2
-                visible: !!(page.portrait && page.portrait.text)
-                clip: true
-                readOnly: true
-                selectByMouse: true
-                wrapMode: Text.Wrap
-                color: "#444444"
-                font.pixelSize: 12
-                text: page.portrait ? page.portrait.text : ""
-            }
-
-            Label {
-                Layout.fillWidth: true
-                visible: !(page.portrait && page.portrait.text)
-                wrapMode: Text.Wrap
-                color: page.muted
-                font.pixelSize: 12
-                text: page.yui.heartCache.length > 0 ? qsTr("Ask Yui what she makes of you from her memories.") : qsTr("No memories yet: chat with Yui a little first.")
-            }
-
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                spacing: 8
-
-                Label {
-                    visible: !!page.portrait
-                    color: page.muted
-                    font.pixelSize: 11
-                    text: page.portrait ? Qt.formatDateTime(new Date(page.portrait.created), "yyyy-MM-dd HH:mm") : ""
+                // Read-only but selectable, so a part can be copied.
+                TextEdit {
+                    Layout.fillWidth: true
+                    // Three lines while folded (TextEdit has no maximumLineCount).
+                    Layout.maximumHeight: page.portraitOpen ? -1 : 3 * (font.pixelSize * 1.5) + 2
+                    visible: !!(page.portrait && page.portrait.text)
+                    clip: true
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: Text.Wrap
+                    color: portraitCard.palette.windowText
+                    selectionColor: page.orange
+                    font.pixelSize: 12
+                    text: page.portrait ? page.portrait.text : ""
                 }
 
                 Label {
-                    readonly property bool active: !page.yui.writingPortrait && page.yui.heartCache.length > 0
+                    Layout.fillWidth: true
+                    visible: !(page.portrait && page.portrait.text)
+                    wrapMode: Text.Wrap
+                    opacity: 0.7
+                    font.pixelSize: 12
+                    text: page.yui.heartCache.length > 0 ? qsTr("Ask Yui what she makes of you from her memories.") : qsTr("No memories yet: chat with Yui a little first.")
+                }
 
-                    color: active ? page.orange : page.muted
-                    font.pixelSize: 11
-                    font.bold: !page.portrait
-                    text: page.yui.writingPortrait ? qsTr("Writing...") : (page.portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
+                RowLayout {
+                    Layout.alignment: Qt.AlignRight
+                    spacing: 6
 
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        enabled: parent.active
-                        cursorShape: Qt.PointingHandCursor
+                    Label {
+                        visible: !!page.portrait
+                        opacity: 0.6
+                        font.pixelSize: 11
+                        text: page.portrait ? Qt.formatDateTime(new Date(page.portrait.created), "yyyy-MM-dd HH:mm") : ""
+                    }
+
+                    SmallButton {
+                        enabled: !page.yui.writingPortrait && page.yui.heartCache.length > 0
+                        icon.name: "regular:"
+                        display: AbstractButton.TextBesideIcon
+                        text: page.yui.writingPortrait ? qsTr("Writing...") : (page.portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
                         onClicked: page.yui.writePortrait(function(error) {
                             page.message = error;
                         })
@@ -209,7 +188,7 @@ ColumnLayout {
                 implicitWidth: tabLabel.implicitWidth + 24
                 implicitHeight: 30
                 radius: 15
-                color: active ? page.orange : (tabMouse.containsMouse ? "#FFF3DC" : "#FFFFFF")
+                color: active ? page.orange : (tabMouse.containsMouse ? "#33F59B00" : "transparent")
                 border.color: active ? page.orange : page.line
 
                 Label {
@@ -217,7 +196,7 @@ ColumnLayout {
 
                     anchors.centerIn: parent
                     text: modelData[0] + "   " + modelData[1]
-                    color: parent.active ? "#FFFFFF" : page.ink
+                    color: parent.active ? "#FFFFFF" : palette.windowText
                     font.pixelSize: 12
                     font.bold: parent.active
                 }
@@ -242,7 +221,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.minimumWidth: 100
             selectByMouse: true
-            placeholderText: "🔍  " + qsTr("Search memories")
+            placeholderText: qsTr("Search memories")
             onTextChanged: page.filter = text.trim().toLowerCase()
         }
 
@@ -277,18 +256,18 @@ ColumnLayout {
             visible: list.count === 0
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            color: page.muted
+            opacity: 0.6
             font.pixelSize: 12
             text: page.filter ? qsTr("No memory contains this.") : (page.tab === 0 ? qsTr("The heart core is empty: what matters most about you goes here.") : qsTr("No memory fragments yet: chat with Yui and she will remember."))
         }
 
-        delegate: Rectangle {
+        delegate: Card {
             id: card
 
             readonly property var memory: modelData
             readonly property bool isCore: memory.kind === "core"
             readonly property bool editing: page.editingId === memory.id
-            readonly property bool hovered: hover.hovered || editing
+            readonly property bool active: hover.hovered || editing
 
             function act(action) {
                 if (action === "edit") {
@@ -316,34 +295,21 @@ ColumnLayout {
             }
 
             width: list.width - 12
-            implicitHeight: cardRow.implicitHeight + 20
-            radius: 6
-            color: hovered ? "#FFFDF7" : "#FFFFFF"
-            border.color: hovered ? "#F5C76B" : page.line
 
             HoverHandler {
                 id: hover
             }
 
-            Rectangle {
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                anchors.verticalCenter: parent.verticalCenter
-                width: 4
-                height: parent.height - 16
-                radius: 2
-                color: card.isCore ? page.orange : "#C4C4C4"
-            }
-
             RowLayout {
-                id: cardRow
+                anchors.fill: parent
+                spacing: 10
 
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 22
-                anchors.rightMargin: 10
-                spacing: 8
+                Rectangle {
+                    Layout.fillHeight: true
+                    implicitWidth: 4
+                    radius: 2
+                    color: card.isCore ? page.orange : "#C4C4C4"
+                }
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -353,12 +319,11 @@ ColumnLayout {
                         Layout.fillWidth: true
                         visible: !card.editing
                         text: (card.memory.pinned ? "📌 " : "") + (card.memory.text || "")
-                        color: page.ink
                         font.pixelSize: 13
                         wrapMode: Text.Wrap
                     }
 
-                    // Several lines, for long memories; Ctrl+Enter saves.
+                    // Several lines, for long memories; Ctrl+Enter saves, Esc cancels.
                     TextArea {
                         id: editor
 
@@ -366,7 +331,6 @@ ColumnLayout {
                         visible: card.editing
                         selectByMouse: true
                         wrapMode: Text.Wrap
-                        color: page.ink
                         font.pixelSize: 13
                         Keys.onReturnPressed: {
                             if (event.modifiers & Qt.ControlModifier)
@@ -380,47 +344,30 @@ ColumnLayout {
                     Label {
                         visible: !card.editing && text !== ""
                         text: page.details(card.memory)
-                        color: page.muted
+                        opacity: 0.6
                         font.pixelSize: 10
                     }
 
                 }
 
-                // Edit, pin (core only), move to the other side, delete: on hover; Save / Cancel while editing.
+                // Edit, pin (core only), move to the other side, delete: on hover; save / cancel while
+                // editing. Font Awesome icons: pen, thumbtack, exchange, times; check, undo.
                 Row {
                     Layout.alignment: Qt.AlignTop
-                    visible: card.hovered
-                    spacing: 4
+                    // Keeps its room, so the text does not jump when the buttons appear.
+                    opacity: card.active ? 1 : 0
+                    enabled: card.active
+                    spacing: 2
 
                     Repeater {
-                        model: card.editing ? [["✓", "save", qsTr("Save")], ["↺", "cancel", qsTr("Cancel")]] : [["✎", "edit", qsTr("Edit")]].concat(card.isCore ? [["📌", "pin", card.memory.pinned ? qsTr("Unpin") : qsTr("Pin")]] : [], [["⇅", "move", card.isCore ? qsTr("To Fragments") : qsTr("To Core")], ["✕", "delete", qsTr("Delete")]])
+                        model: card.editing ? [["", "save", qsTr("Save")], ["", "cancel", qsTr("Cancel")]] : [["", "edit", qsTr("Edit")]].concat(card.isCore ? [["", "pin", card.memory.pinned ? qsTr("Unpin") : qsTr("Pin")]] : [], [["", "move", card.isCore ? qsTr("To Fragments") : qsTr("To Core")], ["", "delete", qsTr("Delete")]])
 
-                        Rectangle {
-                            readonly property bool danger: modelData[1] === "delete"
-
-                            width: 26
-                            height: 26
-                            radius: 13
-                            color: iconMouse.containsMouse ? (danger ? "#E53935" : page.orange) : (danger ? "#FDECEC" : "#FFF3DC")
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: modelData[0]
-                                font.pixelSize: 12
-                                color: iconMouse.containsMouse ? "#FFFFFF" : (parent.danger ? "#E53935" : page.orange)
-                            }
-
-                            MouseArea {
-                                id: iconMouse
-
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: card.act(modelData[1])
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: modelData[2]
-                            }
-
+                        SmallButton {
+                            icon.name: (modelData[1] === "pin" && card.memory.pinned ? "solid:" : "regular:") + modelData[0]
+                            icon.color: modelData[1] === "delete" ? "#E53935" : page.orange
+                            ToolTip.visible: hovered
+                            ToolTip.text: modelData[2]
+                            onClicked: card.act(modelData[1])
                         }
 
                     }
@@ -434,18 +381,11 @@ ColumnLayout {
     }
 
     // ---------------------------------------------------------------- adding, always at the bottom
-    Rectangle {
+    Card {
         Layout.fillWidth: true
-        implicitHeight: addRow.implicitHeight + 14
-        radius: 6
-        color: "#FFFFFF"
-        border.color: page.line
 
         RowLayout {
-            id: addRow
-
             anchors.fill: parent
-            anchors.margins: 7
             spacing: 6
 
             TextField {
