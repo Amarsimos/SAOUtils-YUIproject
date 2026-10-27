@@ -2409,6 +2409,16 @@ T.Widget {
             }));
         });
         var now = Date.now();
+        // Relative days become dates, and a bare date or time is not kept (Yui.datedMemory).
+        var dated = function(texts) {
+            return texts.map(function(text) {
+                return Yui.datedMemory(text, now);
+            }).filter(function(text) {
+                return text !== "";
+            });
+        };
+        reply.cores = dated(reply.cores);
+        reply.memories = dated(reply.memories);
         reply.cores.forEach(function(text) {
             entries = Yui.rememberMemory(entries, text, "core", now, heartCoreCapacity);
         });

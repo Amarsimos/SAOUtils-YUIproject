@@ -584,4 +584,20 @@ test("Quick Replies, Character Traits, Log Recall and Through Yui's Eyes", () =>
     assert.ok(portrait.includes("- 名字是小明") && portrait.includes("- 喜欢拉面"));
 });
 
+test("Memories keep their dates", () => {
+    const now = new Date(2026, 9, 27, 21, 0).getTime();
+    assert.strictEqual(Yui.datedMemory("明天要考数学", now), "10月28日要考数学");
+    assert.strictEqual(Yui.datedMemory("昨天和朋友去吃了拉面", now), "10月26日和朋友去吃了拉面");
+    assert.strictEqual(Yui.datedMemory("下周去京都", now), "11月3日那周去京都");
+    assert.strictEqual(Yui.datedMemory("今年开始学吉他", now), "2026年开始学吉他");
+    assert.strictEqual(Yui.datedMemory("喜欢豚骨拉面", now), "喜欢豚骨拉面");
+    assert.strictEqual(Yui.datedMemory("今天是10月27日", now), "");
+    assert.strictEqual(Yui.datedMemory("现在是21:30", now), "");
+    assert.strictEqual(Yui.datedMemory("2026年10月27日星期二", now), "");
+    assert.strictEqual(Yui.memoryLine({ text: "喜欢拉面", created: new Date(2026, 9, 12).getTime() }), "[10-12] 喜欢拉面");
+    assert.strictEqual(Yui.memoryLine({ text: "喜欢拉面" }), "喜欢拉面");
+    assert.ok(Yui.recallContext("爸爸", [{ text: "喜欢拉面", created: new Date(2026, 9, 12).getTime() }]).includes("- [10-12] 喜欢拉面"));
+    assert.ok(Yui.featureInstructions("爸爸", [{ text: "名字叫小明", kind: "core", created: new Date(2026, 9, 1).getTime() }], {}, "tags").includes("- [10-01] 名字叫小明"));
+});
+
 console.log(passed + " tests passed");
