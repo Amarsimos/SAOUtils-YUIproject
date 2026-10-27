@@ -27,7 +27,7 @@ NVG.Window {
         logResults = logQuery ? targetWidget.searchMessageLog(logQuery, 50) : [];
     }
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, conversation, savedChat]
+    readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, logRecallPreference, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
 
     function refreshLogSize() {
@@ -133,6 +133,26 @@ NVG.Window {
                             visible: heartWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("How many memories related to the current topic are sent with each request (the heart core is always sent). Fewer use fewer tokens.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: logRecallPreference
+
+                            name: "log_recall"
+                            label: qsTr("Log Recall")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 10
+                            stepSize: 1
+                            defaultValue: 3
+                        }
+
+                        SettingNote {
+                            visible: heartWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How many older chat messages about the same thing Yui looks up in the recollection log and reads with each request, so she can recall what was said long ago without remembering it. 0 turns it off; fewer use fewer tokens.")
                         }
 
                         P.SpinPreference {

@@ -106,7 +106,7 @@ NVG.Window {
     // connection (Link) is never reset.
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
-    readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
+    readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference, warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference, quickRepliesPreference]
     readonly property var pixieTabPreferences: [sleepPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
@@ -855,11 +855,93 @@ NVG.Window {
 
                     }
 
+                    // Character Traits: the style on top of the personality (Yui.traitContext), and the
+                    // Quick Replies offered under her messages.
+                    Heading {
+                        level: 2
+                        text: qsTr("Character Traits")
+                    }
+
+                    P.ObjectPreferenceGroup {
+                        id: traitsGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: coreSettings.targetWidget.settings
+                        syncProperties: true
+
+                        P.SelectPreference {
+                            id: warmthPreference
+
+                            name: "trait_warmth"
+                            label: qsTr("Warmth")
+                            defaultValue: 1
+                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                        }
+
+                        P.SelectPreference {
+                            id: energyPreference
+
+                            name: "trait_energy"
+                            label: qsTr("Energy")
+                            defaultValue: 1
+                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                        }
+
+                        P.SelectPreference {
+                            id: kaomojiPreference
+
+                            name: "trait_kaomoji"
+                            label: qsTr("Kaomoji")
+                            defaultValue: 1
+                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                        }
+
+                        P.SelectPreference {
+                            id: lengthPreference
+
+                            name: "trait_length"
+                            label: qsTr("Reply Length")
+                            defaultValue: 1
+                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                        }
+
+                        P.SelectPreference {
+                            id: formatPreference
+
+                            name: "trait_format"
+                            label: qsTr("Format")
+                            defaultValue: 0
+                            model: [qsTr("Chat"), qsTr("Lists")]
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Fine-tune how Yui talks without editing the personality: a little more or less of each, or Default to leave it to the personality. Lists lets her use simple lists when it helps.")
+                        }
+
+                        P.SwitchPreference {
+                            id: quickRepliesPreference
+
+                            name: "quick_replies"
+                            label: qsTr("Quick Replies")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Under her latest message Yui offers two or three short replies you might say next; click one to send it.")
+                        }
+
+                    }
+
                     ResetTabButton {
                         yui: coreSettings.targetWidget
                         windowTitle: coreSettings.title
                         tabTitle: qsTr("Personality")
                         preferences: coreSettings.personaTabPreferences
+                        groups: [traitsGroup]
                         onAboutToReset: coreSettings.discardEdits = true
                         onReset: coreSettings.discardEdits = false
                     }
@@ -1009,6 +1091,8 @@ NVG.Window {
                 coreSettings.coreTabPreferences.concat(coreSettings.personaTabPreferences, coreSettings.pixieTabPreferences).forEach(function(preference) {
                     preference.load();
                 });
+                // load() is no edit, so the synced group writes the defaults to the settings by save().
+                traitsGroup.save();
                 coreSettings.discardEdits = false;
             }
         }

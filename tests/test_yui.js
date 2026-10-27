@@ -563,4 +563,25 @@ test("Tools set aside", () => {
     assert.ok(!report.includes("Boss Raid") && !report.includes("待办"));
 });
 
+test("Quick Replies, Character Traits, Log Recall and Through Yui's Eyes", () => {
+    const reply = Yui.parseReply("要不要休息一下？<<suggest:好呀|再玩一会|好呀|你呢？|第四个>>", [], { allowed: { suggest: true } });
+    assert.strictEqual(JSON.stringify(reply.suggestions), JSON.stringify(["好呀", "再玩一会", "你呢？"]));
+    assert.strictEqual(reply.text, "要不要休息一下？");
+    assert.strictEqual(Yui.parseReply("嗯<<suggest:好>>", [], { allowed: { suggest: false } }).suggestions.length, 0);
+    assert.ok(Yui.featureInstructions("爸爸", "", { suggest: true }, "tags").includes("<<suggest:"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<suggest:"));
+    assert.strictEqual(Yui.traitContext({ warmth: 1, energy: 1, kaomoji: 1, length: 1, format: 0 }), "");
+    const style = Yui.traitContext({ warmth: 2, energy: 0, kaomoji: 0, length: 1, format: 1 });
+    assert.ok(style.includes("更温柔") && style.includes("沉稳") && style.includes("很少用颜文字") && style.includes("列表"));
+    const rows = [{ author: "user", message: "我下周要去京都旅行", created: new Date(2026, 8, 1).getTime() }, { author: "ai", message: "今天天气很好", created: 2 }, { author: "user", message: "京都的红叶很漂亮吧", created: new Date(2026, 8, 3).getTime() }];
+    const picked = Yui.logRecallPick(rows, "京都旅行怎么样", 2);
+    assert.strictEqual(picked.length, 2);
+    assert.ok(picked.every((row) => row.message.includes("京都")));
+    const context = Yui.logRecallContext("爸爸", picked);
+    assert.ok(context.indexOf("09-01 爸爸：我下周要去京都旅行") < context.indexOf("09-03"));
+    assert.strictEqual(Yui.logRecallPick(rows, "", 3).length, 0);
+    const portrait = Yui.portraitPrompt("爸爸", [{ kind: "core", text: "名字是小明", created: 1 }, { kind: "fragment", text: "喜欢拉面" }]);
+    assert.ok(portrait.includes("- 名字是小明") && portrait.includes("- 喜欢拉面"));
+});
+
 console.log(passed + " tests passed");

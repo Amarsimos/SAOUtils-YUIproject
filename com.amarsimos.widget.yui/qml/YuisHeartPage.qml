@@ -54,6 +54,40 @@ ColumnLayout {
 
     spacing: 8
 
+    // Through Yui's Eyes: what Yui makes of the user from all her memories (written on request).
+    Label {
+        text: qsTr("Through Yui's Eyes")
+        font.pixelSize: 13
+        font.bold: true
+    }
+
+    // Read-only but selectable, so a part can be copied.
+    TextArea {
+        Layout.fillWidth: true
+        visible: !!(yui.settings.heart_portrait && yui.settings.heart_portrait.text)
+        readOnly: true
+        selectByMouse: true
+        wrapMode: Text.Wrap
+        text: yui.settings.heart_portrait ? yui.settings.heart_portrait.text : ""
+    }
+
+    Label {
+        Layout.alignment: Qt.AlignHCenter
+        visible: !!yui.settings.heart_portrait
+        opacity: 0.6
+        font.pixelSize: 11
+        text: yui.settings.heart_portrait ? Qt.formatDateTime(new Date(yui.settings.heart_portrait.created), "yyyy-MM-dd HH:mm") : ""
+    }
+
+    Button {
+        Layout.alignment: Qt.AlignHCenter
+        enabled: !yui.writingPortrait && yui.heartCache.length > 0
+        text: yui.writingPortrait ? qsTr("Writing...") : (yui.settings.heart_portrait ? qsTr("Ask Again") : qsTr("Ask Yui"))
+        onClicked: yui.writePortrait(function(error) {
+            page.message = error;
+        })
+    }
+
     Label {
         text: "♥ " + qsTr("Yui's Heart") + "  (" + yui.heartCache.length + ")"
         font.pixelSize: 13

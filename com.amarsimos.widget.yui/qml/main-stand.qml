@@ -469,6 +469,8 @@ T.Widget {
             "focus": toolsEnabled,
             "alarm": toolsEnabled && widget.settings.alarm_enabled !== false,
             "notes": toolsEnabled && widget.settings.notes_enabled !== false,
+            // Quick Replies (Cardinal System, Personality).
+            "suggest": widget.settings.quick_replies !== false,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -476,7 +478,72 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+    }
+
+    // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
+    function characterTraits() {
+        var level = function(key) {
+            var value = widget.settings[key];
+            return value === 0 || value === 2 ? value : 1;
+        };
+        return {
+            "warmth": level("trait_warmth"),
+            "energy": level("trait_energy"),
+            "kaomoji": level("trait_kaomoji"),
+            "length": level("trait_length"),
+            "format": widget.settings.trait_format === 1 ? 1 : 0
+        };
+    }
+
+    // Log Recall (Yui's Heart, Recall): older chat messages about the same thing, found in the
+    // recollection log (not the ones still in the conversation sent), at most settings.log_recall.
+    function logRecallExtras(title, query) {
+        var count = widget.settings.log_recall !== undefined ? widget.settings.log_recall : 3;
+        var keywords = Yui.memoryKeywords(query).slice(0, 8);
+        if (count <= 0 || keywords.length === 0 || !database)
+            return "";
+
+        var newest = (readSql("reading the log", "SELECT MAX(id) AS id FROM messages")[0] || {
+            "id": 0
+        }).id || 0;
+        var rows = readSql("reading the log", "SELECT author, message, created FROM messages WHERE id <= ? AND (" + keywords.map(function() {
+            return "message LIKE ?";
+        }).join(" OR ") + ") ORDER BY id DESC LIMIT 300", [newest - maxHistory].concat(keywords.map(function(k) {
+            return "%" + k + "%";
+        })));
+        var picked = Yui.logRecallPick(rows, query, count);
+        if (picked.length > 0)
+            diag("log recall: " + picked.length + " message(s)");
+
+        return Yui.logRecallContext(title, picked);
+    }
+
+    // Through Yui's Eyes (Yui's Heart): Yui sums up what her memories say of the user (one request,
+    // not in the chat), kept in settings.heart_portrait {text, created}. onDone(error text or "").
+    property bool writingPortrait: false
+
+    function writePortrait(onDone) {
+        if (writingPortrait)
+            return ;
+
+        writingPortrait = true;
+        diag("portrait: requested (" + heartCache.length + " memories)");
+        requestCompletion([{
+            "role": "user",
+            "content": Yui.portraitPrompt(userTitle(), heartCache)
+        }], function(text, isError) {
+            writingPortrait = false;
+            if (isError) {
+                onDone(text);
+                return ;
+            }
+            widget.settings.heart_portrait = {
+                "text": Yui.parseReply(text, [], {}).text,
+                "created": Date.now()
+            };
+            onDone("");
+        });
     }
 
     // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
@@ -1230,7 +1297,8 @@ T.Widget {
             "local": !!local,
             "note": "",
             "action": "",
-            "actionState": ""
+            "actionState": "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         if (!fromYui) {
@@ -1293,7 +1361,8 @@ T.Widget {
                 "local": !!item.local,
                 "note": "",
                 "action": "",
-                "actionState": ""
+                "actionState": "",
+                "suggestions": ""
             });
         }
         widget.historyStart = Math.min(saved.history_start || 0, chatModel.count);
@@ -1313,7 +1382,8 @@ T.Widget {
             "local": false,
             "note": "",
             "action": "",
-            "actionState": ""
+            "actionState": "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         widget.busy = true;
@@ -1363,6 +1433,9 @@ T.Widget {
                         note = (note ? note + "\n" : "") + "✅ 已完成：" + finished;
 
                 });
+                if (reply.suggestions.length > 0)
+                    chatModel.setProperty(index, "suggestions", JSON.stringify(reply.suggestions));
+
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1758,7 +1831,8 @@ T.Widget {
             "local": true,
             "note": reply.disabled ? "🚫 已在 System Console 中关闭这类代行，没有执行" : reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
             "action": reply.action ? JSON.stringify(reply.action) : "",
-            "actionState": reply.action ? "pending" : ""
+            "actionState": reply.action ? "pending" : "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         if (reply.action)
@@ -4966,6 +5040,8 @@ T.Widget {
                         actionState: model.actionState
                         thinking: model.pending
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
+                        // Quick Replies: under Yui's latest message only, while nothing else is going on.
+                        suggestions: !messageItem.fromUser && model.suggestions && index === chatModel.count - 1 && !widget.busy ? JSON.parse(model.suggestions) : []
                         fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
                         fontStyle: widget.styles.bubble_font_style || {
@@ -4973,6 +5049,7 @@ T.Widget {
                         onLinkActivated: widget.openMessageLink(link)
                         onConfirmRequested: widget.confirmAction(index)
                         onRegenerateRequested: widget.regenerateReply()
+                        onSuggestionPicked: widget.sendMessage(text)
                     }
 
                     // "..." (a reply on its way) is not a message: it shows without popping up; the window pops

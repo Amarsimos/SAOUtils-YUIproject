@@ -94,7 +94,7 @@ function bareTagPattern() {
 }
 
 function tagPattern() {
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill)\s*[:：]\s*([^<>]*?)\s*>>/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest)\s*[:：]\s*([^<>]*?)\s*>>/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -798,7 +798,9 @@ function parseReply(text, userProtected, options) {
         "notes": [],
         "dones": [],
         // <<skill:>> (Skill Slots, Sword Skills): the name of the sword skill to run, "" when none.
-        "skill": ""
+        "skill": "",
+        // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
+        "suggestions": []
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -840,6 +842,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "note") {
             if (allowed.notes !== false)
                 result.notes.push(value);
+
+        } else if (kind === "suggest") {
+            if (allowed.suggest !== false)
+                result.suggestions = suggestionsFrom(value);
 
         } else if (kind === "skill") {
             if (allowed.skills && allowed.skills.length > 0)
@@ -1103,6 +1109,98 @@ function weatherWanted(query) {
     return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
 }
 
+// Quick Replies: a <<suggest:>> tag's value ("a|b|c") -> up to three different short replies.
+function suggestionsFrom(value) {
+    var found = [];
+    String(value).split(/[|｜]/).forEach(function(part) {
+        var text = part.trim().slice(0, 30);
+        if (text && found.indexOf(text) === -1 && found.length < 3)
+            found.push(text);
+
+    });
+    return found;
+}
+
+// Character Traits (Cardinal System, Personality): the style asked for on top of the personality.
+// traits: {warmth, energy, kaomoji, length (0 less, 1 as the personality says, 2 more), format (0
+// chat only, 1 lists allowed)}. "" when nothing differs.
+function traitContext(traits) {
+    traits = traits || {};
+    var asks = [];
+    var pick = function(level, less, more) {
+        if (level === 0)
+            asks.push(less);
+        else if (level === 2)
+            asks.push(more);
+    };
+    pick(traits.warmth, "语气可以收敛一点、更干脆", "语气更温柔、更体贴");
+    pick(traits.energy, "更沉稳安静一些", "更元气活泼一些");
+    pick(traits.kaomoji, "很少用颜文字", "多用一些颜文字");
+    pick(traits.length, "回复尽量简短，一两句话", "回复可以详细一些");
+    if (traits.format === 1)
+        asks.push("需要条理时可以用简单的列表");
+
+    return asks.length > 0 ? "\n\n（说话风格微调：" + asks.join("；") + "。）" : "";
+}
+
+// Log Recall (Yui's Heart, Recall): up to count older chat messages sharing the most keywords with
+// the query, most relevant first; rows [{author, message, created}].
+function logRecallPick(rows, query, count) {
+    var keywords = memoryKeywords(query);
+    if (keywords.length === 0 || count <= 0)
+        return [];
+
+    return (rows || []).map(function(row) {
+        var own = memoryKeywords(row.message);
+        var shared = own.filter(function(k) {
+            return keywords.indexOf(k) !== -1;
+        }).length;
+        return {
+            "row": row,
+            "score": shared === 0 ? 0 : shared / Math.sqrt(own.length)
+        };
+    }).filter(function(item) {
+        return item.score >= 0.3;
+    }).sort(function(x, y) {
+        return y.score - x.score || (y.row.created || 0) - (x.row.created || 0);
+    }).slice(0, count).map(function(item) {
+        return item.row;
+    });
+}
+
+// The picked messages for the system prompt, oldest first, each cut short.
+function logRecallContext(title, rows) {
+    if (!rows || rows.length === 0)
+        return "";
+
+    return "\n\n回忆日志里和现在的话题有关的旧对话（只作参考，自然的时候才提起）：\n" + rows.slice().sort(function(x, y) {
+        return (x.created || 0) - (y.created || 0);
+    }).map(function(row) {
+        var text = String(row.message).replace(/\s+/g, " ");
+        return "- " + (row.created ? formatDate(row.created) + " " : "") + (row.author === "user" ? title : "结衣") + "：" + (text.length > 100 ? text.slice(0, 100) + "…" : text);
+    }).join("\n");
+}
+
+// "MM-dd" of a time in ms.
+function formatDate(ms) {
+    var d = new Date(ms);
+    return (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+}
+
+// Through Yui's Eyes (Yui's Heart): the request asking Yui to sum up what she knows of the user from
+// all her memories.
+function portraitPrompt(title, entries) {
+    var core = coreMemories(entries).map(function(entry) {
+        return "- " + entry.text;
+    });
+    var fragments = (entries || []).filter(function(entry) {
+        return entry.kind !== "core";
+    }).map(function(entry) {
+        return "- " + entry.text;
+    });
+    return "（系统提示：请结衣根据结衣之心里的全部记忆，写一段「结衣眼中的" + title + "」。）\n心核：\n" + (core.join("\n") || "（无）") + "\n记忆碎片：\n" + (fragments.join("\n") || "（无）") + "\n\n（要求：以结衣的口吻对" + title + "说，两到四段，不用 Markdown 和列表。说说" + title + "是个怎样的人、喜欢什么、最近在忙什么、结衣最在意的地方；只根据记忆，不要编造，记忆少的话就坦白说还想更了解" + title + "。不要加任何标签。）";
+}
+
 // Text to show while a reply is still streaming: complete tags are removed and a tag that has
 // started but not finished yet ("<<emot") is hidden until it is complete.
 function displayText(partial) {
@@ -1331,6 +1429,9 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.alarm !== false)
         lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 
+    if (allowed.suggest)
+        lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字）。不需要时就不加。");
+
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
@@ -1530,7 +1631,7 @@ function tuningFields(format, providerId, t) {
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
-    return "\n\n（提醒：回复最后加上表情标签" + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+    return "\n\n（提醒：回复最后加上表情标签" + (allowed.suggest ? "，可以接着聊时加上快捷回复标签" : "") + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
 }
 
 // Memory fragments recalled for this request (placed after the parts that stay the same).
