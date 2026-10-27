@@ -28,7 +28,6 @@ Button {
 
     Layout.alignment: Qt.AlignHCenter
     Layout.topMargin: 8
-    flat: true
     text: qsTr("Reset This Tab")
     enabled: changed
     onClicked: yui.confirmReset(windowTitle + " · " + tabTitle, function() {

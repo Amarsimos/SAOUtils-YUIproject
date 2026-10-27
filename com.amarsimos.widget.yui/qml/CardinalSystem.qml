@@ -432,13 +432,15 @@ NVG.Window {
                                 }
                             }
 
-                            Label {
-                                id: modelStatus
+                        }
 
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                            }
+                        // What Scan Cores found (or why it failed), under the buttons.
+                        Label {
+                            id: modelStatus
 
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: targetWidget.settingsAdvanced && text !== ""
+                            elide: Text.ElideRight
                         }
 
                         SettingNote {
