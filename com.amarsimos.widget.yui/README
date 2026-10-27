@@ -54,6 +54,7 @@ Fewer action categories: Yui (Open Chat, Spontaneous Talk, Record Mood..., Write
 The small tools (Skill Slots: Boss Raid, Alarm, Quest Log, Sword Skills, with their actions, data, tags and the Raid Banner) are set aside until they become extensions of their own; their data is kept.
 Every button of the settings windows is centered (Reset This Tab too); rows of buttons wrap within the page when narrow (CenteredFlow).
 **Character Traits** (Cardinal System, Personality): Warmth, Energy, Kaomoji, Reply Length (less / default / more) and Format (chat / lists), added to the personality; **Quick Replies**: two or three short replies under Yui's latest message, sent with a click (<<suggest:>>); **Log Recall** (Yui's Heart, Recall): related older chat messages from the recollection log read with each request (found locally); **Through Yui's Eyes** (Yui's Heart, Memories): Yui sums up what her memories say of you.
+Yui's Heart, Memories reworked: Through Yui's Eyes as a card folded to three lines, Heart Core / Fragments tabs with counts and the search, each memory a card (orange stripe for the core, grey for fragments, when noted and how often recalled) whose edit / pin / move / delete buttons appear on hover, multi-line editing, and adding at the bottom.
 
 ### Changed
 
