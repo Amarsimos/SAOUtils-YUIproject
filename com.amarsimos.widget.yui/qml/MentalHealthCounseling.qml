@@ -398,8 +398,7 @@ NVG.Window {
                     }
 
                     RowLayout {
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
 
                         Button {
                             text: counselingWindow.targetWidget.writingReport ? qsTr("Writing...") : qsTr("Write This Week's Report")

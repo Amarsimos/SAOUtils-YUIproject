@@ -184,14 +184,14 @@ NVG.Window {
                     }
 
                     Button {
-                        Layout.leftMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
                         visible: skillsWindow.targetWidget.raidActive || skillsWindow.targetWidget.resting
                         text: qsTr("Show Raid Banner")
                         onClicked: skillsWindow.targetWidget.showRaidBanner()
                     }
 
                     Button {
-                        Layout.leftMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
                         text: skillsWindow.targetWidget.raidActive || skillsWindow.targetWidget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
                         onClicked: {
                             var yui = skillsWindow.targetWidget;
@@ -558,8 +558,7 @@ NVG.Window {
                     }
 
                     RowLayout {
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
 
                         Repeater {
                             model: 5

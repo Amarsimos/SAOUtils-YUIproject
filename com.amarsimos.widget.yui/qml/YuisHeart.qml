@@ -200,13 +200,7 @@ NVG.Window {
                         text: qsTr("Include the chat history (private conversations)")
                     }
 
-                    // Inset (16 px each side) so the slanted buttons stay inside the page.
-                    Flow {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
-                        spacing: 8
-
+                    CenteredFlow {
                         Button {
                             text: qsTr("Export")
                             onClicked: heartWindow.targetWidget.exportHeart(withMessages.checked, function(path) {
@@ -274,15 +268,12 @@ NVG.Window {
                         text: qsTr("Recollection Log")
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                    Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("%1 messages").arg(heartWindow.logSize)
+                    }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("%1 messages").arg(heartWindow.logSize)
-                        }
+                    CenteredFlow {
 
                         Button {
                             text: qsTr("Clear Log")
@@ -292,6 +283,14 @@ NVG.Window {
                                 heartWindow.refreshLogSize();
                                 heartWindow.searchLog();
                             }, true)
+                        }
+
+                        Button {
+                            text: qsTr("Export Log")
+                            enabled: heartWindow.logSize > 0
+                            onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
+                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
+                            })
                         }
 
                     }
@@ -315,14 +314,6 @@ NVG.Window {
                             selectByMouse: true
                             placeholderText: qsTr("Search the log")
                             onTextChanged: logSearchTimer.restart()
-                        }
-
-                        Button {
-                            text: qsTr("Export Log")
-                            enabled: heartWindow.logSize > 0
-                            onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
-                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
-                            })
                         }
 
                         Timer {
@@ -360,7 +351,7 @@ NVG.Window {
                     }
 
                     Button {
-                        Layout.leftMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
                         text: qsTr("Forget Everything")
                         enabled: heartWindow.targetWidget.heartCache.length > 0
                         onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete all %1 memories of Yui's Heart?").arg(heartWindow.targetWidget.heartCache.length), function() {

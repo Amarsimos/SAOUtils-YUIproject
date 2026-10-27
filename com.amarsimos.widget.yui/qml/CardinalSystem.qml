@@ -411,13 +411,10 @@ NVG.Window {
                             text: qsTr("The AI model that runs Yui.")
                         }
 
-                        // Inset as the settings (16 px each side), so the slanted buttons stay inside the page.
                         RowLayout {
                             visible: targetWidget.settingsAdvanced
                             spacing: 12
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
+                            Layout.alignment: Qt.AlignHCenter
 
                             Button {
                                 text: qsTr("Scan Cores")

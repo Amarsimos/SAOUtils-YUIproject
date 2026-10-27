@@ -505,13 +505,7 @@ NVG.Window {
                         text: qsTr("Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.")
                     }
 
-                    // Inset (16 px each side) so the slanted buttons stay inside the page.
-                    Flow {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
-                        spacing: 8
-
+                    CenteredFlow {
                         Repeater {
                             model: [{
                                 "label": qsTr("Launch Notepad"),
@@ -548,15 +542,13 @@ NVG.Window {
                     }
 
                     // Live log of the desktop actions: confirmations, commands and their results.
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                    // The live log, under its own heading (it was a label beside the buttons).
+                    Heading {
+                        level: 2
+                        text: qsTr("Log")
+                    }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Log")
-                        }
+                    CenteredFlow {
 
                         // The full requests to the AI and its raw replies (tags included) in the log.
                         CheckBox {
