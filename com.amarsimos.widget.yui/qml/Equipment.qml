@@ -569,7 +569,7 @@ NVG.Window {
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("When SAO Utils starts, Yui appears with a short \"Link Start!\" ceremony.")
+                            text: qsTr("When SAO Utils starts, Yui appears from her heart crystal.")
                         }
                     }
 

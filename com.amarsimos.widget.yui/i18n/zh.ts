@@ -633,8 +633,8 @@
     </message>
     <message>
         <location filename="../qml/Equipment.qml" line="572"/>
-        <source>When SAO Utils starts, Yui appears with a short &quot;Link Start!&quot; ceremony.</source>
-        <translation>SAO Utils 启动时，结衣会伴随一段简短的「Link Start!」开场登场。</translation>
+        <source>When SAO Utils starts, Yui appears from her heart crystal.</source>
+        <translation>SAO Utils 启动时，结衣从她的心之结晶中现身。</translation>
     </message>
     <message>
         <location filename="../qml/Equipment.qml" line="493"/>

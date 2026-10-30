@@ -4169,50 +4169,68 @@ T.Widget {
 
     }
 
-    // "Link Start!" when the widget starts (Equipment): rainbow rings spreading from Yui, as in the
-    // dive into the virtual world, and the words over them; then it fades away.
+    // "Link Start!" when the widget starts (Equipment): Yui's Heart, the crystal her core was saved in,
+    // glows into view, bursts into motes of light, and Yui appears in the flash.
     Item {
         id: linkStartEffect
 
         property real progress: 0
+        // The crystal's height: a third of the widget's shorter side.
+        readonly property real crystalSize: Math.min(width, height) / 3
 
         anchors.fill: parent
         z: 200
         visible: linkStartAnimation.running
-        opacity: 1
 
+        // The crystal: in (0 - 0.3), glowing and pulsing (0.3 - 0.55), gone in the burst (0.55 - 0.62).
+        YuiCrystal {
+            readonly property real grown: Math.min(1, linkStartEffect.progress / 0.3)
+
+            anchors.centerIn: parent
+            width: linkStartEffect.crystalSize * 0.67
+            height: linkStartEffect.crystalSize
+            statusColor: "#B3E5FC"
+            opacity: grown * Math.max(0, Math.min(1, (0.62 - linkStartEffect.progress) / 0.07))
+            scale: 0.6 + 0.4 * grown + (linkStartEffect.progress > 0.3 ? 0.06 * Math.sin(linkStartEffect.progress * 40) : 0)
+        }
+
+        // The burst: motes of light flying out from the crystal and fading (0.55 - 1).
         Repeater {
-            model: ["#FF5252", "#FFB74D", "#FFF176", "#69F0AE", "#40C4FF", "#B388FF"]
+            model: 28
 
             Rectangle {
-                readonly property real spread: Math.max(0, Math.min(1, linkStartEffect.progress * 1.6 - index * 0.12))
+                readonly property real burst: Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45))
+                // Each mote its own direction and reach, the same every time.
+                readonly property real angle: index * 2.399963
+                readonly property real reach: Math.min(linkStartEffect.width, linkStartEffect.height) * (0.25 + 0.25 * ((index * 7) % 11) / 10)
+                readonly property real travel: 1 - Math.pow(1 - burst, 3)
 
-                anchors.centerIn: parent
-                // At most the widget's shorter side, so the whole ring stays inside it.
-                width: Math.max(0, Math.min(linkStartEffect.width, linkStartEffect.height) - border.width * 2) * spread
+                visible: burst > 0
+                width: 3 + (index % 4) * 1.5
                 height: width
-                radius: width / 2
-                color: "transparent"
-                border.color: modelData
-                border.width: 3
-                opacity: (1 - spread) * 0.9
+                rotation: 45
+                x: linkStartEffect.width / 2 - width / 2 + Math.cos(angle) * reach * travel
+                y: linkStartEffect.height / 2 - height / 2 + Math.sin(angle) * reach * travel
+                color: index % 3 === 0 ? "#FFFFFF" : (index % 3 === 1 ? "#B3E5FC" : "#FFF59D")
+                opacity: (1 - burst) * 0.95
             }
 
         }
 
-        Text {
+        // The flash Yui appears in.
+        Rectangle {
+            readonly property real flash: linkStartEffect.progress < 0.55 ? 0 : Math.max(0, 1 - (linkStartEffect.progress - 0.55) / 0.3)
+
             anchors.centerIn: parent
-            width: parent.width * 0.9
-            horizontalAlignment: Text.AlignHCenter
-            fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: 8
-            font.family: "SAO UI"
-            font.pixelSize: 28
-            color: "white"
-            style: Text.Outline
-            styleColor: "#66000000"
-            text: "Link Start!"
-            opacity: Math.min(1, linkStartEffect.progress * 3) * Math.min(1, (1 - linkStartEffect.progress) * 4)
+            width: Math.min(parent.width, parent.height) * (0.3 + 0.7 * (1 - flash))
+            height: width
+            radius: width / 2
+            color: "#FFFFFF"
+            opacity: flash * 0.8
+            layer.enabled: true
+            layer.effect: FastBlur {
+                radius: 48
+            }
         }
 
         NumberAnimation {
@@ -4222,8 +4240,7 @@ T.Widget {
             property: "progress"
             from: 0
             to: 1
-            duration: 2200
-            easing.type: Easing.OutSine
+            duration: 2800
         }
 
     }
