@@ -232,8 +232,10 @@ T.Widget {
     // shrinks and fades out as the view opens, and comes back only once the view has gone.
     property real collapsedReveal: 1
     readonly property bool collapsedShown: !showChat || collapsedReveal > 0
-    // The collapsed form during Link Start: hidden until the crystal bursts, then fading in with the flash.
-    readonly property real linkStartReveal: linkStartAnimation.running ? Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.25)) : 1
+    // The collapsed form during Link Start: hidden until the crystal bursts, then fading in and growing
+    // from small with the flash (linkStartGrow is her scale).
+    readonly property real linkStartReveal: linkStartAnimation.running ? Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45)) : 1
+    readonly property real linkStartGrow: 0.2 + 0.8 * (1 - Math.pow(1 - linkStartReveal, 3))
     property var yuiView: null
 
     TextMetrics {
@@ -4111,7 +4113,7 @@ T.Widget {
 
         configuration: widget.styles.pixie_image_path
         visible: widget.collapsedShown && widget.collapsedForm === "pixie"
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
         anchors.fill: parent
         anchors.topMargin: 6
         anchors.bottomMargin: 6
@@ -4160,7 +4162,7 @@ T.Widget {
         visible: widget.collapsedShown && widget.collapsedForm === "crystal"
         anchors.fill: parent
         opacity: widget.collapsedReveal * widget.linkStartReveal
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
 
@@ -5355,7 +5357,7 @@ T.Widget {
         configuration: characterImage.configuration
         visible: widget.collapsedShown && widget.collapsedForm === "avatar"
         opacity: characterImage.opacity * widget.collapsedReveal * widget.linkStartReveal
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
 
