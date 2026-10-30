@@ -1819,6 +1819,12 @@ T.Widget {
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
+    // System Console: the Link Start effect again, whatever its setting.
+    function testLinkStart() {
+        diag("test link start");
+        linkStartAnimation.restart();
+    }
+
     function testAction(tag) {
         diag("test " + tag);
         var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected, replyOptions());

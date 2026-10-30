@@ -528,13 +528,17 @@ NVG.Window {
                             }, {
                                 "label": qsTr("Test Streaming"),
                                 "tag": "stream"
+                            }, {
+                                "label": qsTr("Test Link Start"),
+                                "tag": "linkstart"
                             }]
 
                             // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
-                            // made-up streamed reply in the chat (neither makes an API request).
+                            // made-up streamed reply in the chat (neither makes an API request),
+                            // "Test Link Start" plays the startup effect.
                             Button {
                                 text: modelData.label
-                                onClicked: modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                             }
 
                         }
