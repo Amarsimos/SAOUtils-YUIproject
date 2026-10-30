@@ -12,6 +12,9 @@ ScrollView {
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     contentWidth: availableWidth
+    // Bound to the column, so the page scrolls to its end at any window height (left to itself the
+    // ScrollView kept a height from before the wrapped items were laid out).
+    contentHeight: column.implicitHeight
 
     ColumnLayout {
         id: column

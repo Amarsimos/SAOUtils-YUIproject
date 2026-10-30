@@ -76,6 +76,7 @@ NVG.Window {
                 currentIndex: tabs.shownIndex
 
                 // ---------------------------------------------------------------- Companion
+                // Under headings: Greeting, Presence (talking up and standby), Weather.
                 SettingsPage {
                     P.ObjectPreferenceGroup {
                         id: companionGroup
@@ -83,6 +84,10 @@ NVG.Window {
                         Layout.fillWidth: true
                         defaultValue: counselingWindow.targetWidget.settings
                         syncProperties: true
+
+                        Heading {
+                            text: qsTr("Greeting")
+                        }
 
                         P.SwitchPreference {
                             id: greetPreference
@@ -96,6 +101,10 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.")
+                        }
+
+                        Heading {
+                            text: qsTr("Presence")
                         }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
@@ -135,6 +144,10 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
+                        }
+
+                        Heading {
+                            text: qsTr("Weather")
                         }
 
                         P.SwitchPreference {
@@ -297,7 +310,6 @@ NVG.Window {
                 // No settings: what Yui recorded (moods) and wrote (weekly reports).
                 SettingsPage {
                     Heading {
-                        level: 2
                         text: qsTr("Mental Record")
                     }
 
@@ -412,7 +424,6 @@ NVG.Window {
                     }
 
                     Heading {
-                        level: 2
                         text: qsTr("Weekly Report")
                     }
 

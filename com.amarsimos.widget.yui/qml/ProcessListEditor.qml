@@ -34,6 +34,9 @@ ColumnLayout {
 
     Flow {
         Layout.fillWidth: true
+        // The height of the chips as wrapped at the layout's width (the implicit height did not count
+        // the wrapped rows, so the page could not be scrolled to its end).
+        Layout.preferredHeight: childrenRect.height
         spacing: 6
 
         Repeater {

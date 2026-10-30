@@ -94,6 +94,10 @@ NVG.Window {
             StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // A StackLayout is at least as tall as its tallest page needs: the Log page's fixed part
+                // (test calls, notes, buttons) kept it taller than a low window, so the other pages ran
+                // past the window's bottom and could not be scrolled to their end.
+                Layout.minimumHeight: 0
                 currentIndex: tabs.shownIndex
 
                 // ---------------------------------------------------------------- Monitor
