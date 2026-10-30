@@ -39,7 +39,7 @@ NVG.Window {
     minimumWidth: 420
     minimumHeight: 420
     width: 520
-    height: 720
+    height: 1008
     transientParent: widget.NVG.View.window
     onClosing: destroy()
 
@@ -77,6 +77,7 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Recall
+                // Under headings: Memory, Context (sent with each request), Chat History.
                 SettingsPage {
                     P.ObjectPreferenceGroup {
                         id: recallGroup
@@ -84,6 +85,10 @@ NVG.Window {
                         Layout.fillWidth: true
                         defaultValue: heartWindow.targetWidget.settings
                         syncProperties: true
+
+                        Heading {
+                            text: qsTr("Memory")
+                        }
 
                         P.SwitchPreference {
                             id: autoMemoryPreference
@@ -115,6 +120,10 @@ NVG.Window {
                             visible: heartWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The heart core is sent with every request. When it is full, the memory used longest ago (unless pinned) becomes a fragment.")
+                        }
+
+                        Heading {
+                            text: qsTr("Context")
                         }
 
                         P.SpinPreference {
@@ -174,6 +183,10 @@ NVG.Window {
                             text: qsTr("How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
                         }
 
+                        Heading {
+                            text: qsTr("Chat History")
+                        }
+
                         P.SpinPreference {
                             id: savedChat
 
@@ -206,7 +219,12 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Local Memory
+                // Under headings: Transfer, Backup, Recollection Log, Forget Everything.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Transfer")
+                    }
+
                     SettingNote {
                         visible: heartWindow.targetWidget.settingsHelp
                         besidePreferences: true
@@ -250,6 +268,13 @@ NVG.Window {
                             }
                         }
 
+                    }
+
+                    Heading {
+                        text: qsTr("Backup")
+                    }
+
+                    CenteredFlow {
                         Button {
                             text: qsTr("Open Backup Folder")
                             onClicked: heartWindow.targetWidget.openHeartFolder()

@@ -110,7 +110,7 @@ ColumnLayout {
                     Label {
                         Layout.fillWidth: true
                         text: "“ " + qsTr("Through Yui's Eyes")
-                        font.pixelSize: 13
+                        font.pixelSize: 15
                         font.bold: true
                     }
 
@@ -137,7 +137,9 @@ ColumnLayout {
                     wrapMode: Text.Wrap
                     color: portraitCard.palette.windowText
                     selectionColor: page.orange
-                    font.pixelSize: 12
+                    // A plain TextEdit does not take the controls' font (it fell back to the system one): the card's.
+                    font.family: portraitCard.font.family
+                    font.pixelSize: 14
                     text: page.portrait ? page.portrait.text : ""
                 }
 
@@ -146,7 +148,7 @@ ColumnLayout {
                     visible: !(page.portrait && page.portrait.text)
                     wrapMode: Text.Wrap
                     opacity: 0.7
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     text: page.yui.heartCache.length > 0 ? qsTr("Ask Yui what she makes of you from her memories.") : qsTr("No memories yet: chat with Yui a little first.")
                 }
 
@@ -157,7 +159,7 @@ ColumnLayout {
                     Label {
                         visible: !!page.portrait
                         opacity: 0.6
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         text: page.portrait ? Qt.formatDateTime(new Date(page.portrait.created), "yyyy-MM-dd HH:mm") : ""
                     }
 
