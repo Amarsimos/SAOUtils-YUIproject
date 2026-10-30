@@ -6,9 +6,9 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// "System Console" window (after the GM console Yui uses in Aincrad), in three tabs: the Cardinal
-// System Monitor (loads and the crystal's thresholds), Object Control Authority (what Yui may do on the
-// desktop) and the System Log. Test Call runs each desktop action without the AI, through the same
+// "System Console" window (after the GM console Yui uses in Aincrad), in three tabs: Monitor (loads and
+// the crystal's thresholds, Navigation Reports, Col Ledger), Authority (what Yui may do on the desktop,
+// where pages and searches open, the process lists) and Log. Test Call runs each desktop action without the AI, through the same
 // message, SAO confirmation box and execution as a real one. The settings are SAO Utils' own
 // preferences; the plain ones are synced with the widget's settings (ObjectPreferenceGroup).
 NVG.Window {
@@ -103,7 +103,7 @@ NVG.Window {
                 // ---------------------------------------------------------------- Monitor
                 SettingsPage {
                     Heading {
-                        text: qsTr("Cardinal System Monitor")
+                        text: qsTr("Load")
                     }
 
                     LoadBars {
@@ -122,84 +122,96 @@ NVG.Window {
                     P.PreferenceGroup {
                         Layout.fillWidth: true
 
-                        Repeater {
-                            id: thresholdRows
+                        // The six thresholds in a dialog of their own (they are set once and take room);
+                        // the row tells how many of the loads differ from the default.
+                        P.DialogPreference {
+                            label: qsTr("Crystal Thresholds")
+                            live: true
+                            displayValue: consoleWindow.changedThresholds ? qsTr("%1 changed").arg(consoleWindow.changedThresholds) : qsTr("All default")
 
-                            model: [{
-                                "metric": "cpu",
-                                "label": qsTr("Computing Load (CPU)")
-                            }, {
-                                "metric": "gpu",
-                                "label": qsTr("Visual Engine (GPU)")
-                            }, {
-                                "metric": "ram",
-                                "label": qsTr("Memory Capacity (RAM)")
-                            }]
+                            Repeater {
+                                id: thresholdRows
 
-                            P.PreferenceGroup {
-                                id: thresholdGroup
+                                model: [{
+                                    "metric": "cpu",
+                                    "label": qsTr("Computing Load (CPU)")
+                                }, {
+                                    "metric": "gpu",
+                                    "label": qsTr("Visual Engine (GPU)")
+                                }, {
+                                    "metric": "ram",
+                                    "label": qsTr("Memory Capacity (RAM)")
+                                }]
 
-                                readonly property var defaults: Yui.loadThresholds({}, modelData.metric)
-                                readonly property bool changed: Yui.anyChanged([yellowPreference, redPreference])
-                                // Off while values are put in (not changes by the user).
-                                property bool ready: false
+                                P.PreferenceGroup {
+                                    id: thresholdGroup
 
-                                function save() {
-                                    if (!ready)
-                                        return ;
+                                    readonly property var defaults: Yui.loadThresholds({}, modelData.metric)
+                                    readonly property bool changed: Yui.anyChanged([yellowPreference, redPreference])
+                                    // Off while values are put in (not changes by the user).
+                                    property bool ready: false
 
-                                    if (redPreference.value <= yellowPreference.value)
-                                        redPreference.value = Math.min(100, yellowPreference.value + 1);
+                                    function save() {
+                                        if (!ready)
+                                            return ;
 
-                                    var all = JSON.parse(JSON.stringify(consoleWindow.targetWidget.settings.load_thresholds || {}));
-                                    all[modelData.metric] = [yellowPreference.value, redPreference.value];
-                                    consoleWindow.targetWidget.settings.load_thresholds = all;
-                                }
+                                        if (redPreference.value <= yellowPreference.value)
+                                            redPreference.value = Math.min(100, yellowPreference.value + 1);
 
-                                // Back to the defaults (their saved pair was cleared by the caller).
-                                function reset() {
-                                    ready = false;
-                                    yellowPreference.load();
-                                    redPreference.load();
-                                    ready = true;
-                                }
+                                        var all = JSON.parse(JSON.stringify(consoleWindow.targetWidget.settings.load_thresholds || {}));
+                                        all[modelData.metric] = [yellowPreference.value, redPreference.value];
+                                        consoleWindow.targetWidget.settings.load_thresholds = all;
+                                    }
 
-                                onChangedChanged: consoleWindow.recount()
-                                Component.onCompleted: {
-                                    var pair = Yui.loadThresholds(consoleWindow.targetWidget.settings.load_thresholds, modelData.metric);
-                                    yellowPreference.value = pair[0];
-                                    redPreference.value = pair[1];
-                                    ready = true;
-                                }
+                                    // Back to the defaults (their saved pair was cleared by the caller).
+                                    function reset() {
+                                        ready = false;
+                                        yellowPreference.load();
+                                        redPreference.load();
+                                        ready = true;
+                                    }
 
-                                P.SpinPreference {
-                                    id: yellowPreference
+                                    onChangedChanged: consoleWindow.recount()
+                                    Component.onCompleted: {
+                                        var pair = Yui.loadThresholds(consoleWindow.targetWidget.settings.load_thresholds, modelData.metric);
+                                        yellowPreference.value = pair[0];
+                                        redPreference.value = pair[1];
+                                        ready = true;
+                                    }
 
-                                    label: modelData.label + " · " + qsTr("Yellow")
-                                    display: P.TextFieldPreference.ExpandLabel
-                                    editable: true
-                                    from: 1
-                                    to: 99
-                                    defaultValue: thresholdGroup.defaults[0]
-                                    onValueChanged: thresholdGroup.save()
-                                }
+                                    P.SpinPreference {
+                                        id: yellowPreference
 
-                                P.SpinPreference {
-                                    id: redPreference
+                                        label: modelData.label + " · " + qsTr("Yellow")
+                                        display: P.TextFieldPreference.ExpandLabel
+                                        editable: true
+                                        from: 1
+                                        to: 99
+                                        defaultValue: thresholdGroup.defaults[0]
+                                        onValueChanged: thresholdGroup.save()
+                                    }
 
-                                    label: modelData.label + " · " + qsTr("Red")
-                                    display: P.TextFieldPreference.ExpandLabel
-                                    editable: true
-                                    from: 2
-                                    to: 100
-                                    defaultValue: thresholdGroup.defaults[1]
-                                    onValueChanged: thresholdGroup.save()
+                                    P.SpinPreference {
+                                        id: redPreference
+
+                                        label: modelData.label + " · " + qsTr("Red")
+                                        display: P.TextFieldPreference.ExpandLabel
+                                        editable: true
+                                        from: 2
+                                        to: 100
+                                        defaultValue: thresholdGroup.defaults[1]
+                                        onValueChanged: thresholdGroup.save()
+                                    }
+
                                 }
 
                             }
-
                         }
 
+                    }
+
+                    Heading {
+                        text: qsTr("Navigation Reports")
                     }
 
                     P.ObjectPreferenceGroup {
@@ -277,7 +289,6 @@ NVG.Window {
 
                     // Col Ledger: the tokens of this month's replies, as the servers report them.
                     Heading {
-                        level: 2
                         text: qsTr("Col Ledger")
                     }
 
@@ -339,7 +350,7 @@ NVG.Window {
                 // ---------------------------------------------------------------- Authority
                 SettingsPage {
                     Heading {
-                        text: qsTr("Object Control Authority")
+                        text: qsTr("Actions")
                     }
 
                     // What Yui may do on the desktop (written out, not by a Repeater: the group loads
@@ -389,6 +400,11 @@ NVG.Window {
                         visible: consoleWindow.targetWidget.settingsHelp
                         besidePreferences: true
                         text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
+                    }
+
+                    Heading {
+                        visible: webSwitch.value
+                        text: qsTr("Browsing")
                     }
 
                     // Where Open Web Pages and Search opens them (moved from Cardinal System): synced by
@@ -473,6 +489,10 @@ NVG.Window {
 
                     }
 
+                    Heading {
+                        text: qsTr("File Search")
+                    }
+
                     // es.exe: synced by hand, as surrounding quotes from "Copy as path" are dropped and
                     // Yui fills it in herself once she finds es.exe (settingsRevision).
                     P.PreferenceGroup {
@@ -516,7 +536,6 @@ NVG.Window {
                     }
 
                     Heading {
-                        level: 2
                         text: qsTr("Delete Authority")
                     }
 
@@ -544,7 +563,6 @@ NVG.Window {
                     }
 
                     Heading {
-                        level: 2
                         text: qsTr("Immortal Objects")
                     }
 
@@ -574,61 +592,69 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Log
-                // The test calls, then the log filling the rest of the window.
+                // The test calls (in a dialog), then the log filling the rest of the window.
                 ColumnLayout {
                     spacing: 10
 
                     Heading {
-                        text: qsTr("System Log")
-                    }
-
-                    Heading {
-                        level: 2
                         text: qsTr("Test Call")
                     }
 
-                    SettingNote {
-                        visible: consoleWindow.targetWidget.settingsHelp
-                        besidePreferences: true
-                        text: qsTr("Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.")
-                    }
+                    // The test calls in a dialog of their own, so the log keeps the window's height.
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
 
-                    CenteredFlow {
-                        Repeater {
-                            model: [{
-                                "label": qsTr("Launch Notepad"),
-                                "tag": "<<launch:notepad>>"
-                            }, {
-                                "label": qsTr("Close Notepad"),
-                                "tag": "<<kill:notepad.exe>>"
-                            }, {
-                                "label": qsTr("Find File"),
-                                "tag": "<<find:notepad.exe>>"
-                            }, {
-                                "label": qsTr("Open Link"),
-                                "tag": "<<open:https://www.bilibili.com>>"
-                            }, {
-                                "label": qsTr("Protected Process"),
-                                "tag": "<<kill:explorer.exe>>"
-                            }, {
-                                "label": qsTr("Test Bubble"),
-                                "tag": ""
-                            }, {
-                                "label": qsTr("Test Streaming"),
-                                "tag": "stream"
-                            }, {
-                                "label": qsTr("Test Link Start"),
-                                "tag": "linkstart"
-                            }]
+                        P.DialogPreference {
+                            label: qsTr("Run a Test")
+                            live: true
 
-                            // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
-                            // made-up streamed reply in the chat (neither makes an API request),
-                            // "Test Link Start" plays the startup effect.
-                            Button {
-                                text: modelData.label
-                                onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                            SettingNote {
+                                visible: consoleWindow.targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.")
                             }
 
+                            CenteredFlow {
+                                Repeater {
+                                    model: [{
+                                        "label": qsTr("Launch Notepad"),
+                                        "tag": "<<launch:notepad>>"
+                                    }, {
+                                        "label": qsTr("Close Notepad"),
+                                        "tag": "<<kill:notepad.exe>>"
+                                    }, {
+                                        "label": qsTr("Find File"),
+                                        "tag": "<<find:notepad.exe>>"
+                                    }, {
+                                        "label": qsTr("Open Link"),
+                                        "tag": "<<open:https://www.bilibili.com>>"
+                                    }, {
+                                        "label": qsTr("Protected Process"),
+                                        "tag": "<<kill:explorer.exe>>"
+                                    }, {
+                                        "label": qsTr("Test Bubble"),
+                                        "tag": ""
+                                    }, {
+                                        "label": qsTr("Test Streaming"),
+                                        "tag": "stream"
+                                    }, {
+                                        "label": qsTr("Test Link Start"),
+                                        "tag": "linkstart"
+                                    }]
+
+                                    // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
+                                    // made-up streamed reply in the chat (neither makes an API request),
+                                    // "Test Link Start" plays the startup effect.
+                                    Button {
+                                        text: modelData.label
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                    }
+
+                                }
+
+                            }
                         }
 
                     }
@@ -636,7 +662,6 @@ NVG.Window {
                     // Live log of the desktop actions: confirmations, commands and their results.
                     // The live log, under its own heading (it was a label beside the buttons).
                     Heading {
-                        level: 2
                         text: qsTr("Log")
                     }
 

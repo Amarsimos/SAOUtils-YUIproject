@@ -499,7 +499,7 @@ T.Widget {
         };
     }
 
-    // The desktop actions Yui may do (System Console, Object Control Authority; all by default).
+    // The desktop actions Yui may do (System Console, Authority; all by default).
     function allowedActions() {
         return {
             "web": widget.settings.action_web !== false,

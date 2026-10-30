@@ -291,7 +291,7 @@ NVG.Window {
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
-        // The older Thinking switch turned off is the depth "off".
+        // Off when never set (the older Thinking switch is not read any more).
         thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || "off"));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
