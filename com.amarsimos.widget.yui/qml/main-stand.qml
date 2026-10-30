@@ -87,11 +87,11 @@ T.Widget {
     // Longest reply asked for, in tokens (Cardinal System); 0 (the default) sends no limit, except to
     // Claude, which requires one.
     readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
-    // Cardinal System: Thinking Depth ("default" leaves it to the server; the older Thinking switch
-    // turned off means "off"), and Core Tuning's sampling values: temperature, top p and the penalties
+    // Cardinal System: Thinking Depth ("off" when never set; "default" leaves it to the server),
+    // and Core Tuning's sampling values: temperature, top p and the penalties
     // stored in tenths (-1 = the server's default, nothing is sent), top k and seed (0 = the
     // default). Sent as Yui.tuningFields makes them.
-    readonly property string thinkingDepth: widget.settings.thinking_depth || (widget.settings.thinking === false ? "off" : "default")
+    readonly property string thinkingDepth: widget.settings.thinking_depth || "off"
     readonly property real temperature: widget.settings.temperature >= 0 ? widget.settings.temperature / 10 : -1
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
     readonly property real frequencyPenalty: widget.settings.frequency_penalty >= 0 ? widget.settings.frequency_penalty / 10 : -1

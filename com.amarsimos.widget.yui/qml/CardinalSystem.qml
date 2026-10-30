@@ -4,6 +4,7 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 NVG.Window {
     id: coreSettings
@@ -104,6 +105,8 @@ NVG.Window {
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
     // connection (Link) is never reset.
+    // Core Tuning's sampling values, in the Sampling Parameters dialog.
+    readonly property var samplingPreferences: [temperaturePreference, topPPreference, topKPreference, seedPreference, penaltyPreference, frequencyPreference]
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference, warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference, quickRepliesPreference]
@@ -294,7 +297,7 @@ NVG.Window {
         sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
         // The older Thinking switch turned off is the depth "off".
-        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || (settings.thinking === false ? "off" : "default")));
+        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || "off"));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
         topPPreference.value = settings.top_p !== undefined ? settings.top_p : -1;
@@ -581,7 +584,12 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Core Tuning
+                // How the model answers, under headings: Reply, Sampling (its values in a dialog), Behavior.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Reply")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
@@ -592,7 +600,7 @@ NVG.Window {
                             readonly property var ids: ["off", "default", "low", "medium", "high"]
 
                             name: "thinking_depth"
-                            defaultValue: 1
+                            defaultValue: 0
                             label: qsTr("Thinking Depth")
                             model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
                         }
@@ -622,126 +630,176 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
                         }
+                    }
 
-                        P.SliderPreference {
-                            id: temperaturePreference
+                    Heading {
+                        text: qsTr("Sampling")
+                    }
 
-                            // Updates (and shows its value) while being dragged.
+                    // The sampling values in a dialog of their own (they are rarely changed and take room),
+                    // live as the rest of the window; the row tells how many differ from the default.
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.DialogPreference {
+                            label: qsTr("Sampling Parameters")
                             live: true
-                            name: "temperature"
-                            defaultValue: -1
-                            label: qsTr("Temperature")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            displayValue: {
+                                var changed = coreSettings.samplingPreferences.filter(Yui.preferenceChanged).length;
+                                return changed ? qsTr("%1 changed").arg(changed) : qsTr("All default");
+                            }
+
+                            Heading {
+                                text: qsTr("Randomness")
+                            }
+
+                            P.SliderPreference {
+                                id: temperaturePreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "temperature"
+                                defaultValue: -1
+                                label: qsTr("Temperature")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.")
+                            }
+
+                            P.SliderPreference {
+                                id: topPPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "top_p"
+                                defaultValue: -1
+                                label: qsTr("Top P")
+                                from: -1
+                                to: 10
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
+                            }
+
+                            // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                            P.SpinPreference {
+                                id: topKPreference
+
+                                name: "top_k"
+                                defaultValue: 0
+                                label: qsTr("Top K")
+                                display: P.TextFieldPreference.ExpandLabel
+                                editable: true
+                                from: 0
+                                to: 500
+                                stepSize: 1
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
+                            }
+
+                            // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                            P.SpinPreference {
+                                id: seedPreference
+
+                                name: "seed"
+                                defaultValue: 0
+                                label: qsTr("Seed")
+                                display: P.TextFieldPreference.ExpandLabel
+                                editable: true
+                                from: 0
+                                to: 999999999
+                                stepSize: 1
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
+                            }
+
+                            Heading {
+                                text: qsTr("Repetition")
+                            }
+
+                            P.SliderPreference {
+                                id: penaltyPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "presence_penalty"
+                                defaultValue: -1
+                                label: qsTr("Repetition Penalty")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                            }
+
+                            P.SliderPreference {
+                                id: frequencyPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "frequency_penalty"
+                                defaultValue: -1
+                                label: qsTr("Frequency Penalty")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
+                            }
                         }
 
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.")
-                        }
+                    }
 
-                        P.SliderPreference {
-                            id: penaltyPreference
+                    Heading {
+                        text: qsTr("Behavior")
+                    }
 
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "presence_penalty"
-                            defaultValue: -1
-                            label: qsTr("Repetition Penalty")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
-                        }
-
-                        P.SliderPreference {
-                            id: topPPreference
-
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "top_p"
-                            defaultValue: -1
-                            label: qsTr("Top P")
-                            from: -1
-                            to: 10
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: topKPreference
-
-                            name: "top_k"
-                            defaultValue: 0
-                            label: qsTr("Top K")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 500
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
-                        }
-
-                        P.SliderPreference {
-                            id: frequencyPreference
-
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "frequency_penalty"
-                            defaultValue: -1
-                            label: qsTr("Frequency Penalty")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: seedPreference
-
-                            name: "seed"
-                            defaultValue: 0
-                            label: qsTr("Seed")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 999999999
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
-                        }
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
                             id: actionModePreference
@@ -773,7 +831,6 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.")
                         }
-
                     }
 
                     ResetTabButton {
@@ -781,8 +838,15 @@ NVG.Window {
                         windowTitle: coreSettings.title
                         tabTitle: qsTr("Core Tuning")
                         preferences: coreSettings.coreTabPreferences
+                        // The values in the dialog count (and are reset) whether it is open or not.
+                        changed: Yui.anyChanged(shownPreferences.concat(coreSettings.samplingPreferences))
                         onAboutToReset: coreSettings.discardEdits = true
-                        onReset: coreSettings.discardEdits = false
+                        onReset: {
+                            coreSettings.samplingPreferences.forEach(function(preference) {
+                                preference.load();
+                            });
+                            coreSettings.discardEdits = false;
+                        }
                     }
 
                 }
