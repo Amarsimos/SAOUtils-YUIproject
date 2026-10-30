@@ -335,8 +335,7 @@ T.Widget {
         "bubble_opacity": 80,
         "chat_opacity": 80,
         "sound_messages": true,
-        "sound_interface": true,
-        "link_start": true
+        "sound_interface": true
     }
     // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
     // sounds of Yui's messages and of the chat panel opening and closing.
@@ -1863,7 +1862,7 @@ T.Widget {
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
-    // System Console: the Link Start effect again, whatever its setting.
+    // System Console: the Link Start effect again.
     function testLinkStart() {
         diag("test link start");
         linkStartAnimation.restart();
@@ -4014,10 +4013,9 @@ T.Widget {
         if (!widget.settings.meeting_day)
             widget.settings.meeting_day = Qt.formatDate(new Date(), "yyyy-MM-dd");
 
-        // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
+        // The Link Start effect, whenever SAO Utils starts the widget.
         // No sound: SAO Utils plays its own "Link Start!" when it starts.
-        if (styles.link_start !== false)
-            linkStartAnimation.start();
+        linkStartAnimation.start();
 
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
@@ -4223,7 +4221,7 @@ T.Widget {
 
     }
 
-    // "Link Start!" when the widget starts (Equipment): Yui's Heart, the crystal her core was saved in,
+    // "Link Start!" when the widget starts: Yui's Heart, the crystal her core was saved in,
     // glows into view, bursts into motes of light, and Yui appears in the flash.
     Item {
         id: linkStartEffect
