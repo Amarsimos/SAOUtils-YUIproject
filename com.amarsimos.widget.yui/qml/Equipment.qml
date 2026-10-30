@@ -169,8 +169,8 @@ NVG.Window {
 
     // The settings of each tab, for its Reset This Tab button.
     readonly property var avatarTabPreferences: [avatarPreference, fieldPreference, standbyImagePreference, happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
-    readonly property var formsTabPreferences: [formPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
-    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference, linkStartPreference]
+    readonly property var formsTabPreferences: [formPreference, linkStartPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
+    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
 
     // True while values are put into the preferences (not changes by the user).
     property bool loading: true
@@ -402,6 +402,20 @@ NVG.Window {
                             text: qsTr("What Yui turns into while the message window is hidden. The crystal glows green, yellow or red with the CPU, GPU and memory load; the pixie needs a Navigation Pixie Form image, otherwise the avatar is shown.")
                         }
 
+                        P.SwitchPreference {
+                            id: linkStartPreference
+
+                            name: "link_start"
+                            label: qsTr("Link Start")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When SAO Utils starts, Yui appears from her heart crystal.")
+                        }
+
                         P.SliderPreference {
                             id: crystalSizePreference
 
@@ -566,20 +580,6 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The sounds of the chat panel opening and closing.")
-                        }
-
-                        P.SwitchPreference {
-                            id: linkStartPreference
-
-                            name: "link_start"
-                            label: qsTr("Link Start")
-                            defaultValue: true
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("When SAO Utils starts, Yui appears from her heart crystal.")
                         }
                     }
 
