@@ -8,6 +8,7 @@ import QtQuick.Shapes 1.12
 import QtGraphicalEffects 1.0
 import QtQuick.LocalStorage 2.12
 import "yui.js" as Yui
+import "link" 1.0 as Link
 
 T.Widget {
     id: widget
@@ -21,6 +22,10 @@ T.Widget {
     property var yuisHeartDialogInstance: null
     property Component counselingDialog: Qt.createComponent("MentalHealthCounseling.qml")
     property var counselingDialogInstance: null
+    property Component quickInputDialog: Qt.createComponent("QuickInput.qml")
+    property var quickInputDialogInstance: null
+    property Component skillSlotsDialog: Qt.createComponent("SkillSlots.qml")
+    property var skillSlotsDialogInstance: null
     property Component seedlingDialog: Qt.createComponent("Seedling.qml")
     property var seedlingDialogInstance: null
     // Widgets popped out of the Seedling (SeedlingWidget.qml views), not saved.
@@ -28,7 +33,8 @@ T.Widget {
     property var cardinalSystemDialogInstance: null
     // Shared with CardinalSystem.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
-    // format: "openai" (Chat Completions), "gemini" (generateContent), "anthropic" (Messages)
+    // format: "openai" (Chat Completions), "gemini" (generateContent), "anthropic" (Messages);
+    // keyOptional: the server needs no access key.
     readonly property var providers: [{
         "id": "openai",
         "title": "OpenAI",
@@ -60,6 +66,14 @@ T.Widget {
         "endpoint": "https://api.anthropic.com/v1/messages",
         "models": ["claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
     }, {
+        // Local models: Ollama's OpenAI-compatible endpoint; it needs no access key (keyOptional).
+        "id": "ollama",
+        "title": "Ollama (local)",
+        "format": "openai",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "keyOptional": true,
+        "models": ["qwen3.5:9b", "qwen3:30b-a3b", "gemma4:e4b"]
+    }, {
         "id": "custom",
         "title": "Custom (OpenAI-compatible)",
         "format": "openai",
@@ -73,11 +87,11 @@ T.Widget {
     // Longest reply asked for, in tokens (Cardinal System); 0 (the default) sends no limit, except to
     // Claude, which requires one.
     readonly property int maxTokens: widget.settings.max_tokens !== undefined ? widget.settings.max_tokens : 0
-    // Cardinal System: Thinking Depth ("default" leaves it to the server; the older Thinking switch
-    // turned off means "off"), and Core Tuning's sampling values: temperature, top p and the penalties
+    // Cardinal System: Thinking Depth ("off" when never set; "default" leaves it to the server),
+    // and Core Tuning's sampling values: temperature, top p and the penalties
     // stored in tenths (-1 = the server's default, nothing is sent), top k and seed (0 = the
     // default). Sent as Yui.tuningFields makes them.
-    readonly property string thinkingDepth: widget.settings.thinking_depth || (widget.settings.thinking === false ? "off" : "default")
+    readonly property string thinkingDepth: widget.settings.thinking_depth || "off"
     readonly property real temperature: widget.settings.temperature >= 0 ? widget.settings.temperature / 10 : -1
     readonly property real presencePenalty: widget.settings.presence_penalty >= 0 ? widget.settings.presence_penalty / 10 : -1
     readonly property real frequencyPenalty: widget.settings.frequency_penalty >= 0 ? widget.settings.frequency_penalty / 10 : -1
@@ -114,6 +128,8 @@ T.Widget {
     // Seedling is set aside for now: not in Yui's menu, and its item is not shown in Yui at start.
     // Seedling widgets already saved to "My Widgets" still work and keep their own menu.
     readonly property bool seedlingEnabled: false
+    // The small tools (Skill Slots) are set aside for now (Yui.TOOLS_ENABLED).
+    readonly property bool toolsEnabled: Yui.TOOLS_ENABLED
     readonly property int maxSavedMessages: widget.settings.saved_messages > 0 ? widget.settings.saved_messages : 50
     readonly property bool autoMemory: widget.settings.auto_memory !== false
     readonly property int heartCoreCapacity: widget.settings.heart_core_capacity > 0 ? widget.settings.heart_core_capacity : Yui.MAX_CORE
@@ -143,7 +159,47 @@ T.Widget {
         if (widget.settings.initialized && !seedlingMode)
             Qt.callLater(applyCollapsedSize);
 
+        if (formChosen && !seedlingMode && previousForm && (previousForm === "crystal") !== (collapsedForm === "crystal")) {
+            morphFrom = previousForm;
+            formMorphAnimation.restart();
+        }
+        previousForm = collapsedForm;
     }
+    // Switching between the crystal and the character (in Equipment) plays its own transition: the old
+    // form shrinks into a point of light and the new one grows out of it (formMorph 0 … 1, see
+    // formSwitchEffect). Not while the widget starts (formChosen is set once it has).
+    property bool formChosen: false
+    property string previousForm: ""
+    property string morphFrom: ""
+    property real formMorph: 1
+    readonly property bool morphing: formMorphAnimation.running
+
+    // Whether a collapsed form is drawn (as the current form or the one leaving), and how much: its
+    // opacity and scale factors during the transition and Link Start.
+    function formVisible(form) {
+        return collapsedForm === form || (morphing && morphFrom === form);
+    }
+
+    function formPresence(form) {
+        if (!morphing)
+            return linkStartReveal;
+
+        if (form === collapsedForm)
+            return Math.max(0, Math.min(1, (formMorph - 0.5) / 0.35));
+
+        return Math.max(0, 1 - formMorph / 0.4);
+    }
+
+    function formScale(form) {
+        if (!morphing)
+            return linkStartGrow;
+
+        if (form === collapsedForm)
+            return 0.2 + 0.8 * (1 - Math.pow(1 - Math.max(0, Math.min(1, (formMorph - 0.5) / 0.5)), 3));
+
+        return 1 - 0.8 * Math.pow(Math.min(1, formMorph / 0.5), 2);
+    }
+
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
     // editable in System Console), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
@@ -154,7 +210,7 @@ T.Widget {
     readonly property int crystalLevel: Math.max(loadLevelOf("cpu"), loadLevelOf("gpu"), loadLevelOf("ram"))
     // During a Boss Raid the crystal has the raid's color instead of the load's.
     readonly property color crystalColor: raidActive ? raidColor : levelColors[crystalLevel]
-    // Boss Raid (focus time, Pixie Functions): the raid ends at raidEnd (kept in the settings, so it
+    // Boss Raid (focus time, Skill Slots): the raid ends at raidEnd (kept in the settings, so it
     // goes on after a restart), then a rest ends at restEnd. Meanwhile Yui says nothing by herself.
     readonly property color raidColor: "#B388FF"
     readonly property int raidMinutes: widget.settings.raid_minutes > 0 ? widget.settings.raid_minutes : 25
@@ -216,6 +272,10 @@ T.Widget {
     // shrinks and fades out as the view opens, and comes back only once the view has gone.
     property real collapsedReveal: 1
     readonly property bool collapsedShown: !showChat || collapsedReveal > 0
+    // The collapsed form during Link Start: hidden until the crystal bursts, then fading in and growing
+    // from small with the flash (linkStartGrow is her scale).
+    readonly property real linkStartReveal: linkStartAnimation.running ? Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45)) : 1
+    readonly property real linkStartGrow: 0.2 + 0.8 * (1 - Math.pow(1 - linkStartReveal, 3))
     property var yuiView: null
 
     TextMetrics {
@@ -275,8 +335,7 @@ T.Widget {
         "bubble_opacity": 80,
         "chat_opacity": 80,
         "sound_messages": true,
-        "sound_interface": true,
-        "link_start": true
+        "sound_interface": true
     }
     // Equipment: the crystal bubble's time on screen and opacity, the chat panel's opacity, and the
     // sounds of Yui's messages and of the chat panel opening and closing.
@@ -331,7 +390,8 @@ T.Widget {
         var customModel = (saved.custom_model || "").trim();
         return {
             "provider": provider,
-            "apiKey": (saved.api_key || "").trim(),
+            // A server without keys (Ollama) still gets one, so it counts as set up.
+            "apiKey": (saved.api_key || "").trim() || (provider.keyOptional ? "ollama" : ""),
             "endpoint": (saved.api_endpoint || "").trim() || provider.endpoint,
             "model": customModel || saved.model || provider.models[0] || ""
         };
@@ -439,19 +499,284 @@ T.Widget {
         };
     }
 
-    // The desktop actions Yui may do (System Console, Object Control Authority; all by default).
+    // The desktop actions Yui may do (System Console, Authority; all by default).
     function allowedActions() {
         return {
             "web": widget.settings.action_web !== false,
             "launch": widget.settings.action_launch !== false,
             "find": widget.settings.action_find !== false,
             "kill": widget.settings.action_kill === true,
-            "memory": autoMemory
+            "memory": autoMemory,
+            // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
+            // (none of them while the tools are set aside).
+            "focus": toolsEnabled,
+            "alarm": toolsEnabled && widget.settings.alarm_enabled !== false,
+            "notes": toolsEnabled && widget.settings.notes_enabled !== false,
+            // Quick Replies (Cardinal System, Personality).
+            "suggest": widget.settings.quick_replies !== false,
+            "skills": toolsEnabled ? swordSkills().map(function(skill) {
+                return skill.name;
+            }) : []
         };
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+    }
+
+    // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
+    function characterTraits() {
+        var level = function(key) {
+            var value = widget.settings[key];
+            return value === 0 || value === 2 ? value : 1;
+        };
+        return {
+            "warmth": level("trait_warmth"),
+            "energy": level("trait_energy"),
+            "kaomoji": level("trait_kaomoji"),
+            "length": level("trait_length"),
+            "format": widget.settings.trait_format === 1 ? 1 : 0
+        };
+    }
+
+    // Log Recall (Yui's Heart, Recall): older chat messages about the same thing, found in the
+    // recollection log (not the ones still in the conversation sent), at most settings.log_recall.
+    function logRecallExtras(title, query) {
+        var count = widget.settings.log_recall !== undefined ? widget.settings.log_recall : 3;
+        var keywords = Yui.memoryKeywords(query).slice(0, 8);
+        if (count <= 0 || keywords.length === 0 || !database)
+            return "";
+
+        var newest = (readSql("reading the log", "SELECT MAX(id) AS id FROM messages")[0] || {
+            "id": 0
+        }).id || 0;
+        var rows = readSql("reading the log", "SELECT author, message, created FROM messages WHERE id <= ? AND (" + keywords.map(function() {
+            return "message LIKE ?";
+        }).join(" OR ") + ") ORDER BY id DESC LIMIT 300", [newest - maxHistory].concat(keywords.map(function(k) {
+            return "%" + k + "%";
+        })));
+        var picked = Yui.logRecallPick(rows, query, count);
+        if (picked.length > 0)
+            diag("log recall: " + picked.length + " message(s)");
+
+        return Yui.logRecallContext(title, picked);
+    }
+
+    // Through Yui's Eyes (Yui's Heart): Yui sums up what her memories say of the user (one request,
+    // not in the chat), kept in settings.heart_portrait {text, created}. onDone(error text or "").
+    property bool writingPortrait: false
+
+    function writePortrait(onDone) {
+        if (writingPortrait)
+            return ;
+
+        writingPortrait = true;
+        diag("portrait: requested (" + heartCache.length + " memories)");
+        requestCompletion([{
+            "role": "user",
+            "content": Yui.portraitPrompt(userTitle(), heartCache)
+        }], function(text, isError) {
+            writingPortrait = false;
+            if (isError) {
+                onDone(text);
+                return ;
+            }
+            widget.settings.heart_portrait = {
+                "text": Yui.parseReply(text, [], {}).text,
+                "created": Date.now()
+            };
+            onDone("");
+        });
+    }
+
+    // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
+    function notesExtras(title, query) {
+        if (!toolsEnabled || widget.settings.notes_enabled === false || !Yui.notesWanted(query))
+            return "";
+
+        return Yui.notesContext(title, notesList(false));
+    }
+
+    // ---------------------------------------------------------------- Weather Report
+    // Mental Health Counseling: the weather from a SAO Utils data source (e.g. Weather Data's Weather
+    // Forecast and Current Temperature, with the place chosen there), "" when none is set or ready.
+    function weatherLine() {
+        if (widget.settings.weather_report === false || !weatherSource.configuration)
+            return "";
+
+        var text = weatherSource.value && weatherSource.value.status === 1 ? weatherText.result : "";
+        var temperature = temperatureSource.configuration && temperatureSource.value && temperatureSource.value.status === 1 ? temperatureText.result + (temperatureSource.suffix || temperatureText.unit || "") : "";
+        return [text, temperature].filter(function(part) {
+            return part;
+        }).join("，");
+    }
+
+    // Sent when the message is about the weather.
+    function weatherExtras(title, query) {
+        var line = Yui.weatherWanted(query) ? weatherLine() : "";
+        return line ? "\n\n（天气数据：现在 " + line + "。回答天气相关的问题时以此为准，不要编造。）" : "";
+    }
+
+    // ---------------------------------------------------------------- Sword Skills
+    // Skill Slots: up to five named SAO Utils actions (usually a Script Action chaining several), run
+    // when Yui says <<skill:name>> and the user confirms. Only slots with both a name and an action.
+    function swordSkills() {
+        var found = [];
+        for (var i = 1; i <= 5; i++) {
+            var name = String(widget.settings["sword_skill_" + i + "_name"] || "").trim();
+            if (name && widget.settings["sword_skill_" + i + "_action"])
+                found.push({
+                "slot": i,
+                "name": name
+            });
+
+        }
+        return found;
+    }
+
+    function runSwordSkill(slot) {
+        var source = swordSkillSources.objectAt(slot - 1);
+        if (!source || !source.configuration) {
+            diag("sword skill " + slot + ": no action");
+            return false;
+        }
+        diag("sword skill " + slot + ": " + source.title);
+        source.trigger();
+        return true;
+    }
+
+    // <<skill:>>: asks first, then runs it.
+    function askSwordSkill(name) {
+        var skills = swordSkills();
+        var index = Yui.swordSkillIndex(name, skills.map(function(skill) {
+            return skill.name;
+        }));
+        if (index === -1)
+            return "";
+
+        var skill = skills[index];
+        askConfirm(qsTr("Sword Skills"), qsTr("Run the sword skill \"%1\"?").arg(skill.name), function() {
+            runSwordSkill(skill.slot);
+        });
+        return skill.name;
+    }
+
+    // ---------------------------------------------------------------- Skill Slots: Alarm and Quest Log
+    // Bumped whenever a reminder or a note changes (the Skill Slots window lists them).
+    property int alarmRevision: 0
+    property int notesRevision: 0
+
+    // Runs a statement on the database; false when it failed (logged).
+    function writeSql(what, sql, args) {
+        if (!database)
+            return false;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql(sql, args || []);
+            });
+            return true;
+        } catch (e) {
+            diag(what + " failed: " + e);
+            return false;
+        }
+    }
+
+    function readSql(what, sql, args) {
+        var found = [];
+        if (!database)
+            return found;
+
+        try {
+            database.readTransaction(function(tx) {
+                var rows = tx.executeSql(sql, args || []).rows;
+                for (var i = 0; i < rows.length; i++)
+                    found.push(rows.item(i));
+            });
+        } catch (e) {
+            diag(what + " failed: " + e);
+        }
+        return found;
+    }
+
+    // Reminders by time: [{id, due, text, daily}].
+    function remindersList() {
+        return readSql("reading the reminders", "SELECT id, due, text, daily FROM reminders ORDER BY due");
+    }
+
+    function addReminder(reminder) {
+        if (writeSql("adding a reminder", "INSERT INTO reminders(due, text, daily, created) VALUES(?, ?, ?, ?)", [reminder.due, reminder.text, reminder.daily ? 1 : 0, Date.now()]))
+            alarmRevision++;
+
+    }
+
+    function deleteReminder(id) {
+        if (writeSql("deleting a reminder", "DELETE FROM reminders WHERE id = ?", [id]))
+            alarmRevision++;
+
+    }
+
+    // Rings the reminders that are due (missed ones while SAO Utils was closed too, once): Yui says
+    // them without the API; a daily one moves on to its next time, the others are removed.
+    function checkAlarms(now) {
+        var due = readSql("reading the reminders", "SELECT id, due, text, daily FROM reminders WHERE due <= ? ORDER BY due", [now]);
+        if (due.length === 0)
+            return ;
+
+        due.forEach(function(reminder) {
+            var late = now - reminder.due > 120000 ? "（刚才 " + Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm") + " 的提醒）" : "";
+            appendMessage("ai", "⏰ " + userTitle() + "，" + reminder.text + "！" + late + " 结衣提醒你啦～ (｡･ω･｡)", false, true);
+            announce(qsTr("Alarm"), "⏰ " + reminder.text);
+            if (reminder.daily)
+                writeSql("moving a daily reminder", "UPDATE reminders SET due = ? WHERE id = ?", [Yui.nextTimeOfDay(Qt.formatDateTime(new Date(reminder.due), "HH:mm"), now), reminder.id]);
+            else
+                writeSql("removing a reminder", "DELETE FROM reminders WHERE id = ?", [reminder.id]);
+        });
+        setEmotion("surprised");
+        diag("alarm: " + due.length + " reminder(s)");
+        alarmRevision++;
+    }
+
+    // Quest Log notes, open first (oldest first), then the done ones (latest first); open only when
+    // withDone is false.
+    function notesList(withDone) {
+        var open = readSql("reading the notes", "SELECT id, text, done, created FROM notes WHERE done = 0 ORDER BY id");
+        if (!withDone)
+            return open;
+
+        return open.concat(readSql("reading the notes", "SELECT id, text, done, created FROM notes WHERE done = 1 ORDER BY updated DESC"));
+    }
+
+    function addQuestNote(text) {
+        text = String(text || "").trim();
+        if (text && writeSql("adding a note", "INSERT INTO notes(text, done, created, updated) VALUES(?, 0, ?, ?)", [text, Date.now(), Date.now()]))
+            notesRevision++;
+
+    }
+
+    function editNote(id, text, done) {
+        if (writeSql("editing a note", "UPDATE notes SET text = ?, done = ?, updated = ? WHERE id = ?", [String(text).trim(), done ? 1 : 0, Date.now(), id]))
+            notesRevision++;
+
+    }
+
+    function deleteNote(id) {
+        if (writeSql("deleting a note", "DELETE FROM notes WHERE id = ?", [id]))
+            notesRevision++;
+
+    }
+
+    // <<done:>>: the open note that contains the text (or is contained in it); its text, or "".
+    function finishNote(text) {
+        var wanted = String(text).trim();
+        var found = notesList(false).filter(function(note) {
+            return note.text.indexOf(wanted) !== -1 || wanted.indexOf(note.text) !== -1;
+        })[0];
+        if (!found)
+            return "";
+
+        editNote(found.id, found.text, true);
+        return found.text;
     }
 
     // Bond (Mental Health Counseling): the player's birthday and the day of meeting, always known, celebrated once that day
@@ -1015,7 +1340,8 @@ T.Widget {
             "local": !!local,
             "note": "",
             "action": "",
-            "actionState": ""
+            "actionState": "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         if (!fromYui) {
@@ -1078,7 +1404,8 @@ T.Widget {
                 "local": !!item.local,
                 "note": "",
                 "action": "",
-                "actionState": ""
+                "actionState": "",
+                "suggestions": ""
             });
         }
         widget.historyStart = Math.min(saved.history_start || 0, chatModel.count);
@@ -1098,7 +1425,8 @@ T.Widget {
             "local": false,
             "note": "",
             "action": "",
-            "actionState": ""
+            "actionState": "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         widget.busy = true;
@@ -1130,6 +1458,27 @@ T.Widget {
                     recordMood(reply.mood);
                     note = (note ? note + "\n" : "") + "📝 心情记录：" + reply.mood.score + "/5" + (reply.mood.note ? " " + reply.mood.note : "");
                 }
+                reply.reminders.forEach(function(reminder) {
+                    addReminder(reminder);
+                    note = (note ? note + "\n" : "") + "⏰ 已设提醒：" + (reminder.daily ? "每天 " + Qt.formatDateTime(new Date(reminder.due), "HH:mm") : Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm")) + " " + reminder.text;
+                });
+                reply.notes.forEach(function(text) {
+                    addQuestNote(text);
+                    note = (note ? note + "\n" : "") + "📜 已记下：" + text;
+                });
+                if (reply.skill) {
+                    var skillName = askSwordSkill(reply.skill);
+                    note = (note ? note + "\n" : "") + (skillName ? "⚔ 剑技：" + skillName : "⚔ 没有叫「" + reply.skill + "」的剑技");
+                }
+                reply.dones.forEach(function(text) {
+                    var finished = finishNote(text);
+                    if (finished)
+                        note = (note ? note + "\n" : "") + "✅ 已完成：" + finished;
+
+                });
+                if (reply.suggestions.length > 0)
+                    chatModel.setProperty(index, "suggestions", JSON.stringify(reply.suggestions));
+
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1260,7 +1609,7 @@ T.Widget {
         var away = Yui.formatDuration(now - lastActive);
         var how = {
             "long": "已经 " + away + " 没见了。请以结衣的身份说一句「好久不见」，表达想念和开心，可以问问" + title + "这些天过得怎么样。",
-            "morning": "今天是第一次见面，现在是早上 " + Qt.formatTime(new Date(now), "HH:mm") + "。请以结衣的身份向" + title + "说早安，可以关心一下睡得好不好、今天的安排。",
+            "morning": "今天是第一次见面，现在是早上 " + Qt.formatTime(new Date(now), "HH:mm") + "。请以结衣的身份向" + title + "说早安，可以关心一下睡得好不好、今天的安排。" + (weatherLine() ? "今天的天气是：" + weatherLine() + "，顺带提一句，会下雨的话提醒带伞。" : ""),
             "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
         }[kind];
         diag("login greeting: " + kind);
@@ -1513,6 +1862,12 @@ T.Widget {
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
+    // System Console: the Link Start effect again.
+    function testLinkStart() {
+        diag("test link start");
+        linkStartAnimation.restart();
+    }
+
     function testAction(tag) {
         diag("test " + tag);
         var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected, replyOptions());
@@ -1525,7 +1880,8 @@ T.Widget {
             "local": true,
             "note": reply.disabled ? "🚫 已在 System Console 中关闭这类代行，没有执行" : reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
             "action": reply.action ? JSON.stringify(reply.action) : "",
-            "actionState": reply.action ? "pending" : ""
+            "actionState": reply.action ? "pending" : "",
+            "suggestions": ""
         });
         chatView.stickToBottom = true;
         if (reply.action)
@@ -1791,6 +2147,12 @@ T.Widget {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT, message TEXT, created INTEGER)");
             // Mental Record: one mood a day (day "yyyy-MM-dd", score 1–5).
             tx.executeSql("CREATE TABLE IF NOT EXISTS moods(day TEXT PRIMARY KEY, score INTEGER, note TEXT, created INTEGER)");
+            // Skill Slots: Alarm reminders (due in ms; daily ones move on a day when they ring) and
+            // Quest Log notes.
+            tx.executeSql("CREATE TABLE IF NOT EXISTS reminders(id INTEGER PRIMARY KEY AUTOINCREMENT, due REAL, text TEXT, daily INTEGER, created INTEGER)");
+            // Weekly Report (Mental Health Counseling): what Yui wrote, by the week's first day.
+            tx.executeSql("CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY AUTOINCREMENT, week TEXT, text TEXT, created INTEGER)");
+            tx.executeSql("CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, done INTEGER NOT NULL DEFAULT 0, created INTEGER, updated INTEGER)");
             });
             // Columns added with the heart core (1.1): every older memory was sent with every request,
             // so the oldest MAX_CORE become the core and the rest fragments.
@@ -2022,6 +2384,21 @@ T.Widget {
         });
     }
 
+    // Quest Log (Skill Slots): the notes as a text file next to the log exports ([ ] open, [x] done).
+    function exportNotes(onDone) {
+        var text = notesList(true).map(function(note) {
+            return (note.done ? "[x] " : "[ ] ") + note.text;
+        }).join("
+");
+        writeHeartFile("Quest-Log-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".txt", text, function(path) {
+            diag("notes export -> " + (path || "failed"));
+            if (path)
+                showInExplorer(path);
+
+            onDone(path);
+        });
+    }
+
     function clearMessageLog() {
         if (!database)
             return ;
@@ -2081,6 +2458,16 @@ T.Widget {
             }));
         });
         var now = Date.now();
+        // Relative days become dates, and a bare date or time is not kept (Yui.datedMemory).
+        var dated = function(texts) {
+            return texts.map(function(text) {
+                return Yui.datedMemory(text, now);
+            }).filter(function(text) {
+                return text !== "";
+            });
+        };
+        reply.cores = dated(reply.cores);
+        reply.memories = dated(reply.memories);
         reply.cores.forEach(function(text) {
             entries = Yui.rememberMemory(entries, text, "core", now, heartCoreCapacity);
         });
@@ -2703,12 +3090,249 @@ T.Widget {
 
     }
 
+    // The SAO Utils action (YuiAction.qml): opens the chat (sending text, if any), lets Yui speak up,
+    // starts or ends a Boss Raid, or opens one of her windows. False when the command is unknown.
+    // config: the action's whole configuration (minutes, score, slot), for the commands that use more.
+    function runCommand(command, text, config) {
+        config = config || {};
+        if (!toolsEnabled && ["skills", "raid", "start_raid", "end_raid", "raid_banner", "add_reminder", "dismiss_reminder", "add_note", "finish_note", "sword_skill"].indexOf(command) !== -1)
+            return false;
+
+        diag("action: " + command);
+        var windows = {
+            "cardinal": [cardinalSystemDialog, "cardinalSystemDialogInstance"],
+            "equipment": [equipmentDialog, "equipmentDialogInstance"],
+            "heart": [yuisHeartDialog, "yuisHeartDialogInstance"],
+            "counseling": [counselingDialog, "counselingDialogInstance"],
+            "skills": [skillSlotsDialog, "skillSlotsDialogInstance"],
+            "console": [systemConsoleDialog, "systemConsoleDialogInstance"]
+        };
+        if (windows[command]) {
+            showDialog(windows[command][0], windows[command][1]);
+        } else if (command === "chat") {
+            if (!showChat)
+                openView();
+
+            if (text && text.trim())
+                Qt.callLater(sendMessage, text);
+
+        } else if (command === "speak") {
+            idleChat();
+        } else if (command === "start_raid") {
+            if (raidActive)
+                return true;
+
+            if (config.minutes > 0)
+                startRaid(config.minutes, true);
+            else
+                openQuickInput("raid");
+
+        } else if (command === "end_raid") {
+            stopRaid();
+        } else if (command === "raid_banner") {
+            showRaidBanner();
+        } else if (command === "add_reminder") {
+            openQuickInput("alarm");
+        } else if (command === "dismiss_reminder") {
+            var next = remindersList()[0];
+            if (!next)
+                return false;
+
+            deleteReminder(next.id);
+            actionSay(qsTr("Alarm"), "⏰ 已取消提醒：" + next.text);
+        } else if (command === "add_note") {
+            openQuickInput("note");
+        } else if (command === "finish_note") {
+            var first = notesList(false)[0];
+            if (!first)
+                return false;
+
+            editNote(first.id, first.text, true);
+            actionSay(qsTr("Quest Log"), "✅ 已完成：" + first.text);
+        } else if (command === "record_mood") {
+            openQuickInput("mood");
+        } else if (command === "weekly_report") {
+            writeWeeklyReport(true, function() {
+            });
+        } else if (command === "sword_skill") {
+            // Chosen by the user's own button, so no confirmation.
+            return runSwordSkill(Number(config.slot) || 1);
+        } else if (command === "raid") {
+            if (raidActive || resting)
+                stopRaid();
+            else
+                startRaid(raidMinutes, true);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    // QuickInput.qml at the cursor: what an action needs each time (mode "alarm", "note", "mood" or
+    // "raid"); one at a time, a new one replaces it.
+    function openQuickInput(mode) {
+        if (quickInputDialogInstance)
+            quickInputDialogInstance.close();
+
+        showDialog(quickInputDialog, "quickInputDialogInstance");
+        if (quickInputDialogInstance)
+            quickInputDialogInstance.start(mode);
+
+    }
+
+    // Done from the quick input (the same as an action with its setting filled in): false when the
+    // input is not understood.
+    function quickAlarm(time, text) {
+        var reminder = Yui.remindFrom(time + "|" + text, Date.now());
+        if (!reminder)
+            return false;
+
+        addReminder(reminder);
+        actionSay(qsTr("Alarm"), "⏰ 已设提醒：" + Qt.formatDateTime(new Date(reminder.due), reminder.daily ? "每天 HH:mm" : "MM-dd HH:mm") + " " + reminder.text);
+        return true;
+    }
+
+    function quickNote(text) {
+        if (!String(text).trim())
+            return false;
+
+        addQuestNote(text);
+        actionSay(qsTr("Quest Log"), "📜 已记下：" + String(text).trim());
+        return true;
+    }
+
+    function quickMood(score, note) {
+        recordMood({
+            "score": score,
+            "note": String(note || "").trim()
+        });
+        actionSay(qsTr("Mental Record"), "📝 心情记录：" + score + "/5" + (String(note || "").trim() ? " " + String(note).trim() : ""));
+        return true;
+    }
+
+    // "Ask Yui" from the quick input: the chat opens with the start of a message written, for her to
+    // understand what is harder to type into the boxes.
+    function prefillChat(text) {
+        if (!showChat)
+            openView();
+
+        Qt.callLater(function() {
+            textInput.text = text;
+            textInput.cursorPosition = text.length;
+            textInput.forceActiveFocus();
+        });
+    }
+
+    // What an action did, said like Yui's other local messages: in the chat, and in the bubble while
+    // it is closed.
+    function actionSay(title, text) {
+        appendMessage("ai", text, false, true);
+        announce(title, text);
+    }
+
+    // The SAO Utils data (YuiData.qml): {current, maximum} of a value, or null for an unknown one. The
+    // maximum is never 0, so bars (which show current / maximum) always have something to show.
+    function linkValue(name) {
+        if (!toolsEnabled && ["boss_raid", "raid_timer", "raid_cleared", "next_alarm", "next_alarm_text", "quest_log"].indexOf(name) !== -1)
+            return null;
+
+        if (name === "companion_days") {
+            var met = Date.parse(widget.settings.meeting_day || "");
+            var days = isNaN(met) ? 0 : Math.max(0, Math.floor((Date.now() - met) / 86400000)) + 1;
+            // As a bar: the way to the next anniversary.
+            return {
+                "current": days,
+                "maximum": Math.max(1, Math.ceil(days / 365)) * 365
+            };
+        }
+        if (name === "mood") {
+            var today = moodsSince(1);
+            return {
+                "current": today.length > 0 ? today[0].score : 0
+            };
+        }
+        if (name === "col_ledger") {
+            var ledger = Yui.addToLedger(widget.settings.col_ledger, {}, Date.now());
+            return {
+                "current": Math.round((ledger.input + ledger.output) / 1000),
+                // Without a Monthly Budget the bar is simply full.
+                "maximum": widget.settings.col_budget || Math.max(1, Math.round((ledger.input + ledger.output) / 1000))
+            };
+        }
+        if (name === "boss_raid")
+            return {
+                "current": raidActive ? Math.max(0, Math.ceil((raidEnd - Date.now()) / 60000)) : 0,
+                "maximum": raidMinutes
+            };
+
+        if (name === "next_alarm") {
+            var next = remindersList()[0];
+            var left = next ? Math.max(0, Math.ceil((next.due - Date.now()) / 60000)) : 0;
+            return {
+                "current": left,
+                "maximum": Math.max(1, left)
+            };
+        }
+        // Text values (for HUD text elements).
+        if (name === "quest_log")
+            return {
+                "current": notesList(false).map(function(note) {
+                    return "· " + note.text;
+                }).join("\n")
+            };
+
+        if (name === "next_alarm_text") {
+            var upcoming = remindersList()[0];
+            return {
+                "current": upcoming ? Qt.formatDateTime(new Date(upcoming.due), new Date(upcoming.due).toDateString() === new Date().toDateString() ? "HH:mm" : "MM-dd HH:mm") + " " + upcoming.text : ""
+            };
+        }
+        if (name === "raid_timer") {
+            var end = raidActive ? raidEnd : (resting ? restEnd : 0);
+            var seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+            var clock = Math.floor(seconds / 60) + ":" + ("0" + seconds % 60).slice(-2);
+            return {
+                "current": raidActive ? clock : (resting ? "REST " + clock : "")
+            };
+        }
+        if (name === "mood_text") {
+            var mood = moodsSince(1)[0];
+            return {
+                "current": mood ? "★★★★★".slice(0, mood.score) + "☆☆☆☆☆".slice(0, 5 - mood.score) + (mood.note ? " " + mood.note : "") : ""
+            };
+        }
+        if (name === "latest_report") {
+            var report = reportsList()[0];
+            return {
+                "current": report ? report.text : ""
+            };
+        }
+        if (name === "raid_cleared")
+            return {
+                "current": Date.now() < raidClearedUntil ? 1 : 0,
+                "maximum": 1
+            };
+
+        if (name === "heart_core")
+            return {
+                "current": Yui.coreMemories(heartCache).length,
+                "maximum": heartCoreCapacity
+            };
+
+        return null;
+    }
+
     // Starts a Boss Raid of minutes; fromMenu: say it (when Yui starts it from a reply, she says it).
     function startRaid(minutes, fromMenu) {
         raidEnd = Date.now() + minutes * 60000;
         widget.settings.raid_end = raidEnd;
         raidActive = true;
         resting = false;
+        if (widget.settings.raid_banner !== false)
+            showRaidBanner();
+        else
+            diag("raid banner: off (Skill Slots, Raid Banner)");
+
         diag("boss raid: " + minutes + " min");
         if (fromMenu)
             raidSay("Boss Raid 开始！✧ 结衣会安静地陪着" + userTitle() + " " + minutes + " 分钟，加油哦～ (ง •̀_•́)ง");
@@ -2719,10 +3343,143 @@ T.Widget {
         if (!raidActive && !resting)
             return ;
 
+        // The minutes actually spent count too (Weekly Report).
+        if (raidActive)
+            logRaid(Math.round((raidMinutes * 60000 - Math.max(0, raidEnd - Date.now())) / 60000));
+
         raidActive = false;
         resting = false;
         widget.settings.raid_end = 0;
         diag("boss raid: ended early");
+    }
+
+    // Weekly Report: the raids of the last weeks ({end, minutes}, at most 100).
+    function logRaid(minutes) {
+        if (minutes <= 0)
+            return ;
+
+        widget.settings.raid_log = (widget.settings.raid_log || []).concat([{
+            "end": Date.now(),
+            "minutes": minutes
+        }]).slice(-100);
+    }
+
+    // ---------------------------------------------------------------- Weekly Report
+    // Bumped when a report is written or deleted (Mental Health Counseling lists them).
+    property int reportRevision: 0
+    property bool writingReport: false
+
+    // Reports, newest first: [{id, week, text, created}].
+    function reportsList() {
+        return readSql("reading the reports", "SELECT id, week, text, created FROM reports ORDER BY created DESC");
+    }
+
+    function deleteReport(id) {
+        if (writeSql("deleting a report", "DELETE FROM reports WHERE id = ?", [id]))
+            reportRevision++;
+
+    }
+
+    // The last seven days, today included: Yui writes the report (one request, not in the chat) and
+    // it is kept; announce: she says it is ready (the automatic one). onDone(error text or "").
+    function writeWeeklyReport(announceIt, onDone) {
+        if (writingReport)
+            return ;
+
+        var now = Date.now();
+        var from = new Date(now - 6 * 86400000);
+        from.setHours(0, 0, 0, 0);
+        var raids = (widget.settings.raid_log || []).filter(function(raid) {
+            return raid.end >= from.getTime();
+        });
+        var ledger = Yui.addToLedger(widget.settings.col_ledger, {}, now);
+        var stats = {
+            "from": Qt.formatDate(from, "yyyy-MM-dd"),
+            "to": Qt.formatDate(new Date(now), "yyyy-MM-dd"),
+            "messages": (readSql("counting the messages", "SELECT COUNT(*) AS n FROM messages WHERE author = 'user' AND created >= ?", [from.getTime()])[0] || {
+                "n": 0
+            }).n,
+            "moods": moodsSince(7),
+            "raids": toolsEnabled ? {
+                "count": raids.length,
+                "minutes": raids.reduce(function(sum, raid) {
+                    return sum + raid.minutes;
+                }, 0)
+            } : null,
+            "notesDone": toolsEnabled ? readSql("reading the notes", "SELECT text FROM notes WHERE done = 1 AND updated >= ?", [from.getTime()]).map(function(note) {
+                return note.text;
+            }) : null,
+            "notesOpen": toolsEnabled ? notesList(false).length : 0,
+            "tokens": Math.round((ledger.input + ledger.output) / 1000)
+        };
+        writingReport = true;
+        diag("weekly report: requested (" + stats.from + " – " + stats.to + ")");
+        requestCompletion([{
+            "role": "user",
+            "content": Yui.weeklyReportPrompt(userTitle(), stats)
+        }], function(text, isError) {
+            writingReport = false;
+            if (isError) {
+                diag("weekly report failed: " + text);
+                onDone(text);
+                return ;
+            }
+            var report = Yui.parseReply(text, [], {}).text;
+            widget.settings.report_week = stats.from;
+            if (writeSql("saving the report", "INSERT INTO reports(week, text, created) VALUES(?, ?, ?)", [stats.from + " – " + stats.to, report, Date.now()]))
+                reportRevision++;
+
+            if (announceIt) {
+                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 Mental Health Counseling 的 Records 里，有空看看哦 (｡･ω･｡)", false, true);
+                announce(qsTr("Weekly Report"), "📊 这周的小结写好啦～");
+            }
+            onDone("");
+        });
+    }
+
+    // Weekly Report on Sunday evenings (from 20:00), once a week, when it is turned on.
+    function checkWeeklyReport() {
+        var now = new Date();
+        if (widget.settings.weekly_report !== true || now.getDay() !== 0 || now.getHours() < 20 || widget.busy || !activeConfig().apiKey)
+            return ;
+
+        var from = new Date(now.getTime() - 6 * 86400000);
+        if (widget.settings.report_week === Qt.formatDate(from, "yyyy-MM-dd"))
+            return ;
+
+        writeWeeklyReport(true, function() {
+        });
+    }
+
+    // Boss Raid's banner (RaidBanner.qml), created on first use: the time left, then "Congratulations!".
+    property var raidBanner: null
+    // The data value Raid Cleared is 1 until then (a few seconds after a raid is won), for a HUD banner.
+    property double raidClearedUntil: 0
+
+    // A point on Yui's screen for the banner: the middle of her open chat, else of the widget.
+    function bannerScreenPoint() {
+        if (showChat && yuiView)
+            return Qt.point(yuiView.x + yuiView.width / 2, yuiView.y + yuiView.height / 2);
+
+        var rect = widgetScreenRect();
+        return Qt.point(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    }
+
+    function showRaidBanner() {
+        if (!raidBanner) {
+            var component = Qt.createComponent("RaidBanner.qml");
+            if (component.status !== Component.Ready) {
+                diag("raid banner unavailable: " + component.errorString());
+                return ;
+            }
+            raidBanner = component.createObject(widget, {
+                "yui": widget
+            });
+        }
+        if (raidActive || resting)
+            raidBanner.open();
+
+        diag("raid banner: " + (raidBanner.visible ? "shown" : "hidden") + " at " + raidBanner.x + "," + raidBanner.y + " " + raidBanner.width + "x" + raidBanner.height + ", compositor " + raidBanner.compositor + ", z " + raidBanner.z);
     }
 
     // What Yui says about a raid: in the chat, and in the bubble while it is closed.
@@ -2738,6 +3495,14 @@ T.Widget {
             widget.settings.raid_end = 0;
             resting = true;
             restEnd = now + restMinutes * 60000;
+            logRaid(raidMinutes);
+            raidClearedUntil = now + 6000;
+            // Also when the banner was hidden by its ×: the win is shown either way.
+            if (raidBanner && widget.settings.raid_banner !== false) {
+                raidBanner.celebrate();
+                diag("raid banner: congratulations at " + raidBanner.x + "," + raidBanner.y + " " + raidBanner.width + "x" + raidBanner.height);
+            }
+
             raidSay("Boss 讨伐成功！✧ " + userTitle() + "辛苦啦～休息 " + restMinutes + " 分钟吧，喝口水、看看远处 (｡･ω･｡)");
         } else if (resting && now >= restEnd) {
             resting = false;
@@ -3190,7 +3955,12 @@ T.Widget {
     implicitWidth: 60
     implicitHeight: 400
     visible: true
+    Component.onDestruction: Link.Server.unregister(widget)
     Component.onCompleted: {
+        Qt.callLater(function() {
+            widget.previousForm = widget.collapsedForm;
+            widget.formChosen = true;
+        });
         if (Yui.migrateSeedlingKeys(widget.settings))
             console.log("migrated: lab_* settings renamed to seedling_*");
 
@@ -3210,6 +3980,8 @@ T.Widget {
             });
             console.log("repaired: Seedling editor text moved out of seedling_code");
         }
+        // The SAO Utils action and data (YuiAction.qml, YuiData.qml) reach this Yui through Link.Server.
+        Link.Server.register(widget);
         // Apply the default size only once, so a size chosen by the user survives restarts.
         var firstRun = !widget.settings.initialized;
         widget.settings.initialized = true;
@@ -3230,17 +4002,21 @@ T.Widget {
         if (widget.settings.chat_hidden === false)
             Qt.callLater(openView);
 
-        if (widget.settings.raid_end > Date.now()) {
+        if (toolsEnabled && widget.settings.raid_end > Date.now()) {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
+            if (widget.settings.raid_banner !== false)
+                Qt.callLater(showRaidBanner);
+
         }
         // Bond: the day of meeting is the first day the widget ran, unless the player sets another.
         if (!widget.settings.meeting_day)
             widget.settings.meeting_day = Qt.formatDate(new Date(), "yyyy-MM-dd");
 
-        // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
-        if (styles.link_start !== false)
-            linkStartAnimation.start();
+        // The Link Start effect, whenever SAO Utils starts the widget.
+        // No sound: SAO Utils plays its own "Link Start!" when it starts.
+        linkStartAnimation.start();
+
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
@@ -3378,13 +4154,13 @@ T.Widget {
         property real hover: 0
 
         configuration: widget.styles.pixie_image_path
-        visible: widget.collapsedShown && widget.collapsedForm === "pixie"
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        visible: widget.collapsedShown && widget.formVisible("pixie")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("pixie")
         anchors.fill: parent
         anchors.topMargin: 6
         anchors.bottomMargin: 6
         fillMode: Image.PreserveAspectFit
-        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal
+        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal * widget.formPresence("pixie")
 
         SequentialAnimation on hover {
             running: pixieImage.visible && !widget.sleeping
@@ -3425,10 +4201,10 @@ T.Widget {
     YuiCrystal {
         id: crystalForm
 
-        visible: widget.collapsedShown && widget.collapsedForm === "crystal"
+        visible: widget.collapsedShown && widget.formVisible("crystal")
         anchors.fill: parent
-        opacity: widget.collapsedReveal
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        opacity: widget.collapsedReveal * widget.formPresence("crystal")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("crystal")
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
 
@@ -3445,50 +4221,75 @@ T.Widget {
 
     }
 
-    // "Link Start!" when the widget starts (Equipment): rainbow rings spreading from Yui, as in the
-    // dive into the virtual world, and the words over them; then it fades away.
+    // "Link Start!" when the widget starts: Yui's Heart, the crystal her core was saved in,
+    // glows into view, bursts into motes of light, and Yui appears in the flash.
     Item {
         id: linkStartEffect
 
         property real progress: 0
+        // The crystal's height: a third of the widget's shorter side.
+        readonly property real crystalSize: Math.min(width, height) / 3
+        // With the crystal as her collapsed form it is turned around: the motes gather into the flash
+        // (0 - 0.55) and the crystal grows in it, so the crystal never breaks and comes back.
+        readonly property bool gather: widget.collapsedForm === "crystal"
 
         anchors.fill: parent
         z: 200
         visible: linkStartAnimation.running
-        opacity: 1
 
+        // The crystal: in (0 - 0.3), glowing and pulsing (0.3 - 0.55), gone in the burst (0.55 - 0.62).
+        YuiCrystal {
+            readonly property real grown: Math.min(1, linkStartEffect.progress / 0.3)
+
+            visible: !linkStartEffect.gather
+            anchors.centerIn: parent
+            width: linkStartEffect.crystalSize * 0.67
+            height: linkStartEffect.crystalSize
+            statusColor: "#B3E5FC"
+            opacity: grown * Math.max(0, Math.min(1, (0.62 - linkStartEffect.progress) / 0.07))
+            scale: 0.6 + 0.4 * grown + (linkStartEffect.progress > 0.3 ? 0.06 * Math.sin(linkStartEffect.progress * 40) : 0)
+        }
+
+        // The burst: motes of light flying out from the crystal and fading (0.55 - 1); or gathering
+        // from afar, brightening as they come (0 - 0.55).
         Repeater {
-            model: ["#FF5252", "#FFB74D", "#FFF176", "#69F0AE", "#40C4FF", "#B388FF"]
+            model: 28
 
             Rectangle {
-                readonly property real spread: Math.max(0, Math.min(1, linkStartEffect.progress * 1.6 - index * 0.12))
+                readonly property real burst: linkStartEffect.gather ? Math.max(0, 1 - linkStartEffect.progress / 0.55) : Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45))
+                // Each mote its own direction and reach, the same every time.
+                readonly property real angle: index * 2.399963
+                readonly property real reach: Math.min(linkStartEffect.width, linkStartEffect.height) * (0.25 + 0.25 * ((index * 7) % 11) / 10)
+                readonly property real travel: 1 - Math.pow(1 - burst, 3)
 
-                anchors.centerIn: parent
-                // At most the widget's shorter side, so the whole ring stays inside it.
-                width: Math.max(0, Math.min(linkStartEffect.width, linkStartEffect.height) - border.width * 2) * spread
+                visible: burst > 0
+                width: 3 + (index % 4) * 1.5
                 height: width
-                radius: width / 2
-                color: "transparent"
-                border.color: modelData
-                border.width: 3
-                opacity: (1 - spread) * 0.9
+                rotation: 45
+                x: linkStartEffect.width / 2 - width / 2 + Math.cos(angle) * reach * travel
+                y: linkStartEffect.height / 2 - height / 2 + Math.sin(angle) * reach * travel
+                color: index % 3 === 0 ? "#FFFFFF" : (index % 3 === 1 ? "#B3E5FC" : "#FFF59D")
+                opacity: (linkStartEffect.gather ? Math.min(1, (1 - burst) * 4) * Math.min(1, burst * 6) : 1 - burst) * 0.95
             }
 
         }
 
-        Text {
+        // The flash Yui appears in: a soft round light, fading out to its edge (a blurred circle was cut
+        // square at the edge of its layer).
+        RadialGradient {
+            readonly property real flash: linkStartEffect.progress < 0.55 ? 0 : Math.max(0, 1 - (linkStartEffect.progress - 0.55) / 0.3)
+
             anchors.centerIn: parent
-            width: parent.width * 0.9
-            horizontalAlignment: Text.AlignHCenter
-            fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: 8
-            font.family: "SAO UI"
-            font.pixelSize: 28
-            color: "white"
-            style: Text.Outline
-            styleColor: "#66000000"
-            text: "Link Start!"
-            opacity: Math.min(1, linkStartEffect.progress * 3) * Math.min(1, (1 - linkStartEffect.progress) * 4)
+            width: Math.min(parent.width, parent.height) * (0.3 + 0.7 * (1 - flash))
+            height: width
+            visible: flash > 0
+            opacity: flash * 0.8
+
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#FFFFFFFF" }
+                GradientStop { position: 0.25; color: "#C0FFFFFF" }
+                GradientStop { position: 0.5; color: "#00FFFFFF" }
+            }
         }
 
         NumberAnimation {
@@ -3498,8 +4299,67 @@ T.Widget {
             property: "progress"
             from: 0
             to: 1
-            duration: 2200
-            easing.type: Easing.OutSine
+            duration: 2800
+        }
+
+    }
+
+    // Switching between the crystal and the character: a point of light the old form shrinks into and the
+    // new one grows out of. Into the crystal the motes gather to it; out of it they fly away.
+    Item {
+        id: formSwitchEffect
+
+        readonly property bool toCrystal: widget.collapsedForm === "crystal"
+        readonly property real glow: Math.max(0, 1 - Math.abs(widget.formMorph - 0.45) / 0.3)
+
+        anchors.fill: parent
+        z: 200
+        visible: widget.morphing
+
+        RadialGradient {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height) * (0.2 + 0.6 * formSwitchEffect.glow)
+            height: width
+            opacity: formSwitchEffect.glow * 0.9
+
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#FFFFFFFF" }
+                GradientStop { position: 0.25; color: formSwitchEffect.toCrystal ? "#C0B3E5FC" : "#C0FFF59D" }
+                GradientStop { position: 0.5; color: "#00FFFFFF" }
+            }
+        }
+
+        Repeater {
+            model: 16
+
+            Rectangle {
+                // 0 at the center, 1 out at the mote's reach: coming in (0 - 0.45) into the crystal,
+                // going out (0.45 - 1) from it.
+                readonly property real out: formSwitchEffect.toCrystal ? Math.max(0, 1 - widget.formMorph / 0.45) : Math.max(0, Math.min(1, (widget.formMorph - 0.45) / 0.55))
+                readonly property real angle: index * 2.399963
+                readonly property real reach: Math.min(formSwitchEffect.width, formSwitchEffect.height) * (0.3 + 0.2 * ((index * 7) % 11) / 10)
+                readonly property real travel: 1 - Math.pow(1 - out, 3)
+
+                visible: out > 0
+                width: 3 + (index % 3) * 1.5
+                height: width
+                rotation: 45
+                x: formSwitchEffect.width / 2 - width / 2 + Math.cos(angle) * reach * travel
+                y: formSwitchEffect.height / 2 - height / 2 + Math.sin(angle) * reach * travel
+                color: index % 2 ? "#FFFFFF" : (formSwitchEffect.toCrystal ? "#B3E5FC" : "#FFF59D")
+                opacity: (formSwitchEffect.toCrystal ? Math.min(1, (1 - out) * 4) * Math.min(1, out * 6) : 1 - out) * 0.95
+            }
+
+        }
+
+        NumberAnimation {
+            id: formMorphAnimation
+
+            target: widget
+            property: "formMorph"
+            from: 0
+            to: 1
+            duration: 1400
         }
 
     }
@@ -3510,6 +4370,82 @@ T.Widget {
         repeat: true
         running: widget.raidActive || widget.resting
         onTriggered: widget.checkRaid(Date.now())
+    }
+
+    // Weather Report: the chosen weather values (Mental Health Counseling), as text.
+    NVG.DataSource {
+        id: weatherSource
+
+        configuration: widget.settings.weather_report === false ? null : (widget.settings.weather_data || null)
+    }
+
+    NVG.DataSourceTextOutput {
+        id: weatherText
+
+        source: weatherSource
+        nullText: ""
+        undefinedText: ""
+    }
+
+    NVG.DataSource {
+        id: temperatureSource
+
+        configuration: widget.settings.weather_report === false ? null : (widget.settings.weather_temperature || null)
+    }
+
+    NVG.DataSourceTextOutput {
+        id: temperatureText
+
+        source: temperatureSource
+        nullText: ""
+        undefinedText: ""
+        fixedDecimalDigits: 0
+    }
+
+    // The weather values are read now and every 10 minutes (whatever their own update interval).
+    Timer {
+        interval: 600000
+        repeat: true
+        triggeredOnStart: true
+        running: !!weatherSource.configuration || !!temperatureSource.configuration
+        onTriggered: {
+            if (weatherSource.configuration)
+                weatherSource.update();
+
+            if (temperatureSource.configuration)
+                temperatureSource.update();
+
+        }
+    }
+
+    // Sword Skills (Skill Slots): the action of each slot, loaded ahead so it runs at once.
+    Instantiator {
+        id: swordSkillSources
+
+        model: 5
+
+        delegate: NVG.ActionSource {
+            configuration: widget.settings["sword_skill_" + (index + 1) + "_action"] || null
+        }
+
+    }
+
+    // Weekly Report (automatic, Sunday evenings), checked every 10 minutes.
+    Timer {
+        interval: 600000
+        repeat: true
+        running: widget.chatReady && !widget.seedlingMode
+        onTriggered: widget.checkWeeklyReport()
+    }
+
+    // Alarm (Skill Slots): rings the due reminders, checked every 15 s (and once at start, for the
+    // ones missed while SAO Utils was closed).
+    Timer {
+        interval: 15000
+        repeat: true
+        triggeredOnStart: true
+        running: widget.toolsEnabled && widget.chatReady && !widget.seedlingMode && widget.settings.alarm_enabled !== false
+        onTriggered: widget.checkAlarms(Date.now())
     }
 
     // Keeps the crystal color current while it is shown.
@@ -4247,6 +5183,8 @@ T.Widget {
                         actionState: model.actionState
                         thinking: model.pending
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
+                        // Quick Replies: under Yui's latest message only, while nothing else is going on.
+                        suggestions: !messageItem.fromUser && model.suggestions && index === chatModel.count - 1 && !widget.busy ? JSON.parse(model.suggestions) : []
                         fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
                         fontSize: widget.styles.bubble_font_size > 0 ? widget.styles.bubble_font_size : widget.defaultValues.bubble_font_size
                         fontStyle: widget.styles.bubble_font_style || {
@@ -4254,6 +5192,7 @@ T.Widget {
                         onLinkActivated: widget.openMessageLink(link)
                         onConfirmRequested: widget.confirmAction(index)
                         onRegenerateRequested: widget.regenerateReply()
+                        onSuggestionPicked: widget.sendMessage(text)
                     }
 
                     // "..." (a reply on its way) is not a message: it shows without popping up; the window pops
@@ -4525,9 +5464,9 @@ T.Widget {
         id: avatarImage
 
         configuration: characterImage.configuration
-        visible: widget.collapsedShown && widget.collapsedForm === "avatar"
-        opacity: characterImage.opacity * widget.collapsedReveal
-        scale: 0.8 + 0.2 * widget.collapsedReveal
+        visible: widget.collapsedShown && widget.formVisible("avatar")
+        opacity: characterImage.opacity * widget.collapsedReveal * widget.formPresence("avatar")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("avatar")
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
 
@@ -4578,11 +5517,8 @@ T.Widget {
             onTriggered: showDialog(widget.counselingDialog, "counselingDialogInstance")
         }
 
-        // Boss Raid: starts one of the set length, or ends the running one.
-        Action {
-            text: widget.raidActive || widget.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
-            onTriggered: widget.raidActive || widget.resting ? widget.stopRaid() : widget.startRaid(widget.raidMinutes, true)
-        }
+        // Skill Slots (set aside, see toolsEnabled): its menu entry goes back here, after Mental Health
+        // Counseling.
 
         // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.
         Action {

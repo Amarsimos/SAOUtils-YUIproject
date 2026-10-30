@@ -458,6 +458,7 @@ test("Core Tuning fields per server", () => {
     assert.strictEqual(ollama.reasoning_effort, "none");
     assert.strictEqual(ollama.top_k, 40);
     assert.ok(!("options" in ollama));
+    assert.strictEqual(Yui.tuningFields("openai", "ollama", all).top_k, 40);
     assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", all)), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
     assert.strictEqual(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { temperature: 1.5, thinking: "default" })).temperature, 1);
     const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off" }));
@@ -474,6 +475,143 @@ test("Tags without a value", () => {
     assert.strictEqual(odd.unknown.length, 1);
     assert.strictEqual(Yui.displayText("嗯<<shy>>"), "嗯");
     assert.strictEqual(Yui.parseReply("读了《三体》").text, "读了《三体》");
+});
+
+test("Alarm reminder times", () => {
+    const now = new Date(2026, 9, 26, 21, 0).getTime();
+    const at = Yui.remindFrom("2026-10-27 08:00|交作业", now);
+    assert.strictEqual(at.due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(at.text, "交作业");
+    assert.strictEqual(at.daily, false);
+    assert.strictEqual(Yui.remindFrom("+30|开会", now).due, now + 30 * 60000);
+    assert.strictEqual(Yui.remindFrom("08:00|起床", now).due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("22:30|洗澡", now).due, new Date(2026, 9, 26, 22, 30).getTime());
+    const daily = Yui.remindFrom("每天 23:00|该睡觉了", now);
+    assert.strictEqual(daily.daily, true);
+    assert.strictEqual(daily.due, new Date(2026, 9, 26, 23, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("2026-10-25 08:00|过去的", now), null);
+    assert.strictEqual(Yui.remindFrom("明天|没有时间", now), null);
+    assert.strictEqual(Yui.remindFrom("+5", now), null);
+    const reply = Yui.parseReply("好的～<<remind:+10|喝水>>", [], { now: now });
+    assert.strictEqual(reply.reminders.length, 1);
+    assert.strictEqual(reply.text, "好的～");
+    assert.strictEqual(Yui.parseReply("<<remind:+10|喝水>>", [], { now: now, allowed: { alarm: false } }).reminders.length, 0);
+});
+
+test("Quest Log notes", () => {
+    const reply = Yui.parseReply("记下啦<<note:买牛奶>><<done:交水费>>");
+    assert.strictEqual(JSON.stringify(reply.notes), JSON.stringify(["买牛奶"]));
+    assert.strictEqual(JSON.stringify(reply.dones), JSON.stringify(["交水费"]));
+    assert.ok(Yui.notesWanted("我记了哪些待办？"));
+    assert.ok(!Yui.notesWanted("今天天气怎么样"));
+    assert.ok(Yui.notesContext("爸爸", [{ text: "买牛奶" }]).includes("- 买牛奶"));
+    const text = Yui.featureInstructions("爸爸", "", { alarm: false, notes: true }, "tags");
+    assert.ok(text.includes("<<note:") && !text.includes("<<remind:"));
+});
+
+// A QML file with two functions or properties of the same name does not load at all (the widget
+// shows as unknown), and qmllint does not catch it.
+test("No duplicate members in the QML files", () => {
+    const dir = require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml");
+    fs.readdirSync(dir).filter((name) => name.endsWith(".qml")).forEach((name) => {
+        const names = [...fs.readFileSync(require("path").join(dir, name), "utf8").matchAll(/^    (?:function (\w+)|(?:readonly )?property \w+ (\w+))/gm)].map((m) => m[1] || m[2]);
+        const twice = names.filter((n, i) => names.indexOf(n) !== i);
+        assert.strictEqual(twice.join(", "), "", name);
+    });
+});
+
+test("Weekly Report prompt", () => {
+    const stats = { from: "2026-10-20", to: "2026-10-26", messages: 42, moods: [{ day: "2026-10-21", score: 2, note: "加班" }, { day: "2026-10-22", score: 4, note: "" }], raids: { count: 3, minutes: 75 }, notesDone: ["交作业"], notesOpen: 2, tokens: 120 };
+    const text = Yui.weeklyReportPrompt("爸爸", stats);
+    assert.ok(text.includes("42 条") && text.includes("10-21 2（加班）") && text.includes("平均 3.0") && text.includes("3 次，共 75 分钟") && text.includes("交作业") && text.includes("2 件"));
+    const empty = Yui.weeklyReportPrompt("爸爸", Object.assign({}, stats, { moods: [], raids: { count: 0, minutes: 0 }, notesDone: [], notesOpen: 0 }));
+    assert.ok(empty.includes("这周没有记录") && !empty.includes("完成的待办"));
+});
+
+test("Sword Skills and Weather Report", () => {
+    const names = ["开始工作", "Game Time", ""];
+    assert.strictEqual(Yui.swordSkillIndex("开始工作", names), 0);
+    assert.strictEqual(Yui.swordSkillIndex("game time", names), 1);
+    assert.strictEqual(Yui.swordSkillIndex("工作", names), 0);
+    assert.strictEqual(Yui.swordSkillIndex("睡觉", names), -1);
+    assert.strictEqual(Yui.parseReply("好的<<skill:开始工作>>", [], { allowed: { skills: ["开始工作"] } }).skill, "开始工作");
+    assert.strictEqual(Yui.parseReply("好的<<skill:开始工作>>", [], { allowed: {} }).skill, "");
+    assert.ok(Yui.featureInstructions("爸爸", "", { skills: ["开始工作"] }, "tags").includes("<<skill:名字>>"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<skill:"));
+    assert.ok(Yui.weatherWanted("明天要带伞吗"));
+    assert.ok(!Yui.weatherWanted("帮我开一下浏览器"));
+});
+
+test("Alarm days in words", () => {
+    const now = new Date(2026, 9, 26, 21, 0).getTime(); // a Monday
+    assert.strictEqual(Yui.remindFrom("明天 08:00|交作业", now).due, new Date(2026, 9, 27, 8, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("后天 9:30|体检", now).due, new Date(2026, 9, 28, 9, 30).getTime());
+    assert.strictEqual(Yui.remindFrom("周五 15:00|开会", now).due, new Date(2026, 9, 30, 15, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("星期一 10:00|周会", now).due, new Date(2026, 10, 2, 10, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("周日 10:00|休息", now).due, new Date(2026, 10, 1, 10, 0).getTime());
+    assert.strictEqual(Yui.remindFrom("明天|没有时间", now), null);
+});
+
+test("Tools set aside", () => {
+    assert.strictEqual(Yui.TOOLS_ENABLED, false);
+    const off = { focus: false, alarm: false, notes: false, skills: [] };
+    const text = Yui.featureInstructions("爸爸", "", off, "tags");
+    assert.ok(!text.includes("<<focus:") && !text.includes("<<remind:") && !text.includes("<<note:") && !text.includes("<<skill:"));
+    assert.strictEqual(Yui.parseReply("好<<focus:25>>", [], { allowed: off }).focus, null);
+    assert.strictEqual(Yui.parseReply("好<<focus:25>>", [], { allowed: off }).text, "好");
+    const report = Yui.weeklyReportPrompt("爸爸", { from: "2026-10-20", to: "2026-10-26", messages: 3, moods: [], raids: null, notesDone: null, notesOpen: 0, tokens: 1 });
+    assert.ok(!report.includes("Boss Raid") && !report.includes("待办"));
+});
+
+test("Quick Replies, Character Traits, Log Recall and Through Yui's Eyes", () => {
+    const reply = Yui.parseReply("要不要休息一下？<<suggest:好呀|再玩一会|好呀|你呢？|第四个>>", [], { allowed: { suggest: true } });
+    assert.strictEqual(JSON.stringify(reply.suggestions), JSON.stringify(["好呀", "再玩一会", "你呢？"]));
+    assert.strictEqual(reply.text, "要不要休息一下？");
+    assert.strictEqual(Yui.parseReply("嗯<<suggest:好>>", [], { allowed: { suggest: false } }).suggestions.length, 0);
+    assert.ok(Yui.featureInstructions("爸爸", "", { suggest: true }, "tags").includes("<<suggest:"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<suggest:"));
+    assert.strictEqual(Yui.traitContext({ warmth: 1, energy: 1, kaomoji: 1, length: 1, format: 0 }), "");
+    const style = Yui.traitContext({ warmth: 2, energy: 0, kaomoji: 0, length: 1, format: 1 });
+    assert.ok(style.includes("更温柔") && style.includes("沉稳") && style.includes("很少用颜文字") && style.includes("列表"));
+    const rows = [{ author: "user", message: "我下周要去京都旅行", created: new Date(2026, 8, 1).getTime() }, { author: "ai", message: "今天天气很好", created: 2 }, { author: "user", message: "京都的红叶很漂亮吧", created: new Date(2026, 8, 3).getTime() }];
+    const picked = Yui.logRecallPick(rows, "京都旅行怎么样", 2);
+    assert.strictEqual(picked.length, 2);
+    assert.ok(picked.every((row) => row.message.includes("京都")));
+    const context = Yui.logRecallContext("爸爸", picked);
+    assert.ok(context.indexOf("09-01 爸爸：我下周要去京都旅行") < context.indexOf("09-03"));
+    assert.strictEqual(Yui.logRecallPick(rows, "", 3).length, 0);
+    const portrait = Yui.portraitPrompt("爸爸", [{ kind: "core", text: "名字是小明", created: 1 }, { kind: "fragment", text: "喜欢拉面" }]);
+    assert.ok(portrait.includes("- 名字是小明") && portrait.includes("- 喜欢拉面"));
+});
+
+test("Memories keep their dates", () => {
+    const now = new Date(2026, 9, 27, 21, 0).getTime();
+    assert.strictEqual(Yui.datedMemory("明天要考数学", now), "10月28日要考数学");
+    assert.strictEqual(Yui.datedMemory("昨天和朋友去吃了拉面", now), "10月26日和朋友去吃了拉面");
+    assert.strictEqual(Yui.datedMemory("下周去京都", now), "11月3日那周去京都");
+    assert.strictEqual(Yui.datedMemory("今年开始学吉他", now), "2026年开始学吉他");
+    assert.strictEqual(Yui.datedMemory("喜欢豚骨拉面", now), "喜欢豚骨拉面");
+    assert.strictEqual(Yui.datedMemory("今天是10月27日", now), "");
+    assert.strictEqual(Yui.datedMemory("现在是21:30", now), "");
+    assert.strictEqual(Yui.datedMemory("2026年10月27日星期二", now), "");
+    assert.strictEqual(Yui.memoryLine({ text: "喜欢拉面", created: new Date(2026, 9, 12).getTime() }), "[10-12] 喜欢拉面");
+    assert.strictEqual(Yui.memoryLine({ text: "喜欢拉面" }), "喜欢拉面");
+    assert.ok(Yui.recallContext("爸爸", [{ text: "喜欢拉面", created: new Date(2026, 9, 12).getTime() }]).includes("- [10-12] 喜欢拉面"));
+    assert.ok(Yui.featureInstructions("爸爸", [{ text: "名字叫小明", kind: "core", created: new Date(2026, 9, 1).getTime() }], {}, "tags").includes("- [10-01] 名字叫小明"));
+});
+
+test("Replies of small models", () => {
+    const raw = "爸爸回来了！想听故事吗？<<mood:8|情绪正在回升。>\n<<suggest:好温暖/继续休息/不想动>\n\n\n</think>\n\n爸爸回来了！想听故事吗？\n\n<<forget:上次误用了sad表情>\n</think>\n\n爸爸回来了！想听故事吗？\n\n<<mood:8|情绪正在回升。>\n\n\n<<suggest:好温暖啊/继续休息吧/不想动>";
+    const reply = Yui.parseReply(raw, [], { allowed: { suggest: true } });
+    assert.strictEqual(reply.text, "爸爸回来了！想听故事吗？");
+    assert.strictEqual(reply.mood.score, 5);
+    assert.strictEqual(JSON.stringify(reply.suggestions), JSON.stringify(["好温暖啊", "继续休息吧", "不想动"]));
+    assert.strictEqual(Yui.cleanReply("<think>想一想</think>你好"), "你好");
+    assert.strictEqual(Yui.cleanReply("一\n\n二\n\n一"), "一\n\n二");
+    assert.strictEqual(Yui.displayText("<think>正在想"), "");
+    assert.strictEqual(Yui.displayText("想了很多</think>\n你好"), "你好");
+    // a ">" inside the text is no tag end
+    assert.strictEqual(Yui.parseReply("3 > 2 是对的<<emotion:happy>>").text, "3 > 2 是对的");
 });
 
 console.log(passed + " tests passed");

@@ -4,6 +4,7 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 NVG.Window {
     id: coreSettings
@@ -86,10 +87,6 @@ NVG.Window {
         targetWidget.settings.system_prompt = systemPromptPreference.value;
         targetWidget.settings.persona = profileNames[shownProfile] || builtInProfile;
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
-        targetWidget.settings.external_browser = !!externalBrowserPreference.value;
-        targetWidget.settings.sleep_minutes = sleepPreference.value;
-        targetWidget.settings.raid_minutes = raidPreference.value;
-        targetWidget.settings.rest_minutes = restPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
         targetWidget.settings.thinking_depth = thinkingPreference.ids[thinkingPreference.value] || "default";
         targetWidget.settings.temperature = temperaturePreference.value;
@@ -100,16 +97,17 @@ NVG.Window {
         targetWidget.settings.seed = seedPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
-        targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
-        targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
     // connection (Link) is never reset.
+    // Core Tuning's sampling values, in the Sampling Parameters dialog.
+    readonly property var samplingPreferences: [temperaturePreference, topPPreference, topKPreference, seedPreference, penaltyPreference, frequencyPreference]
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
-    readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference]
-    readonly property var pixieTabPreferences: [sleepPreference, raidPreference, restPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
+    // Personality's fine-tuning, in the Fine-Tuning dialog.
+    readonly property var traitPreferences: [warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference]
+    readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference, warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference, quickRepliesPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -292,13 +290,9 @@ NVG.Window {
         profilePreference.value = shownProfile;
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
-        externalBrowserPreference.value = settings.external_browser === true;
-        sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
-        raidPreference.value = settings.raid_minutes > 0 ? settings.raid_minutes : 25;
-        restPreference.value = settings.rest_minutes > 0 ? settings.rest_minutes : 5;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
-        // The older Thinking switch turned off is the depth "off".
-        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || (settings.thinking === false ? "off" : "default")));
+        // Off when never set (the older Thinking switch is not read any more).
+        thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || "off"));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
         penaltyPreference.value = settings.presence_penalty !== undefined ? settings.presence_penalty : -1;
         topPPreference.value = settings.top_p !== undefined ? settings.top_p : -1;
@@ -307,10 +301,8 @@ NVG.Window {
         seedPreference.value = settings.seed > 0 ? settings.seed : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === true;
-        searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
-        searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference, raidPreference, restPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -344,9 +336,9 @@ NVG.Window {
 
         anchors.fill: parent
 
-        // Four tabs (as Yui's Heart and Equipment): Link (the server), Core Tuning (how the model
-        // answers), Personality, Pixie Functions (what Yui does by herself). The last tab shown is
-        // remembered.
+        // Three tabs, the AI itself: Link (the server), Core Tuning (how the model answers),
+        // Personality. The last tab shown is remembered. (Standby Mode is in Mental Health Counseling,
+        // the browser and search engine in System Console.)
         ColumnLayout {
             anchors.fill: parent
             // Little room at the sides: the settings have their own 16 px padding.
@@ -360,9 +352,9 @@ NVG.Window {
                 id: tabs
 
                 Layout.fillWidth: true
-                currentIndex: Math.max(0, Math.min(3, targetWidget.settings.cardinal_tab || 0))
+                currentIndex: Math.max(0, Math.min(2, targetWidget.settings.cardinal_tab || 0))
                 onCurrentIndexChanged: targetWidget.settings.cardinal_tab = currentIndex
-                model: [qsTr("Link"), qsTr("Core Tuning"), qsTr("Personality"), qsTr("Pixie Functions")]
+                model: [qsTr("Link"), qsTr("Core Tuning"), qsTr("Personality")]
                 // Core Tuning holds advanced settings only.
                 hiddenTabs: targetWidget.settingsAdvanced ? [] : [1]
             }
@@ -373,7 +365,12 @@ NVG.Window {
                 currentIndex: tabs.shownIndex
 
                 // ---------------------------------------------------------------- Link
+                // The API settings only, under headings: the server, the core (model), the connection test.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Server")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
@@ -399,75 +396,6 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The AI service Yui connects to. Each server keeps its own core, address and access key.")
-                        }
-
-                        P.SelectPreference {
-                            id: modelPreference
-
-                            name: "model"
-                            label: qsTr("Core Program")
-                            visible: model.length > 0
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("The AI model that runs Yui.")
-                        }
-
-                        // Inset as the settings (16 px each side), so the slanted buttons stay inside the page.
-                        RowLayout {
-                            visible: targetWidget.settingsAdvanced
-                            spacing: 12
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
-
-                            Button {
-                                text: qsTr("Scan Cores")
-                                onClicked: refreshModelList()
-                            }
-
-                            Button {
-                                text: qsTr("Restore Registry")
-                                visible: shownFetchedModels !== null
-                                onClicked: {
-                                    var current = shownModels[modelPreference.value];
-                                    shownFetchedModels = null;
-                                    setModelList(targetWidget.providers[shownProvider].models, current);
-                                    modelStatus.text = "";
-                                }
-                            }
-
-                            Label {
-                                id: modelStatus
-
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                            }
-
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsAdvanced && targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
-                        }
-
-                        P.TextFieldPreference {
-                            id: customModelPreference
-                            visible: targetWidget.settingsAdvanced
-
-                            name: "custom_model"
-                            label: qsTr("Manual Core ID")
-                            display: P.TextFieldPreference.ExpandAll
-                            hint: qsTr("model id, e.g. gpt-6-sol")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
                         }
 
                         P.TextFieldPreference {
@@ -499,23 +427,94 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("The API key of this server. Each server keeps its own key.")
                         }
+                    }
+
+
+                    Heading {
+                        text: qsTr("Core")
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
-                            id: thinkingPreference
+                            id: modelPreference
 
-                            readonly property var ids: ["off", "default", "low", "medium", "high"]
-
-                            name: "thinking_depth"
-                            defaultValue: 1
-                            label: qsTr("Thinking Depth")
-                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
+                            name: "model"
+                            label: qsTr("Core Program")
+                            visible: model.length > 0
                         }
 
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
+                            text: qsTr("The AI model that runs Yui.")
                         }
+
+                        RowLayout {
+                            visible: targetWidget.settingsAdvanced
+                            spacing: 12
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Button {
+                                text: qsTr("Scan Cores")
+                                onClicked: refreshModelList()
+                            }
+
+                            Button {
+                                text: qsTr("Restore Registry")
+                                visible: shownFetchedModels !== null
+                                onClicked: {
+                                    var current = shownModels[modelPreference.value];
+                                    shownFetchedModels = null;
+                                    setModelList(targetWidget.providers[shownProvider].models, current);
+                                    modelStatus.text = "";
+                                }
+                            }
+
+                        }
+
+                        // What Scan Cores found (or why it failed), under the buttons.
+                        Label {
+                            id: modelStatus
+
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: targetWidget.settingsAdvanced && text !== ""
+                            elide: Text.ElideRight
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsAdvanced && targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: customModelPreference
+                            visible: targetWidget.settingsAdvanced
+
+                            name: "custom_model"
+                            label: qsTr("Manual Core ID")
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: qsTr("model id, e.g. gpt-6-sol")
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
+                            besidePreferences: true
+                            text: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
+                        }
+                    }
+
+
+                    Heading {
+                        text: qsTr("Connection Test")
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         RowLayout {
                             spacing: 20
@@ -560,13 +559,50 @@ NVG.Window {
                         }
                     }
 
+                    // Resets the shown server's core and address (the scanned list, Manual Core ID);
+                    // the server chosen and its access key are kept.
+                    ResetTabButton {
+                        yui: coreSettings.targetWidget
+                        windowTitle: coreSettings.title
+                        tabTitle: qsTr("Link")
+                        changed: shownProvider >= 0 && (modelPreference.value !== 0 || shownFetchedModels !== null || customModelPreference.value !== "" || apiEndpointPreference.value !== targetWidget.providers[shownProvider].endpoint)
+                        onReset: {
+                            showProvider(shownProvider, {
+                                "api_key": apiKeyPreference.value
+                            });
+                            scheduleApply();
+                        }
+                    }
+
                 }
 
                 // ---------------------------------------------------------------- Core Tuning
+                // How the model answers, under headings: Reply, Sampling (its values in a dialog), Behavior.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Reply")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
+
+                        P.SelectPreference {
+                            id: thinkingPreference
+
+                            readonly property var ids: ["off", "default", "low", "medium", "high"]
+
+                            name: "thinking_depth"
+                            defaultValue: 0
+                            label: qsTr("Thinking Depth")
+                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
+                        }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
                         P.SpinPreference {
@@ -587,126 +623,176 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
                         }
+                    }
 
-                        P.SliderPreference {
-                            id: temperaturePreference
+                    Heading {
+                        text: qsTr("Sampling")
+                    }
 
-                            // Updates (and shows its value) while being dragged.
+                    // The sampling values in a dialog of their own (they are rarely changed and take room),
+                    // live as the rest of the window; the row tells how many differ from the default.
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.DialogPreference {
+                            label: qsTr("Sampling Parameters")
                             live: true
-                            name: "temperature"
-                            defaultValue: -1
-                            label: qsTr("Temperature")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            displayValue: {
+                                var changed = coreSettings.samplingPreferences.filter(Yui.preferenceChanged).length;
+                                return changed ? qsTr("%1 changed").arg(changed) : qsTr("All default");
+                            }
+
+                            Heading {
+                                text: qsTr("Randomness")
+                            }
+
+                            P.SliderPreference {
+                                id: temperaturePreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "temperature"
+                                defaultValue: -1
+                                label: qsTr("Temperature")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.")
+                            }
+
+                            P.SliderPreference {
+                                id: topPPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "top_p"
+                                defaultValue: -1
+                                label: qsTr("Top P")
+                                from: -1
+                                to: 10
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
+                            }
+
+                            // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                            P.SpinPreference {
+                                id: topKPreference
+
+                                name: "top_k"
+                                defaultValue: 0
+                                label: qsTr("Top K")
+                                display: P.TextFieldPreference.ExpandLabel
+                                editable: true
+                                from: 0
+                                to: 500
+                                stepSize: 1
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
+                            }
+
+                            // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                            P.SpinPreference {
+                                id: seedPreference
+
+                                name: "seed"
+                                defaultValue: 0
+                                label: qsTr("Seed")
+                                display: P.TextFieldPreference.ExpandLabel
+                                editable: true
+                                from: 0
+                                to: 999999999
+                                stepSize: 1
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
+                            }
+
+                            Heading {
+                                text: qsTr("Repetition")
+                            }
+
+                            P.SliderPreference {
+                                id: penaltyPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "presence_penalty"
+                                defaultValue: -1
+                                label: qsTr("Repetition Penalty")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
+                            }
+
+                            P.SliderPreference {
+                                id: frequencyPreference
+
+                                // Updates (and shows its value) while being dragged.
+                                live: true
+                                name: "frequency_penalty"
+                                defaultValue: -1
+                                label: qsTr("Frequency Penalty")
+                                from: -1
+                                to: 20
+                                stepSize: 1
+                                displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
+                            }
                         }
 
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.")
-                        }
+                    }
 
-                        P.SliderPreference {
-                            id: penaltyPreference
+                    Heading {
+                        text: qsTr("Behavior")
+                    }
 
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "presence_penalty"
-                            defaultValue: -1
-                            label: qsTr("Repetition Penalty")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.")
-                        }
-
-                        P.SliderPreference {
-                            id: topPPreference
-
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "top_p"
-                            defaultValue: -1
-                            label: qsTr("Top P")
-                            from: -1
-                            to: 10
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Only the most likely words, up to this share of probability, are chosen from; lower is more focused. Use it or Temperature, rarely both. Default leaves it to the server.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: topKPreference
-
-                            name: "top_k"
-                            defaultValue: 0
-                            label: qsTr("Top K")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 500
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Only the K most likely words are chosen from. 0 (the default) sends nothing. For Claude, Gemini and custom servers such as Ollama (OpenAI and similar servers do not take it).")
-                        }
-
-                        P.SliderPreference {
-                            id: frequencyPreference
-
-                            // Updates (and shows its value) while being dragged.
-                            live: true
-                            name: "frequency_penalty"
-                            defaultValue: -1
-                            label: qsTr("Frequency Penalty")
-                            from: -1
-                            to: 20
-                            stepSize: 1
-                            displayValue: value < 0 ? qsTr("Default") : (value / 10).toFixed(1)
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Higher makes Yui use the same words less often (each repetition counts). Default leaves it to the server. Not for Claude.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: seedPreference
-
-                            name: "seed"
-                            defaultValue: 0
-                            label: qsTr("Seed")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 999999999
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("The same seed gives the same reply to the same message, for trying out a personality. 0 (the default) is random. Not for Claude; not every server keeps to it.")
-                        }
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
                             id: actionModePreference
@@ -738,7 +824,6 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.")
                         }
-
                     }
 
                     ResetTabButton {
@@ -746,14 +831,26 @@ NVG.Window {
                         windowTitle: coreSettings.title
                         tabTitle: qsTr("Core Tuning")
                         preferences: coreSettings.coreTabPreferences
+                        // The values in the dialog count (and are reset) whether it is open or not.
+                        changed: Yui.anyChanged(shownPreferences.concat(coreSettings.samplingPreferences))
                         onAboutToReset: coreSettings.discardEdits = true
-                        onReset: coreSettings.discardEdits = false
+                        onReset: {
+                            coreSettings.samplingPreferences.forEach(function(preference) {
+                                preference.load();
+                            });
+                            coreSettings.discardEdits = false;
+                        }
                     }
 
                 }
 
                 // ---------------------------------------------------------------- Personality
+                // Under headings: Identity, MHCP Profile, Character Traits.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Identity")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
@@ -774,6 +871,15 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("How Yui calls you. Replaces {{user_title}} in the personality data.")
                         }
+                    }
+
+                    Heading {
+                        text: qsTr("MHCP Profile")
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
                             id: profilePreference
@@ -860,135 +966,114 @@ NVG.Window {
 
                     }
 
+                    // Character Traits: the style on top of the personality (Yui.traitContext), and the
+                    // Quick Replies offered under her messages.
+                    Heading {
+                        text: qsTr("Character Traits")
+                    }
+
+                    P.ObjectPreferenceGroup {
+                        id: traitsGroup
+
+                        Layout.fillWidth: true
+                        defaultValue: coreSettings.targetWidget.settings
+                        syncProperties: true
+
+                        // The fine-tuning in a dialog of its own; passthrough keeps its values in this
+                        // group's object (the settings), as before. The row tells how many are changed.
+                        P.DialogPreference {
+                            label: qsTr("Fine-Tuning")
+                            live: true
+                            passthrough: true
+                            displayValue: {
+                                var changed = coreSettings.traitPreferences.filter(Yui.preferenceChanged).length;
+                                return changed ? qsTr("%1 changed").arg(changed) : qsTr("All default");
+                            }
+
+                            P.SelectPreference {
+                                id: warmthPreference
+
+                                name: "trait_warmth"
+                                label: qsTr("Warmth")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
+
+                            P.SelectPreference {
+                                id: energyPreference
+
+                                name: "trait_energy"
+                                label: qsTr("Energy")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
+
+                            P.SelectPreference {
+                                id: kaomojiPreference
+
+                                name: "trait_kaomoji"
+                                label: qsTr("Kaomoji")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
+
+                            P.SelectPreference {
+                                id: lengthPreference
+
+                                name: "trait_length"
+                                label: qsTr("Reply Length")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
+
+                            P.SelectPreference {
+                                id: formatPreference
+
+                                name: "trait_format"
+                                label: qsTr("Format")
+                                defaultValue: 0
+                                model: [qsTr("Chat"), qsTr("Lists")]
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Fine-tune how Yui talks without editing the personality: a little more or less of each, or Default to leave it to the personality. Lists lets her use simple lists when it helps.")
+                            }
+                        }
+
+                        P.SwitchPreference {
+                            id: quickRepliesPreference
+
+                            name: "quick_replies"
+                            label: qsTr("Quick Replies")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Under her latest message Yui offers two or three short replies you might say next; click one to send it.")
+                        }
+
+                    }
+
                     ResetTabButton {
                         yui: coreSettings.targetWidget
                         windowTitle: coreSettings.title
                         tabTitle: qsTr("Personality")
                         preferences: coreSettings.personaTabPreferences
-                        onAboutToReset: coreSettings.discardEdits = true
-                        onReset: coreSettings.discardEdits = false
-                    }
-
-                }
-
-                // ---------------------------------------------------------------- Pixie Functions
-                SettingsPage {
-                    P.PreferenceGroup {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        P.SwitchPreference {
-                            id: externalBrowserPreference
-
-                            visible: targetWidget.settingsAdvanced
-
-                            name: "external_browser"
-                            defaultValue: false
-                            label: qsTr("External Browser")
+                        groups: [traitsGroup]
+                        // The values in the dialog count (and are reset) whether it is open or not.
+                        changed: Yui.anyChanged(shownPreferences.concat(coreSettings.traitPreferences))
+                        onAboutToReset: {
+                            coreSettings.discardEdits = true;
+                            coreSettings.traitPreferences.forEach(function(preference) {
+                                preference.load();
+                            });
                         }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
-                        }
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: sleepPreference
-
-                            name: "sleep_minutes"
-                            defaultValue: 20
-                            label: qsTr("Standby Mode")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1440
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
-                        }
-
-                        P.SpinPreference {
-                            id: raidPreference
-
-                            name: "raid_minutes"
-                            defaultValue: 25
-                            label: qsTr("Raid Duration")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 5
-                            to: 180
-                            stepSize: 5
-                        }
-
-                        P.SpinPreference {
-                            id: restPreference
-
-                            name: "rest_minutes"
-                            defaultValue: 5
-                            label: qsTr("Rest Duration")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 1
-                            to: 60
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Boss Raid: focus time with Yui, in minutes, then a rest. Start it from her menu or ask her (\"stay with me for 25 minutes\"); meanwhile the crystal turns violet and she does not speak up by herself.")
-                        }
-
-                        P.SelectPreference {
-                            id: searchPreference
-
-                            visible: targetWidget.settingsAdvanced
-                            readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
-
-                            name: "search_engine"
-                            defaultValue: 0
-                            label: qsTr("Search Engine")
-                            model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("Where the searches Yui offers are opened.")
-                        }
-
-                        // Only with Custom chosen above.
-                        P.TextFieldPreference {
-                            id: searchCustomPreference
-
-                            visible: searchPreference.value === 4 && targetWidget.settingsAdvanced
-                            name: "search_custom"
-                            defaultValue: ""
-                            label: qsTr("Custom Search Address")
-                            display: P.TextFieldPreference.ExpandAll
-                            hint: "https://example.com/search?q=%s"
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (searchPreference.value === 4 && targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("%s is replaced by the search words.")
-                        }
-
-                    }
-
-                    ResetTabButton {
-                        yui: coreSettings.targetWidget
-                        windowTitle: coreSettings.title
-                        tabTitle: qsTr("Pixie Functions")
-                        preferences: coreSettings.pixieTabPreferences
-                        onAboutToReset: coreSettings.discardEdits = true
                         onReset: coreSettings.discardEdits = false
                     }
 
@@ -1043,9 +1128,11 @@ NVG.Window {
             onResetRequested: {
                 // Everything but the connection (server, core, address, access key).
                 coreSettings.discardEdits = true;
-                coreSettings.coreTabPreferences.concat(coreSettings.personaTabPreferences, coreSettings.pixieTabPreferences).forEach(function(preference) {
+                coreSettings.coreTabPreferences.concat(coreSettings.personaTabPreferences).forEach(function(preference) {
                     preference.load();
                 });
+                // load() is no edit, so the synced group writes the defaults to the settings by save().
+                traitsGroup.save();
                 coreSettings.discardEdits = false;
             }
         }

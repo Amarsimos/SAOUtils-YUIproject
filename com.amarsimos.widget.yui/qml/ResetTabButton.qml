@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// "Reset This Tab" at the bottom right of a settings tab: grey while none of the tab's shown settings
+// "Reset This Tab" at the bottom of a settings tab, centered as every button of the settings: grey while none of the tab's shown settings
 // differs from its default (changed); a click asks first, then restores those preferences with
 // Preference.load() (each takes its own defaultValue), saves the ObjectPreferenceGroups they are in
 // (groups: load() is no edit, so a synced group would not write the defaults to the settings by
@@ -26,10 +26,8 @@ Button {
     signal aboutToReset()
     signal reset()
 
-    Layout.alignment: Qt.AlignRight
+    Layout.alignment: Qt.AlignHCenter
     Layout.topMargin: 8
-    Layout.rightMargin: 16
-    flat: true
     text: qsTr("Reset This Tab")
     enabled: changed
     onClicked: yui.confirmReset(windowTitle + " · " + tabTitle, function() {

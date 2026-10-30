@@ -105,11 +105,6 @@ NVG.Window {
                 "defaultValue": true
             },
             {
-                "key": "link_start",
-                "preference": linkStartPreference,
-                "defaultValue": true
-            },
-            {
                 "key": "sound_interface",
                 "preference": interfaceSoundsPreference,
                 "defaultValue": true
@@ -170,7 +165,7 @@ NVG.Window {
     // The settings of each tab, for its Reset This Tab button.
     readonly property var avatarTabPreferences: [avatarPreference, fieldPreference, standbyImagePreference, happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
     readonly property var formsTabPreferences: [formPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
-    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference, linkStartPreference]
+    readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
 
     // True while values are put into the preferences (not changes by the user).
     property bool loading: true
@@ -384,6 +379,16 @@ NVG.Window {
                             label: qsTr("Collapsed Form")
                             model: [qsTr("Navigation Pixie"), qsTr("Yui's Heart Crystal")]
                             defaultValue: 0
+                            // Switching keeps her height: the new form takes the size of the one shown
+                            // (the avatar is 300 px high), within its slider's range.
+                            onValueChanged: {
+                                if (styleSettingsWindow.loading)
+                                    return;
+
+                                var shown = targetWidget.collapsedForm === "avatar" ? 300 : (value === 1 ? pixieSizePreference.value : crystalSizePreference.value);
+                                var size = value === 1 ? crystalSizePreference : pixieSizePreference;
+                                size.value = Math.max(size.from, Math.min(size.to, Math.round(shown / 10) * 10));
+                            }
                         }
 
                         SettingNote {
@@ -556,20 +561,6 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The sounds of the chat panel opening and closing.")
-                        }
-
-                        P.SwitchPreference {
-                            id: linkStartPreference
-
-                            name: "link_start"
-                            label: qsTr("Link Start")
-                            defaultValue: true
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("When SAO Utils starts, Yui appears with a short \"Link Start!\" ceremony.")
                         }
                     }
 

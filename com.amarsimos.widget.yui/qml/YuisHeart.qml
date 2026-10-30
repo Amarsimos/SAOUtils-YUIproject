@@ -27,7 +27,7 @@ NVG.Window {
         logResults = logQuery ? targetWidget.searchMessageLog(logQuery, 50) : [];
     }
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, conversation, savedChat]
+    readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, logRecallPreference, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
 
     function refreshLogSize() {
@@ -39,7 +39,7 @@ NVG.Window {
     minimumWidth: 420
     minimumHeight: 420
     width: 520
-    height: 720
+    height: 1008
     transientParent: widget.NVG.View.window
     onClosing: destroy()
 
@@ -77,6 +77,7 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Recall
+                // Under headings: Memory, Context (sent with each request), Chat History.
                 SettingsPage {
                     P.ObjectPreferenceGroup {
                         id: recallGroup
@@ -84,6 +85,10 @@ NVG.Window {
                         Layout.fillWidth: true
                         defaultValue: heartWindow.targetWidget.settings
                         syncProperties: true
+
+                        Heading {
+                            text: qsTr("Memory")
+                        }
 
                         P.SwitchPreference {
                             id: autoMemoryPreference
@@ -117,6 +122,10 @@ NVG.Window {
                             text: qsTr("The heart core is sent with every request. When it is full, the memory used longest ago (unless pinned) becomes a fragment.")
                         }
 
+                        Heading {
+                            text: qsTr("Context")
+                        }
+
                         P.SpinPreference {
                             id: recalled
 
@@ -133,6 +142,26 @@ NVG.Window {
                             visible: heartWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("How many memories related to the current topic are sent with each request (the heart core is always sent). Fewer use fewer tokens.")
+                        }
+
+                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
+                        P.SpinPreference {
+                            id: logRecallPreference
+
+                            name: "log_recall"
+                            label: qsTr("Log Recall")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 10
+                            stepSize: 1
+                            defaultValue: 3
+                        }
+
+                        SettingNote {
+                            visible: heartWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How many older chat messages about the same thing Yui looks up in the recollection log and reads with each request, so she can recall what was said long ago without remembering it. 0 turns it off; fewer use fewer tokens.")
                         }
 
                         P.SpinPreference {
@@ -152,6 +181,10 @@ NVG.Window {
                             visible: heartWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("How many of the latest messages (count) are sent with each request. Fewer use fewer tokens; more let Yui remember more of the conversation.")
+                        }
+
+                        Heading {
+                            text: qsTr("Chat History")
                         }
 
                         P.SpinPreference {
@@ -186,7 +219,12 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Local Memory
+                // Under headings: Transfer, Backup, Recollection Log, Forget Everything.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Transfer")
+                    }
+
                     SettingNote {
                         visible: heartWindow.targetWidget.settingsHelp
                         besidePreferences: true
@@ -200,13 +238,7 @@ NVG.Window {
                         text: qsTr("Include the chat history (private conversations)")
                     }
 
-                    // Inset (16 px each side) so the slanted buttons stay inside the page.
-                    Flow {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
-                        spacing: 8
-
+                    CenteredFlow {
                         Button {
                             text: qsTr("Export")
                             onClicked: heartWindow.targetWidget.exportHeart(withMessages.checked, function(path) {
@@ -236,6 +268,13 @@ NVG.Window {
                             }
                         }
 
+                    }
+
+                    Heading {
+                        text: qsTr("Backup")
+                    }
+
+                    CenteredFlow {
                         Button {
                             text: qsTr("Open Backup Folder")
                             onClicked: heartWindow.targetWidget.openHeartFolder()
@@ -274,15 +313,12 @@ NVG.Window {
                         text: qsTr("Recollection Log")
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
+                    Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: qsTr("%1 messages").arg(heartWindow.logSize)
+                    }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("%1 messages").arg(heartWindow.logSize)
-                        }
+                    CenteredFlow {
 
                         Button {
                             text: qsTr("Clear Log")
@@ -292,6 +328,14 @@ NVG.Window {
                                 heartWindow.refreshLogSize();
                                 heartWindow.searchLog();
                             }, true)
+                        }
+
+                        Button {
+                            text: qsTr("Export Log")
+                            enabled: heartWindow.logSize > 0
+                            onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
+                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
+                            })
                         }
 
                     }
@@ -315,14 +359,6 @@ NVG.Window {
                             selectByMouse: true
                             placeholderText: qsTr("Search the log")
                             onTextChanged: logSearchTimer.restart()
-                        }
-
-                        Button {
-                            text: qsTr("Export Log")
-                            enabled: heartWindow.logSize > 0
-                            onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
-                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
-                            })
                         }
 
                         Timer {
@@ -360,7 +396,7 @@ NVG.Window {
                     }
 
                     Button {
-                        Layout.leftMargin: 16
+                        Layout.alignment: Qt.AlignHCenter
                         text: qsTr("Forget Everything")
                         enabled: heartWindow.targetWidget.heartCache.length > 0
                         onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete all %1 memories of Yui's Heart?").arg(heartWindow.targetWidget.heartCache.length), function() {

@@ -19,6 +19,8 @@ Item {
     property string actionLabel
     property string actionState
     property bool canRegenerate: false
+    // Quick Replies Yui offers: clicking one sends it.
+    property var suggestions: []
     // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
     // strip under the title bar.
     property bool thinking: false
@@ -42,8 +44,9 @@ Item {
     signal linkActivated(string link)
     signal confirmRequested()
     signal regenerateRequested()
+    signal suggestionPicked(string text)
 
-    readonly property bool hasFooter: note !== "" || actionLabel !== "" || canRegenerate
+    readonly property bool hasFooter: note !== "" || actionLabel !== "" || canRegenerate || suggestions.length > 0
     // Width the button bar needs: the action label (up to 220 px) and the buttons, with margins.
     readonly property real footerWidth: actionLabel === "" && !canRegenerate ? 0 : Math.min(actionMeasure.implicitWidth, 220) + buttons.width + 32
     readonly property color orange: "#F1AA03"
@@ -389,6 +392,48 @@ Item {
                     color: "#888888"
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
+                }
+
+                // Quick Replies, as the buttons below.
+                Flow {
+                    visible: messageWindow.suggestions.length > 0
+                    width: parent.width
+                    spacing: 6
+
+                    Repeater {
+                        model: messageWindow.suggestions
+
+                        Rectangle {
+                            width: Math.min(suggestionText.implicitWidth + 18, parent.width)
+                            height: 24
+                            radius: 2
+                            color: suggestionArea.pressed ? messageWindow.orange : (suggestionArea.containsMouse ? "#CCF1AA03" : "#FFFFFF")
+                            border.color: "#D0D0D0"
+
+                            Text {
+                                id: suggestionText
+
+                                anchors.centerIn: parent
+                                width: Math.min(implicitWidth, parent.width - 18)
+                                text: modelData
+                                elide: Text.ElideRight
+                                color: suggestionArea.containsMouse ? "#FFFFFF" : "#BB333333"
+                                font.pixelSize: 12
+                            }
+
+                            MouseArea {
+                                id: suggestionArea
+
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: messageWindow.suggestionPicked(modelData)
+                            }
+
+                        }
+
+                    }
+
                 }
 
                 Item {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map>
+    <value name="icon">{"normal":"nvg://yui.widget.amarsimos.com/icon#crystal.png","hovered":"nvg://yui.widget.amarsimos.com/icon#crystal-hovered.png","pressed":"nvg://yui.widget.amarsimos.com/icon#crystal-pressed.png"}</value>
+    <list name="items">
+        <map>
+            <value name="label">"Open Chat"</value>
+            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#guide.png"}</value>
+            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#yui"}</value>
+        </map>
+        <map>
+            <value name="label">"Weekly Report"</value>
+            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#modify.png"}</value>
+            <value name="action">{"data":{"command":3},"source":"nvg://yui.widget.amarsimos.com/action#yui"}</value>
+        </map>
+        <map>
+            <value name="label">"Mental Health Counseling"</value>
+            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#help.png"}</value>
+            <value name="action">{"data":{"command":3},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
+        </map>
+        <map>
+            <value name="label">"Cardinal System"</value>
+            <value name="icon">{"normal":"nvg://sao.theme.gpbeta.com/icon/item#option.png"}</value>
+            <value name="action">{"data":{"command":0},"source":"nvg://yui.widget.amarsimos.com/action#window"}</value>
+        </map>
+    </list>
+    <value name="style">"nvg://sao.theme.gpbeta.com/shortcut-menu"</value>
+</map>
