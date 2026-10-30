@@ -109,6 +109,8 @@ NVG.Window {
     readonly property var samplingPreferences: [temperaturePreference, topPPreference, topKPreference, seedPreference, penaltyPreference, frequencyPreference]
     readonly property var coreTabPreferences: [maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference]
     // (The profile goes back to MHCP001; saved profiles are kept.)
+    // Personality's fine-tuning, in the Fine-Tuning dialog.
+    readonly property var traitPreferences: [warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference]
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference, warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference, quickRepliesPreference]
     readonly property var pixieTabPreferences: [sleepPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
@@ -852,7 +854,12 @@ NVG.Window {
                 }
 
                 // ---------------------------------------------------------------- Personality
+                // Under headings: Identity, MHCP Profile, Character Traits.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Identity")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
@@ -873,6 +880,15 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("How Yui calls you. Replaces {{user_title}} in the personality data.")
                         }
+                    }
+
+                    Heading {
+                        text: qsTr("MHCP Profile")
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
                             id: profilePreference
@@ -962,7 +978,6 @@ NVG.Window {
                     // Character Traits: the style on top of the personality (Yui.traitContext), and the
                     // Quick Replies offered under her messages.
                     Heading {
-                        level: 2
                         text: qsTr("Character Traits")
                     }
 
@@ -973,55 +988,69 @@ NVG.Window {
                         defaultValue: coreSettings.targetWidget.settings
                         syncProperties: true
 
-                        P.SelectPreference {
-                            id: warmthPreference
+                        // The fine-tuning in a dialog of its own; passthrough keeps its values in this
+                        // group's object (the settings), as before. The row tells how many are changed.
+                        P.DialogPreference {
+                            label: qsTr("Fine-Tuning")
+                            live: true
+                            passthrough: true
+                            displayValue: {
+                                var changed = coreSettings.traitPreferences.filter(Yui.preferenceChanged).length;
+                                return changed ? qsTr("%1 changed").arg(changed) : qsTr("All default");
+                            }
 
-                            name: "trait_warmth"
-                            label: qsTr("Warmth")
-                            defaultValue: 1
-                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
-                        }
+                            P.SelectPreference {
+                                id: warmthPreference
 
-                        P.SelectPreference {
-                            id: energyPreference
+                                name: "trait_warmth"
+                                label: qsTr("Warmth")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
 
-                            name: "trait_energy"
-                            label: qsTr("Energy")
-                            defaultValue: 1
-                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
-                        }
+                            P.SelectPreference {
+                                id: energyPreference
 
-                        P.SelectPreference {
-                            id: kaomojiPreference
+                                name: "trait_energy"
+                                label: qsTr("Energy")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
 
-                            name: "trait_kaomoji"
-                            label: qsTr("Kaomoji")
-                            defaultValue: 1
-                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
-                        }
+                            P.SelectPreference {
+                                id: kaomojiPreference
 
-                        P.SelectPreference {
-                            id: lengthPreference
+                                name: "trait_kaomoji"
+                                label: qsTr("Kaomoji")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
 
-                            name: "trait_length"
-                            label: qsTr("Reply Length")
-                            defaultValue: 1
-                            model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
-                        }
+                            P.SelectPreference {
+                                id: lengthPreference
 
-                        P.SelectPreference {
-                            id: formatPreference
+                                name: "trait_length"
+                                label: qsTr("Reply Length")
+                                defaultValue: 1
+                                model: [qsTr("Less"), qsTr("Default"), qsTr("More")]
+                            }
 
-                            name: "trait_format"
-                            label: qsTr("Format")
-                            defaultValue: 0
-                            model: [qsTr("Chat"), qsTr("Lists")]
-                        }
+                            P.SelectPreference {
+                                id: formatPreference
 
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Fine-tune how Yui talks without editing the personality: a little more or less of each, or Default to leave it to the personality. Lists lets her use simple lists when it helps.")
+                                name: "trait_format"
+                                label: qsTr("Format")
+                                defaultValue: 0
+                                model: [qsTr("Chat"), qsTr("Lists")]
+                            }
+
+                            SettingNote {
+                                visible: targetWidget.settingsHelp
+                                besidePreferences: true
+                                // The dialog takes its size from its content: wrapped at a set width.
+                                wrapWidth: 360
+                                text: qsTr("Fine-tune how Yui talks without editing the personality: a little more or less of each, or Default to leave it to the personality. Lists lets her use simple lists when it helps.")
+                            }
                         }
 
                         P.SwitchPreference {
@@ -1046,33 +1075,29 @@ NVG.Window {
                         tabTitle: qsTr("Personality")
                         preferences: coreSettings.personaTabPreferences
                         groups: [traitsGroup]
-                        onAboutToReset: coreSettings.discardEdits = true
+                        // The values in the dialog count (and are reset) whether it is open or not.
+                        changed: Yui.anyChanged(shownPreferences.concat(coreSettings.traitPreferences))
+                        onAboutToReset: {
+                            coreSettings.discardEdits = true;
+                            coreSettings.traitPreferences.forEach(function(preference) {
+                                preference.load();
+                            });
+                        }
                         onReset: coreSettings.discardEdits = false
                     }
 
                 }
 
                 // ---------------------------------------------------------------- Pixie Functions
+                // Under headings: Standby, Browsing (advanced only).
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Standby")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
-
-                        P.SwitchPreference {
-                            id: externalBrowserPreference
-
-                            visible: targetWidget.settingsAdvanced
-
-                            name: "external_browser"
-                            defaultValue: false
-                            label: qsTr("External Browser")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
-                        }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
                         P.SpinPreference {
@@ -1092,6 +1117,33 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
+                        }
+                    }
+
+                    Heading {
+                        visible: targetWidget.settingsAdvanced
+                        text: qsTr("Browsing")
+                    }
+
+                    P.PreferenceGroup {
+                        visible: targetWidget.settingsAdvanced
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.SwitchPreference {
+                            id: externalBrowserPreference
+
+                            visible: targetWidget.settingsAdvanced
+
+                            name: "external_browser"
+                            defaultValue: false
+                            label: qsTr("External Browser")
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
+                            besidePreferences: true
+                            text: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
                         }
 
                         P.SelectPreference {
@@ -1129,7 +1181,6 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("%s is replaced by the search words.")
                         }
-
                     }
 
                     ResetTabButton {
