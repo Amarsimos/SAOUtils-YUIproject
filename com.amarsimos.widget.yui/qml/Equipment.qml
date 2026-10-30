@@ -384,6 +384,16 @@ NVG.Window {
                             label: qsTr("Collapsed Form")
                             model: [qsTr("Navigation Pixie"), qsTr("Yui's Heart Crystal")]
                             defaultValue: 0
+                            // Switching keeps her height: the new form takes the size of the one shown
+                            // (the avatar is 300 px high), within its slider's range.
+                            onValueChanged: {
+                                if (styleSettingsWindow.loading)
+                                    return;
+
+                                var shown = targetWidget.collapsedForm === "avatar" ? 300 : (value === 1 ? pixieSizePreference.value : crystalSizePreference.value);
+                                var size = value === 1 ? crystalSizePreference : pixieSizePreference;
+                                size.value = Math.max(size.from, Math.min(size.to, Math.round(shown / 10) * 10));
+                            }
                         }
 
                         SettingNote {
