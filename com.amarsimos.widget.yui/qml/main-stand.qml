@@ -232,6 +232,8 @@ T.Widget {
     // shrinks and fades out as the view opens, and comes back only once the view has gone.
     property real collapsedReveal: 1
     readonly property bool collapsedShown: !showChat || collapsedReveal > 0
+    // The collapsed form during Link Start: hidden until the crystal bursts, then fading in with the flash.
+    readonly property real linkStartReveal: linkStartAnimation.running ? Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.25)) : 1
     property var yuiView: null
 
     TextMetrics {
@@ -4114,7 +4116,7 @@ T.Widget {
         anchors.topMargin: 6
         anchors.bottomMargin: 6
         fillMode: Image.PreserveAspectFit
-        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal
+        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal * widget.linkStartReveal
 
         SequentialAnimation on hover {
             running: pixieImage.visible && !widget.sleeping
@@ -4157,7 +4159,7 @@ T.Widget {
 
         visible: widget.collapsedShown && widget.collapsedForm === "crystal"
         anchors.fill: parent
-        opacity: widget.collapsedReveal
+        opacity: widget.collapsedReveal * widget.linkStartReveal
         scale: 0.8 + 0.2 * widget.collapsedReveal
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
@@ -5352,7 +5354,7 @@ T.Widget {
 
         configuration: characterImage.configuration
         visible: widget.collapsedShown && widget.collapsedForm === "avatar"
-        opacity: characterImage.opacity * widget.collapsedReveal
+        opacity: characterImage.opacity * widget.collapsedReveal * widget.linkStartReveal
         scale: 0.8 + 0.2 * widget.collapsedReveal
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
