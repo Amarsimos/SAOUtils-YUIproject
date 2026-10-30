@@ -159,16 +159,47 @@ T.Widget {
         if (widget.settings.initialized && !seedlingMode)
             Qt.callLater(applyCollapsedSize);
 
+        if (formChosen && !seedlingMode && previousForm && (previousForm === "crystal") !== (collapsedForm === "crystal")) {
+            morphFrom = previousForm;
+            formMorphAnimation.restart();
+        }
+        previousForm = collapsedForm;
     }
-    // The form chosen in Equipment: changing it there plays the Link Start effect with the new form
-    // (not while the widget starts, formChosen is set once it has).
-    readonly property string chosenForm: styles.collapsed_form || ""
+    // Switching between the crystal and the character (in Equipment) plays its own transition: the old
+    // form shrinks into a point of light and the new one grows out of it (formMorph 0 … 1, see
+    // formSwitchEffect). Not while the widget starts (formChosen is set once it has).
     property bool formChosen: false
-    onChosenFormChanged: {
-        if (formChosen && !seedlingMode)
-            linkStartAnimation.restart();
+    property string previousForm: ""
+    property string morphFrom: ""
+    property real formMorph: 1
+    readonly property bool morphing: formMorphAnimation.running
 
+    // Whether a collapsed form is drawn (as the current form or the one leaving), and how much: its
+    // opacity and scale factors during the transition and Link Start.
+    function formVisible(form) {
+        return collapsedForm === form || (morphing && morphFrom === form);
     }
+
+    function formPresence(form) {
+        if (!morphing)
+            return linkStartReveal;
+
+        if (form === collapsedForm)
+            return Math.max(0, Math.min(1, (formMorph - 0.5) / 0.35));
+
+        return Math.max(0, 1 - formMorph / 0.4);
+    }
+
+    function formScale(form) {
+        if (!morphing)
+            return linkStartGrow;
+
+        if (form === collapsedForm)
+            return 0.2 + 0.8 * (1 - Math.pow(1 - Math.max(0, Math.min(1, (formMorph - 0.5) / 0.5)), 3));
+
+        return 1 - 0.8 * Math.pow(Math.min(1, formMorph / 0.5), 2);
+    }
+
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
     // editable in System Console), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
@@ -3928,6 +3959,7 @@ T.Widget {
     Component.onDestruction: Link.Server.unregister(widget)
     Component.onCompleted: {
         Qt.callLater(function() {
+            widget.previousForm = widget.collapsedForm;
             widget.formChosen = true;
         });
         if (Yui.migrateSeedlingKeys(widget.settings))
@@ -4124,13 +4156,13 @@ T.Widget {
         property real hover: 0
 
         configuration: widget.styles.pixie_image_path
-        visible: widget.collapsedShown && widget.collapsedForm === "pixie"
-        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
+        visible: widget.collapsedShown && widget.formVisible("pixie")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("pixie")
         anchors.fill: parent
         anchors.topMargin: 6
         anchors.bottomMargin: 6
         fillMode: Image.PreserveAspectFit
-        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal * widget.linkStartReveal
+        opacity: (widget.sleeping ? 0.6 : 1) * widget.collapsedReveal * widget.formPresence("pixie")
 
         SequentialAnimation on hover {
             running: pixieImage.visible && !widget.sleeping
@@ -4171,10 +4203,10 @@ T.Widget {
     YuiCrystal {
         id: crystalForm
 
-        visible: widget.collapsedShown && widget.collapsedForm === "crystal"
+        visible: widget.collapsedShown && widget.formVisible("crystal")
         anchors.fill: parent
-        opacity: widget.collapsedReveal * widget.linkStartReveal
-        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
+        opacity: widget.collapsedReveal * widget.formPresence("crystal")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("crystal")
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
 
@@ -4270,6 +4302,66 @@ T.Widget {
             from: 0
             to: 1
             duration: 2800
+        }
+
+    }
+
+    // Switching between the crystal and the character: a point of light the old form shrinks into and the
+    // new one grows out of. Into the crystal the motes gather to it; out of it they fly away.
+    Item {
+        id: formSwitchEffect
+
+        readonly property bool toCrystal: widget.collapsedForm === "crystal"
+        readonly property real glow: Math.max(0, 1 - Math.abs(widget.formMorph - 0.45) / 0.3)
+
+        anchors.fill: parent
+        z: 200
+        visible: widget.morphing
+
+        RadialGradient {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height) * (0.2 + 0.6 * formSwitchEffect.glow)
+            height: width
+            opacity: formSwitchEffect.glow * 0.9
+
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#FFFFFFFF" }
+                GradientStop { position: 0.25; color: formSwitchEffect.toCrystal ? "#C0B3E5FC" : "#C0FFF59D" }
+                GradientStop { position: 0.5; color: "#00FFFFFF" }
+            }
+        }
+
+        Repeater {
+            model: 16
+
+            Rectangle {
+                // 0 at the center, 1 out at the mote's reach: coming in (0 - 0.45) into the crystal,
+                // going out (0.45 - 1) from it.
+                readonly property real out: formSwitchEffect.toCrystal ? Math.max(0, 1 - widget.formMorph / 0.45) : Math.max(0, Math.min(1, (widget.formMorph - 0.45) / 0.55))
+                readonly property real angle: index * 2.399963
+                readonly property real reach: Math.min(formSwitchEffect.width, formSwitchEffect.height) * (0.3 + 0.2 * ((index * 7) % 11) / 10)
+                readonly property real travel: 1 - Math.pow(1 - out, 3)
+
+                visible: out > 0
+                width: 3 + (index % 3) * 1.5
+                height: width
+                rotation: 45
+                x: formSwitchEffect.width / 2 - width / 2 + Math.cos(angle) * reach * travel
+                y: formSwitchEffect.height / 2 - height / 2 + Math.sin(angle) * reach * travel
+                color: index % 2 ? "#FFFFFF" : (formSwitchEffect.toCrystal ? "#B3E5FC" : "#FFF59D")
+                opacity: (formSwitchEffect.toCrystal ? Math.min(1, (1 - out) * 4) * Math.min(1, out * 6) : 1 - out) * 0.95
+            }
+
+        }
+
+        NumberAnimation {
+            id: formMorphAnimation
+
+            target: widget
+            property: "formMorph"
+            from: 0
+            to: 1
+            duration: 1400
         }
 
     }
@@ -5374,9 +5466,9 @@ T.Widget {
         id: avatarImage
 
         configuration: characterImage.configuration
-        visible: widget.collapsedShown && widget.collapsedForm === "avatar"
-        opacity: characterImage.opacity * widget.collapsedReveal * widget.linkStartReveal
-        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.linkStartGrow
+        visible: widget.collapsedShown && widget.formVisible("avatar")
+        opacity: characterImage.opacity * widget.collapsedReveal * widget.formPresence("avatar")
+        scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("avatar")
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
 
