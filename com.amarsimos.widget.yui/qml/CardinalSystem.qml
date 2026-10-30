@@ -369,7 +369,12 @@ NVG.Window {
                 currentIndex: tabs.shownIndex
 
                 // ---------------------------------------------------------------- Link
+                // The API settings only, under headings: the server, the core (model), the connection test.
                 SettingsPage {
+                    Heading {
+                        text: qsTr("Server")
+                    }
+
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
@@ -396,6 +401,46 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("The AI service Yui connects to. Each server keeps its own core, address and access key.")
                         }
+
+                        P.TextFieldPreference {
+                            id: apiEndpointPreference
+                            visible: targetWidget.settingsAdvanced
+
+                            name: "api_endpoint"
+                            label: qsTr("Server Address")
+                            display: P.TextFieldPreference.ExpandAll
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
+                            besidePreferences: true
+                            text: qsTr("The API endpoint URL. Change it only when using a proxy or a self-hosted service.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: apiKeyPreference
+
+                            name: "api_key"
+                            label: qsTr("Access Key")
+                            display: P.TextFieldPreference.ExpandAll
+                            echoMode: TextInput.Password
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("The API key of this server. Each server keeps its own key.")
+                        }
+                    }
+
+
+                    Heading {
+                        text: qsTr("Core")
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         P.SelectPreference {
                             id: modelPreference
@@ -464,53 +509,16 @@ NVG.Window {
                             besidePreferences: true
                             text: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
                         }
+                    }
 
-                        P.TextFieldPreference {
-                            id: apiEndpointPreference
-                            visible: targetWidget.settingsAdvanced
 
-                            name: "api_endpoint"
-                            label: qsTr("Server Address")
-                            display: P.TextFieldPreference.ExpandAll
-                        }
+                    Heading {
+                        text: qsTr("Connection Test")
+                    }
 
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("The API endpoint URL. Change it only when using a proxy or a self-hosted service.")
-                        }
-
-                        P.TextFieldPreference {
-                            id: apiKeyPreference
-
-                            name: "api_key"
-                            label: qsTr("Access Key")
-                            display: P.TextFieldPreference.ExpandAll
-                            echoMode: TextInput.Password
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("The API key of this server. Each server keeps its own key.")
-                        }
-
-                        P.SelectPreference {
-                            id: thinkingPreference
-
-                            readonly property var ids: ["off", "default", "low", "medium", "high"]
-
-                            name: "thinking_depth"
-                            defaultValue: 1
-                            label: qsTr("Thinking Depth")
-                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
-                        }
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
 
                         RowLayout {
                             spacing: 20
@@ -555,6 +563,21 @@ NVG.Window {
                         }
                     }
 
+                    // Resets the shown server's core and address (the scanned list, Manual Core ID);
+                    // the server chosen and its access key are kept.
+                    ResetTabButton {
+                        yui: coreSettings.targetWidget
+                        windowTitle: coreSettings.title
+                        tabTitle: qsTr("Link")
+                        changed: shownProvider >= 0 && (modelPreference.value !== 0 || shownFetchedModels !== null || customModelPreference.value !== "" || apiEndpointPreference.value !== targetWidget.providers[shownProvider].endpoint)
+                        onReset: {
+                            showProvider(shownProvider, {
+                                "api_key": apiKeyPreference.value
+                            });
+                            scheduleApply();
+                        }
+                    }
+
                 }
 
                 // ---------------------------------------------------------------- Core Tuning
@@ -562,6 +585,23 @@ NVG.Window {
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
+
+                        P.SelectPreference {
+                            id: thinkingPreference
+
+                            readonly property var ids: ["off", "default", "low", "medium", "high"]
+
+                            name: "thinking_depth"
+                            defaultValue: 1
+                            label: qsTr("Thinking Depth")
+                            model: [qsTr("Off"), qsTr("Default"), qsTr("Low"), qsTr("Medium"), qsTr("High")]
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
+                        }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
                         P.SpinPreference {
