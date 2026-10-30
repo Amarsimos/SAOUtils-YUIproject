@@ -160,6 +160,15 @@ T.Widget {
             Qt.callLater(applyCollapsedSize);
 
     }
+    // The form chosen in Equipment: changing it there plays the Link Start effect with the new form
+    // (not while the widget starts, formChosen is set once it has).
+    readonly property string chosenForm: styles.collapsed_form || ""
+    property bool formChosen: false
+    onChosenFormChanged: {
+        if (formChosen && !seedlingMode)
+            linkStartAnimation.restart();
+
+    }
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
     // editable in System Console), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
@@ -3918,6 +3927,9 @@ T.Widget {
     visible: true
     Component.onDestruction: Link.Server.unregister(widget)
     Component.onCompleted: {
+        Qt.callLater(function() {
+            widget.formChosen = true;
+        });
         if (Yui.migrateSeedlingKeys(widget.settings))
             console.log("migrated: lab_* settings renamed to seedling_*");
 
