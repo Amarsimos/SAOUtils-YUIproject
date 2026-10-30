@@ -3961,13 +3961,10 @@ T.Widget {
             widget.settings.meeting_day = Qt.formatDate(new Date(), "yyyy-MM-dd");
 
         // The Link Start ceremony (Equipment), when SAO Utils starts the widget.
-        if (styles.link_start !== false) {
+        // No sound: SAO Utils plays its own "Link Start!" when it starts.
+        if (styles.link_start !== false)
             linkStartAnimation.start();
-            // SAO Utils' own "Link Start!" voice (the one chosen in its sound settings).
-            if (interfaceSounds)
-                NVG.SystemCall.playSound(NVG.SFX.LinkStart);
 
-        }
 
         // Continue the saved conversation (welcoming the user back); greet when there is none.
         if (restoreHistory())
