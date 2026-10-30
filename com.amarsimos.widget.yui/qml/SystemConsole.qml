@@ -20,6 +20,8 @@ NVG.Window {
     property int changedThresholds: 0
     // The action switches, for Reset This Tab and the title bar's Reset.
     readonly property var switchPreferences: [webSwitch, launchSwitch, findSwitch, killSwitch]
+    // Where web pages and searches open, for the same resets.
+    readonly property var browsingPreferences: [externalBrowserPreference, searchPreference, searchCustomPreference]
 
     function recount() {
         var thresholds = 0;
@@ -51,10 +53,10 @@ NVG.Window {
         ledgerGroup.save();
     }
 
-    // Authority: the action switches. The es.exe path and the two process lists are the user's own
+    // Authority: the action switches and where web pages and searches open. The es.exe path and the two process lists are the user's own
     // entries and stay.
     function resetAuthority() {
-        switchPreferences.forEach(function(preference) {
+        switchPreferences.concat(browsingPreferences).forEach(function(preference) {
             preference.load();
         });
         authorityGroup.save();
@@ -385,6 +387,88 @@ NVG.Window {
                         text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
                     }
 
+                    // Where Open Web Pages and Search opens them (moved from Cardinal System): synced by
+                    // hand, as the engine is kept by its id; shown while that action is on.
+                    P.PreferenceGroup {
+                        id: browsingGroup
+
+                        property bool ready: false
+
+                        function show() {
+                            ready = false;
+                            var settings = consoleWindow.targetWidget.settings;
+                            externalBrowserPreference.value = settings.external_browser === true;
+                            searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
+                            searchCustomPreference.value = settings.search_custom || "";
+                            ready = true;
+                        }
+
+                        function store() {
+                            if (!ready)
+                                return ;
+
+                            var settings = consoleWindow.targetWidget.settings;
+                            settings.external_browser = !!externalBrowserPreference.value;
+                            settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
+                            settings.search_custom = String(searchCustomPreference.value || "").trim();
+                        }
+
+                        visible: webSwitch.value
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Component.onCompleted: show()
+
+                        P.SwitchPreference {
+                            id: externalBrowserPreference
+
+                            defaultValue: false
+                            label: qsTr("External Browser")
+                            onValueChanged: browsingGroup.store()
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
+                        }
+
+                        P.SelectPreference {
+                            id: searchPreference
+
+                            readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
+
+                            defaultValue: 0
+                            label: qsTr("Search Engine")
+                            model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
+                            onValueChanged: browsingGroup.store()
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Where the searches Yui offers are opened.")
+                        }
+
+                        // Only with Custom chosen above.
+                        P.TextFieldPreference {
+                            id: searchCustomPreference
+
+                            visible: searchPreference.value === 4
+                            defaultValue: ""
+                            label: qsTr("Custom Search Address")
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: "https://example.com/search?q=%s"
+                            onValueChanged: browsingGroup.store()
+                        }
+
+                        SettingNote {
+                            visible: consoleWindow.targetWidget.settingsHelp && searchPreference.value === 4
+                            besidePreferences: true
+                            text: qsTr("%s is replaced by the search words.")
+                        }
+
+                    }
+
                     // es.exe: synced by hand, as surrounding quotes from "Copy as path" are dropped and
                     // Yui fills it in herself once she finds es.exe (settingsRevision).
                     P.PreferenceGroup {
@@ -479,7 +563,7 @@ NVG.Window {
                         yui: consoleWindow.targetWidget
                         windowTitle: consoleWindow.title
                         tabTitle: qsTr("Authority")
-                        preferences: consoleWindow.switchPreferences
+                        preferences: consoleWindow.switchPreferences.concat(consoleWindow.browsingPreferences)
                         groups: [authorityGroup]
                     }
 

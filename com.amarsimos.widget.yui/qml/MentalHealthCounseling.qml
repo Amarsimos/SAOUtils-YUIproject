@@ -7,7 +7,7 @@ import QtQuick.Layouts 1.12
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
 // Yui's own task as MHCP-001, caring for the player. The settings are grouped by what they do:
-// Companion (greetings, speaking up by herself, the weather), Care (rest reminders, the daily mood
+// Companion (greetings, speaking up by herself, standby, the weather), Care (rest reminders, the daily mood
 // check, the Sunday report) and Bond (birthday and the day of meeting); Records holds no settings, only
 // what was recorded (the daily moods, Yui's weekly reports), to become a window of its own later.
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
@@ -21,7 +21,7 @@ NVG.Window {
     property var moods: []
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var companionPreferences: [greetPreference, idleChatPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
+    readonly property var companionPreferences: [greetPreference, idleChatPreference, sleepPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
     readonly property var carePreferences: [carePreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
@@ -116,6 +116,25 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.")
+                        }
+
+                        P.SpinPreference {
+                            id: sleepPreference
+
+                            name: "sleep_minutes"
+                            defaultValue: 20
+                            label: qsTr("Standby Mode")
+                            display: P.TextFieldPreference.ExpandLabel
+                            editable: true
+                            from: 0
+                            to: 1440
+                            stepSize: 1
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
                         }
 
                         P.SwitchPreference {

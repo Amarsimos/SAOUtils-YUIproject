@@ -87,8 +87,6 @@ NVG.Window {
         targetWidget.settings.system_prompt = systemPromptPreference.value;
         targetWidget.settings.persona = profileNames[shownProfile] || builtInProfile;
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
-        targetWidget.settings.external_browser = !!externalBrowserPreference.value;
-        targetWidget.settings.sleep_minutes = sleepPreference.value;
         targetWidget.settings.max_tokens = maxTokensPreference.value;
         targetWidget.settings.thinking_depth = thinkingPreference.ids[thinkingPreference.value] || "default";
         targetWidget.settings.temperature = temperaturePreference.value;
@@ -99,8 +97,6 @@ NVG.Window {
         targetWidget.settings.seed = seedPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
         targetWidget.settings.small_model = !!smallModelPreference.value;
-        targetWidget.settings.search_engine = searchPreference.ids[searchPreference.value] || "bing";
-        targetWidget.settings.search_custom = String(searchCustomPreference.value || "").trim();
     }
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
@@ -112,7 +108,6 @@ NVG.Window {
     // Personality's fine-tuning, in the Fine-Tuning dialog.
     readonly property var traitPreferences: [warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference]
     readonly property var personaTabPreferences: [userTitlePreference, profilePreference, systemPromptPreference, warmthPreference, energyPreference, kaomojiPreference, lengthPreference, formatPreference, quickRepliesPreference]
-    readonly property var pixieTabPreferences: [sleepPreference, externalBrowserPreference, searchPreference, searchCustomPreference]
 
     readonly property string builtInProfile: "MHCP001"
     property var personas: []
@@ -295,8 +290,6 @@ NVG.Window {
         profilePreference.value = shownProfile;
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
-        externalBrowserPreference.value = settings.external_browser === true;
-        sleepPreference.value = settings.sleep_minutes !== undefined ? settings.sleep_minutes : 20;
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
         // The older Thinking switch turned off is the depth "off".
         thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || "off"));
@@ -308,10 +301,8 @@ NVG.Window {
         seedPreference.value = settings.seed > 0 ? settings.seed : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === true;
-        searchPreference.value = Math.max(0, searchPreference.ids.indexOf(settings.search_engine || "bing"));
-        searchCustomPreference.value = settings.search_custom || "";
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference, externalBrowserPreference, searchPreference, searchCustomPreference, sleepPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -345,9 +336,9 @@ NVG.Window {
 
         anchors.fill: parent
 
-        // Four tabs (as Yui's Heart and Equipment): Link (the server), Core Tuning (how the model
-        // answers), Personality, Pixie Functions (what Yui does by herself). The last tab shown is
-        // remembered.
+        // Three tabs, the AI itself: Link (the server), Core Tuning (how the model answers),
+        // Personality. The last tab shown is remembered. (Standby Mode is in Mental Health Counseling,
+        // the browser and search engine in System Console.)
         ColumnLayout {
             anchors.fill: parent
             // Little room at the sides: the settings have their own 16 px padding.
@@ -361,9 +352,9 @@ NVG.Window {
                 id: tabs
 
                 Layout.fillWidth: true
-                currentIndex: Math.max(0, Math.min(3, targetWidget.settings.cardinal_tab || 0))
+                currentIndex: Math.max(0, Math.min(2, targetWidget.settings.cardinal_tab || 0))
                 onCurrentIndexChanged: targetWidget.settings.cardinal_tab = currentIndex
-                model: [qsTr("Link"), qsTr("Core Tuning"), qsTr("Personality"), qsTr("Pixie Functions")]
+                model: [qsTr("Link"), qsTr("Core Tuning"), qsTr("Personality")]
                 // Core Tuning holds advanced settings only.
                 hiddenTabs: targetWidget.settingsAdvanced ? [] : [1]
             }
@@ -1088,112 +1079,6 @@ NVG.Window {
 
                 }
 
-                // ---------------------------------------------------------------- Pixie Functions
-                // Under headings: Standby, Browsing (advanced only).
-                SettingsPage {
-                    Heading {
-                        text: qsTr("Standby")
-                    }
-
-                    P.PreferenceGroup {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: sleepPreference
-
-                            name: "sleep_minutes"
-                            defaultValue: 20
-                            label: qsTr("Standby Mode")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1440
-                            stepSize: 1
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
-                        }
-                    }
-
-                    Heading {
-                        visible: targetWidget.settingsAdvanced
-                        text: qsTr("Browsing")
-                    }
-
-                    P.PreferenceGroup {
-                        visible: targetWidget.settingsAdvanced
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        P.SwitchPreference {
-                            id: externalBrowserPreference
-
-                            visible: targetWidget.settingsAdvanced
-
-                            name: "external_browser"
-                            defaultValue: false
-                            label: qsTr("External Browser")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("Open the links and searches Yui offers in the system's default browser instead of SAO Utils' built-in browser.")
-                        }
-
-                        P.SelectPreference {
-                            id: searchPreference
-
-                            visible: targetWidget.settingsAdvanced
-                            readonly property var ids: ["bing", "google", "baidu", "duckduckgo", "custom"]
-
-                            name: "search_engine"
-                            defaultValue: 0
-                            label: qsTr("Search Engine")
-                            model: ["Bing", "Google", qsTr("Baidu"), "DuckDuckGo", qsTr("Custom")]
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("Where the searches Yui offers are opened.")
-                        }
-
-                        // Only with Custom chosen above.
-                        P.TextFieldPreference {
-                            id: searchCustomPreference
-
-                            visible: searchPreference.value === 4 && targetWidget.settingsAdvanced
-                            name: "search_custom"
-                            defaultValue: ""
-                            label: qsTr("Custom Search Address")
-                            display: P.TextFieldPreference.ExpandAll
-                            hint: "https://example.com/search?q=%s"
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && (searchPreference.value === 4 && targetWidget.settingsAdvanced)
-                            besidePreferences: true
-                            text: qsTr("%s is replaced by the search words.")
-                        }
-                    }
-
-                    ResetTabButton {
-                        yui: coreSettings.targetWidget
-                        windowTitle: coreSettings.title
-                        tabTitle: qsTr("Pixie Functions")
-                        preferences: coreSettings.pixieTabPreferences
-                        onAboutToReset: coreSettings.discardEdits = true
-                        onReset: coreSettings.discardEdits = false
-                    }
-
-                }
-
             }
 
         }
@@ -1243,7 +1128,7 @@ NVG.Window {
             onResetRequested: {
                 // Everything but the connection (server, core, address, access key).
                 coreSettings.discardEdits = true;
-                coreSettings.coreTabPreferences.concat(coreSettings.personaTabPreferences, coreSettings.pixieTabPreferences).forEach(function(preference) {
+                coreSettings.coreTabPreferences.concat(coreSettings.personaTabPreferences).forEach(function(preference) {
                     preference.load();
                 });
                 // load() is no edit, so the synced group writes the defaults to the settings by save().

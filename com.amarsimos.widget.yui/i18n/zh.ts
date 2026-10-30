@@ -769,6 +769,10 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
+        <source>Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.</source>
+        <translation>超过这么多分钟没有互动，结衣会进入待机睡眠；点击她即可唤醒。0 为关闭。</translation>
+    </message>
+    <message>
         <location filename="../qml/MentalHealthCounseling.qml" line="36"/>
         <location filename="../qml/MentalHealthCounseling.qml" line="386"/>
         <location filename="../qml/MentalHealthCounseling.qml" line="451"/>
@@ -1445,6 +1449,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 </context>
 <context>
     <name>SystemConsole</name>
+    <message>
+        <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
+        <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
+    </message>
+    <message>
+        <source>Where the searches Yui offers are opened.</source>
+        <translation>结衣提供的搜索在哪个搜索引擎中打开。</translation>
+    </message>
+    <message>
+        <source>%s is replaced by the search words.</source>
+        <translation>%s 会被替换为搜索词。</translation>
+    </message>
     <message>
         <location filename="../qml/SystemConsole.qml" line="404"/>
         <source>es.exe Path</source>
