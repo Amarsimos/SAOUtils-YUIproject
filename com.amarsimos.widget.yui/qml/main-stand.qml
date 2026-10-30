@@ -4227,19 +4227,21 @@ T.Widget {
 
         }
 
-        // The flash Yui appears in.
-        Rectangle {
+        // The flash Yui appears in: a soft round light, fading out to its edge (a blurred circle was cut
+        // square at the edge of its layer).
+        RadialGradient {
             readonly property real flash: linkStartEffect.progress < 0.55 ? 0 : Math.max(0, 1 - (linkStartEffect.progress - 0.55) / 0.3)
 
             anchors.centerIn: parent
             width: Math.min(parent.width, parent.height) * (0.3 + 0.7 * (1 - flash))
             height: width
-            radius: width / 2
-            color: "#FFFFFF"
+            visible: flash > 0
             opacity: flash * 0.8
-            layer.enabled: true
-            layer.effect: FastBlur {
-                radius: 48
+
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#FFFFFFFF" }
+                GradientStop { position: 0.25; color: "#C0FFFFFF" }
+                GradientStop { position: 0.5; color: "#00FFFFFF" }
             }
         }
 
