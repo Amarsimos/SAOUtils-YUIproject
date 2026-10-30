@@ -4187,6 +4187,9 @@ T.Widget {
         property real progress: 0
         // The crystal's height: a third of the widget's shorter side.
         readonly property real crystalSize: Math.min(width, height) / 3
+        // With the crystal as her collapsed form it is turned around: the motes gather into the flash
+        // (0 - 0.55) and the crystal grows in it, so the crystal never breaks and comes back.
+        readonly property bool gather: widget.collapsedForm === "crystal"
 
         anchors.fill: parent
         z: 200
@@ -4196,6 +4199,7 @@ T.Widget {
         YuiCrystal {
             readonly property real grown: Math.min(1, linkStartEffect.progress / 0.3)
 
+            visible: !linkStartEffect.gather
             anchors.centerIn: parent
             width: linkStartEffect.crystalSize * 0.67
             height: linkStartEffect.crystalSize
@@ -4204,12 +4208,13 @@ T.Widget {
             scale: 0.6 + 0.4 * grown + (linkStartEffect.progress > 0.3 ? 0.06 * Math.sin(linkStartEffect.progress * 40) : 0)
         }
 
-        // The burst: motes of light flying out from the crystal and fading (0.55 - 1).
+        // The burst: motes of light flying out from the crystal and fading (0.55 - 1); or gathering
+        // from afar, brightening as they come (0 - 0.55).
         Repeater {
             model: 28
 
             Rectangle {
-                readonly property real burst: Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45))
+                readonly property real burst: linkStartEffect.gather ? Math.max(0, 1 - linkStartEffect.progress / 0.55) : Math.max(0, Math.min(1, (linkStartEffect.progress - 0.55) / 0.45))
                 // Each mote its own direction and reach, the same every time.
                 readonly property real angle: index * 2.399963
                 readonly property real reach: Math.min(linkStartEffect.width, linkStartEffect.height) * (0.25 + 0.25 * ((index * 7) % 11) / 10)
@@ -4222,7 +4227,7 @@ T.Widget {
                 x: linkStartEffect.width / 2 - width / 2 + Math.cos(angle) * reach * travel
                 y: linkStartEffect.height / 2 - height / 2 + Math.sin(angle) * reach * travel
                 color: index % 3 === 0 ? "#FFFFFF" : (index % 3 === 1 ? "#B3E5FC" : "#FFF59D")
-                opacity: (1 - burst) * 0.95
+                opacity: (linkStartEffect.gather ? Math.min(1, (1 - burst) * 4) * Math.min(1, burst * 6) : 1 - burst) * 0.95
             }
 
         }
