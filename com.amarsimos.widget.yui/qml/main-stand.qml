@@ -523,7 +523,7 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + mediaExtras(query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + mediaExtras() + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -667,9 +667,9 @@ T.Widget {
         };
     }
 
-    // Sent when the message is about music.
-    function mediaExtras(query) {
-        return Yui.mediaWanted(query) ? Yui.mediaContext(mediaInfo()) : "";
+    // Sent with every request while something plays.
+    function mediaExtras() {
+        return Yui.mediaContext(mediaInfo());
     }
 
     // System Console: what Media Player reads now, then Play / Pause.

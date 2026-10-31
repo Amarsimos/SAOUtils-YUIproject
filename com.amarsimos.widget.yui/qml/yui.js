@@ -1196,19 +1196,14 @@ function mediaCommand(value) {
     return "";
 }
 
-// Media: whether the user's message is about what is playing, so the track is sent with it.
-function mediaWanted(query) {
-    return /音乐|歌|曲|播放|在放|放的|在听|听的|听什么|这首|那首|旋律|bgm|music|song|playing|track|tune/i.test(String(query || ""));
-}
-
-// Media: the track playing as a line for the AI, "" when nothing is. info: {title, artist, player,
-// playing (true, false or undefined when unknown)}.
+// Media: the track playing as a line for the AI, sent with every request while it plays; "" when
+// nothing plays (paused, stopped or unknown). info: {title, artist, player, playing}.
 function mediaContext(info) {
-    if (!info || !info.title)
+    if (!info || !info.title || info.playing !== true)
         return "";
 
-    var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "") + (info.playing === false ? "，已暂停" : "");
-    return "\n\n（正在播放：" + track + "。说到音乐时以此为准，不要编造。）";
+    var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "");
+    return "\n\n（正在播放：" + track + "。被问到或话题相关时以此为准，不要编造；不相关时不用提起。）";
 }
 
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
