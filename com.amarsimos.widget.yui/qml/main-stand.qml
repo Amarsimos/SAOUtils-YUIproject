@@ -669,7 +669,13 @@ T.Widget {
 
     // Sent with every request while something plays.
     function mediaExtras() {
-        return Yui.mediaContext(mediaInfo());
+        if (widget.settings.media_control === false)
+            return "";
+
+        var info = mediaInfo();
+        // Logged with each request, to see why a track was or was not sent.
+        diag("media: " + (mediaReady ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
+        return Yui.mediaContext(info);
     }
 
     // System Console: what Media Player reads now, then Play / Pause.
