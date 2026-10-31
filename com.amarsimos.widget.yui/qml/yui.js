@@ -1174,6 +1174,17 @@ var MEDIA_COMMANDS = {
     "stop": ["stop", "停止"]
 };
 
+// Media: each command as said in the chat's note.
+var MEDIA_LABELS = {
+    "pause": "播放 / 暂停",
+    "next": "下一首",
+    "prev": "上一首",
+    "vol+": "音量 +",
+    "vol-": "音量 −",
+    "mute": "静音",
+    "stop": "停止"
+};
+
 // The media command a <<media:>> tag or the media_control tool names, "" when none (pure).
 function mediaCommand(value) {
     var word = String(value || "").trim().toLowerCase();

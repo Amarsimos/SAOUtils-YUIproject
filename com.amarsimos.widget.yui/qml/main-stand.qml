@@ -514,6 +514,8 @@ T.Widget {
             "notes": toolsEnabled && widget.settings.notes_enabled !== false,
             // Quick Replies (Cardinal System, Personality).
             "suggest": widget.settings.quick_replies !== false,
+            // Media (System Console, Authority): only with Media Player installed.
+            "media": mediaReady,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -521,7 +523,7 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + mediaExtras(query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -615,6 +617,69 @@ T.Widget {
     function weatherExtras(title, query) {
         var line = Yui.weatherWanted(query) ? weatherLine() : "";
         return line ? "\n\n（天气数据：现在 " + line + "。回答天气相关的问题时以此为准，不要编造。）" : "";
+    }
+
+    // ---------------------------------------------------------------- Media
+    // System Console, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
+    // System Media Control action and System Media Data, not reimplemented here.
+    readonly property var mediaCommands: ["pause", "next", "prev", "vol+", "vol-", "mute", "stop"]
+    readonly property bool mediaReady: widget.settings.media_control !== false && mediaData.status === Loader.Ready
+
+    function runMedia(command) {
+        var source = mediaActions.objectAt(mediaCommands.indexOf(command));
+        if (!mediaReady || !source) {
+            diag("media " + command + ": not available");
+            return false;
+        }
+        diag("media " + command);
+        source.trigger();
+        return true;
+    }
+
+    // The track playing: {title, artist, player, playing}, null when nothing is (or no Media Player).
+    function mediaInfo() {
+        if (!mediaReady)
+            return null;
+
+        var read = function(name) {
+            var value = mediaData.item.query(name);
+            if (!value)
+                return undefined;
+
+            try {
+                value.update.execute();
+                return value.status === 1 ? value.current : undefined;
+            } catch (e) {
+                return undefined;
+            }
+        };
+        var title = String(read("title") || "").trim();
+        if (!title)
+            return null;
+
+        var state = read("state");
+        return {
+            "title": title,
+            "artist": String(read("artist") || "").trim(),
+            "player": String(read("player") || "").trim(),
+            "playing": state === undefined ? undefined : Number(state) === 2,
+            "state": state
+        };
+    }
+
+    // Sent when the message is about music.
+    function mediaExtras(query) {
+        return Yui.mediaWanted(query) ? Yui.mediaContext(mediaInfo()) : "";
+    }
+
+    // System Console: what Media Player reads now, then Play / Pause.
+    function testMedia() {
+        if (!mediaReady) {
+            diag("test media: Media Player (com.gpbeta.media) not found or Media turned off");
+            return ;
+        }
+        diag("test media: " + JSON.stringify(mediaInfo()));
+        runMedia("pause");
     }
 
     // ---------------------------------------------------------------- Sword Skills
@@ -1466,6 +1531,11 @@ T.Widget {
                     addQuestNote(text);
                     note = (note ? note + "\n" : "") + "📜 已记下：" + text;
                 });
+                reply.media.forEach(function(command) {
+                    if (runMedia(command))
+                        note = (note ? note + "\n" : "") + "🎵 " + Yui.MEDIA_LABELS[command];
+
+                });
                 if (reply.skill) {
                     var skillName = askSwordSkill(reply.skill);
                     note = (note ? note + "\n" : "") + (skillName ? "⚔ 剑技：" + skillName : "⚔ 没有叫「" + reply.skill + "」的剑技");
@@ -1822,7 +1892,7 @@ T.Widget {
         if (reply.blocked)
             return "这个是系统的重要程序，结衣不能关掉哦 (>_<)";
 
-        if (reply.action)
+        if (reply.action || reply.media.length > 0)
             return "好的，结衣来帮你～ (｡･ω･｡)";
 
         if (reply.cores.length + reply.memories.length + reply.forgets.length > 0)
@@ -1839,6 +1909,8 @@ T.Widget {
                 (made.core ? reply.cores : reply.memories).push(made.text);
             } else if (made.kind === "forget") {
                 reply.forgets.push(made.text);
+            } else if (made.kind === "media") {
+                reply.media.push(made.command);
             } else if (made.kind === "blocked") {
                 reply.blocked = made.blocked;
             } else if (made.kind === "action") {
@@ -4416,6 +4488,34 @@ T.Widget {
                 temperatureSource.update();
 
         }
+    }
+
+    // Media: Media Player's System Media Data (not ready when the package is missing).
+    Loader {
+        id: mediaData
+
+        active: widget.settings.media_control !== false
+        source: Qt.resolvedUrl("nvg://media.gpbeta.com/data/player#system")
+        onStatusChanged: {
+            if (status === Loader.Error)
+                widget.diag("media: Media Player (com.gpbeta.media) not found");
+
+        }
+    }
+
+    // Media: one System Media Control action per command, loaded ahead so it runs at once.
+    Instantiator {
+        id: mediaActions
+
+        model: widget.mediaReady ? widget.mediaCommands : []
+
+        delegate: NVG.ActionSource {
+            configuration: ({
+                "source": "nvg://media.gpbeta.com/action/player#system",
+                "configuration": modelData
+            })
+        }
+
     }
 
     // Sword Skills (Skill Slots): the action of each slot, loaded ahead so it runs at once.
