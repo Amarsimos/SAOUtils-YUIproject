@@ -4512,7 +4512,7 @@ T.Widget {
         delegate: NVG.ActionSource {
             configuration: ({
                 "source": "nvg://media.gpbeta.com/action/player#system",
-                "configuration": modelData
+                "data": modelData
             })
         }
 
