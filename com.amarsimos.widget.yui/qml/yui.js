@@ -1196,14 +1196,15 @@ function mediaCommand(value) {
     return "";
 }
 
-// Media: the track playing as a line for the AI, sent with every request while it plays; "" when
-// nothing plays (paused, stopped or unknown). info: {title, artist, player, playing}.
+// Media: the track in the player as a line for the AI, sent with every request while there is one;
+// "" when there is none. Media Player's playback state is not reliable (a playing track can read
+// as paused, 1), so only a playing one (2) is said to play. info: {title, artist, player, playing}.
 function mediaContext(info) {
-    if (!info || !info.title || info.playing !== true)
+    if (!info || !info.title)
         return "";
 
     var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "");
-    return "\n\n（正在播放：" + track + "。被问到或话题相关时以此为准，不要编造；不相关时不用提起。）";
+    return "\n\n（" + (info.playing === true ? "正在播放" : "播放器里的曲目") + "：" + track + "。被问到或话题相关时以此为准，不要编造；不相关时不用提起。）";
 }
 
 // Weather Report: whether the user's message is about the weather, so it is sent with it.

@@ -630,7 +630,7 @@ test("Media", () => {
     assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<media:"));
     assert.ok(!Yui.featureInstructions("爸爸", "", on, "tools").includes("<<media:"));
     assert.ok(Yui.mediaContext({ title: "Yui", artist: "Kajiura", player: "网易云音乐", playing: true }).includes("Kajiura -《Yui》，用 网易云音乐。"));
-    assert.strictEqual(Yui.mediaContext({ title: "Yui", playing: false }), "");
+    assert.ok(Yui.mediaContext({ title: "Yui", playing: false }).includes("播放器里的曲目：《Yui》"));
     assert.strictEqual(Yui.mediaContext({ title: "" }), "");
 });
 
