@@ -95,7 +95,7 @@ function bareTagPattern() {
 
 function tagPattern() {
     // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -513,6 +513,23 @@ var TOOLS = [{
         "required": ["process"]
     }
 }, {
+    "name": "media_control",
+    "kind": "media",
+    "allow": "media",
+    "arg": "command",
+    "description": "控制电脑上正在播放的音乐或视频（系统媒体，网易云、QQ 音乐、浏览器等都可以）。用户要求暂停、继续播放、切歌、调音量、静音时使用。",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "command": {
+                "type": "string",
+                "enum": ["pause", "next", "prev", "vol+", "vol-", "mute", "stop"],
+                "description": "pause 播放 / 暂停，next 下一首，prev 上一首，vol+ 音量加，vol- 音量减，mute 静音，stop 停止"
+            }
+        },
+        "required": ["command"]
+    }
+}, {
     "name": "remember",
     "kind": "remember",
     "allow": "memory",
@@ -556,7 +573,7 @@ var TOOLS = [{
 function toolDefinitions(allowed, withMemory) {
     allowed = allowed || {};
     return TOOLS.filter(function(tool) {
-        return allowed[tool.allow] !== false && (withMemory || (tool.kind !== "remember" && tool.kind !== "forget"));
+        return allowed[tool.allow] !== false && (tool.kind !== "media" || allowed.media === true) && (withMemory || (tool.kind !== "remember" && tool.kind !== "forget"));
     }).map(function(tool) {
         return {
             "name": tool.name,
@@ -582,7 +599,7 @@ function toolCallToAction(name, args, userProtected, options) {
             "error": "unknown tool " + name
         };
 
-    if (allowed[tool.allow] === false)
+    if (allowed[tool.allow] === false || (tool.kind === "media" && allowed.media !== true))
         return {
             "kind": "error",
             "error": "the user turned " + name + " off"
@@ -617,6 +634,17 @@ function toolCallToAction(name, args, userProtected, options) {
             "kind": "forget",
             "text": value
         };
+
+    if (tool.kind === "media") {
+        var command = mediaCommand(value);
+        return command ? {
+            "kind": "media",
+            "command": command
+        } : {
+            "kind": "error",
+            "error": "unknown media command " + value
+        };
+    }
 
     var made = actionFrom(tool.kind, value, userProtected, options);
     if (made.blocked)
@@ -823,7 +851,9 @@ function parseReply(text, userProtected, options) {
         // <<skill:>> (Skill Slots, Sword Skills): the name of the sword skill to run, "" when none.
         "skill": "",
         // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
-        "suggestions": []
+        "suggestions": [],
+        // <<media:>> (System Console, Media): the media commands to run (see mediaCommand), in order.
+        "media": []
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -869,6 +899,11 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "suggest") {
             if (allowed.suggest !== false)
                 result.suggestions = suggestionsFrom(value);
+
+        } else if (kind === "media") {
+            var command = mediaCommand(value);
+            if (allowed.media === true && command && result.media.length < 5)
+                result.media.push(command);
 
         } else if (kind === "skill") {
             if (allowed.skills && allowed.skills.length > 0)
@@ -1125,6 +1160,44 @@ function swordSkillIndex(name, names) {
 
     }
     return -1;
+}
+
+// Media (System Console): the commands of Media Player's System Media Control action, and the words
+// a model may write for them instead.
+var MEDIA_COMMANDS = {
+    "pause": ["pause", "play", "toggle", "resume", "播放", "暂停", "继续"],
+    "next": ["next", "下一首", "下一曲", "切歌"],
+    "prev": ["prev", "previous", "上一首", "上一曲"],
+    "vol+": ["vol+", "volume+", "up", "louder", "大声", "音量加", "调大"],
+    "vol-": ["vol-", "volume-", "down", "quieter", "小声", "音量减", "调小"],
+    "mute": ["mute", "unmute", "静音"],
+    "stop": ["stop", "停止"]
+};
+
+// The media command a <<media:>> tag or the media_control tool names, "" when none (pure).
+function mediaCommand(value) {
+    var word = String(value || "").trim().toLowerCase();
+    for (var command in MEDIA_COMMANDS) {
+        if (MEDIA_COMMANDS[command].indexOf(word) !== -1)
+            return command;
+
+    }
+    return "";
+}
+
+// Media: whether the user's message is about what is playing, so the track is sent with it.
+function mediaWanted(query) {
+    return /音乐|歌|曲子|播放|在听|听什么|切歌|music|song|playing|track/i.test(String(query || ""));
+}
+
+// Media: the track playing as a line for the AI, "" when nothing is. info: {title, artist, player,
+// playing (true, false or undefined when unknown)}.
+function mediaContext(info) {
+    if (!info || !info.title)
+        return "";
+
+    var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "") + (info.playing === false ? "，已暂停" : "");
+    return "\n\n（正在播放：" + track + "。说到音乐时以此为准，不要编造。）";
 }
 
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
@@ -1485,6 +1558,9 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.suggest)
         lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字）。不需要时就不加。");
 
+    if (allowed.media === true)
+        lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
+
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
@@ -1505,7 +1581,7 @@ function featureInstructions(title, core, allowed, mode) {
     if (mode === "tools") {
         // Only the expression and care lines stay; actions and memories are tools.
         lines = lines.filter(function(line) {
-            return line.indexOf("- 导航：") !== 0 && line.indexOf("- 桌面代行：") !== 0;
+            return line.indexOf("- 导航：") !== 0 && line.indexOf("- 桌面代行：") !== 0 && line.indexOf("- 音乐：") !== 0;
         });
         var abilities = [];
         if (allowed.web !== false)
@@ -1519,6 +1595,9 @@ function featureInstructions(title, core, allowed, mode) {
 
         if (allowed.kill !== false)
             abilities.push("关闭程序");
+
+        if (allowed.media === true)
+            abilities.push("控制音乐播放");
 
         if (abilities.length > 0)
             lines.splice(4, 0, "- 电脑操作：你可以用提供的工具" + abilities.join("、") + "。只有当" + title + "明确请你做这些事时才使用；需要天气、新闻这类实时信息时用搜索，不要编造。");
