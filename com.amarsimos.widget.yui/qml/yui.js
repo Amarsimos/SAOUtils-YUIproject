@@ -1198,7 +1198,7 @@ function mediaCommand(value) {
 
 // Media: whether the user's message is about what is playing, so the track is sent with it.
 function mediaWanted(query) {
-    return /音乐|歌|曲子|播放|在听|听什么|切歌|music|song|playing|track/i.test(String(query || ""));
+    return /音乐|歌|曲|播放|在放|放的|在听|听的|听什么|这首|那首|旋律|bgm|music|song|playing|track|tune/i.test(String(query || ""));
 }
 
 // Media: the track playing as a line for the AI, "" when nothing is. info: {title, artist, player,

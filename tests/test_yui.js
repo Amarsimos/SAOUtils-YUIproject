@@ -630,6 +630,9 @@ test("Media", () => {
     assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<media:"));
     assert.ok(!Yui.featureInstructions("爸爸", "", on, "tools").includes("<<media:"));
     assert.ok(Yui.mediaWanted("现在放的是什么歌"));
+    assert.ok(Yui.mediaWanted("这首叫什么"));
+    assert.ok(Yui.mediaWanted("现在在放什么"));
+    assert.ok(Yui.mediaWanted("BGM 是哪个"));
     assert.ok(!Yui.mediaWanted("帮我开一下浏览器"));
     assert.ok(Yui.mediaContext({ title: "Yui", artist: "Kajiura", player: "网易云音乐", playing: false }).includes("Kajiura -《Yui》，用 网易云音乐，已暂停"));
     assert.strictEqual(Yui.mediaContext({ title: "" }), "");
