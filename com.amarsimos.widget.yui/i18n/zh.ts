@@ -996,7 +996,7 @@
     <message>
         <location filename="../qml/ProcessListEditor.qml" line="+122"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
 </context>
 <context>
@@ -1470,7 +1470,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+452"/>
+        <location filename="../qml/SystemConsole.qml" line="+466"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1495,7 +1495,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
     </message>
     <message>
-        <location line="-468"/>
+        <location line="-482"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1535,7 +1535,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+303"/>
+        <location line="+317"/>
         <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
         <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
     </message>
@@ -1555,19 +1555,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="-495"/>
         <location line="+252"/>
         <source>Monitor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-252"/>
-        <location line="+496"/>
+        <location line="+510"/>
         <source>Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="-495"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1678,9 +1678,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+8"/>
+        <source>Control Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.</source>
         <translation>在这里关闭的操作不会告诉 AI，即使回复里要求也不会执行。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking, and knows what is playing when you talk about music. It uses the Media Player package (com.gpbeta.media); without it this does nothing.</source>
+        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量，聊到音乐时也知道正在放什么。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -1773,18 +1783,23 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-549"/>
-        <location line="+574"/>
+        <location line="-563"/>
+        <location line="+592"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-22"/>
+        <location line="-26"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+3"/>
+        <source>Test Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Log Requests</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2317,7 +2332,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location line="+5"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -2363,7 +2378,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1688"/>
+        <location filename="../qml/main-stand.qml" line="+1758"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2373,18 +2388,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2264"/>
+        <location line="+2266"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2247"/>
-        <location line="+2363"/>
+        <location line="-2249"/>
+        <location line="+2365"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3409"/>
+        <location line="-3416"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2395,13 +2410,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2413"/>
+        <location line="+2420"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1502"/>
+        <location line="-1504"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2426,7 +2441,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+141"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2505,15 +2520,15 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1842"/>
+        <location line="+1870"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1842"/>
+        <location line="-1870"/>
         <location line="+28"/>
         <location line="+6"/>
-        <location line="+1799"/>
+        <location line="+1827"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2523,25 +2538,25 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5046"/>
-        <location line="+5077"/>
+        <location line="-5146"/>
+        <location line="+5177"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5084"/>
-        <location line="+5084"/>
+        <location line="-5184"/>
+        <location line="+5184"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1798"/>
+        <location line="-1826"/>
         <location line="+380"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1435"/>
+        <location line="+1463"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

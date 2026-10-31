@@ -19,7 +19,7 @@ NVG.Window {
     // This Tab.
     property int changedThresholds: 0
     // The action switches, for Reset This Tab and the title bar's Reset.
-    readonly property var switchPreferences: [webSwitch, launchSwitch, findSwitch, killSwitch]
+    readonly property var switchPreferences: [webSwitch, launchSwitch, findSwitch, killSwitch, mediaSwitch]
     // Where web pages and searches open, for the same resets.
     readonly property var browsingPreferences: [externalBrowserPreference, searchPreference, searchCustomPreference]
 
@@ -394,12 +394,26 @@ NVG.Window {
                             defaultValue: false
                         }
 
+                        P.SwitchPreference {
+                            id: mediaSwitch
+
+                            name: "media_control"
+                            label: qsTr("Control Media")
+                            defaultValue: true
+                        }
+
                     }
 
                     SettingNote {
                         visible: consoleWindow.targetWidget.settingsHelp
                         besidePreferences: true
                         text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
+                    }
+
+                    SettingNote {
+                        visible: consoleWindow.targetWidget.settingsHelp
+                        besidePreferences: true
+                        text: qsTr("Control Media: Yui plays, pauses, skips tracks and changes the volume without asking, and knows what is playing when you talk about music. It uses the Media Player package (com.gpbeta.media); without it this does nothing.")
                     }
 
                     Heading {
@@ -642,14 +656,18 @@ NVG.Window {
                                     }, {
                                         "label": qsTr("Test Link Start"),
                                         "tag": "linkstart"
+                                    }, {
+                                        "label": qsTr("Test Media"),
+                                        "tag": "media"
                                     }]
 
                                     // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
                                     // made-up streamed reply in the chat (neither makes an API request),
-                                    // "Test Link Start" plays the startup effect.
+                                    // "Test Link Start" plays the startup effect, "Test Media" logs the track
+                                    // playing and plays / pauses it.
                                     Button {
                                         text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                                     }
 
                                 }
