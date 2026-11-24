@@ -671,11 +671,23 @@ T.Widget {
     }
 
     // Sent with every request while something plays.
+    // The track last sent, and the note for the latest message when it changed (see mediaExtras).
+    property string mediaSentTrack: ""
+    property string mediaNote: ""
+
     function mediaExtras(title) {
+        widget.mediaNote = "";
         if (widget.settings.now_playing === false)
             return "";
 
         var info = mediaInfo();
+        // A new track (or the first one sent) is also said beside the latest message: small models
+        // answered with the song named earlier in the chat, whatever the system prompt said.
+        var key = info ? info.artist + "|" + info.title : "";
+        if (key && key !== widget.mediaSentTrack)
+            widget.mediaNote = Yui.mediaChangeNote(info);
+
+        widget.mediaSentTrack = key;
         // Logged with each request, to see why a track was or was not sent.
         diag("media: " + (mediaLoaded ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
         return Yui.mediaContext(info, title);
@@ -1042,6 +1054,14 @@ T.Widget {
             messages[messages.length - 1] = {
                 "role": "user",
                 "content": latest.content + Yui.smallModelReminder(mode, allowedActions())
+            };
+        }
+        if (widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
+            messages = messages.slice();
+            var asked = messages[messages.length - 1];
+            messages[messages.length - 1] = {
+                "role": "user",
+                "content": asked.content + widget.mediaNote
             };
         }
         if (!config.apiKey || !config.endpoint || !config.model) {

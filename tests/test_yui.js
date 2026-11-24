@@ -632,6 +632,8 @@ test("Media", () => {
     assert.ok(Yui.mediaContext({ title: "Yui", artist: "Kajiura", player: "网易云音乐", playing: true }).includes("正在播放的曲目，这是程序刚刚读到的：Kajiura -《Yui》，用 网易云音乐。"));
     assert.ok(Yui.mediaContext({ title: "Yui", playing: false }).includes("播放器里的曲目，这是程序刚刚读到的：《Yui》"));
     assert.strictEqual(Yui.mediaContext({ title: "" }), "");
+    assert.ok(Yui.mediaChangeNote({ title: "I can do it now", artist: "倉木麻衣" }).includes("倉木麻衣 -《I can do it now》"));
+    assert.strictEqual(Yui.mediaChangeNote(null), "");
 });
 
 console.log(passed + " tests passed");

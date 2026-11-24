@@ -1209,6 +1209,16 @@ function mediaContext(info, title) {
     return "\n\n（结衣能看到" + title + "电脑上" + (info.playing === true ? "正在播放" : "播放器里") + "的曲目，这是程序刚刚读到的：" + track + "。" + title + "问在放什么歌时，直接说出歌名和歌手；以前说过「读不到」的话已经不对了。不相关时不用提起。）";
 }
 
+// Now Playing: said beside the latest message when the track is new since the last request, so a
+// song named earlier in the chat is not taken for the one playing now.
+function mediaChangeNote(info) {
+    if (!info || !info.title)
+        return "";
+
+    var track = info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》";
+    return "\n\n（系统信息：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
+}
+
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
 function weatherWanted(query) {
     return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
