@@ -1240,6 +1240,19 @@ function claimsDone(text) {
     });
 }
 
+// Whether a reply promises to remind or wake the user later ("明天 8 点一定准时叫爸爸起床哦"), which she
+// cannot do while Alarm is set aside. Questions and refusals ("结衣不能提醒爸爸") do not count (pure).
+function promisesReminder(text) {
+    var promise = /(?:到时候|到时|明天|明早|今晚|待会儿?|等一下|一会儿|以后|每天|准时|一定|会|就)[^，。！？]{0,8}?(?:叫醒?|提醒|喊|通知|唤醒)(?:爸爸|妈妈|你|您)[^，。！？]{0,6}?(?:起床|起来|休息|睡觉|吃饭|出门|开会|喝水|的|哦|呀|呢|啦|！|。|～|$)/;
+    var sentences = String(text || "").match(/[^。！!？?\n]+[。！!？?\n]?/g) || [];
+    return sentences.some(function(sentence) {
+        if (/[？?]$/.test(sentence) || /[吗呢吧][～~\s]*[。！!？?]?$/.test(sentence) || /不能|没法|无法|不会|做不到/.test(sentence))
+            return false;
+
+        return promise.test(sentence);
+    });
+}
+
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
 function weatherWanted(query) {
     return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
@@ -1695,7 +1708,7 @@ function priorityRules(title, allowed, mode) {
         rules.push("需要天气、新闻、价格这类实时信息时，必须搜索，绝不自己编造。");
 
     // What she cannot do: said so, never pretended (small models said "已经设好了" for an alarm).
-    rules.push((acts.length > 0 ? "电脑上的事，结衣只能" + acts.join("、") + "。其他事（设闹钟、发消息、改系统设置等）" : "结衣不能操作电脑，") + "做不到就直接说做不到，请" + title + "自己操作，绝不假装已经做了。");
+    rules.push((acts.length > 0 ? "电脑上的事，结衣只能" + acts.join("、") + "。其他事（设闹钟、发消息、改系统设置等）" : "结衣不能操作电脑，") + "做不到就直接说做不到，请" + title + "自己操作，绝不假装已经做了" + (allowed.alarm === false ? "，也不要答应以后提醒、叫醒" + title : "") + "。");
     return "【最重要的规则】\n" + rules.map(function(rule, i) {
         return (i + 1) + ". " + rule;
     }).join("\n") + "\n\n";

@@ -644,6 +644,12 @@ test("Claims of actions not done", () => {
     const rules = Yui.priorityRules("爸爸", { web: false, launch: false, find: false, kill: false }, "tags");
     assert.ok(rules.includes("结衣不能操作电脑") && rules.includes("绝不假装已经做了"));
     assert.ok(Yui.priorityRules("爸爸", { find: false, kill: false, media: true }, "tags").includes("结衣只能打开网页、搜索、启动程序、控制音乐播放"));
+    for (const said of ["明天早上8点一定要准时叫爸爸起床哦", "到时候结衣会提醒你的", "结衣会记得提醒爸爸喝水哦"])
+        assert.ok(Yui.promisesReminder(said), said);
+    for (const said of ["要不要结衣提醒你？", "爸爸记得定闹钟提醒自己哦", "结衣不能提醒爸爸，对不起"])
+        assert.ok(!Yui.promisesReminder(said), said);
+    assert.ok(Yui.priorityRules("爸爸", { alarm: false }, "tags").includes("也不要答应以后提醒、叫醒爸爸"));
+    assert.ok(!Yui.priorityRules("爸爸", {}, "tags").includes("也不要答应以后提醒"));
 });
 
 console.log(passed + " tests passed");

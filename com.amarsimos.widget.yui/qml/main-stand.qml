@@ -1602,6 +1602,11 @@ T.Widget {
                     note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
                     diag("claimed an action, none carried out");
                 }
+                // Promised to remind or wake the user later, with no Alarm to do it.
+                if (reply.reminders.length === 0 && !allowedActions().alarm && Yui.promisesReminder(text)) {
+                    note = (note ? note + "\n" : "") + "⚠ 结衣现在没有提醒功能，到时候不会提醒你";
+                    diag("promised a reminder, none set");
+                }
 
                 if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
