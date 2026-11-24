@@ -1597,6 +1597,12 @@ T.Widget {
                 if (reply.disabled)
                     note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
 
+                // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
+                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && Yui.claimsDone(text)) {
+                    note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
+                    diag("claimed an action, none carried out");
+                }
+
                 if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
                     Qt.callLater(showImmortalObject, reply.blocked);

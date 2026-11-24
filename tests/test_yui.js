@@ -322,7 +322,7 @@ test("priority rules and the small model reminder", () => {
     const tags = Yui.priorityRules("爸爸", { web: false }, "tags");
     assert.ok(tags.includes("写对应的标签") && !tags.includes("必须搜索") && !tags.includes("打开网页"));
     const none = Yui.priorityRules("爸爸", { web: false, launch: false, find: false, kill: false, memory: false }, "tools");
-    assert.ok(!none.includes("2."));
+    assert.ok(none.includes("2. 结衣不能操作电脑") && !none.includes("3."));
     assert.ok(Yui.smallModelReminder("tags", {}).includes("写对应的标签"));
 });
 
@@ -634,6 +634,16 @@ test("Media", () => {
     assert.strictEqual(Yui.mediaContext({ title: "" }), "");
     assert.ok(Yui.mediaChangeNote({ title: "I can do it now", artist: "倉木麻衣" }).includes("倉木麻衣 -《I can do it now》"));
     assert.strictEqual(Yui.mediaChangeNote(null), "");
+});
+
+test("Claims of actions not done", () => {
+    for (const said of ["好哒，爸爸！音乐已经重新动起来啦", "好的，结衣已经帮你打开记事本了！", "结衣这就帮你把音量调大了哦", "闹钟已经帮爸爸设好了～", "好的，已经为你搜索好了"])
+        assert.ok(Yui.claimsDone(said), said);
+    for (const said of ["爸爸已经打开了吗？", "你已经关掉了呀，真棒", "结衣帮你打开它，好吗？", "这首歌真好听呢", "要不要结衣帮你打开？", "我已经记住啦", "昨天你让我打开的那个文件还在哦"])
+        assert.ok(!Yui.claimsDone(said), said);
+    const rules = Yui.priorityRules("爸爸", { web: false, launch: false, find: false, kill: false }, "tags");
+    assert.ok(rules.includes("结衣不能操作电脑") && rules.includes("绝不假装已经做了"));
+    assert.ok(Yui.priorityRules("爸爸", { find: false, kill: false, media: true }, "tags").includes("结衣只能打开网页、搜索、启动程序、控制音乐播放"));
 });
 
 console.log(passed + " tests passed");
