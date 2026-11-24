@@ -96,7 +96,7 @@ NVG.Window {
         targetWidget.settings.frequency_penalty = frequencyPreference.value;
         targetWidget.settings.seed = seedPreference.value;
         targetWidget.settings.action_mode = actionModePreference.ids[actionModePreference.value] || "tags";
-        targetWidget.settings.small_model = !!smallModelPreference.value;
+        targetWidget.settings.small_model = smallModelPreference.value === 1;
     }
 
     // The settings of each tab that Reset This Tab (and the title bar's Reset, all three) restore; the
@@ -300,7 +300,7 @@ NVG.Window {
         frequencyPreference.value = settings.frequency_penalty !== undefined ? settings.frequency_penalty : -1;
         seedPreference.value = settings.seed > 0 ? settings.seed : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
-        smallModelPreference.value = settings.small_model === true;
+        smallModelPreference.value = settings.small_model === false ? 0 : 1;
         loading = false;
         [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
@@ -811,18 +811,21 @@ NVG.Window {
                             text: qsTr("How Yui operates the computer. Tags (the default) writes the actions into her reply, which local models follow best; Tools uses the server's function calling, for large models that are good at it (for now only OpenAI-compatible servers; others keep Tags). Memories always use tags. A server that rejects tools is switched to Tags automatically.")
                         }
 
-                        P.SwitchPreference {
+                        // Kept as the boolean small_model (Limited = true), synced by hand.
+                        P.SelectPreference {
                             id: smallModelPreference
 
                             name: "small_model"
-                            defaultValue: false
-                            label: qsTr("Small Model Mode")
+                            // Limited by default: it works with any model, Full only with large ones.
+                            defaultValue: 1
+                            label: qsTr("Authority Level")
+                            model: [qsTr("Full"), qsTr("Limited")]
                         }
 
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.")
+                            text: qsTr("Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Console, for large models.")
                         }
                     }
 

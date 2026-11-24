@@ -177,7 +177,7 @@
         <location line="+22"/>
         <location line="+70"/>
         <location line="+22"/>
-        <location line="+224"/>
+        <location line="+226"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+9"/>
@@ -185,7 +185,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-357"/>
+        <location line="-359"/>
         <source>Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.</source>
         <translation>越高回复越多变，越低越稳定。Default 表示交给服务器决定。</translation>
     </message>
@@ -215,17 +215,7 @@
         <translation>结衣操作电脑的方式。Tags（默认）把操作写在回复里，本地模型执行得最好；Tools 使用服务器的工具调用（function calling），适合擅长工具调用的大模型（目前只对 OpenAI 兼容的服务器生效，其他服务器仍用 Tags）。记忆始终使用标签。服务器不接受工具时，会自动改用 Tags。</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Small Model Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>For small local models: every message carries a short reminder of the expression tag and of using tools (or tags), which they otherwise often forget. Not needed for large models.</source>
-        <translation>适合本地小模型：每条消息都会附一句简短的提醒，提醒模型写表情标签、使用工具（或标签），小模型不提醒时常常会忘。大模型不需要开启。</translation>
-    </message>
-    <message>
-        <location line="+76"/>
+        <location line="+92"/>
         <source>Yui&apos;s personality. MHCP001 is the built-in one; edit the prompt below and keep it with Save As…, then switch between your profiles here.</source>
         <translation>结衣的人格。MHCP001 是内置人格；修改下面的提示词后用 Save As… 保存，之后就可以在这里切换你的人格。</translation>
     </message>
@@ -270,25 +260,25 @@
         <translation>结衣对你的称呼，会替换人格数据中的 {{user_title}}。</translation>
     </message>
     <message>
-        <location line="-515"/>
+        <location line="-517"/>
         <location line="+210"/>
         <source>Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-210"/>
-        <location line="+475"/>
+        <location line="+477"/>
         <source>Core Tuning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-475"/>
-        <location line="+709"/>
+        <location line="-477"/>
+        <location line="+711"/>
         <source>Personality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-469"/>
+        <location line="-471"/>
         <source>Thinking Depth</source>
         <translation>Thinking Depth</translation>
     </message>
@@ -384,18 +374,18 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+347"/>
+        <location line="+349"/>
         <source>%1 changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-347"/>
-        <location line="+347"/>
+        <location line="-349"/>
+        <location line="+349"/>
         <source>All default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-343"/>
+        <location line="-345"/>
         <source>Randomness</source>
         <translation type="unfinished"></translation>
     </message>
@@ -415,7 +405,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+30"/>
+        <source>Authority Level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Limited</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Console, for large models.</source>
+        <translation>Limited：适合本地小模型。结衣只负责陪伴（聊天、记忆、关怀），不操作电脑，因为小模型常常说做了却没有执行；每条消息还会附一句表情标签的简短提醒。Full：适合大模型，代行按 System Console 的设置执行。</translation>
+    </message>
+    <message>
+        <location line="+26"/>
         <source>Identity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1490,7 +1500,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+466"/>
+        <location filename="../qml/SystemConsole.qml" line="+473"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1515,7 +1525,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
     </message>
     <message>
-        <location line="-482"/>
+        <location line="-489"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1555,7 +1565,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+174"/>
+        <location line="+181"/>
         <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.</source>
         <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。想让结衣知道正在放什么歌，请在 Mental Health Counseling 里打开 Now Playing。</translation>
     </message>
@@ -1580,19 +1590,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
     </message>
     <message>
-        <location line="-495"/>
+        <location line="-502"/>
         <location line="+252"/>
         <source>Monitor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-252"/>
-        <location line="+510"/>
+        <location line="+517"/>
         <source>Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-495"/>
+        <location line="-502"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1713,6 +1723,11 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>在这里关闭的操作不会告诉 AI，即使回复里要求也不会执行。</translation>
     </message>
     <message>
+        <location line="+7"/>
+        <source>Authority Level is Limited (Cardinal System, Core Tuning), so Yui does none of these actions.</source>
+        <translation>Authority Level 为 Limited（Cardinal System → Core Tuning），结衣不会执行这里的任何代行。</translation>
+    </message>
+    <message>
         <location line="+11"/>
         <source>Browsing</source>
         <translation type="unfinished"></translation>
@@ -1803,8 +1818,8 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-563"/>
-        <location line="+592"/>
+        <location line="-570"/>
+        <location line="+599"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1834,7 +1849,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+64"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -2398,7 +2413,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1770"/>
+        <location filename="../qml/main-stand.qml" line="+1807"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2419,7 +2434,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3416"/>
+        <location line="-3439"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2430,7 +2445,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2420"/>
+        <location line="+2443"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
@@ -2558,14 +2573,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5158"/>
-        <location line="+5189"/>
+        <location line="-5195"/>
+        <location line="+5226"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5196"/>
-        <location line="+5196"/>
+        <location line="-5233"/>
+        <location line="+5233"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>

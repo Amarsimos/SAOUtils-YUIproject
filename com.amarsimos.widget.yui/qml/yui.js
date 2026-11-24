@@ -1219,6 +1219,40 @@ function mediaChangeNote(info) {
     return "\n\n（系统信息：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
 }
 
+// Whether a reply says Yui has done something on the computer ("已经帮你打开了", "音乐已经重新动起来啦"),
+// to flag a claim when nothing was carried out (small models say so without writing the tag). Questions
+// ("爸爸已经打开了吗？") and what the user did ("你已经关掉了") do not count (pure).
+function claimsDone(text) {
+    // "已经 / 这就 …" or "帮你 / 给你 …", an optional "把…", a doing verb, its object, then a done ending.
+    var done = /(?:已经|已|这就|马上|现在就|立刻|帮你|给你|为你|帮[^，。！？\s]{1,4}?)(?:帮你|给你|为你|帮[^，。！？\s]{1,4}?)?(?:把[^，。！？]{1,20}?)?(?:打开|关掉|关闭|关上|启动|运行|播放|暂停|停止|切到|切换|换到|换成|调大|调小|调高|调低|静音|设好|设置好|设定好|定好|删掉|删除|清理|整理好|发送|发出|发给|下载|安装|保存|搜索|找到|查好|重启|关机|锁屏)[^，。！？]{0,12}?(?:了|好了|好啦|啦|完毕|完成|成功)/;
+    var moved = /(?:已经|重新)(?:动起来|响起来|放起来|播起来|停下来|安静下来)/;
+    var source = String(text || "");
+    var sentences = source.match(/[^。！!？?\n]+[。！!？?\n]?/g) || [];
+    return sentences.some(function(sentence) {
+        // A question, or something the user did, is no claim.
+        if (/[？?]$/.test(sentence) || /[吗呢吧][～~\s]*[。！!？?]?$/.test(sentence))
+            return false;
+
+        if (/(?:你|您)(?:已经|已)/.test(sentence) && !/(?:帮你|给你|为你)/.test(sentence))
+            return false;
+
+        return done.test(sentence) || moved.test(sentence);
+    });
+}
+
+// Whether a reply promises to remind or wake the user later ("明天 8 点一定准时叫爸爸起床哦"), which she
+// cannot do while Alarm is set aside. Questions and refusals ("结衣不能提醒爸爸") do not count (pure).
+function promisesReminder(text) {
+    var promise = /(?:到时候|到时|明天|明早|今晚|待会儿?|等一下|一会儿|以后|每天|准时|一定|会|就)[^，。！？]{0,8}?(?:叫醒?|提醒|喊|通知|唤醒)(?:爸爸|妈妈|你|您)[^，。！？]{0,6}?(?:起床|起来|休息|睡觉|吃饭|出门|开会|喝水|的|哦|呀|呢|啦|！|。|～|$)/;
+    var sentences = String(text || "").match(/[^。！!？?\n]+[。！!？?\n]?/g) || [];
+    return sentences.some(function(sentence) {
+        if (/[？?]$/.test(sentence) || /[吗呢吧][～~\s]*[。！!？?]?$/.test(sentence) || /不能|没法|无法|不会|做不到/.test(sentence))
+            return false;
+
+        return promise.test(sentence);
+    });
+}
+
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
 function weatherWanted(query) {
     return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
@@ -1647,6 +1681,9 @@ function priorityRules(title, allowed, mode) {
     if (allowed.find !== false)
         acts.push("查找文件");
 
+    if (allowed.media === true)
+        acts.push("控制音乐播放");
+
     var memory = allowed.memory !== false;
     var rules = ["每条回复的最后都加一个表情标签 <<emotion:…>>，从 normal、happy、sad、surprised、angry、shy 中选一个。"];
     if (mode === "tools") {
@@ -1670,12 +1707,14 @@ function priorityRules(title, allowed, mode) {
     if (allowed.web !== false)
         rules.push("需要天气、新闻、价格这类实时信息时，必须搜索，绝不自己编造。");
 
+    // What she cannot do: said so, never pretended (small models said "已经设好了" for an alarm).
+    rules.push((acts.length > 0 ? "电脑上的事，结衣只能" + acts.join("、") + "。其他事（设闹钟、发消息、改系统设置等）" : "结衣不能操作电脑，") + "做不到就直接说做不到，请" + title + "自己操作，绝不假装已经做了" + (allowed.alarm === false ? "，也不要答应以后提醒、叫醒" + title : "") + "。");
     return "【最重要的规则】\n" + rules.map(function(rule, i) {
         return (i + 1) + ". " + rule;
     }).join("\n") + "\n\n";
 }
 
-// Small Model Mode: a short reminder added to the user's latest message.
+// Authority Level Limited (small models): a short reminder added to the user's latest message.
 // It does not spell the tag out: with a repetition penalty, a tag written just before made models
 // misspell it (<<emphy:happy>>).
 // Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for Claude and Gemini.

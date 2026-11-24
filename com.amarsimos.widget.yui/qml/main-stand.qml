@@ -106,8 +106,8 @@ T.Widget {
     // this session (by endpoint) get tags.
     readonly property string actionMode: widget.settings.action_mode === "tools" ? "tools" : "tags"
     property var toolsRejected: ({})
-    // Small Model Mode (Cardinal System): a short reminder of the tag / tool rules with every message.
-    readonly property bool smallModelMode: widget.settings.small_model === true
+    // Authority Level Limited (Cardinal System, setting small_model): no actions, and a short reminder of the tag rules with every message.
+    readonly property bool smallModelMode: widget.settings.small_model !== false
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing
@@ -500,12 +500,14 @@ T.Widget {
     }
 
     // The desktop actions Yui may do (System Console, Authority; all by default).
+    // Authority Level Limited (Cardinal System, small models): none of them.
     function allowedActions() {
+        var full = !smallModelMode;
         return {
-            "web": widget.settings.action_web !== false,
-            "launch": widget.settings.action_launch !== false,
-            "find": widget.settings.action_find === true,
-            "kill": widget.settings.action_kill === true,
+            "web": full && widget.settings.action_web !== false,
+            "launch": full && widget.settings.action_launch !== false,
+            "find": full && widget.settings.action_find === true,
+            "kill": full && widget.settings.action_kill === true,
             "memory": autoMemory,
             // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
             // (none of them while the tools are set aside).
@@ -515,7 +517,7 @@ T.Widget {
             // Quick Replies (Cardinal System, Personality).
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
-            "media": mediaReady,
+            "media": full && mediaReady,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -1596,6 +1598,17 @@ T.Widget {
 
                 if (reply.disabled)
                     note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
+
+                // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
+                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && Yui.claimsDone(text)) {
+                    note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
+                    diag("claimed an action, none carried out");
+                }
+                // Promised to remind or wake the user later, with no Alarm to do it.
+                if (reply.reminders.length === 0 && !allowedActions().alarm && Yui.promisesReminder(text)) {
+                    note = (note ? note + "\n" : "") + "⚠ 结衣现在没有提醒功能，到时候不会提醒你";
+                    diag("promised a reminder, none set");
+                }
 
                 if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";

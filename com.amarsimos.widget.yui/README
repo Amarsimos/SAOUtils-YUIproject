@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Action Mode: desktop actions as tags (default, best for local models) or as the server's tool
   calling (Tools, for large models; OpenAI-compatible servers for now). A server that rejects tools
   falls back to tags by itself.
-- Small Model Mode: a short reminder with every message for small local models.
+- Authority Level (was Small Model Mode): Limited, for small local models, keeps Yui to company only (no actions) with a short reminder in every message.
 - The System Console log can show every request to the AI (without the access key) and its raw reply.
 - Message windows show a little Markdown: bold, inline code, bullets, headings and code blocks.
 - MHCP Profile (Cardinal System, Personality): keep your own personalities (Save As…, Rename…,

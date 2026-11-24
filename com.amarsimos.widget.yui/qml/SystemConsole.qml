@@ -410,6 +410,13 @@ NVG.Window {
                         text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
                     }
 
+                    // Shown whatever Help says: with Limited none of the switches above count.
+                    SettingNote {
+                        visible: consoleWindow.targetWidget.smallModelMode
+                        besidePreferences: true
+                        text: qsTr("Authority Level is Limited (Cardinal System, Core Tuning), so Yui does none of these actions.")
+                    }
+
                     SettingNote {
                         visible: consoleWindow.targetWidget.settingsHelp
                         besidePreferences: true
