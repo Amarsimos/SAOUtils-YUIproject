@@ -693,6 +693,8 @@ test("Care Scheduler", () => {
     assert.strictEqual(Yui.careFeedback("别烦我了"), "rejected");
     assert.strictEqual(Yui.careFeedback("结衣多陪陪我嘛"), "welcomed");
     assert.strictEqual(Yui.careFeedback("今天好累"), "");
+    const liked = []; liked[21] = [4, 3]; liked[9] = [5, 2]; liked[14] = [3, 1];
+    same(Yui.careLikedHours(liked), ["21:00", "09:00"]);
 });
 
 console.log(passed + " tests passed");

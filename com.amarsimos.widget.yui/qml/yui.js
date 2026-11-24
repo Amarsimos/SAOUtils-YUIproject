@@ -1311,6 +1311,25 @@ function careHourDisliked(hours, hour) {
     return !!entry && entry[0] >= 5 && entry[1] / entry[0] < 0.2;
 }
 
+// The hours the user answers most in (at least 2 answers, best rate first, up to 3), as "20:00".
+function careLikedHours(hours) {
+    var found = [];
+    (hours || []).forEach(function(entry, hour) {
+        if (entry && entry[1] >= 2)
+            found.push({
+            "hour": hour,
+            "rate": entry[1] / Math.max(1, entry[0])
+        });
+
+    });
+    found.sort(function(a, b) {
+        return b.rate - a.rate || a.hour - b.hour;
+    });
+    return found.slice(0, 3).map(function(item) {
+        return (item.hour < 10 ? "0" : "") + item.hour + ":00";
+    });
+}
+
 // Today's record, started afresh on a new day. state: {day, count, said: {kind: true}, last, mutedUntil}.
 function careToday(state, day) {
     if (state && state.day === day)

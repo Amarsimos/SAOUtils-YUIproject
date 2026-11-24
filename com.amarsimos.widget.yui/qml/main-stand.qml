@@ -3825,7 +3825,7 @@ T.Widget {
     property string careLastLog: ""
 
     function careScoreNow() {
-        return Yui.careScore(widget.settings.care_level || "auto", widget.settings.care_score);
+        return Yui.careScore(["auto", "quiet", "normal", "chatty"][widget.settings.care_level || 0], widget.settings.care_score);
     }
 
     function careState(now) {
@@ -3836,8 +3836,8 @@ T.Widget {
         return widget.settings.quiet_hours !== false && Yui.inQuietHours(date, widget.settings.quiet_from || "00:00", widget.settings.quiet_to || "08:00");
     }
 
-    // Spontaneous Talk (Mental Health Counseling): on unless set to 0 (its old minutes setting).
-    readonly property bool spontaneousTalk: widget.settings.idle_chat_minutes !== 0
+    // Spontaneous Talk (Mental Health Counseling); its old minutes setting 0 was migrated to off.
+    readonly property bool spontaneousTalk: widget.settings.spontaneous_talk !== false
 
     // Something was said by herself: counted for today (counted false: only the gap starts again),
     // and waiting for a response.
@@ -4240,6 +4240,10 @@ T.Widget {
             widget.previousForm = widget.collapsedForm;
             widget.formChosen = true;
         });
+        // Spontaneous Talk was a number of minutes (0 off); now a switch, how often is Care Level's.
+        if (widget.settings.spontaneous_talk === undefined && widget.settings.idle_chat_minutes === 0)
+            widget.settings.spontaneous_talk = false;
+
         if (Yui.migrateSeedlingKeys(widget.settings))
             console.log("migrated: lab_* settings renamed to seedling_*");
 
