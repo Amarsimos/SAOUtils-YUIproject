@@ -724,12 +724,15 @@ NVG.Window {
                             anchors.margins: 6
                             clip: true
                             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                            contentWidth: availableWidth
+                            // The text stops short of the scroll bar.
+                            contentWidth: availableWidth - 16
                             // Placed by hand: a scroll bar set on a ScrollView is not laid out for it (it
                             // sat as a sliver at the top left). At the right, as tall as the log; a thumb
                             // of at least 48 px, thicker than the default.
                             ScrollBar.vertical: SaoScrollBar {
                                 parent: logScroll
+                                // Above the text, which took its clicks.
+                                z: 2
                                 x: logScroll.width - width
                                 y: logScroll.topPadding
                                 height: logScroll.availableHeight
