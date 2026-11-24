@@ -723,7 +723,10 @@ NVG.Window {
                             clip: true
                             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                             contentWidth: availableWidth
+                            // A long log made the thumb a sliver: a fixed, thicker one instead.
                             ScrollBar.vertical: SaoScrollBar {
+                                fixedThumb: 48
+                                thumbWidth: 7
                             }
 
                             TextArea {
