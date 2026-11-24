@@ -4,6 +4,7 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
 // Yui's own task as MHCP-001, caring for the player. The settings are grouped by what they do:
@@ -21,8 +22,8 @@ NVG.Window {
     property var moods: []
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var companionPreferences: [greetPreference, idleChatPreference, sleepPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
-    readonly property var carePreferences: [carePreference, moodPreference, weeklyPreference]
+    readonly property var companionPreferences: [greetPreference, spontaneousPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
+    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshReports() {
@@ -107,43 +108,26 @@ NVG.Window {
                             text: qsTr("Presence")
                         }
 
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-                        P.SpinPreference {
-                            id: idleChatPreference
+                        P.SwitchPreference {
+                            id: spontaneousPreference
 
-                            name: "idle_chat_minutes"
-                            defaultValue: 15
+                            name: "spontaneous_talk"
+                            defaultValue: true
                             label: qsTr("Spontaneous Talk")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1440
-                            stepSize: 1
                         }
 
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.")
+                            text: qsTr("While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).")
                         }
 
-                        P.SpinPreference {
-                            id: sleepPreference
-
-                            name: "sleep_minutes"
-                            defaultValue: 20
-                            label: qsTr("Standby Mode")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1440
-                            stepSize: 1
-                        }
-
+                        // Standby has no setting: Yui falls asleep when what she says by herself goes
+                        // unanswered twice (the user seems away), and wakes on any interaction.
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
+                            text: qsTr("When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.")
                         }
 
                         Heading {
@@ -226,6 +210,92 @@ NVG.Window {
                         defaultValue: counselingWindow.targetWidget.settings
                         syncProperties: true
 
+                        Heading {
+                            text: qsTr("Frequency")
+                        }
+
+                        // Kept as its index (0 Auto, 1 Quiet, 2 Normal, 3 Chatty).
+                        P.SelectPreference {
+                            id: careLevelPreference
+
+                            name: "care_level"
+                            defaultValue: 0
+                            label: qsTr("Care Level")
+                            model: [qsTr("Auto"), qsTr("Quiet"), qsTr("Normal"), qsTr("Chatty")]
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How often Yui speaks up by herself (care, reminders, small talk). Auto learns it from you: answering her or opening the chat makes her talk a little more, closing her bubble or leaving it unanswered a little less, and telling her to be quiet or to talk more counts the most. Greetings, follow-ups and system warnings are always said.")
+                        }
+
+                        // What Auto has learned, and a way back to the start.
+                        Label {
+                            visible: careLevelPreference.value === 0
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+                            wrapMode: Text.Wrap
+                            font.pixelSize: 12
+                            text: {
+                                var settings = counselingWindow.targetWidget.settings;
+                                var budget = Yui.careBudget(Yui.careScore("auto", settings.care_score));
+                                var hours = Yui.careLikedHours(settings.care_hours);
+                                return qsTr("Learned: about %1 a day, at least %2 min apart").arg(budget.perDay).arg(budget.gapMinutes) + (hours.length > 0 ? qsTr("; you answer most at %1").arg(hours.join(", ")) : "");
+                            }
+                        }
+
+                        CenteredFlow {
+                            visible: careLevelPreference.value === 0
+
+                            Button {
+                                text: qsTr("Reset Learning")
+                                onClicked: {
+                                    counselingWindow.targetWidget.settings.care_score = 0.5;
+                                    counselingWindow.targetWidget.settings.care_hours = [];
+                                }
+                            }
+
+                        }
+
+                        P.SwitchPreference {
+                            id: quietPreference
+
+                            name: "quiet_hours"
+                            defaultValue: true
+                            label: qsTr("Quiet Hours")
+                        }
+
+                        // SAO Utils' own time pickers; only the time of day counts.
+                        P.TimePreference {
+                            id: quietFromPreference
+
+                            visible: quietPreference.value
+                            name: "quiet_from"
+                            defaultValue: new Date(2000, 0, 1, 0, 0)
+                            label: qsTr("From")
+                        }
+
+                        P.TimePreference {
+                            id: quietToPreference
+
+                            visible: quietPreference.value
+                            name: "quiet_to"
+                            defaultValue: new Date(2000, 0, 1, 8, 0)
+                            label: qsTr("To")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.")
+                        }
+
+                        Heading {
+                            text: qsTr("Reminders")
+                        }
+
                         P.SwitchPreference {
                             id: carePreference
 
@@ -237,7 +307,7 @@ NVG.Window {
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).")
+                            text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions, as often as Care Level allows.")
                         }
 
                         P.SwitchPreference {

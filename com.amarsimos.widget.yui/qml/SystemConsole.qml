@@ -666,15 +666,18 @@ NVG.Window {
                                     }, {
                                         "label": qsTr("Test Media"),
                                         "tag": "media"
+                                    }, {
+                                        "label": qsTr("Care Tick"),
+                                        "tag": "care"
                                     }]
 
                                     // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
                                     // made-up streamed reply in the chat (neither makes an API request),
                                     // "Test Link Start" plays the startup effect, "Test Media" logs the track
-                                    // playing and plays / pauses it.
+                                    // playing and plays / pauses it, "Care Tick" runs the care scheduler at once (leaving out the gap).
                                     Button {
                                         text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                                     }
 
                                 }

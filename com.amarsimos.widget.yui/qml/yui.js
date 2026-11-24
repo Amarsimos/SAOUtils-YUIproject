@@ -1253,6 +1253,165 @@ function promisesReminder(text) {
     });
 }
 
+// ---------------------------------------------------------------- Care Scheduler
+// Everything Yui says by herself goes through one scheduler (main-stand's careTick): each feature
+// offers a candidate {kind, priority}, and at most one is said, within a daily budget and a gap that
+// follow how welcome her words are (the score, learned from the user's responses, see careLearn).
+
+var CARE_PRIORITIES = {
+    "high": 3,
+    "medium": 2,
+    "low": 1
+};
+
+// Care Level (Mental Health Counseling): the fixed scores, "auto" uses the learned one.
+var CARE_LEVEL_SCORES = {
+    "quiet": 0.15,
+    "normal": 0.5,
+    "chatty": 0.85
+};
+
+function careScore(level, learned) {
+    if (CARE_LEVEL_SCORES[level] !== undefined)
+        return CARE_LEVEL_SCORES[level];
+
+    return learned >= 0 && learned <= 1 ? learned : 0.5;
+}
+
+// How often she may speak for a score 0–1: perDay 6–34 times, gapMinutes 50–10 apart (at the
+// starting 0.5, 20 a day and once every half hour).
+function careBudget(score) {
+    var s = Math.max(0, Math.min(1, Number(score)));
+    if (isNaN(s))
+        s = 0.5;
+
+    return {
+        "perDay": Math.round(6 + 28 * s),
+        "gapMinutes": Math.round(50 - 40 * s)
+    };
+}
+
+// Whether "HH:mm" time of day falls in [from, to), across midnight when from > to.
+function inQuietHours(date, from, to) {
+    var minutes = function(text) {
+        var m = /^(\d{1,2}):(\d{2})$/.exec(String(text || ""));
+        return m ? Number(m[1]) * 60 + Number(m[2]) : -1;
+    };
+    var start = minutes(from);
+    var end = minutes(to);
+    if (start < 0 || end < 0 || start === end)
+        return false;
+
+    var now = date.getHours() * 60 + date.getMinutes();
+    return start < end ? now >= start && now < end : now >= start || now < end;
+}
+
+// An hour the user hardly answers in: at least 5 things said, under 20 % answered. hours: 24 × [said, answered].
+function careHourDisliked(hours, hour) {
+    var entry = (hours || [])[hour];
+    return !!entry && entry[0] >= 5 && entry[1] / entry[0] < 0.2;
+}
+
+// The hours the user answers most in (at least 2 answers, best rate first, up to 3), as "20:00".
+function careLikedHours(hours) {
+    var found = [];
+    (hours || []).forEach(function(entry, hour) {
+        if (entry && entry[1] >= 2)
+            found.push({
+            "hour": hour,
+            "rate": entry[1] / Math.max(1, entry[0])
+        });
+
+    });
+    found.sort(function(a, b) {
+        return b.rate - a.rate || a.hour - b.hour;
+    });
+    return found.slice(0, 3).map(function(item) {
+        return (item.hour < 10 ? "0" : "") + item.hour + ":00";
+    });
+}
+
+// Today's record, started afresh on a new day. state: {day, count, said: {kind: true}, last, mutedUntil}.
+function careToday(state, day) {
+    if (state && state.day === day)
+        return state;
+
+    return {
+        "day": day,
+        "count": 0,
+        "said": {},
+        "last": state ? state.last || 0 : 0,
+        "mutedUntil": state ? state.mutedUntil || 0 : 0
+    };
+}
+
+// The candidate to say now, or null; with why the others were not (for the log).
+// candidates: [{kind, priority}] in the order offered; state: careToday's; options: {now, score,
+// quiet (in Quiet Hours), hours, hour}. High priority ignores the budget, the gap and a mute; each kind
+// is said once a day except "chat"; low priority keeps out of Quiet Hours and the hours not answered.
+function carePick(candidates, state, options) {
+    var budget = careBudget(options.score);
+    var muted = (state.mutedUntil || 0) > options.now;
+    var spent = state.count >= budget.perDay;
+    var waiting = options.now - (state.last || 0) < budget.gapMinutes * 60000;
+    var skipped = [];
+    var open = (candidates || []).filter(function(candidate) {
+        var why = "";
+        if (candidate.kind !== "chat" && state.said && state.said[candidate.kind])
+            why = "said today";
+        else if (candidate.priority !== "high" && muted)
+            why = "muted";
+        else if (candidate.priority !== "high" && spent)
+            why = "budget " + state.count + "/" + budget.perDay;
+        else if (candidate.priority !== "high" && waiting)
+            why = "gap " + budget.gapMinutes + " min";
+        else if (candidate.priority === "low" && options.quiet)
+            why = "quiet hours";
+        else if (candidate.priority === "low" && careHourDisliked(options.hours, options.hour))
+            why = "hour not answered";
+        if (why)
+            skipped.push(candidate.kind + ": " + why);
+
+        return !why;
+    });
+    open.sort(function(a, b) {
+        return (CARE_PRIORITIES[b.priority] || 0) - (CARE_PRIORITIES[a.priority] || 0);
+    });
+    return {
+        "pick": open.length > 0 ? open[0] : null,
+        "skipped": skipped,
+        "budget": budget
+    };
+}
+
+// The learned score after a response to something she said: "answered" (replied or opened the chat
+// within 10 minutes), "ignored" (the bubble went by), "dismissed" (closed by a click), "rejected" /
+// "welcomed" (said so, see careFeedback).
+var CARE_STEPS = {
+    "answered": 0.05,
+    "ignored": -0.02,
+    "dismissed": -0.05,
+    "rejected": -0.2,
+    "welcomed": 0.2
+};
+
+function careLearn(score, outcome) {
+    var s = score >= 0 && score <= 1 ? score : 0.5;
+    return Math.round(Math.max(0, Math.min(1, s + (CARE_STEPS[outcome] || 0))) * 1000) / 1000;
+}
+
+// What a message of the user says about her talking by herself: "rejected", "welcomed" or "" (pure).
+function careFeedback(text) {
+    var t = String(text || "");
+    if (/别烦我|别吵|别打扰|安静(一)?点|少说(点|些)?话|不要(一直|总是?)?说话|闭嘴|让我静一静/.test(t))
+        return "rejected";
+
+    if (/多陪陪?我|多(跟|和)我(说说?|聊聊?)话?|多说(点|些)话|陪我聊|多找我聊/.test(t))
+        return "welcomed";
+
+    return "";
+}
+
 // Weather Report: whether the user's message is about the weather, so it is sent with it.
 function weatherWanted(query) {
     return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
@@ -1281,6 +1440,9 @@ function datedMemory(text, now) {
 }
 
 // Quick Replies: a <<suggest:>> tag's value ("a|b|c") -> up to three different short replies.
+// A quick reply asking Yui to do something on the computer ("帮我打开记事本", "下一首", "提醒我8点起床").
+var SUGGESTED_ACTION = /帮我(?:打开|关|开|启动|搜|查|找|放|播|切|调|设|定|记|删|下载|安装)|打开|关掉|关闭|启动|播放|暂停|切歌|下一首|上一首|音量|静音|搜索|搜一下|查一下|找文件|闹钟|提醒我|叫我起床/;
+
 function suggestionsFrom(value) {
     var found = [];
     var text = String(value);
@@ -1288,7 +1450,8 @@ function suggestionsFrom(value) {
     var parts = /[|｜]/.test(text) ? text.split(/[|｜]/) : text.split(/[/／、]/);
     parts.forEach(function(part) {
         var text = part.trim().slice(0, 30);
-        if (text && found.indexOf(text) === -1 && found.length < 3)
+        // Quick Replies stay talk: none asking her to do something on the computer.
+        if (text && found.indexOf(text) === -1 && found.length < 3 && !SUGGESTED_ACTION.test(text))
             found.push(text);
 
     });
@@ -1609,7 +1772,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 
     if (allowed.suggest)
-        lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字）。不需要时就不加。");
+        lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字；只想聊天的话，不要想请结衣操作电脑、设提醒之类的）。不需要时就不加。");
 
     if (allowed.media === true)
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");

@@ -58,6 +58,9 @@ Yui's Heart, Memories reworked: Through Yui's Eyes as a card folded to three lin
 Settings windows under headings: Cardinal System keeps the AI itself in Link (Server, Core, Connection Test; Reset This Tab keeps the access key), Core Tuning (Reply, Sampling, Behavior; the sampling values in a Sampling Parameters dialog) and Personality (Identity, MHCP Profile, Character Traits; the traits in a Fine-Tuning dialog). Pixie Functions is gone: Standby Mode is in Mental Health Counseling (Companion: Greeting, Presence, Weather), External Browser and the search engine in System Console (Authority: Actions, Browsing, File Search, Delete Authority, Immortal Objects). System Console's Monitor has Load (thresholds in a Crystal Thresholds dialog), Navigation Reports and Col Ledger, its Log the tests in a Run a Test dialog; Yui's Heart has Memory, Context and Chat History (Recall), Transfer and Backup (Local Memory). **Thinking Depth** moved to Core Tuning and is Off by default. Settings pages scroll to their end at any window height.
 Memories keep their dates: relative days written by Yui ("明天考试") are turned into dates when saved, a bare date or time is not kept, and every memory reaches the AI with the day it was noted ([10-12] ...).
 Replies of small local models cleaned up: thinking written into the reply (before </think>) and repeated paragraphs are left out, tags closed by a single ">" are understood, and quick replies split by "/" or "、" too.
+**Now Playing** (Mental Health Counseling, Companion, Music; needs the Media Player package): Yui knows the song in the player and can talk about it; **Control Media** (System Console, off by default) lets her play, pause, skip and change the volume through Media Player's own action.
+**Care Scheduler**: everything Yui says by herself (late-night care, rest reminders, the Sunday Report, Spontaneous Talk) goes through one scheduler that says at most one thing at a time, within a daily number and a gap set by **Care Level** (Mental Health Counseling, Care: Auto learns from your responses, 20 a day and once every half hour to start; or Quiet, Normal, Chatty) and outside **Quiet Hours** (no small talk, 00:00–08:00 by default, SAO Utils' time pickers). Telling her to be quiet stops her for the day; asking her to talk more makes her talk more.
+Honest actions: a reply that says Yui did something on the computer when nothing was carried out, or promises a reminder she cannot give, gets a note under it; she is told what she can and cannot do.
 
 ### Changed
 
@@ -82,10 +85,19 @@ Replies of small local models cleaned up: thinking written into the reply (befor
 - Yui no longer makes up real-time information such as the weather; she searches instead.
 - Regenerating a reply asks for a different answer.
 - No reply limit by default (OpenAI gets max_completion_tokens when one is set).
+- Authority Level is Limited by default: with small models Yui keeps you company and does nothing
+  on the computer; choose Full for large models. Search Files is off by default.
+- Standby: Yui falls asleep when two things she says by herself go unanswered (you seem away), not
+  after minutes without touching her; the Standby Mode setting is gone.
+- Spontaneous Talk is a switch; how often she talks is Care Level's.
+- Regenerate is called Say Again and keeps the facts (song, time, memories) while wording it anew.
+- Quick Replies are only talk, never asking Yui to do something on the computer.
+- Clear Log (Yui's Heart) clears the chat window too.
 
 ### Fixed
 
 - Misspelled or full-width tags (for example <<emphy:happy>>) are no longer shown in the chat.
+- The System Console log's scroll bar is at the right, as tall as the log, and can be dragged.
 - When the reply names no expression, Yui guesses one from it.
 
 ## [1.1.0] - 2026-10-20
@@ -143,7 +155,7 @@ Replies of small local models cleaned up: thinking written into the reply (befor
 - Emotion Display: Yui changes her expression with the mood of each reply (optional images).
 - Navigation Pixie Form: with a pixie image set, Yui turns into a small hovering pixie while the
   message window is hidden.
-- Standby Mode: Yui falls asleep after a while without interaction; click her to wake her up.
+- Standby Mode: Yui falls asleep when two things she says by herself go unanswered (you seem away); click her or write to her to wake her up.
 - Login Greeting: Yui welcomes you back after you have been away.
 - Mental Health Counseling: reminders to sleep late at night and to rest after long sessions.
 - Navigation Reports: warnings about low battery and high CPU or memory usage.

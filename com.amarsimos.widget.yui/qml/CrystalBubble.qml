@@ -30,6 +30,9 @@ NVG.View {
     // Opacity of the texts, faded out first when the bubble closes.
     property real textOpacity: 1
 
+    // Closed by a click (not by its time running out).
+    signal dismissed()
+
     function show(heading, text, accent, target) {
         bubble.heading = heading;
         bubble.text = text;
@@ -280,6 +283,7 @@ NVG.View {
             // A click closes the bubble (the crystal itself opens the chat).
             onClicked: {
                 console.log("[bubble] clicked, closing");
+                bubble.dismissed();
                 bubble.hide();
             }
         }

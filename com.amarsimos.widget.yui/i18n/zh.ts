@@ -177,7 +177,7 @@
         <location line="+22"/>
         <location line="+70"/>
         <location line="+22"/>
-        <location line="+226"/>
+        <location line="+227"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+9"/>
@@ -185,7 +185,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-359"/>
+        <location line="-360"/>
         <source>Higher gives more varied replies, lower more predictable ones. Default leaves it to the server.</source>
         <translation>越高回复越多变，越低越稳定。Default 表示交给服务器决定。</translation>
     </message>
@@ -215,7 +215,7 @@
         <translation>结衣操作电脑的方式。Tags（默认）把操作写在回复里，本地模型执行得最好；Tools 使用服务器的工具调用（function calling），适合擅长工具调用的大模型（目前只对 OpenAI 兼容的服务器生效，其他服务器仍用 Tags）。记忆始终使用标签。服务器不接受工具时，会自动改用 Tags。</translation>
     </message>
     <message>
-        <location line="+92"/>
+        <location line="+93"/>
         <source>Yui&apos;s personality. MHCP001 is the built-in one; edit the prompt below and keep it with Save As…, then switch between your profiles here.</source>
         <translation>结衣的人格。MHCP001 是内置人格；修改下面的提示词后用 Save As… 保存，之后就可以在这里切换你的人格。</translation>
     </message>
@@ -260,25 +260,25 @@
         <translation>结衣对你的称呼，会替换人格数据中的 {{user_title}}。</translation>
     </message>
     <message>
-        <location line="-517"/>
+        <location line="-518"/>
         <location line="+210"/>
         <source>Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-210"/>
-        <location line="+477"/>
+        <location line="+478"/>
         <source>Core Tuning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-477"/>
-        <location line="+711"/>
+        <location line="-478"/>
+        <location line="+712"/>
         <source>Personality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-471"/>
+        <location line="-472"/>
         <source>Thinking Depth</source>
         <translation>Thinking Depth</translation>
     </message>
@@ -374,18 +374,18 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+349"/>
+        <location line="+350"/>
         <source>%1 changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-349"/>
-        <location line="+349"/>
+        <location line="-350"/>
+        <location line="+350"/>
         <source>All default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-345"/>
+        <location line="-346"/>
         <source>Randomness</source>
         <translation type="unfinished"></translation>
     </message>
@@ -405,7 +405,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+31"/>
         <source>Authority Level</source>
         <translation type="unfinished"></translation>
     </message>
@@ -782,13 +782,8 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="+146"/>
-        <source>Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.</source>
-        <translation>超过这么多分钟没有互动，结衣会进入待机睡眠；点击她即可唤醒。0 为关闭。</translation>
-    </message>
-    <message>
-        <location line="-110"/>
-        <location line="+406"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
+        <location line="+475"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -799,8 +794,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-268"/>
-        <location line="+257"/>
+        <location line="-337"/>
+        <location line="+326"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -810,24 +805,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-355"/>
+        <location line="-424"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-27"/>
-        <location line="+143"/>
+        <location line="+126"/>
         <source>Companion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-143"/>
-        <location line="+206"/>
+        <location line="-126"/>
+        <location line="+275"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-206"/>
+        <location line="-275"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -847,12 +842,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+28"/>
-        <source>Standby Mode</source>
-        <translation type="unfinished"></translation>
+        <location line="+14"/>
+        <source>While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).</source>
+        <translation>聊天窗口关着时，结衣偶尔会主动说话（会调用 API）。频率由 Care 页的 Care Level 决定。</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+46"/>
         <source>Music</source>
         <translation type="unfinished"></translation>
     </message>
@@ -872,17 +867,82 @@
         <translation>未检测到 Media Player 插件（com.gpbeta.media），此功能不起作用。</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+25"/>
+        <source>Frequency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Care Level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Quiet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Normal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Chatty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>How often Yui speaks up by herself (care, reminders, small talk). Auto learns it from you: answering her or opening the chat makes her talk a little more, closing her bubble or leaving it unanswered a little less, and telling her to be quiet or to talk more counts the most. Greetings, follow-ups and system warnings are always said.</source>
+        <translation>结衣主动开口（关心、提醒、闲聊）的频率。Auto 会从你的反应中学习：回复她或打开聊天，她会多说一点；关掉气泡或不理她，会少说一点；直接叫她安静点或多陪你聊，影响最大。问候、跟进和系统警告总会说。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Learned: about %1 a day, at least %2 min apart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>; you answer most at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Reset Learning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Quiet Hours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>To</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Reminders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Yui reminds you to sleep late at night and to rest after long sessions (at most once an hour).</source>
-        <translation>深夜提醒你早点睡，长时间使用后提醒你休息（每小时最多一次）。</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+14"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
@@ -892,17 +952,12 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-138"/>
+        <location line="-208"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>While the chat is closed, Yui speaks up by herself after this many minutes without interaction (uses the API). 0 turns it off.</source>
-        <translation>对话框收起时，超过这么多分钟没有互动，结衣会主动说话（调用 API），0 为关闭。</translation>
-    </message>
-    <message>
-        <location line="+30"/>
+        <location line="+25"/>
         <source>Weather Report</source>
         <translation type="unfinished"></translation>
     </message>
@@ -923,7 +978,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+206"/>
+        <location line="+292"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -968,7 +1023,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="-201"/>
+        <source>When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.</source>
+        <translation>结衣主动说的话连续两次没人回应时，她会认为你不在，进入待机（Standby），直到你点她或给她发消息才醒来。</translation>
+    </message>
+    <message>
+        <location line="+162"/>
+        <source>In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.</source>
+        <translation>这个时段内结衣不闲聊。深夜关怀照常，因为它只在你还在用电脑时才会出现。</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Yui reminds you to sleep late at night and to rest after long sessions, as often as Care Level allows.</source>
+        <translation>深夜提醒你睡觉，连续用电脑很久时提醒你休息，频率受 Care Level 限制。</translation>
+    </message>
+    <message>
+        <location line="+28"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
     </message>
@@ -1819,18 +1889,23 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="-570"/>
-        <location line="+599"/>
+        <location line="+602"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-26"/>
+        <location line="-29"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Test Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Care Tick</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2413,7 +2488,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1807"/>
+        <location filename="../qml/main-stand.qml" line="+1825"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2423,18 +2498,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2266"/>
+        <location line="+2431"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2249"/>
-        <location line="+2365"/>
+        <location line="-2414"/>
+        <location line="+2541"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3439"/>
+        <location line="-3617"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2445,13 +2520,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2443"/>
+        <location line="+2440"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1504"/>
+        <location line="-1499"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2498,7 +2573,7 @@ You can change this in System Console.</source>
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location line="+447"/>
+        <location line="+442"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
@@ -2549,21 +2624,21 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+27"/>
-        <location line="+167"/>
+        <location line="+29"/>
+        <location line="+159"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1870"/>
+        <location line="+2057"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1870"/>
-        <location line="+28"/>
-        <location line="+6"/>
-        <location line="+1827"/>
+        <location line="-2057"/>
+        <location line="+190"/>
+        <location line="+5"/>
+        <location line="+1853"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2573,25 +2648,25 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5195"/>
-        <location line="+5226"/>
+        <location line="-5389"/>
+        <location line="+5420"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5233"/>
-        <location line="+5233"/>
+        <location line="-5427"/>
+        <location line="+5427"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1826"/>
-        <location line="+380"/>
+        <location line="-2001"/>
+        <location line="+544"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1463"/>
+        <location line="+1474"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
