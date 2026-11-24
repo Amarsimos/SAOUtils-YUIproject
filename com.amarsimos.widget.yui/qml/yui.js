@@ -1714,7 +1714,7 @@ function priorityRules(title, allowed, mode) {
     }).join("\n") + "\n\n";
 }
 
-// Small Model Mode: a short reminder added to the user's latest message.
+// Authority Level Limited (small models): a short reminder added to the user's latest message.
 // It does not spell the tag out: with a repetition penalty, a tag written just before made models
 // misspell it (<<emphy:happy>>).
 // Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for Claude and Gemini.

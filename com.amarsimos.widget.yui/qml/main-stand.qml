@@ -106,7 +106,7 @@ T.Widget {
     // this session (by endpoint) get tags.
     readonly property string actionMode: widget.settings.action_mode === "tools" ? "tools" : "tags"
     property var toolsRejected: ({})
-    // Small Model Mode (Cardinal System): a short reminder of the tag / tool rules with every message.
+    // Authority Level Limited (Cardinal System, setting small_model): no actions, and a short reminder of the tag rules with every message.
     readonly property bool smallModelMode: widget.settings.small_model === true
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
@@ -500,12 +500,14 @@ T.Widget {
     }
 
     // The desktop actions Yui may do (System Console, Authority; all by default).
+    // Authority Level Limited (Cardinal System, small models): none of them.
     function allowedActions() {
+        var full = !smallModelMode;
         return {
-            "web": widget.settings.action_web !== false,
-            "launch": widget.settings.action_launch !== false,
-            "find": widget.settings.action_find === true,
-            "kill": widget.settings.action_kill === true,
+            "web": full && widget.settings.action_web !== false,
+            "launch": full && widget.settings.action_launch !== false,
+            "find": full && widget.settings.action_find === true,
+            "kill": full && widget.settings.action_kill === true,
             "memory": autoMemory,
             // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
             // (none of them while the tools are set aside).
@@ -515,7 +517,7 @@ T.Widget {
             // Quick Replies (Cardinal System, Personality).
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
-            "media": mediaReady,
+            "media": full && mediaReady,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
