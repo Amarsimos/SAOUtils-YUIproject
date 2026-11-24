@@ -323,8 +323,10 @@ NVG.Window {
                         Button {
                             text: qsTr("Clear Log")
                             enabled: heartWindow.logSize > 0
-                            onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete the whole chat history kept in the recollection log? This cannot be undone."), function() {
+                            onClicked: heartWindow.targetWidget.askConfirm(qsTr("Yui's Heart"), qsTr("Delete the whole chat history kept in the recollection log, and clear the chat window? This cannot be undone."), function() {
                                 heartWindow.targetWidget.clearMessageLog();
+                                // The chat window too, or Yui keeps the cleared talk in her context.
+                                heartWindow.targetWidget.clearChat();
                                 heartWindow.refreshLogSize();
                                 heartWindow.searchLog();
                             }, true)

@@ -1834,7 +1834,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+53"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -2001,13 +2001,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/YuisHeart.qml" line="+37"/>
         <location line="+289"/>
-        <location line="+76"/>
+        <location line="+78"/>
         <location line="+1"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-337"/>
+        <location line="-339"/>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2133,12 +2133,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Delete the whole chat history kept in the recollection log? This cannot be undone.</source>
-        <translation>要删除回忆日志中保存的全部聊天记录吗？此操作无法撤销。</translation>
-    </message>
-    <message>
-        <location line="+20"/>
+        <location line="+24"/>
         <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui&apos;s memories stay when it is cleared.</source>
         <translation>每条聊天消息都保存在这里，只用于导出和搜索，从不发送给 AI；清除它不会影响结衣的记忆。</translation>
     </message>
@@ -2153,7 +2148,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-10"/>
+        <source>Delete the whole chat history kept in the recollection log, and clear the chat window? This cannot be undone.</source>
+        <translation>删除回忆日志里保存的全部聊天记录，并清空聊天窗口吗？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location line="+53"/>
         <source>The latest 50 messages found</source>
         <translation>只显示找到的最近 50 条</translation>
     </message>
@@ -2184,13 +2184,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>删除全部记忆（心核和碎片），回忆日志保留。删除前会先写一份备份，之后可以重新导入。</translation>
     </message>
     <message>
-        <location line="-348"/>
-        <location line="+364"/>
+        <location line="-350"/>
+        <location line="+366"/>
         <source>Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-192"/>
+        <location line="-194"/>
         <source>Include the chat history (private conversations)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2201,18 +2201,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+2"/>
-        <location line="+92"/>
+        <location line="+94"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
     <message>
-        <location line="-92"/>
-        <location line="+92"/>
+        <location line="-94"/>
+        <location line="+94"/>
         <source>The export could not be written. See the log in System Console.</source>
         <translation>导出文件无法写入，请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location line="-87"/>
+        <location line="-89"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
