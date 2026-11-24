@@ -3832,8 +3832,17 @@ T.Widget {
         return Yui.careToday(widget.settings.care_today, Qt.formatDate(new Date(now), "yyyy-MM-dd"));
     }
 
+    // Quiet Hours' times (TimePreference: a date, saved as its text) as "HH:mm".
+    function timeOfDay(value, fallback) {
+        if (/^\d{1,2}:\d{2}$/.test(String(value)))
+            return String(value);
+
+        var date = new Date(value);
+        return value !== undefined && value !== null && !isNaN(date.getTime()) ? Qt.formatTime(date, "HH:mm") : fallback;
+    }
+
     function quietNow(date) {
-        return widget.settings.quiet_hours !== false && Yui.inQuietHours(date, widget.settings.quiet_from || "00:00", widget.settings.quiet_to || "08:00");
+        return widget.settings.quiet_hours !== false && Yui.inQuietHours(date, timeOfDay(widget.settings.quiet_from, "00:00"), timeOfDay(widget.settings.quiet_to, "08:00"));
     }
 
     // Spontaneous Talk (Mental Health Counseling); its old minutes setting 0 was migrated to off.
@@ -4239,6 +4248,13 @@ T.Widget {
         Qt.callLater(function() {
             widget.previousForm = widget.collapsedForm;
             widget.formChosen = true;
+        });
+        // Quiet Hours were "HH:mm" text for a short while; the time pickers take dates.
+        ["quiet_from", "quiet_to"].forEach(function(key) {
+            var m = /^(\d{1,2}):(\d{2})$/.exec(String(widget.settings[key]));
+            if (m)
+                widget.settings[key] = new Date(2000, 0, 1, Number(m[1]), Number(m[2]));
+
         });
         // Spontaneous Talk was a number of minutes (0 off); now a switch, how often is Care Level's.
         if (widget.settings.spontaneous_talk === undefined && widget.settings.idle_chat_minutes === 0)

@@ -788,7 +788,7 @@
     </message>
     <message>
         <location line="-106"/>
-        <location line="+489"/>
+        <location line="+488"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -799,8 +799,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-351"/>
-        <location line="+340"/>
+        <location line="-350"/>
+        <location line="+339"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -810,7 +810,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-438"/>
+        <location line="-437"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -822,12 +822,12 @@
     </message>
     <message>
         <location line="-139"/>
-        <location line="+289"/>
+        <location line="+288"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-289"/>
+        <location line="-288"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -932,22 +932,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>From</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+9"/>
         <source>To</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>In these hours (HH:mm) Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.</source>
-        <translation>这个时段（HH:mm）内结衣不闲聊。深夜关怀照常，因为它只在你还在用电脑时才会出现。</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+10"/>
         <source>Reminders</source>
         <translation type="unfinished"></translation>
     </message>
@@ -967,7 +962,7 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-222"/>
+        <location line="-221"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
@@ -993,7 +988,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+292"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -1038,7 +1033,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-21"/>
+        <location line="-39"/>
+        <source>In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.</source>
+        <translation>这个时段内结衣不闲聊。深夜关怀照常，因为它只在你还在用电脑时才会出现。</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Yui reminds you to sleep late at night and to rest after long sessions, as often as Care Level allows.</source>
         <translation>深夜提醒你睡觉，连续用电脑很久时提醒你休息，频率受 Care Level 限制。</translation>
     </message>
@@ -2503,18 +2503,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2422"/>
+        <location line="+2431"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2405"/>
-        <location line="+2525"/>
+        <location line="-2414"/>
+        <location line="+2541"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3601"/>
+        <location line="-3617"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2635,15 +2635,15 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2037"/>
+        <location line="+2053"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2037"/>
-        <location line="+177"/>
+        <location line="-2053"/>
+        <location line="+186"/>
         <location line="+5"/>
-        <location line="+1846"/>
+        <location line="+1853"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2653,25 +2653,25 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5357"/>
-        <location line="+5388"/>
+        <location line="-5373"/>
+        <location line="+5404"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5395"/>
-        <location line="+5395"/>
+        <location line="-5411"/>
+        <location line="+5411"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1981"/>
-        <location line="+531"/>
+        <location line="-1997"/>
+        <location line="+540"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1467"/>
+        <location line="+1474"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

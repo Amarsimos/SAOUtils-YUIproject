@@ -280,30 +280,29 @@ NVG.Window {
                             label: qsTr("Quiet Hours")
                         }
 
-                        P.TextFieldPreference {
+                        // SAO Utils' own time pickers; only the time of day counts.
+                        P.TimePreference {
                             id: quietFromPreference
 
                             visible: quietPreference.value
                             name: "quiet_from"
-                            defaultValue: "00:00"
+                            defaultValue: new Date(2000, 0, 1, 0, 0)
                             label: qsTr("From")
-                            hint: "00:00"
                         }
 
-                        P.TextFieldPreference {
+                        P.TimePreference {
                             id: quietToPreference
 
                             visible: quietPreference.value
                             name: "quiet_to"
-                            defaultValue: "08:00"
+                            defaultValue: new Date(2000, 0, 1, 8, 0)
                             label: qsTr("To")
-                            hint: "08:00"
                         }
 
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("In these hours (HH:mm) Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.")
+                            text: qsTr("In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.")
                         }
 
                         Heading {
