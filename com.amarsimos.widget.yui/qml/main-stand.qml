@@ -3572,17 +3572,14 @@ T.Widget {
     }
 
     // Weekly Report on Sunday evenings (from 20:00), once a week, when it is turned on.
-    function checkWeeklyReport() {
-        var now = new Date();
-        if (widget.settings.weekly_report !== true || now.getDay() !== 0 || now.getHours() < 20 || widget.busy || !activeConfig().apiKey)
-            return ;
+    // Sunday Report (Mental Health Counseling): due on Sunday from 20:00 until this week's is written;
+    // offered to the Care Scheduler (careTick), which writes it.
+    function weeklyReportDue(date) {
+        if (widget.settings.weekly_report !== true || date.getDay() !== 0 || date.getHours() < 20 || writingReport)
+            return false;
 
-        var from = new Date(now.getTime() - 6 * 86400000);
-        if (widget.settings.report_week === Qt.formatDate(from, "yyyy-MM-dd"))
-            return ;
-
-        writeWeeklyReport(true, function() {
-        });
+        var from = new Date(date.getTime() - 6 * 86400000);
+        return widget.settings.report_week !== Qt.formatDate(from, "yyyy-MM-dd");
     }
 
     // Boss Raid's banner (RaidBanner.qml), created on first use: the time left, then "Congratulations!".
@@ -3829,7 +3826,7 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Care Scheduler
-    // What Yui says by herself (late-night care, rest reminders, Spontaneous Talk) is offered here and
+    // What Yui says by herself (late-night care, rest reminders, the Sunday Report, Spontaneous Talk) is offered here and
     // at most one is said, within a daily budget and a gap set by Care Level (learned in Auto, see
     // Yui.carePick); the Login Greeting and Navigation Reports are said at once but count.
     // The last thing she said by herself, waiting for the user's response: {at, hour}, or null.
@@ -3961,6 +3958,12 @@ T.Widget {
             });
 
         }
+        if (weeklyReportDue(date))
+            candidates.push({
+            "kind": "weekly",
+            "priority": "medium"
+        });
+
         if (spontaneousTalk && !showChat && !launcherClosed)
             candidates.push({
             "kind": "chat",
@@ -4007,6 +4010,10 @@ T.Widget {
             if (spoke)
                 widget.settings.last_rest_care = now;
 
+        } else if (result.pick.kind === "weekly") {
+            writeWeeklyReport(true, function() {
+            });
+            spoke = writingReport;
         } else if (result.pick.kind === "chat") {
             spoke = idleChat();
         }
@@ -4771,14 +4778,6 @@ T.Widget {
             configuration: widget.settings["sword_skill_" + (index + 1) + "_action"] || null
         }
 
-    }
-
-    // Weekly Report (automatic, Sunday evenings), checked every 10 minutes.
-    Timer {
-        interval: 600000
-        repeat: true
-        running: widget.chatReady && !widget.seedlingMode
-        onTriggered: widget.checkWeeklyReport()
     }
 
     // Alarm (Skill Slots): rings the due reminders, checked every 15 s (and once at start, for the
