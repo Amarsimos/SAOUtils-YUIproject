@@ -614,4 +614,26 @@ test("Replies of small models", () => {
     assert.strictEqual(Yui.parseReply("3 > 2 是对的<<emotion:happy>>").text, "3 > 2 是对的");
 });
 
+test("Media", () => {
+    assert.strictEqual(Yui.mediaCommand("下一首"), "next");
+    assert.strictEqual(Yui.mediaCommand("Play"), "pause");
+    assert.strictEqual(Yui.mediaCommand("跳舞"), "");
+    const on = { media: true };
+    same(Yui.parseReply("好的<<media:next>><<media:vol+>><<media:乱写>>", [], { allowed: on }).media, ["next", "vol+"]);
+    same(Yui.parseReply("好的<<media:next>>", [], { allowed: {} }).media, []);
+    assert.strictEqual(Yui.parseReply("好的<<media:next>>", [], { allowed: {} }).text, "好的");
+    assert.ok(Yui.toolDefinitions(on).some(t => t.name === "media_control"));
+    assert.ok(!Yui.toolDefinitions({}).some(t => t.name === "media_control"));
+    same(Yui.toolCallToAction("media_control", "{\"command\":\"mute\"}", [], { allowed: on }), { kind: "media", command: "mute" });
+    assert.strictEqual(Yui.toolCallToAction("media_control", { command: "mute" }, [], { allowed: {} }).kind, "error");
+    assert.ok(Yui.featureInstructions("爸爸", "", on, "tags").includes("<<media:"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<media:"));
+    assert.ok(!Yui.featureInstructions("爸爸", "", on, "tools").includes("<<media:"));
+    assert.ok(Yui.mediaContext({ title: "Yui", artist: "Kajiura", player: "网易云音乐", playing: true }).includes("正在播放的曲目，这是程序刚刚读到的：Kajiura -《Yui》，用 网易云音乐。"));
+    assert.ok(Yui.mediaContext({ title: "Yui", playing: false }).includes("播放器里的曲目，这是程序刚刚读到的：《Yui》"));
+    assert.strictEqual(Yui.mediaContext({ title: "" }), "");
+    assert.ok(Yui.mediaChangeNote({ title: "I can do it now", artist: "倉木麻衣" }).includes("倉木麻衣 -《I can do it now》"));
+    assert.strictEqual(Yui.mediaChangeNote(null), "");
+});
+
 console.log(passed + " tests passed");

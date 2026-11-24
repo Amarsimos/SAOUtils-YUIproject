@@ -19,7 +19,7 @@ NVG.Window {
     // This Tab.
     property int changedThresholds: 0
     // The action switches, for Reset This Tab and the title bar's Reset.
-    readonly property var switchPreferences: [webSwitch, launchSwitch, findSwitch, killSwitch]
+    readonly property var switchPreferences: [webSwitch, launchSwitch, findSwitch, killSwitch, mediaSwitch]
     // Where web pages and searches open, for the same resets.
     readonly property var browsingPreferences: [externalBrowserPreference, searchPreference, searchCustomPreference]
 
@@ -383,7 +383,7 @@ NVG.Window {
 
                             name: "action_find"
                             label: qsTr("Search Files")
-                            defaultValue: true
+                            defaultValue: false
                         }
 
                         P.SwitchPreference {
@@ -394,12 +394,26 @@ NVG.Window {
                             defaultValue: false
                         }
 
+                        P.SwitchPreference {
+                            id: mediaSwitch
+
+                            name: "media_control"
+                            label: qsTr("Control Media")
+                            defaultValue: false
+                        }
+
                     }
 
                     SettingNote {
                         visible: consoleWindow.targetWidget.settingsHelp
                         besidePreferences: true
                         text: qsTr("Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.")
+                    }
+
+                    SettingNote {
+                        visible: consoleWindow.targetWidget.settingsHelp
+                        besidePreferences: true
+                        text: qsTr("Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.")
                     }
 
                     Heading {
@@ -642,14 +656,18 @@ NVG.Window {
                                     }, {
                                         "label": qsTr("Test Link Start"),
                                         "tag": "linkstart"
+                                    }, {
+                                        "label": qsTr("Test Media"),
+                                        "tag": "media"
                                     }]
 
                                     // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
                                     // made-up streamed reply in the chat (neither makes an API request),
-                                    // "Test Link Start" plays the startup effect.
+                                    // "Test Link Start" plays the startup effect, "Test Media" logs the track
+                                    // playing and plays / pauses it.
                                     Button {
                                         text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                                     }
 
                                 }
@@ -700,12 +718,26 @@ NVG.Window {
 
                         // Read-only but selectable text, so the log can be copied (drag + Ctrl+C or Copy Log).
                         ScrollView {
+                            id: logScroll
+
                             anchors.fill: parent
                             anchors.margins: 6
                             clip: true
                             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                            contentWidth: availableWidth
+                            // The text stops short of the scroll bar.
+                            contentWidth: availableWidth - 16
+                            // Placed by hand: a scroll bar set on a ScrollView is not laid out for it (it
+                            // sat as a sliver at the top left). At the right, as tall as the log; a thumb
+                            // of at least 48 px, thicker than the default.
                             ScrollBar.vertical: SaoScrollBar {
+                                parent: logScroll
+                                // Above the text, which took its clicks.
+                                z: 2
+                                x: logScroll.width - width
+                                y: logScroll.topPadding
+                                height: logScroll.availableHeight
+                                fixedThumb: 48
+                                thumbWidth: 7
                             }
 
                             TextArea {

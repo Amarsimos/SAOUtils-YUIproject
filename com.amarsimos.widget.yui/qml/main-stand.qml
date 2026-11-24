@@ -504,7 +504,7 @@ T.Widget {
         return {
             "web": widget.settings.action_web !== false,
             "launch": widget.settings.action_launch !== false,
-            "find": widget.settings.action_find !== false,
+            "find": widget.settings.action_find === true,
             "kill": widget.settings.action_kill === true,
             "memory": autoMemory,
             // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
@@ -514,6 +514,8 @@ T.Widget {
             "notes": toolsEnabled && widget.settings.notes_enabled !== false,
             // Quick Replies (Cardinal System, Personality).
             "suggest": widget.settings.quick_replies !== false,
+            // Media (System Console, Authority): only with Media Player installed.
+            "media": mediaReady,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -521,7 +523,7 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + mediaExtras(title);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -615,6 +617,93 @@ T.Widget {
     function weatherExtras(title, query) {
         var line = Yui.weatherWanted(query) ? weatherLine() : "";
         return line ? "\n\n（天气数据：现在 " + line + "。回答天气相关的问题时以此为准，不要编造。）" : "";
+    }
+
+    // ---------------------------------------------------------------- Media
+    // System Console, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
+    // System Media Control action and System Media Data, not reimplemented here.
+    readonly property var mediaCommands: ["pause", "next", "prev", "vol+", "vol-", "mute", "stop"]
+    // Media Player loaded (it is loaded while Now Playing or Control Media is on).
+    readonly property bool mediaLoaded: mediaData.status === Loader.Ready
+    // Control Media (System Console, off by default); Now Playing is read in mediaExtras.
+    readonly property bool mediaReady: widget.settings.media_control === true && mediaLoaded
+
+    function runMedia(command) {
+        var source = mediaActions.objectAt(mediaCommands.indexOf(command));
+        if (!mediaReady || !source) {
+            diag("media " + command + ": not available");
+            return false;
+        }
+        diag("media " + command);
+        source.trigger();
+        return true;
+    }
+
+    // The track playing: {title, artist, player, playing}, null when nothing is (or no Media Player).
+    function mediaInfo() {
+        if (!mediaLoaded)
+            return null;
+
+        var read = function(name) {
+            var value = mediaData.item.query(name);
+            if (!value)
+                return undefined;
+
+            try {
+                value.update.execute();
+                return value.status === 1 ? value.current : undefined;
+            } catch (e) {
+                return undefined;
+            }
+        };
+        var title = String(read("title") || "").trim();
+        if (!title)
+            return null;
+
+        var state = read("state");
+        return {
+            "title": title,
+            "artist": String(read("artist") || "").trim(),
+            "player": String(read("player") || "").trim(),
+            "playing": state === undefined ? undefined : Number(state) === 2,
+            "state": state
+        };
+    }
+
+    // Sent with every request while something plays.
+    // The track last sent, and the note for the latest message when it changed (see mediaExtras).
+    property string mediaSentTrack: ""
+    property string mediaNote: ""
+
+    function mediaExtras(title) {
+        widget.mediaNote = "";
+        if (widget.settings.now_playing === false)
+            return "";
+
+        var info = mediaInfo();
+        // A new track (or the first one sent) is also said beside the latest message: small models
+        // answered with the song named earlier in the chat, whatever the system prompt said.
+        var key = info ? info.artist + "|" + info.title : "";
+        if (key && key !== widget.mediaSentTrack)
+            widget.mediaNote = Yui.mediaChangeNote(info);
+
+        widget.mediaSentTrack = key;
+        // Logged with each request, to see why a track was or was not sent.
+        diag("media: " + (mediaLoaded ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
+        return Yui.mediaContext(info, title);
+    }
+
+    // System Console: what Media Player reads now, then Play / Pause.
+    function testMedia() {
+        if (!mediaLoaded) {
+            diag("test media: Media Player (com.gpbeta.media) not found, or Now Playing and Control Media both off");
+            return ;
+        }
+        diag("test media: " + JSON.stringify(mediaInfo()));
+        if (mediaReady)
+            runMedia("pause");
+        else
+            diag("test media: Control Media is off, so nothing is played or paused");
     }
 
     // ---------------------------------------------------------------- Sword Skills
@@ -946,7 +1035,7 @@ T.Widget {
             var last = messages[messages.length - 1];
             messages[messages.length - 1] = {
                 "role": last.role,
-                "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子。）"
+                "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子；但事实（比如歌名、时间、记住的事）不要改。）"
             };
         }
         // Tools for the OpenAI-compatible format; other formats and servers that rejected tools get tags.
@@ -965,6 +1054,18 @@ T.Widget {
             messages[messages.length - 1] = {
                 "role": "user",
                 "content": latest.content + Yui.smallModelReminder(mode, allowedActions())
+            };
+        }
+        // Say Again: asked to answer differently, gemma changed the song too, so the track is said again.
+        if (regenerate && !widget.mediaNote && widget.mediaSentTrack)
+            widget.mediaNote = Yui.mediaChangeNote(mediaInfo());
+
+        if (widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
+            messages = messages.slice();
+            var asked = messages[messages.length - 1];
+            messages[messages.length - 1] = {
+                "role": "user",
+                "content": asked.content + widget.mediaNote
             };
         }
         if (!config.apiKey || !config.endpoint || !config.model) {
@@ -1466,6 +1567,11 @@ T.Widget {
                     addQuestNote(text);
                     note = (note ? note + "\n" : "") + "📜 已记下：" + text;
                 });
+                reply.media.forEach(function(command) {
+                    if (runMedia(command))
+                        note = (note ? note + "\n" : "") + "🎵 " + Yui.MEDIA_LABELS[command];
+
+                });
                 if (reply.skill) {
                     var skillName = askSwordSkill(reply.skill);
                     note = (note ? note + "\n" : "") + (skillName ? "⚔ 剑技：" + skillName : "⚔ 没有叫「" + reply.skill + "」的剑技");
@@ -1822,7 +1928,7 @@ T.Widget {
         if (reply.blocked)
             return "这个是系统的重要程序，结衣不能关掉哦 (>_<)";
 
-        if (reply.action)
+        if (reply.action || reply.media.length > 0)
             return "好的，结衣来帮你～ (｡･ω･｡)";
 
         if (reply.cores.length + reply.memories.length + reply.forgets.length > 0)
@@ -1839,6 +1945,8 @@ T.Widget {
                 (made.core ? reply.cores : reply.memories).push(made.text);
             } else if (made.kind === "forget") {
                 reply.forgets.push(made.text);
+            } else if (made.kind === "media") {
+                reply.media.push(made.command);
             } else if (made.kind === "blocked") {
                 reply.blocked = made.blocked;
             } else if (made.kind === "action") {
@@ -4416,6 +4524,34 @@ T.Widget {
                 temperatureSource.update();
 
         }
+    }
+
+    // Media: Media Player's System Media Data (not ready when the package is missing).
+    Loader {
+        id: mediaData
+
+        active: widget.settings.media_control === true || widget.settings.now_playing !== false
+        source: Qt.resolvedUrl("nvg://media.gpbeta.com/data/player#system")
+        onStatusChanged: {
+            if (status === Loader.Error)
+                widget.diag("media: Media Player (com.gpbeta.media) not found");
+
+        }
+    }
+
+    // Media: one System Media Control action per command, loaded ahead so it runs at once.
+    Instantiator {
+        id: mediaActions
+
+        model: widget.mediaReady ? widget.mediaCommands : []
+
+        delegate: NVG.ActionSource {
+            configuration: ({
+                "source": "nvg://media.gpbeta.com/action/player#system",
+                "data": modelData
+            })
+        }
+
     }
 
     // Sword Skills (Skill Slots): the action of each slot, loaded ahead so it runs at once.

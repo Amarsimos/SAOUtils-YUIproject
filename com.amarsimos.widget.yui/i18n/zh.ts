@@ -778,7 +778,7 @@
     </message>
     <message>
         <location line="-110"/>
-        <location line="+381"/>
+        <location line="+406"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -789,8 +789,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-243"/>
-        <location line="+232"/>
+        <location line="-268"/>
+        <location line="+257"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -800,24 +800,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-330"/>
+        <location line="-355"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-27"/>
-        <location line="+118"/>
+        <location line="+143"/>
         <source>Companion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-118"/>
-        <location line="+181"/>
+        <location line="-143"/>
+        <location line="+206"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-181"/>
+        <location line="-206"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -842,7 +842,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+74"/>
+        <location line="+49"/>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Now Playing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Yui knows the song you are listening to and can talk about it, without bringing it up when it does not fit. It reads the system media through the Media Player package (com.gpbeta.media).</source>
+        <translation>结衣知道你正在听的歌，可以和你聊它，不相关时不会主动提起。通过 Media Player 插件（com.gpbeta.media）读取系统媒体。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Media Player (com.gpbeta.media) was not found, so this does nothing.</source>
+        <translation>未检测到 Media Player 插件（com.gpbeta.media），此功能不起作用。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
@@ -862,7 +882,7 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-113"/>
+        <location line="-138"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
@@ -893,7 +913,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+181"/>
+        <location line="+206"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -987,7 +1007,7 @@
     </message>
     <message>
         <location line="+0"/>
-        <source>Regenerate</source>
+        <source>Say Again</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -996,7 +1016,7 @@
     <message>
         <location filename="../qml/ProcessListEditor.qml" line="+122"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
 </context>
 <context>
@@ -1470,7 +1490,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+452"/>
+        <location filename="../qml/SystemConsole.qml" line="+466"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1495,7 +1515,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
     </message>
     <message>
-        <location line="-468"/>
+        <location line="-482"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1535,7 +1555,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+303"/>
+        <location line="+174"/>
+        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.</source>
+        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。想让结衣知道正在放什么歌，请在 Mental Health Counseling 里打开 Now Playing。</translation>
+    </message>
+    <message>
+        <location line="+143"/>
         <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
         <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
     </message>
@@ -1555,19 +1580,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="-495"/>
         <location line="+252"/>
         <source>Monitor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-252"/>
-        <location line="+496"/>
+        <location line="+510"/>
         <source>Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-481"/>
+        <location line="-495"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1678,12 +1703,17 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+8"/>
+        <source>Control Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+9"/>
         <source>Actions turned off here are not offered to the AI, and are not carried out even if a reply asks for them.</source>
         <translation>在这里关闭的操作不会告诉 AI，即使回复里要求也不会执行。</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+11"/>
         <source>Browsing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1773,18 +1803,23 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-549"/>
-        <location line="+574"/>
+        <location line="-563"/>
+        <location line="+592"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-22"/>
+        <location line="-26"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+3"/>
+        <source>Test Media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Log Requests</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1799,7 +1834,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+53"/>
         <source>Run a test to see its steps here.</source>
         <translation>运行测试后，这里会实时显示每一步。</translation>
     </message>
@@ -1966,13 +2001,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location filename="../qml/YuisHeart.qml" line="+37"/>
         <location line="+289"/>
-        <location line="+76"/>
+        <location line="+78"/>
         <location line="+1"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-337"/>
+        <location line="-339"/>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2098,12 +2133,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Delete the whole chat history kept in the recollection log? This cannot be undone.</source>
-        <translation>要删除回忆日志中保存的全部聊天记录吗？此操作无法撤销。</translation>
-    </message>
-    <message>
-        <location line="+20"/>
+        <location line="+24"/>
         <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui&apos;s memories stay when it is cleared.</source>
         <translation>每条聊天消息都保存在这里，只用于导出和搜索，从不发送给 AI；清除它不会影响结衣的记忆。</translation>
     </message>
@@ -2118,7 +2148,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="-10"/>
+        <source>Delete the whole chat history kept in the recollection log, and clear the chat window? This cannot be undone.</source>
+        <translation>删除回忆日志里保存的全部聊天记录，并清空聊天窗口吗？此操作无法撤销。</translation>
+    </message>
+    <message>
+        <location line="+53"/>
         <source>The latest 50 messages found</source>
         <translation>只显示找到的最近 50 条</translation>
     </message>
@@ -2149,13 +2184,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>删除全部记忆（心核和碎片），回忆日志保留。删除前会先写一份备份，之后可以重新导入。</translation>
     </message>
     <message>
-        <location line="-348"/>
-        <location line="+364"/>
+        <location line="-350"/>
+        <location line="+366"/>
         <source>Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-192"/>
+        <location line="-194"/>
         <source>Include the chat history (private conversations)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2166,18 +2201,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+2"/>
-        <location line="+92"/>
+        <location line="+94"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
     <message>
-        <location line="-92"/>
-        <location line="+92"/>
+        <location line="-94"/>
+        <location line="+94"/>
         <source>The export could not be written. See the log in System Console.</source>
         <translation>导出文件无法写入，请查看 System Console 中的日志。</translation>
     </message>
     <message>
-        <location line="-87"/>
+        <location line="-89"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2317,7 +2352,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location line="+5"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">添加</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -2363,7 +2398,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1688"/>
+        <location filename="../qml/main-stand.qml" line="+1770"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2373,18 +2408,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2264"/>
+        <location line="+2266"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2247"/>
-        <location line="+2363"/>
+        <location line="-2249"/>
+        <location line="+2365"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3409"/>
+        <location line="-3416"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2395,13 +2430,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2413"/>
+        <location line="+2420"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1502"/>
+        <location line="-1504"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2426,7 +2461,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+141"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2505,15 +2540,15 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1842"/>
+        <location line="+1870"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1842"/>
+        <location line="-1870"/>
         <location line="+28"/>
         <location line="+6"/>
-        <location line="+1799"/>
+        <location line="+1827"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2523,25 +2558,25 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5046"/>
-        <location line="+5077"/>
+        <location line="-5158"/>
+        <location line="+5189"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5084"/>
-        <location line="+5084"/>
+        <location line="-5196"/>
+        <location line="+5196"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1798"/>
+        <location line="-1826"/>
         <location line="+380"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1435"/>
+        <location line="+1463"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

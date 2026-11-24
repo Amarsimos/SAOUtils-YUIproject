@@ -8,21 +8,25 @@ ScrollBar {
     id: control
 
     property bool onLight: false
+    // A thumb of this many pixels whatever the content's length (0: proportional, at least
+    // minimumSize), and this width when not hovered.
+    property real fixedThumb: 0
+    property real thumbWidth: 5
     readonly property bool highlighted: hovered || pressed
     readonly property bool shown: active || hovered
 
     policy: ScrollBar.AsNeeded
     padding: 3
-    minimumSize: 0.08
+    minimumSize: fixedThumb > 0 && height > 0 ? Math.min(1, fixedThumb / height) : 0.08
 
     contentItem: Item {
-        implicitWidth: 8
+        implicitWidth: Math.max(8, control.thumbWidth + 3)
         implicitHeight: 40
         opacity: control.shown ? 1 : 0
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: control.highlighted ? 8 : 5
+            width: control.highlighted ? control.thumbWidth + 3 : control.thumbWidth
             height: parent.height
             radius: width / 2
             // SAO orange on hover / drag, as in the SAO theme of SAO Utils.

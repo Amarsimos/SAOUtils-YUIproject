@@ -21,7 +21,7 @@ NVG.Window {
     property var moods: []
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var companionPreferences: [greetPreference, idleChatPreference, sleepPreference, weatherPreference, weatherDataPreference, temperatureDataPreference]
+    readonly property var companionPreferences: [greetPreference, idleChatPreference, sleepPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
     readonly property var carePreferences: [carePreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
@@ -178,6 +178,31 @@ NVG.Window {
                             name: "weather_temperature"
                             label: qsTr("Temperature")
                             visible: weatherPreference.value
+                        }
+
+                        Heading {
+                            text: qsTr("Music")
+                        }
+
+                        P.SwitchPreference {
+                            id: nowPlayingPreference
+
+                            name: "now_playing"
+                            label: qsTr("Now Playing")
+                            defaultValue: true
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui knows the song you are listening to and can talk about it, without bringing it up when it does not fit. It reads the system media through the Media Player package (com.gpbeta.media).")
+                        }
+
+                        // Shown whatever Help says: without the package this does nothing.
+                        SettingNote {
+                            visible: nowPlayingPreference.value && !counselingWindow.targetWidget.mediaLoaded
+                            besidePreferences: true
+                            text: qsTr("Media Player (com.gpbeta.media) was not found, so this does nothing.")
                         }
 
                     }
