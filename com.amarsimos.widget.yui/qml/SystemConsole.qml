@@ -718,13 +718,21 @@ NVG.Window {
 
                         // Read-only but selectable text, so the log can be copied (drag + Ctrl+C or Copy Log).
                         ScrollView {
+                            id: logScroll
+
                             anchors.fill: parent
                             anchors.margins: 6
                             clip: true
                             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                             contentWidth: availableWidth
-                            // A long log made the thumb a sliver: a fixed, thicker one instead.
+                            // Placed by hand: a scroll bar set on a ScrollView is not laid out for it (it
+                            // sat as a sliver at the top left). At the right, as tall as the log; a thumb
+                            // of at least 48 px, thicker than the default.
                             ScrollBar.vertical: SaoScrollBar {
+                                parent: logScroll
+                                x: logScroll.width - width
+                                y: logScroll.topPadding
+                                height: logScroll.availableHeight
                                 fixedThumb: 48
                                 thumbWidth: 7
                             }
