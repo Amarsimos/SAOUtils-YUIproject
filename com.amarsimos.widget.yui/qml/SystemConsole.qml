@@ -383,7 +383,7 @@ NVG.Window {
 
                             name: "action_find"
                             label: qsTr("Search Files")
-                            defaultValue: true
+                            defaultValue: false
                         }
 
                         P.SwitchPreference {
@@ -399,7 +399,7 @@ NVG.Window {
 
                             name: "media_control"
                             label: qsTr("Control Media")
-                            defaultValue: true
+                            defaultValue: false
                         }
 
                     }
@@ -413,7 +413,7 @@ NVG.Window {
                     SettingNote {
                         visible: consoleWindow.targetWidget.settingsHelp
                         besidePreferences: true
-                        text: qsTr("Control Media: Yui plays, pauses, skips tracks and changes the volume without asking, and knows what is playing when you talk about music. It uses the Media Player package (com.gpbeta.media); without it this does nothing.")
+                        text: qsTr("Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.")
                     }
 
                     Heading {

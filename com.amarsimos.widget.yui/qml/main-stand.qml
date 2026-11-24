@@ -504,7 +504,7 @@ T.Widget {
         return {
             "web": widget.settings.action_web !== false,
             "launch": widget.settings.action_launch !== false,
-            "find": widget.settings.action_find !== false,
+            "find": widget.settings.action_find === true,
             "kill": widget.settings.action_kill === true,
             "memory": autoMemory,
             // Skill Slots: Boss Raid, Alarm and Quest Log, and the names of the Sword Skills set up
@@ -623,7 +623,10 @@ T.Widget {
     // System Console, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
     // System Media Control action and System Media Data, not reimplemented here.
     readonly property var mediaCommands: ["pause", "next", "prev", "vol+", "vol-", "mute", "stop"]
-    readonly property bool mediaReady: widget.settings.media_control !== false && mediaData.status === Loader.Ready
+    // Media Player loaded (it is loaded while Now Playing or Control Media is on).
+    readonly property bool mediaLoaded: mediaData.status === Loader.Ready
+    // Control Media (System Console, off by default); Now Playing is read in mediaExtras.
+    readonly property bool mediaReady: widget.settings.media_control === true && mediaLoaded
 
     function runMedia(command) {
         var source = mediaActions.objectAt(mediaCommands.indexOf(command));
@@ -638,7 +641,7 @@ T.Widget {
 
     // The track playing: {title, artist, player, playing}, null when nothing is (or no Media Player).
     function mediaInfo() {
-        if (!mediaReady)
+        if (!mediaLoaded)
             return null;
 
         var read = function(name) {
@@ -669,23 +672,26 @@ T.Widget {
 
     // Sent with every request while something plays.
     function mediaExtras() {
-        if (widget.settings.media_control === false)
+        if (widget.settings.now_playing === false)
             return "";
 
         var info = mediaInfo();
         // Logged with each request, to see why a track was or was not sent.
-        diag("media: " + (mediaReady ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
+        diag("media: " + (mediaLoaded ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
         return Yui.mediaContext(info);
     }
 
     // System Console: what Media Player reads now, then Play / Pause.
     function testMedia() {
-        if (!mediaReady) {
-            diag("test media: Media Player (com.gpbeta.media) not found or Media turned off");
+        if (!mediaLoaded) {
+            diag("test media: Media Player (com.gpbeta.media) not found, or Now Playing and Control Media both off");
             return ;
         }
         diag("test media: " + JSON.stringify(mediaInfo()));
-        runMedia("pause");
+        if (mediaReady)
+            runMedia("pause");
+        else
+            diag("test media: Control Media is off, so nothing is played or paused");
     }
 
     // ---------------------------------------------------------------- Sword Skills
@@ -4500,7 +4506,7 @@ T.Widget {
     Loader {
         id: mediaData
 
-        active: widget.settings.media_control !== false
+        active: widget.settings.media_control === true || widget.settings.now_playing !== false
         source: Qt.resolvedUrl("nvg://media.gpbeta.com/data/player#system")
         onStatusChanged: {
             if (status === Loader.Error)

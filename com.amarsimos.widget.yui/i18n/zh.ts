@@ -778,7 +778,7 @@
     </message>
     <message>
         <location line="-110"/>
-        <location line="+381"/>
+        <location line="+406"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -789,8 +789,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-243"/>
-        <location line="+232"/>
+        <location line="-268"/>
+        <location line="+257"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -800,24 +800,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-330"/>
+        <location line="-355"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-27"/>
-        <location line="+118"/>
+        <location line="+143"/>
         <source>Companion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-118"/>
-        <location line="+181"/>
+        <location line="-143"/>
+        <location line="+206"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-181"/>
+        <location line="-206"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -842,7 +842,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+74"/>
+        <location line="+49"/>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Now Playing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Yui knows the song you are listening to and can talk about it, without bringing it up when it does not fit. It reads the system media through the Media Player package (com.gpbeta.media).</source>
+        <translation>结衣知道你正在听的歌，可以和你聊它，不相关时不会主动提起。通过 Media Player 插件（com.gpbeta.media）读取系统媒体。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Media Player (com.gpbeta.media) was not found, so this does nothing.</source>
+        <translation>未检测到 Media Player 插件（com.gpbeta.media），此功能不起作用。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
@@ -862,7 +882,7 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-113"/>
+        <location line="-138"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
@@ -893,7 +913,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+181"/>
+        <location line="+206"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -1535,7 +1555,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+317"/>
+        <location line="+174"/>
+        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.</source>
+        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。想让结衣知道正在放什么歌，请在 Mental Health Counseling 里打开 Now Playing。</translation>
+    </message>
+    <message>
+        <location line="+143"/>
         <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
         <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
     </message>
@@ -1688,12 +1713,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>在这里关闭的操作不会告诉 AI，即使回复里要求也不会执行。</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking, and knows what is playing when you talk about music. It uses the Media Player package (com.gpbeta.media); without it this does nothing.</source>
-        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量，聊到音乐时也知道正在放什么。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+11"/>
         <source>Browsing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2378,7 +2398,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1758"/>
+        <location filename="../qml/main-stand.qml" line="+1770"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2538,14 +2558,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5146"/>
-        <location line="+5177"/>
+        <location line="-5158"/>
+        <location line="+5189"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5184"/>
-        <location line="+5184"/>
+        <location line="-5196"/>
+        <location line="+5196"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
