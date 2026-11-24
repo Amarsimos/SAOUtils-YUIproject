@@ -1732,7 +1732,8 @@ T.Widget {
             "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
         }[kind];
         diag("login greeting: " + kind);
-        yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）");
+        if (yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）"))
+            careSaid("greeting", now);
     }
 
     function sendMessage(text) {
@@ -1741,6 +1742,7 @@ T.Widget {
 
         noteActivity();
         sleeping = false;
+        careHeard(text, Date.now());
         // "System Call, ..." easter egg: answered locally, then part of the conversation like any turn.
         var call = Yui.systemCall(text, userTitle(), {
             "cpu": readData(cpuLoad),
@@ -2252,8 +2254,7 @@ T.Widget {
             sleeping = true;
 
         checkSystemStatus(now);
-        checkCare(now);
-        checkIdleChat(now);
+        careTick(now, false);
     }
 
     // ---------------------------------------------------------------- Yui's Heart (SQLite)
@@ -3632,6 +3633,8 @@ T.Widget {
     }
 
     function statusWarning(text) {
+        // Said at once, but the scheduler's gap starts again.
+        careSaid("report", Date.now(), false);
         appendMessage("ai", text, false, true);
         setEmotion("surprised");
         announce(qsTr("Navigation Report"), text);
@@ -3670,6 +3673,10 @@ T.Widget {
             });
             crystalBubble.sound = Qt.binding(function() {
                 return widget.messageSounds;
+            });
+            // Closing what she said by herself counts against her talking (Care Scheduler).
+            crystalBubble.dismissed.connect(function() {
+                careRespond("dismissed");
             });
         }
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
@@ -3732,18 +3739,6 @@ T.Widget {
             else
                 widget.crystalBubble.hide();
         }
-    }
-
-    // MHCP001 care: remind the user to sleep late at night or to rest after a long session.
-    // At most once an hour, only while the user is around and Yui is awake.
-    // Yui talks by herself while she is a crystal and nothing happened for settings.idle_chat_minutes
-    // (0 = never; default 15, before she falls asleep after the standby time).
-    function checkIdleChat(now) {
-        var minutes = widget.settings.idle_chat_minutes !== undefined ? widget.settings.idle_chat_minutes : 15;
-        if (minutes <= 0 || showChat || launcherClosed || raidActive || sleeping || widget.busy || now - Math.max(lastProactive, lastActivity) < minutes * 60000)
-            return ;
-
-        idleChat();
     }
 
     // System Console "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
@@ -3818,27 +3813,187 @@ T.Widget {
         var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
         var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
         diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)"));
+        return started;
     }
 
-    function checkCare(now) {
-        if (!featureEnabled("proactive_care") || raidActive || sleeping || widget.busy || now - lastProactive < 3600000 || now - lastActivity > 15 * 60000)
+    // ---------------------------------------------------------------- Care Scheduler
+    // What Yui says by herself (late-night care, rest reminders, Spontaneous Talk) is offered here and
+    // at most one is said, within a daily budget and a gap set by Care Level (learned in Auto, see
+    // Yui.carePick); the Login Greeting and Navigation Reports are said at once but count.
+    // The last thing she said by herself, waiting for the user's response: {at, hour}, or null.
+    property var carePending: null
+    property string careLastLog: ""
+
+    function careScoreNow() {
+        return Yui.careScore(widget.settings.care_level || "auto", widget.settings.care_score);
+    }
+
+    function careState(now) {
+        return Yui.careToday(widget.settings.care_today, Qt.formatDate(new Date(now), "yyyy-MM-dd"));
+    }
+
+    function quietNow(date) {
+        return widget.settings.quiet_hours !== false && Yui.inQuietHours(date, widget.settings.quiet_from || "00:00", widget.settings.quiet_to || "08:00");
+    }
+
+    // Spontaneous Talk (Mental Health Counseling): on unless set to 0 (its old minutes setting).
+    readonly property bool spontaneousTalk: widget.settings.idle_chat_minutes !== 0
+
+    // Something was said by herself: counted for today (counted false: only the gap starts again),
+    // and waiting for a response.
+    function careSaid(kind, now, counted) {
+        var state = careState(now);
+        var said = JSON.parse(JSON.stringify(state.said || {}));
+        said[kind] = true;
+        widget.settings.care_today = {
+            "day": state.day,
+            "count": state.count + (counted === false ? 0 : 1),
+            "said": said,
+            "last": now,
+            "mutedUntil": state.mutedUntil || 0
+        };
+        lastProactive = now;
+        if (counted === false)
+            return ;
+
+        var hour = new Date(now).getHours();
+        var hours = (widget.settings.care_hours || []).slice();
+        hours[hour] = [(hours[hour] ? hours[hour][0] : 0) + 1, hours[hour] ? hours[hour][1] : 0];
+        widget.settings.care_hours = hours;
+        carePending = {
+            "at": now,
+            "hour": hour
+        };
+    }
+
+    // The user's response to what she said by herself (see Yui.careLearn); nothing when none is waiting.
+    function careRespond(outcome) {
+        if (!carePending)
+            return ;
+
+        var before = widget.settings.care_score;
+        widget.settings.care_score = Yui.careLearn(before, outcome);
+        if (outcome === "answered") {
+            var hours = (widget.settings.care_hours || []).slice();
+            var entry = hours[carePending.hour] || [1, 0];
+            hours[carePending.hour] = [entry[0], entry[1] + 1];
+            widget.settings.care_hours = hours;
+        }
+        carePending = null;
+        diag("care: " + outcome + ", score " + (before === undefined ? 0.5 : before) + " → " + widget.settings.care_score);
+    }
+
+    // A message of the user: an answer to what she said, and what it says about her talking by herself.
+    function careHeard(text, now) {
+        if (carePending && now - carePending.at <= 10 * 60000)
+            careRespond("answered");
+
+        var feedback = Yui.careFeedback(text);
+        if (!feedback)
+            return ;
+
+        widget.settings.care_score = Yui.careLearn(widget.settings.care_score, feedback);
+        if (feedback === "rejected") {
+            // Nothing more by herself today, but high priority.
+            var state = careState(now);
+            var end = new Date(now);
+            end.setHours(24, 0, 0, 0);
+            widget.settings.care_today = {
+                "day": state.day,
+                "count": state.count,
+                "said": state.said,
+                "last": state.last,
+                "mutedUntil": end.getTime()
+            };
+        }
+        diag("care: the user said " + feedback + ", score " + widget.settings.care_score);
+    }
+
+    // Every 30 s (tick): the candidates now, and the one to say. force (Care Tick test): the gap and
+    // the activity checks are left out, and the result is always logged.
+    function careTick(now, force) {
+        if (carePending && now - carePending.at > 10 * 60000)
+            careRespond("ignored");
+
+        if (!force && (raidActive || sleeping || widget.busy || now - lastActivity < 2 * 60000))
+            return ;
+
+        var date = new Date(now);
+        var active = force || now - lastActivity <= 15 * 60000;
+        var night = Qt.formatDate(new Date(now - 6 * 3600000), "yyyy-MM-dd");
+        var candidates = [];
+        if (featureEnabled("proactive_care") && active) {
+            if (date.getHours() < 5 && widget.settings.last_night_care !== night)
+                candidates.push({
+                "kind": "night",
+                "priority": "medium"
+            });
+
+            if (now - sessionStart > 2 * 3600000 && now - (widget.settings.last_rest_care || 0) > 2 * 3600000)
+                candidates.push({
+                "kind": "rest",
+                "priority": "medium"
+            });
+
+        }
+        if (spontaneousTalk && !showChat && !launcherClosed)
+            candidates.push({
+            "kind": "chat",
+            "priority": "low"
+        });
+
+        var state = careState(now);
+        if (force)
+            state = {
+            "day": state.day,
+            "count": state.count,
+            "said": state.said,
+            "last": 0,
+            "mutedUntil": state.mutedUntil
+        };
+
+        var result = Yui.carePick(candidates, state, {
+            "now": now,
+            "score": careScoreNow(),
+            "quiet": quietNow(date),
+            "hours": widget.settings.care_hours,
+            "hour": date.getHours()
+        });
+        var line = "care: offered [" + candidates.map(function(c) {
+            return c.kind;
+        }).join(", ") + "], " + (result.pick ? "says " + result.pick.kind : "says nothing") + (result.skipped.length > 0 ? " (" + result.skipped.join("; ") + ")" : "") + ", today " + state.count + "/" + result.budget.perDay + ", gap " + result.budget.gapMinutes + " min";
+        // Logged when it changes (it is asked every 30 s).
+        if (force || (line !== careLastLog && candidates.length > 0))
+            diag(line);
+
+        careLastLog = line;
+        if (!result.pick || widget.busy)
             return ;
 
         var title = userTitle();
-        var hour = new Date(now).getHours();
-        // The "night" a late hour belongs to, so the reminder is given once per night.
-        var night = Qt.formatDate(new Date(now - 6 * 3600000), "yyyy-MM-dd");
-        if (hour < 5 && widget.settings.last_night_care !== night) {
-            if (yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(new Date(now), "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话。）", qsTr("Mental Health Counseling")))
+        var spoke = false;
+        if (result.pick.kind === "night") {
+            spoke = yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(date, "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话。）", qsTr("Mental Health Counseling"));
+            if (spoke)
                 widget.settings.last_night_care = night;
 
-            return ;
-        }
-        if (now - sessionStart > 2 * 3600000 && now - (widget.settings.last_rest_care || 0) > 2 * 3600000) {
-            if (yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话。）", qsTr("Mental Health Counseling")))
+        } else if (result.pick.kind === "rest") {
+            spoke = yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话。）", qsTr("Mental Health Counseling"));
+            if (spoke)
                 widget.settings.last_rest_care = now;
 
+        } else if (result.pick.kind === "chat") {
+            spoke = idleChat();
         }
+        if (spoke)
+            careSaid(result.pick.kind, now);
+
+    }
+
+    // System Console "Care Tick": the scheduler at once, leaving out the gap.
+    function testCareTick() {
+        diag("test care tick");
+        careTick(Date.now(), true);
     }
 
     function clearChat() {
@@ -3866,10 +4021,13 @@ T.Widget {
         if (visible === showChat)
             return ;
 
-        if (visible)
+        if (visible) {
+            // Opening the chat after she said something by herself answers it.
+            careRespond("answered");
             openView();
-        else
+        } else {
             closeView();
+        }
         widget.settings.chat_hidden = !visible;
     }
 
