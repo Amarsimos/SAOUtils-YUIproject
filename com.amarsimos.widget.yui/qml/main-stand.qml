@@ -143,7 +143,7 @@ T.Widget {
     }
     // Yui's current expression (see Yui.EMOTIONS); set by <<emotion:...>> tags in replies.
     property string currentEmotion: "normal"
-    // Yui falls asleep after settings.sleep_minutes without interaction; a click wakes her up.
+    // Standby: Yui falls asleep when what she says by herself goes unanswered twice (careRespond); any interaction wakes her.
     property bool sleeping: false
     // Last interaction with the widget, and when the current stretch of activity began.
     property double lastActivity: Date.now()
@@ -467,22 +467,38 @@ T.Widget {
         saveTimer.restart();
     }
 
-    // Any interaction: keeps Yui awake and tracks how long the user has been active.
+    // Any interaction with Yui. She only knows of those (SAO Utils gives no idle time of the computer),
+    // so she falls asleep when what she says by herself goes unanswered twice (see careRespond), and the
+    // time at the computer (rest reminders) counts from when she is awake.
     function noteActivity() {
-        var now = Date.now();
-        if (now - lastActivity > 30 * 60000)
-            sessionStart = now;
+        lastActivity = Date.now();
+        careIgnored = 0;
+    }
 
-        lastActivity = now;
+    // Asleep (Standby): dimmed, "Zzz", saying nothing by herself; woken by any interaction.
+    function fallAsleep(why) {
+        if (sleeping)
+            return ;
+
+        sleeping = true;
+        diag("standby: " + why);
+    }
+
+    function awaken() {
+        if (!sleeping)
+            return false;
+
+        sleeping = false;
+        sessionStart = Date.now();
+        return true;
     }
 
     // Wake Yui up when she is asleep; returns true when she was.
     function wakeUp() {
         noteActivity();
-        if (!sleeping)
+        if (!awaken())
             return false;
 
-        sleeping = false;
         appendMessage("ai", Yui.wakeLine(userTitle()), false, true);
         return true;
     }
@@ -1741,7 +1757,7 @@ T.Widget {
             return false;
 
         noteActivity();
-        sleeping = false;
+        awaken();
         careHeard(text, Date.now());
         // "System Call, ..." easter egg: answered locally, then part of the conversation like any turn.
         var call = Yui.systemCall(text, userTitle(), {
@@ -2243,16 +2259,12 @@ T.Widget {
         }
     }
 
-    // Periodic checks (every 30 s): falling asleep, system status reports and proactive care.
+    // Periodic checks (every 30 s): system status reports and proactive care.
     function tick() {
         if (seedlingMode)
             return ;
 
         var now = Date.now();
-        var sleepMinutes = widget.settings.sleep_minutes !== undefined ? widget.settings.sleep_minutes : 20;
-        if (!sleeping && sleepMinutes > 0 && !widget.busy && now - lastActivity > sleepMinutes * 60000)
-            sleeping = true;
-
         checkSystemStatus(now);
         careTick(now, false);
     }
@@ -3822,6 +3834,8 @@ T.Widget {
     // Yui.carePick); the Login Greeting and Navigation Reports are said at once but count.
     // The last thing she said by herself, waiting for the user's response: {at, hour}, or null.
     property var carePending: null
+    // What she said by herself and went unanswered in a row: at 2 the user is taken to be away (Standby).
+    property int careIgnored: 0
     property string careLastLog: ""
 
     function careScoreNow() {
@@ -3890,6 +3904,9 @@ T.Widget {
         }
         carePending = null;
         diag("care: " + outcome + ", score " + (before === undefined ? 0.5 : before) + " → " + widget.settings.care_score);
+        careIgnored = outcome === "ignored" ? careIgnored + 1 : 0;
+        if (careIgnored >= 2)
+            fallAsleep("twice unanswered, the user seems away");
     }
 
     // A message of the user: an answer to what she said, and what it says about her talking by herself.
@@ -3928,10 +3945,9 @@ T.Widget {
             return ;
 
         var date = new Date(now);
-        var active = force || now - lastActivity <= 15 * 60000;
         var night = Qt.formatDate(new Date(now - 6 * 3600000), "yyyy-MM-dd");
         var candidates = [];
-        if (featureEnabled("proactive_care") && active) {
+        if (featureEnabled("proactive_care")) {
             if (date.getHours() < 5 && widget.settings.last_night_care !== night)
                 candidates.push({
                 "kind": "night",

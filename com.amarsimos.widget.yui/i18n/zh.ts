@@ -782,13 +782,8 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="+143"/>
-        <source>Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.</source>
-        <translation>超过这么多分钟没有互动，结衣会进入待机睡眠；点击她即可唤醒。0 为关闭。</translation>
-    </message>
-    <message>
-        <location line="-106"/>
-        <location line="+488"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
+        <location line="+475"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -799,8 +794,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-350"/>
-        <location line="+339"/>
+        <location line="-337"/>
+        <location line="+326"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -810,24 +805,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-437"/>
+        <location line="-424"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-27"/>
-        <location line="+139"/>
+        <location line="+126"/>
         <source>Companion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-139"/>
-        <location line="+288"/>
+        <location line="-126"/>
+        <location line="+275"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-288"/>
+        <location line="-275"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -852,12 +847,7 @@
         <translation>聊天窗口关着时，结衣偶尔会主动说话（会调用 API）。频率由 Care 页的 Care Level 决定。</translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Standby Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+49"/>
+        <location line="+46"/>
         <source>Music</source>
         <translation type="unfinished"></translation>
     </message>
@@ -962,12 +952,12 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-221"/>
+        <location line="-208"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+25"/>
         <source>Weather Report</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1033,7 +1023,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-39"/>
+        <location line="-201"/>
+        <source>When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.</source>
+        <translation>结衣主动说的话连续两次没人回应时，她会认为你不在，进入待机（Standby），直到你点她或给她发消息才醒来。</translation>
+    </message>
+    <message>
+        <location line="+162"/>
         <source>In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.</source>
         <translation>这个时段内结衣不闲聊。深夜关怀照常，因为它只在你还在用电脑时才会出现。</translation>
     </message>
@@ -2493,7 +2488,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1809"/>
+        <location filename="../qml/main-stand.qml" line="+1825"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2525,13 +2520,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2444"/>
+        <location line="+2440"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1503"/>
+        <location line="-1499"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2578,7 +2573,7 @@ You can change this in System Console.</source>
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location line="+446"/>
+        <location line="+442"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
@@ -2635,13 +2630,13 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2053"/>
+        <location line="+2057"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2053"/>
-        <location line="+186"/>
+        <location line="-2057"/>
+        <location line="+190"/>
         <location line="+5"/>
         <location line="+1853"/>
         <source>Mental Health Counseling</source>
@@ -2653,20 +2648,20 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5373"/>
-        <location line="+5404"/>
+        <location line="-5389"/>
+        <location line="+5420"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5411"/>
-        <location line="+5411"/>
+        <location line="-5427"/>
+        <location line="+5427"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1997"/>
-        <location line="+540"/>
+        <location line="-2001"/>
+        <location line="+544"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>

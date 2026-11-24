@@ -143,7 +143,7 @@ Replies of small local models cleaned up: thinking written into the reply (befor
 - Emotion Display: Yui changes her expression with the mood of each reply (optional images).
 - Navigation Pixie Form: with a pixie image set, Yui turns into a small hovering pixie while the
   message window is hidden.
-- Standby Mode: Yui falls asleep after a while without interaction; click her to wake her up.
+- Standby Mode: Yui falls asleep when two things she says by herself go unanswered (you seem away); click her or write to her to wake her up.
 - Login Greeting: Yui welcomes you back after you have been away.
 - Mental Health Counseling: reminders to sleep late at night and to rest after long sessions.
 - Navigation Reports: warnings about low battery and high CPU or memory usage.

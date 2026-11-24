@@ -22,7 +22,7 @@ NVG.Window {
     property var moods: []
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var companionPreferences: [greetPreference, spontaneousPreference, sleepPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
+    readonly property var companionPreferences: [greetPreference, spontaneousPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
     readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
@@ -122,25 +122,12 @@ NVG.Window {
                             text: qsTr("While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).")
                         }
 
-                        // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.
-
-                        P.SpinPreference {
-                            id: sleepPreference
-
-                            name: "sleep_minutes"
-                            defaultValue: 20
-                            label: qsTr("Standby Mode")
-                            display: P.TextFieldPreference.ExpandLabel
-                            editable: true
-                            from: 0
-                            to: 1440
-                            stepSize: 1
-                        }
-
+                        // Standby has no setting: Yui falls asleep when what she says by herself goes
+                        // unanswered twice (the user seems away), and wakes on any interaction.
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui goes to sleep after this many minutes without interaction; click her to wake her up. 0 turns it off.")
+                            text: qsTr("When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.")
                         }
 
                         Heading {
