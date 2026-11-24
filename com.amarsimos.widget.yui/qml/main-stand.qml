@@ -1035,7 +1035,7 @@ T.Widget {
             var last = messages[messages.length - 1];
             messages[messages.length - 1] = {
                 "role": last.role,
-                "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子。）"
+                "content": last.content + "\n\n（系统提示：这是重新生成的回答。请换一种说法和角度回答，不要重复之前的回答，也不要重复同样的句子；但事实（比如歌名、时间、记住的事）不要改。）"
             };
         }
         // Tools for the OpenAI-compatible format; other formats and servers that rejected tools get tags.
@@ -1056,6 +1056,10 @@ T.Widget {
                 "content": latest.content + Yui.smallModelReminder(mode, allowedActions())
             };
         }
+        // Say Again: asked to answer differently, gemma changed the song too, so the track is said again.
+        if (regenerate && !widget.mediaNote && widget.mediaSentTrack)
+            widget.mediaNote = Yui.mediaChangeNote(mediaInfo());
+
         if (widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var asked = messages[messages.length - 1];
