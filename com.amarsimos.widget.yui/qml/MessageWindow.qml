@@ -458,7 +458,7 @@ Item {
 
                         Repeater {
                             // [label, kind]: "confirm" and "regenerate" are buttons, "status" is not.
-                            model: (messageWindow.actionLabel === "" ? [] : [messageWindow.actionState === "pending" ? [qsTr("Confirm..."), "confirm"] : [messageWindow.actionState === "done" ? qsTr("Done ✓") : qsTr("Cancelled"), "status"]]).concat(messageWindow.canRegenerate ? [["↻ " + qsTr("Regenerate"), "regenerate"]] : [])
+                            model: (messageWindow.actionLabel === "" ? [] : [messageWindow.actionState === "pending" ? [qsTr("Confirm..."), "confirm"] : [messageWindow.actionState === "done" ? qsTr("Done ✓") : qsTr("Cancelled"), "status"]]).concat(messageWindow.canRegenerate ? [["↻ " + qsTr("Say Again"), "regenerate"]] : [])
 
                             Rectangle {
                                 readonly property bool isButton: modelData[1] !== "status"

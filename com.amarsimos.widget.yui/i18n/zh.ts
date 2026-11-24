@@ -1007,7 +1007,7 @@
     </message>
     <message>
         <location line="+0"/>
-        <source>Regenerate</source>
+        <source>Say Again</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
