@@ -1199,12 +1199,14 @@ function mediaCommand(value) {
 // Media: the track in the player as a line for the AI, sent with every request while there is one;
 // "" when there is none. Media Player's playback state is not reliable (a playing track can read
 // as paused, 1), so only a playing one (2) is said to play. info: {title, artist, player, playing}.
-function mediaContext(info) {
+// Said firmly, as replies earlier in the chat (and the Log Recall) may say she cannot read it.
+function mediaContext(info, title) {
     if (!info || !info.title)
         return "";
 
+    title = title || "爸爸";
     var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "");
-    return "\n\n（" + (info.playing === true ? "正在播放" : "播放器里的曲目") + "：" + track + "。被问到或话题相关时以此为准，不要编造；不相关时不用提起。）";
+    return "\n\n（结衣能看到" + title + "电脑上" + (info.playing === true ? "正在播放" : "播放器里") + "的曲目，这是程序刚刚读到的：" + track + "。" + title + "问在放什么歌时，直接说出歌名和歌手；以前说过「读不到」的话已经不对了。不相关时不用提起。）";
 }
 
 // Weather Report: whether the user's message is about the weather, so it is sent with it.

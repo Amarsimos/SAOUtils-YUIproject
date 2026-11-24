@@ -523,7 +523,7 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + mediaExtras() + Yui.traitContext(characterTraits()) + logRecallExtras(title, query);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + mediaExtras(title);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -671,14 +671,14 @@ T.Widget {
     }
 
     // Sent with every request while something plays.
-    function mediaExtras() {
+    function mediaExtras(title) {
         if (widget.settings.now_playing === false)
             return "";
 
         var info = mediaInfo();
         // Logged with each request, to see why a track was or was not sent.
         diag("media: " + (mediaLoaded ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
-        return Yui.mediaContext(info);
+        return Yui.mediaContext(info, title);
     }
 
     // System Console: what Media Player reads now, then Play / Pause.
