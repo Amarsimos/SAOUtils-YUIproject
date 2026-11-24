@@ -652,4 +652,10 @@ test("Claims of actions not done", () => {
     assert.ok(!Yui.priorityRules("爸爸", {}, "tags").includes("也不要答应以后提醒"));
 });
 
+test("Quick Replies stay talk", () => {
+    same(Yui.suggestionsFrom("好呀|帮我打开记事本|下一首|今天好累"), ["好呀", "今天好累"]);
+    same(Yui.suggestionsFrom("提醒我8点起床/想听你唱歌"), ["想听你唱歌"]);
+    assert.ok(Yui.featureInstructions("爸爸", "", { suggest: true }, "tags").includes("不要想请结衣操作电脑"));
+});
+
 console.log(passed + " tests passed");

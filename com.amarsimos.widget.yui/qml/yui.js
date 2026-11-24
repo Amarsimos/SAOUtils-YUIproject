@@ -1281,6 +1281,9 @@ function datedMemory(text, now) {
 }
 
 // Quick Replies: a <<suggest:>> tag's value ("a|b|c") -> up to three different short replies.
+// A quick reply asking Yui to do something on the computer ("帮我打开记事本", "下一首", "提醒我8点起床").
+var SUGGESTED_ACTION = /帮我(?:打开|关|开|启动|搜|查|找|放|播|切|调|设|定|记|删|下载|安装)|打开|关掉|关闭|启动|播放|暂停|切歌|下一首|上一首|音量|静音|搜索|搜一下|查一下|找文件|闹钟|提醒我|叫我起床/;
+
 function suggestionsFrom(value) {
     var found = [];
     var text = String(value);
@@ -1288,7 +1291,8 @@ function suggestionsFrom(value) {
     var parts = /[|｜]/.test(text) ? text.split(/[|｜]/) : text.split(/[/／、]/);
     parts.forEach(function(part) {
         var text = part.trim().slice(0, 30);
-        if (text && found.indexOf(text) === -1 && found.length < 3)
+        // Quick Replies stay talk: none asking her to do something on the computer.
+        if (text && found.indexOf(text) === -1 && found.length < 3 && !SUGGESTED_ACTION.test(text))
             found.push(text);
 
     });
@@ -1609,7 +1613,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 
     if (allowed.suggest)
-        lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字）。不需要时就不加。");
+        lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字；只想聊天的话，不要想请结衣操作电脑、设提醒之类的）。不需要时就不加。");
 
     if (allowed.media === true)
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
