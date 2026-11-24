@@ -107,7 +107,7 @@ T.Widget {
     readonly property string actionMode: widget.settings.action_mode === "tools" ? "tools" : "tags"
     property var toolsRejected: ({})
     // Authority Level Limited (Cardinal System, setting small_model): no actions, and a short reminder of the tag rules with every message.
-    readonly property bool smallModelMode: widget.settings.small_model === true
+    readonly property bool smallModelMode: widget.settings.small_model !== false
     // Narrowest the chat column can be without cutting off the input row.
     readonly property real inputMinimumWidth: 120
     readonly property real chatMinimumWidth: inputMinimumWidth + sendButtonWidth + clearButton.implicitWidth + 2 * inputArea.spacing

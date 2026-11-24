@@ -300,7 +300,7 @@ NVG.Window {
         frequencyPreference.value = settings.frequency_penalty !== undefined ? settings.frequency_penalty : -1;
         seedPreference.value = settings.seed > 0 ? settings.seed : 0;
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
-        smallModelPreference.value = settings.small_model === true ? 1 : 0;
+        smallModelPreference.value = settings.small_model === false ? 0 : 1;
         loading = false;
         [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
@@ -816,7 +816,8 @@ NVG.Window {
                             id: smallModelPreference
 
                             name: "small_model"
-                            defaultValue: 0
+                            // Limited by default: it works with any model, Full only with large ones.
+                            defaultValue: 1
                             label: qsTr("Authority Level")
                             model: [qsTr("Full"), qsTr("Limited")]
                         }
