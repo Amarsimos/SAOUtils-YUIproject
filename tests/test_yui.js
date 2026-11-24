@@ -658,4 +658,41 @@ test("Quick Replies stay talk", () => {
     assert.ok(Yui.featureInstructions("爸爸", "", { suggest: true }, "tags").includes("不要想请结衣操作电脑"));
 });
 
+test("Care Scheduler", () => {
+    same(Yui.careBudget(0.5), { perDay: 6, gapMinutes: 45 });
+    same(Yui.careBudget(0), { perDay: 2, gapMinutes: 75 });
+    same(Yui.careBudget(1), { perDay: 10, gapMinutes: 15 });
+    assert.strictEqual(Yui.careScore("quiet", 0.9), 0.15);
+    assert.strictEqual(Yui.careScore("auto", 0.9), 0.9);
+    assert.strictEqual(Yui.careScore("auto", undefined), 0.5);
+    assert.ok(Yui.inQuietHours(new Date(2026, 10, 25, 1, 0), "00:00", "08:00"));
+    assert.ok(!Yui.inQuietHours(new Date(2026, 10, 25, 8, 0), "00:00", "08:00"));
+    assert.ok(Yui.inQuietHours(new Date(2026, 10, 25, 23, 30), "23:00", "07:00"));
+    assert.ok(!Yui.inQuietHours(new Date(2026, 10, 25, 12, 0), "23:00", "07:00"));
+    const now = new Date(2026, 10, 25, 14, 0).getTime();
+    const fresh = Yui.careToday(null, "2026-11-25");
+    const offer = [{ kind: "chat", priority: "low" }, { kind: "rest", priority: "medium" }];
+    assert.strictEqual(Yui.carePick(offer, fresh, { now, score: 0.5, hour: 14 }).pick.kind, "rest");
+    // within the gap: only high priority
+    const recent = Object.assign({}, fresh, { last: now - 10 * 60000 });
+    assert.strictEqual(Yui.carePick(offer, recent, { now, score: 0.5, hour: 14 }).pick, null);
+    assert.strictEqual(Yui.carePick(offer.concat([{ kind: "greeting", priority: "high" }]), recent, { now, score: 0.5, hour: 14 }).pick.kind, "greeting");
+    // budget spent, said today, quiet hours, muted, an hour not answered
+    assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { count: 6 }), { now, score: 0.5, hour: 14 }).pick, null);
+    assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { said: { rest: true } }), { now, score: 0.5, hour: 14 }).pick.kind, "chat");
+    assert.strictEqual(Yui.carePick([offer[0]], fresh, { now, score: 0.5, quiet: true, hour: 14 }).pick, null);
+    assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { mutedUntil: now + 1000 }), { now, score: 0.5, hour: 14 }).pick, null);
+    const hours = []; hours[14] = [6, 1];
+    assert.strictEqual(Yui.carePick([offer[0]], fresh, { now, score: 0.5, hours, hour: 14 }).pick, null);
+    // a new day keeps the last time and the mute, resets the rest
+    const next = Yui.careToday({ day: "2026-11-25", count: 4, said: { rest: true }, last: 5, mutedUntil: 9 }, "2026-11-26");
+    same(next, { day: "2026-11-26", count: 0, said: {}, last: 5, mutedUntil: 9 });
+    assert.strictEqual(Yui.careLearn(0.5, "answered"), 0.55);
+    assert.strictEqual(Yui.careLearn(0.1, "rejected"), 0);
+    assert.strictEqual(Yui.careLearn(0.95, "welcomed"), 1);
+    assert.strictEqual(Yui.careFeedback("别烦我了"), "rejected");
+    assert.strictEqual(Yui.careFeedback("结衣多陪陪我嘛"), "welcomed");
+    assert.strictEqual(Yui.careFeedback("今天好累"), "");
+});
+
 console.log(passed + " tests passed");
