@@ -1278,15 +1278,16 @@ function careScore(level, learned) {
     return learned >= 0 && learned <= 1 ? learned : 0.5;
 }
 
-// How often she may speak for a score 0–1: perDay 2–10 times, gapMinutes 75–15 apart.
+// How often she may speak for a score 0–1: perDay 6–34 times, gapMinutes 50–10 apart (at the
+// starting 0.5, 20 a day and once every half hour).
 function careBudget(score) {
     var s = Math.max(0, Math.min(1, Number(score)));
     if (isNaN(s))
         s = 0.5;
 
     return {
-        "perDay": Math.round(2 + 8 * s),
-        "gapMinutes": Math.round(75 - 60 * s)
+        "perDay": Math.round(6 + 28 * s),
+        "gapMinutes": Math.round(50 - 40 * s)
     };
 }
 
@@ -1390,7 +1391,7 @@ var CARE_STEPS = {
     "answered": 0.05,
     "ignored": -0.02,
     "dismissed": -0.05,
-    "rejected": -0.3,
+    "rejected": -0.2,
     "welcomed": 0.2
 };
 

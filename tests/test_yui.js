@@ -659,9 +659,9 @@ test("Quick Replies stay talk", () => {
 });
 
 test("Care Scheduler", () => {
-    same(Yui.careBudget(0.5), { perDay: 6, gapMinutes: 45 });
-    same(Yui.careBudget(0), { perDay: 2, gapMinutes: 75 });
-    same(Yui.careBudget(1), { perDay: 10, gapMinutes: 15 });
+    same(Yui.careBudget(0.5), { perDay: 20, gapMinutes: 30 });
+    same(Yui.careBudget(0), { perDay: 6, gapMinutes: 50 });
+    same(Yui.careBudget(1), { perDay: 34, gapMinutes: 10 });
     assert.strictEqual(Yui.careScore("quiet", 0.9), 0.15);
     assert.strictEqual(Yui.careScore("auto", 0.9), 0.9);
     assert.strictEqual(Yui.careScore("auto", undefined), 0.5);
@@ -678,7 +678,7 @@ test("Care Scheduler", () => {
     assert.strictEqual(Yui.carePick(offer, recent, { now, score: 0.5, hour: 14 }).pick, null);
     assert.strictEqual(Yui.carePick(offer.concat([{ kind: "greeting", priority: "high" }]), recent, { now, score: 0.5, hour: 14 }).pick.kind, "greeting");
     // budget spent, said today, quiet hours, muted, an hour not answered
-    assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { count: 6 }), { now, score: 0.5, hour: 14 }).pick, null);
+    assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { count: 20 }), { now, score: 0.5, hour: 14 }).pick, null);
     assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { said: { rest: true } }), { now, score: 0.5, hour: 14 }).pick.kind, "chat");
     assert.strictEqual(Yui.carePick([offer[0]], fresh, { now, score: 0.5, quiet: true, hour: 14 }).pick, null);
     assert.strictEqual(Yui.carePick(offer, Object.assign({}, fresh, { mutedUntil: now + 1000 }), { now, score: 0.5, hour: 14 }).pick, null);
