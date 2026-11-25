@@ -675,6 +675,12 @@ NVG.Window {
                                     }, {
                                         "label": qsTr("Follow-up: After"),
                                         "tag": "followup_ask"
+                                    }, {
+                                        "label": qsTr("Test Mood Care"),
+                                        "tag": "moodcare"
+                                    }, {
+                                        "label": qsTr("Test Weather Change"),
+                                        "tag": "weatherchange"
                                     }]
 
                                     // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
@@ -684,7 +690,7 @@ NVG.Window {
                                     // "Follow-up: Today / After" has Yui cheer on / ask about a follow-up as if due now.
                                     Button {
                                         text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag.indexOf("followup_") === 0 ? consoleWindow.targetWidget.testFollowup(modelData.tag.slice(9)) : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag.indexOf("followup_") === 0 ? consoleWindow.targetWidget.testFollowup(modelData.tag.slice(9)) : modelData.tag === "moodcare" ? consoleWindow.targetWidget.testMoodCare() : modelData.tag === "weatherchange" ? consoleWindow.targetWidget.testWeatherChange() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                                     }
 
                                 }

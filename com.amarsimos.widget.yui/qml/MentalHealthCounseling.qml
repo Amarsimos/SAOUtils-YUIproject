@@ -23,7 +23,7 @@ NVG.Window {
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var companionPreferences: [greetPreference, spontaneousPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
-    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, followupsPreference, moodPreference, weeklyPreference]
+    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, followupsPreference, moodCarePreference, weatherChangesPreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshReports() {
@@ -101,7 +101,7 @@ NVG.Window {
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.")
+                            text: qsTr("Yui greets you when you return, at start-up or when you wake her up: good morning on the first morning of a day, long time no see after two days or more, otherwise welcome back after half an hour.")
                         }
 
                         Heading {
@@ -322,6 +322,34 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("When Yui remembers something with a date to come (an exam, an interview), she cheers you on that day and asks how it went in the week after (08:00–22:00). See them in Yui's Heart, Follow-ups.")
+                        }
+
+                        P.SwitchPreference {
+                            id: moodCarePreference
+
+                            name: "mood_care"
+                            defaultValue: true
+                            label: qsTr("Mood Care")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When your last three moods were low (Daily Mood Check), Yui gently asks if you want to talk, once a day at most (09:00–22:00).")
+                        }
+
+                        P.SwitchPreference {
+                            id: weatherChangesPreference
+
+                            name: "weather_changes"
+                            defaultValue: true
+                            label: qsTr("Weather Changes")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report's values.")
                         }
 
                         P.SwitchPreference {

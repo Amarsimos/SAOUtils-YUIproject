@@ -783,7 +783,7 @@
     <name>MentalHealthCounseling</name>
     <message>
         <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
-        <location line="+489"/>
+        <location line="+517"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -794,8 +794,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-351"/>
-        <location line="+340"/>
+        <location line="-379"/>
+        <location line="+368"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -805,7 +805,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-438"/>
+        <location line="-466"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -817,12 +817,12 @@
     </message>
     <message>
         <location line="-126"/>
-        <location line="+289"/>
+        <location line="+317"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-289"/>
+        <location line="-317"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -833,8 +833,8 @@
     </message>
     <message>
         <location line="+14"/>
-        <source>Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.</source>
-        <translation>你回来时结衣会打招呼：每天第一次在早上见面时说早安，隔三天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
+        <source>Yui greets you when you return, at start-up or when you wake her up: good morning on the first morning of a day, long time no see after two days or more, otherwise welcome back after half an hour.</source>
+        <translation>你回来时（启动或把她叫醒时）结衣会打招呼：每天第一次在早上见面时说早安，隔两天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -953,6 +953,26 @@
     </message>
     <message>
         <location line="+8"/>
+        <source>Mood Care</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>When your last three moods were low (Daily Mood Check), Yui gently asks if you want to talk, once a day at most (09:00–22:00).</source>
+        <translation>最近三次心情记录都偏低时（Daily Mood Check），结衣会温柔地问你要不要聊聊，每天最多一次（09:00–22:00）。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Weather Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report&apos;s values.</source>
+        <translation>开始下雨、下雪，或三小时内降温 5° 以上时，结衣会提醒你（带伞、注意保暖；07:00–22:00）。需要先设置 Weather Report 的数据。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
@@ -962,7 +982,7 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-222"/>
+        <location line="-250"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
@@ -988,7 +1008,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+306"/>
+        <location line="+334"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -1033,7 +1053,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-215"/>
+        <location line="-243"/>
         <source>When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.</source>
         <translation>结衣主动说的话连续两次没人回应时，她会认为你不在，进入待机（Standby），直到你点她或给她发消息才醒来。</translation>
     </message>
@@ -1048,7 +1068,7 @@
         <translation>深夜提醒你睡觉，连续用电脑很久时提醒你休息，频率受 Care Level 限制。</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+70"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
     </message>
@@ -1899,12 +1919,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="-570"/>
-        <location line="+609"/>
+        <location line="+615"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-36"/>
+        <location line="-42"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1926,6 +1946,16 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     <message>
         <location line="+3"/>
         <source>Follow-up: After</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Test Mood Care</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Test Weather Change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2563,7 +2593,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1843"/>
+        <location filename="../qml/main-stand.qml" line="+1861"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2573,18 +2603,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2557"/>
+        <location line="+2730"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2540"/>
-        <location line="+2664"/>
+        <location line="-2713"/>
+        <location line="+2837"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3764"/>
+        <location line="-3952"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2595,7 +2625,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2464"/>
+        <location line="+2479"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
@@ -2705,7 +2735,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1813"/>
+        <location line="+1986"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2715,11 +2745,15 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2236"/>
-        <location line="+77"/>
-        <location line="+187"/>
+        <location line="-2409"/>
+        <location line="+155"/>
+        <location line="+10"/>
+        <location line="+61"/>
+        <location line="+204"/>
         <location line="+5"/>
         <location line="+11"/>
+        <location line="+2"/>
+        <location line="+5"/>
         <location line="+1947"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -2730,20 +2764,20 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5576"/>
-        <location line="+5607"/>
+        <location line="-5767"/>
+        <location line="+5798"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5614"/>
-        <location line="+5614"/>
+        <location line="-5805"/>
+        <location line="+5805"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2146"/>
-        <location line="+646"/>
+        <location line="-2319"/>
+        <location line="+819"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
