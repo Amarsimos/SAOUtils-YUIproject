@@ -16,6 +16,9 @@ NVG.View {
     property string heading: "Yui"
     property string text
     property color accent: "#2CE67C"
+    // The message font (Equipment, Message Font), as in the chat window. Without it the system's font is
+    // used: on a Japanese system Chinese text then mixes Japanese glyphs with fallback ones of other weights.
+    property string fontFamily: "Source Han Sans SC"
     // True when the bubble sits below the crystal (no room above it).
     property bool below: false
     // Time on screen and opacity (Equipment, set by the widget), and whether it pops up with a sound.
@@ -178,6 +181,28 @@ NVG.View {
                     width: parent.width - 2
                     height: 2
                     color: bubble.accent
+
+                    // Breathing like the chat window's thinking strip (MessageWindow).
+                    SequentialAnimation on opacity {
+                        running: bubble.visible
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            from: 0.25
+                            to: 1
+                            duration: 700
+                            easing.type: Easing.InOutSine
+                        }
+
+                        NumberAnimation {
+                            from: 1
+                            to: 0.25
+                            duration: 700
+                            easing.type: Easing.InOutSine
+                        }
+
+                    }
+
                 }
 
                 Rectangle {
@@ -262,6 +287,7 @@ NVG.View {
             text: bubble.text
             opacity: bubble.textOpacity
             color: "#3A3A3A"
+            font.family: bubble.fontFamily
             font.pixelSize: 13
             wrapMode: Text.Wrap
             maximumLineCount: 6
@@ -327,7 +353,7 @@ NVG.View {
         }
 
         ScriptAction {
-            script: if (bubble.sound) NVG.SystemCall.playSound(NVG.SFX.NotifySystem)
+            script: if (bubble.sound) NVG.SystemCall.playSound(NVG.SFX.NotifyMessage)
         }
 
         NumberAnimation {

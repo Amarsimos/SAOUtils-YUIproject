@@ -3653,10 +3653,27 @@ T.Widget {
     // the bubble next to her collapsed form (crystal, pixie or avatar); while it is open it is already in
     // the chat (and while the launcher she is in is closed, only in the chat). title: unused (the bubble is headed "Yui"), kept for the callers' sake.
     function announce(title, text) {
-        if (!showChat && !launcherClosed)
+        if (showChat)
+            return ;
+
+        // Unread until the chat is opened (or the bubble clicked): marked on her collapsed form, and in the
+        // chat a line above the first message not seen yet.
+        if (!hasUnread) {
+            unreadFrom = seenCount >= 0 ? seenCount : Math.max(0, chatModel.count - 1);
+            hasUnread = true;
+        }
+        if (!launcherClosed)
             showBubble("Yui", text);
 
     }
+
+    // What Yui said while the chat was closed and the user has not seen yet.
+    property bool hasUnread: false
+    // Messages there were when the chat was last closed (-1: not closed since start-up).
+    property int seenCount: -1
+    // Index of the first unread message: the "New messages" line goes above it while the chat is open
+    // (-1: none). Cleared when the chat closes.
+    property int unreadFrom: -1
 
     // Yui's speech bubble (CrystalBubble.qml) next to her collapsed form, created on first use. Next to
     // the crystal its title bar takes the crystal's color, else Yui's green. Clicking it closes it.
@@ -3669,7 +3686,11 @@ T.Widget {
                 diag("bubble unavailable: " + component.errorString());
                 return ;
             }
-            crystalBubble = component.createObject(widget);
+            crystalBubble = component.createObject(widget, {
+                "fontFamily": Qt.binding(function() {
+                    return widget.fontFamilyOf(widget.styles.bubble_font_family);
+                })
+            });
             // On the widget's layer: above it, but not above windows that cover the widget.
             followHostView(crystalBubble, function() {
                 return widget.hostView ? widget.hostView.z : 0;
@@ -3686,10 +3707,16 @@ T.Widget {
             // Closing what she said by herself counts against her talking (Care Scheduler).
             crystalBubble.dismissed.connect(function() {
                 careRespond("dismissed");
+                // Clicked: read.
+                widget.hasUnread = false;
+                widget.unreadFrom = -1;
+                widget.seenCount = chatModel.count;
             });
         }
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
-        crystalBubble.show(title, text, collapsedForm === "crystal" ? levelColors[crystalLevel] : levelColors[0], collapsedScreenRect());
+        // Usually the crystal's sky blue; yellow or red only when the crystal warns.
+        var level = collapsedForm === "crystal" ? crystalLevel : 0;
+        crystalBubble.show(title, text, level > 0 ? levelColors[level] : "#4BB4EC", collapsedScreenRect());
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
@@ -3974,17 +4001,17 @@ T.Widget {
         if (force)
             state = {
             "day": state.day,
-            "count": state.count,
+            "count": 0,
             "said": state.said,
             "last": 0,
-            "mutedUntil": state.mutedUntil
+            "mutedUntil": 0
         };
 
         var result = Yui.carePick(candidates, state, {
             "now": now,
             "score": careScoreNow(),
-            "quiet": quietNow(date),
-            "hours": widget.settings.care_hours,
+            "quiet": !force && quietNow(date),
+            "hours": force ? undefined : widget.settings.care_hours,
             "hour": date.getHours()
         });
         var line = "care: offered [" + candidates.map(function(c) {
@@ -4022,7 +4049,8 @@ T.Widget {
 
     }
 
-    // System Console "Care Tick": the scheduler at once, leaving out the gap.
+    // System Console "Care Tick": the scheduler at once, leaving out the gap, today's number, being told
+    // to be quiet, Quiet Hours and the hours she is seldom answered in (a test should say something).
     function testCareTick() {
         diag("test care tick");
         careTick(Date.now(), true);
@@ -4036,6 +4064,9 @@ T.Widget {
         widget.busy = false;
         chatModel.clear();
         widget.historyStart = 0;
+        hasUnread = false;
+        unreadFrom = -1;
+        seenCount = -1;
         currentEmotion = "normal";
         chatView.stickToBottom = true;
         scheduleSave();
@@ -4060,7 +4091,6 @@ T.Widget {
         } else {
             closeView();
         }
-        widget.settings.chat_hidden = !visible;
     }
 
     // The widget's rectangle on screen (in the launcher, in its space): the chat view is placed by it.
@@ -4084,10 +4114,23 @@ T.Widget {
         collapsedOut.restart();
         popUpTimer.restart();
         chatView.stickToBottom = true;
+        // Opening shows the first unread message (under the "New messages" line) rather than the end.
+        if (hasUnread && unreadFrom >= 0 && unreadFrom < chatModel.count) {
+            var from = unreadFrom;
+            Qt.callLater(function() {
+                chatView.positionViewAtIndex(from, ListView.Beginning);
+                chatView.stickToBottom = chatView.atYEnd;
+            });
+        } else {
+            unreadFrom = -1;
+        }
+        hasUnread = false;
     }
 
     // Folds the view away; the collapsed form comes back once it is gone (onFolded in createView).
     function closeView() {
+        seenCount = chatModel.count;
+        unreadFrom = -1;
         if (yuiView && yuiView.shown) {
             yuiView.fold();
         } else {
@@ -4320,10 +4363,7 @@ T.Widget {
             applyCollapsedSize(); // lowers the minimum size again once applied
         else
             releaseMinimumSize();
-        // Open as it was left: a new widget starts collapsed, the chat reopens only if it was left open.
-        if (widget.settings.chat_hidden === false)
-            Qt.callLater(openView);
-
+        // Always starts collapsed, whether the chat was open or not when SAO Utils was closed.
         if (toolsEnabled && widget.settings.raid_end > Date.now()) {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
@@ -4529,6 +4569,8 @@ T.Widget {
         scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("crystal")
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
+        busy: widget.busy
+        unread: widget.hasUnread
 
         MouseArea {
             id: crystalMouse
@@ -5501,11 +5543,63 @@ T.Widget {
                     readonly property bool fromUser: model.author === "user"
                     readonly property var action: model.action ? JSON.parse(model.action) : null
 
+                    // The first message not seen yet: a "New messages" line above it; unread messages of
+                    // Yui's get a line at their left; SAO orange (MessageWindow.orange), the text darker to be read on the gray.
+                    readonly property bool firstUnread: index === widget.unreadFrom
+                    readonly property bool unread: widget.unreadFrom >= 0 && index >= widget.unreadFrom && !fromUser
+
                     width: chatView.width
-                    height: messageWindow.height
+                    height: messageWindow.height + messageWindow.y
+
+                    Item {
+                        visible: messageItem.firstUnread
+                        width: parent.width - 16
+                        height: 26
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: newLabel.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 1
+                            color: "#F1AA03"
+                        }
+
+                        Text {
+                            id: newLabel
+
+                            anchors.centerIn: parent
+                            text: qsTr("New messages")
+                            color: "#B87400"
+                            font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
+                            font.pixelSize: 12
+                            font.bold: true
+                        }
+
+                        Rectangle {
+                            anchors.left: newLabel.right
+                            anchors.leftMargin: 8
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 1
+                            color: "#F1AA03"
+                        }
+
+                    }
+
+                    Rectangle {
+                        visible: messageItem.unread
+                        x: 0
+                        y: messageWindow.y + 4
+                        width: 3
+                        height: messageWindow.height - 8
+                        color: "#F1AA03"
+                    }
 
                     MessageWindow {
                         id: messageWindow
+
+                        y: messageItem.firstUnread ? 30 : 0
 
                         anchors.left: messageItem.fromUser ? undefined : parent.left
                         anchors.right: messageItem.fromUser ? parent.right : undefined
@@ -5795,6 +5889,40 @@ T.Widget {
                     }
                 }
 
+            }
+
+        }
+
+    }
+
+    // Unread mark next to the pixie or the character (the crystal has its own): a breathing blue dot.
+    Rectangle {
+        visible: widget.hasUnread && widget.collapsedShown && widget.collapsedForm !== "crystal"
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 6
+        width: 10
+        height: 10
+        radius: 5
+        color: "#4BB4EC"
+        z: 5
+
+        SequentialAnimation on opacity {
+            running: widget.hasUnread
+            loops: Animation.Infinite
+
+            NumberAnimation {
+                from: 0.35
+                to: 1
+                duration: 700
+                easing.type: Easing.InOutSine
+            }
+
+            NumberAnimation {
+                from: 1
+                to: 0.35
+                duration: 700
+                easing.type: Easing.InOutSine
             }
 
         }
