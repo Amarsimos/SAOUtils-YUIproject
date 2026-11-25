@@ -3669,7 +3669,11 @@ T.Widget {
                 diag("bubble unavailable: " + component.errorString());
                 return ;
             }
-            crystalBubble = component.createObject(widget);
+            crystalBubble = component.createObject(widget, {
+                "fontFamily": Qt.binding(function() {
+                    return widget.fontFamilyOf(widget.styles.bubble_font_family);
+                })
+            });
             // On the widget's layer: above it, but not above windows that cover the widget.
             followHostView(crystalBubble, function() {
                 return widget.hostView ? widget.hostView.z : 0;
