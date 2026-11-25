@@ -697,4 +697,41 @@ test("Care Scheduler", () => {
     same(Yui.careLikedHours(liked), ["21:00", "09:00"]);
 });
 
+test("Follow-ups", () => {
+    const at = (m, d, h) => new Date(2026, m, d, h || 10).getTime();
+    const written = at(10, 25);
+    // dates, with or without the year; none for birthdays or texts without a date
+    assert.strictEqual(Yui.followupDate("11月28日考试", written), new Date(2026, 10, 28).getTime());
+    assert.strictEqual(Yui.followupDate("2027年1月5日面试", written), new Date(2027, 0, 5).getTime());
+    assert.strictEqual(Yui.followupDate("1月5日面试", at(11, 20)), new Date(2027, 0, 5).getTime());
+    assert.strictEqual(Yui.followupDate("12月20日去了游乐园", at(0, 3)), new Date(2025, 11, 20).getTime());
+    assert.strictEqual(Yui.followupDate("3月8日是爸爸的生日", written), 0);
+    assert.strictEqual(Yui.followupDate("爸爸喜欢猫", written), 0);
+    const entries = [
+        { id: 1, text: "11月28日考试", created: written },
+        { id: 2, text: "11月20日去了游乐园", created: written },
+        { id: 3, text: "11月25日面试", created: written },
+        { id: 4, text: "爸爸喜欢猫", created: written }
+    ];
+    // ahead, then on the day (written earlier: cheer), then after (ask)
+    let list = Yui.followups(entries, at(10, 26), {});
+    same(list.map(i => [i.id, i.phase, i.days]), [[3, "after", -1], [1, "ahead", 2]]);
+    assert.strictEqual(Yui.followupsDue(list, 14).kind, "ask");
+    assert.strictEqual(Yui.followupsDue(list, 23), null);
+    list = Yui.followups(entries, at(10, 28), { "3@2026-11-25": "asked" });
+    const due = Yui.followupsDue(list, 9);
+    same([due.kind, due.items.map(i => i.id)], ["cheer", [1]]);
+    assert.ok(Yui.followupInstruction(due, "爸爸").indexOf("「11月28日考试」（就是今天）") !== -1);
+    assert.ok(Yui.followupNote(due, "爸爸").indexOf("打气") !== -1);
+    // written on the day itself: no cheering, asked the day after
+    const today = [{ id: 5, text: "11月25日面试", created: written }];
+    assert.strictEqual(Yui.followupsDue(Yui.followups(today, at(10, 25, 15), {}), 15), null);
+    assert.strictEqual(Yui.followupsDue(Yui.followups(today, at(10, 26), {}), 15).kind, "ask");
+    // asked, dismissed, more than 7 days past, more than 60 days ahead
+    assert.strictEqual(Yui.followupsDue(Yui.followups(today, at(10, 26), { "5@2026-11-25": "asked" }), 15), null);
+    same(Yui.followups(today, at(10, 26), { "5@2026-11-25": "dismissed" }), []);
+    same(Yui.followups(today, at(11, 3), {}), []);
+    same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
+});
+
 console.log(passed + " tests passed");
