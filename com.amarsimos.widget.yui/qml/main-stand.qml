@@ -493,13 +493,16 @@ T.Widget {
         return true;
     }
 
-    // Wake Yui up when she is asleep; returns true when she was.
+    // Wake Yui up when she is asleep; returns true when she was. Back after a while, she greets you as on
+    // start-up (Login Greeting: welcome back, good morning, long time no see); else a line of her own.
     function wakeUp() {
         noteActivity();
         if (!awaken())
             return false;
 
-        appendMessage("ai", Yui.wakeLine(userTitle()), false, true);
+        if (!welcomeBack())
+            appendMessage("ai", Yui.wakeLine(userTitle()), false, true);
+
         return true;
     }
 
@@ -1756,7 +1759,7 @@ T.Widget {
         var now = Date.now();
         var kind = Yui.greetingKind(lastActive, now);
         if (!featureEnabled("greet_on_start") || kind === "")
-            return ;
+            return false;
 
         var title = userTitle();
         var away = Yui.formatDuration(now - lastActive);
@@ -1766,8 +1769,11 @@ T.Widget {
             "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
         }[kind];
         diag("login greeting: " + kind);
-        if (yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）"))
+        var spoke = yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）");
+        if (spoke)
             careSaid("greeting", now);
+
+        return spoke;
     }
 
     function sendMessage(text) {
