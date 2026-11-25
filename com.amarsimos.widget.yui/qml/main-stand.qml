@@ -1786,6 +1786,17 @@ T.Widget {
         widget.settings.last_active = Date.now();
         appendMessage("user", text, false);
         var history = buildHistory();
+        // A follow-up due: she may bring it up in this reply (only in the request), and it counts as said.
+        var due = followupsDueNow(Date.now());
+        if (due && history.length > 0 && history[history.length - 1].role === "user") {
+            var last = history[history.length - 1];
+            history[history.length - 1] = {
+                "role": "user",
+                "content": last.content + Yui.followupNote(due, userTitle())
+            };
+            setFollowupStage(due.items, due.kind === "cheer" ? "cheered" : "asked");
+            diag("follow-up beside the message: " + due.kind);
+        }
         afterUserMessage(function() {
             startReply(history);
         });
@@ -3852,6 +3863,47 @@ T.Widget {
         return started;
     }
 
+    // ---------------------------------------------------------------- Follow-ups
+    // Memories about a day to come (Yui.followups): cheered on that day, asked about in the 7 days after.
+    // What was said is kept in settings.followup_stages {key: "cheered" | "asked" | "dismissed"}.
+    function followupList(now) {
+        return Yui.followups(heartCache, now || Date.now(), widget.settings.followup_stages || {});
+    }
+
+    function followupsDueNow(now) {
+        if (!featureEnabled("followups"))
+            return null;
+
+        return Yui.followupsDue(followupList(now), new Date(now).getHours());
+    }
+
+    function setFollowupStage(items, stage) {
+        var stages = {};
+        var old = widget.settings.followup_stages || {};
+        var limit = Yui.dayKey(Date.now() - 30 * 86400000);
+        // Kept for a month after the day, then dropped.
+        Object.keys(old).forEach(function(key) {
+            if (key.split("@").pop() >= limit)
+                stages[key] = old[key];
+
+        });
+        items.forEach(function(item) {
+            stages[item.key] = stage;
+        });
+        widget.settings.followup_stages = stages;
+        followupsChanged();
+    }
+
+    // Removed in Yui's Heart: not followed up (the memory stays).
+    function dismissFollowup(key) {
+        setFollowupStage([{
+            "key": key
+        }], "dismissed");
+        diag("follow-up removed: " + key);
+    }
+
+    signal followupsChanged()
+
     // ---------------------------------------------------------------- Care Scheduler
     // What Yui says by herself (late-night care, rest reminders, the Sunday Report, Spontaneous Talk) is offered here and
     // at most one is said, within a daily budget and a gap set by Care Level (learned in Auto, see
@@ -3991,6 +4043,13 @@ T.Widget {
             "priority": "medium"
         });
 
+        var followupDue = followupsDueNow(now);
+        if (followupDue)
+            candidates.push({
+            "kind": "followup_" + followupDue.kind,
+            "priority": "high"
+        });
+
         if (spontaneousTalk && !showChat && !launcherClosed)
             candidates.push({
             "kind": "chat",
@@ -4043,6 +4102,14 @@ T.Widget {
             spoke = writingReport;
         } else if (result.pick.kind === "chat") {
             spoke = idleChat();
+        } else if (result.pick.kind.indexOf("followup_") === 0) {
+            spoke = yuiSpeaks(Yui.followupInstruction(followupDue, title), qsTr("Mental Health Counseling"));
+            if (spoke) {
+                setFollowupStage(followupDue.items, followupDue.kind === "cheer" ? "cheered" : "asked");
+                diag("follow-up: " + followupDue.kind + " " + followupDue.items.map(function(item) {
+                    return item.key;
+                }).join(", "));
+            }
         }
         if (spoke)
             careSaid(result.pick.kind, now);

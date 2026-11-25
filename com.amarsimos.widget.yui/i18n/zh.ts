@@ -783,7 +783,7 @@
     <name>MentalHealthCounseling</name>
     <message>
         <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
-        <location line="+475"/>
+        <location line="+489"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -794,8 +794,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-337"/>
-        <location line="+326"/>
+        <location line="-351"/>
+        <location line="+340"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -805,7 +805,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-424"/>
+        <location line="-438"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -817,12 +817,12 @@
     </message>
     <message>
         <location line="-126"/>
-        <location line="+275"/>
+        <location line="+289"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-275"/>
+        <location line="-289"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
@@ -943,6 +943,16 @@
     </message>
     <message>
         <location line="+14"/>
+        <source>Follow-ups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>When Yui remembers something with a date to come (an exam, an interview), she cheers you on that day and asks how it went in the week after (08:00–22:00). See them in Yui&apos;s Heart, Follow-ups.</source>
+        <translation>结衣记下带有将来日期的事（考试、面试等）时，会在当天给你打气，并在之后一周内问问结果怎么样（08:00–22:00）。可以在 Yui's Heart 的 Follow-ups 里查看。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
@@ -952,7 +962,7 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-208"/>
+        <location line="-222"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
@@ -978,7 +988,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+292"/>
+        <location line="+306"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -1023,7 +1033,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-201"/>
+        <location line="-215"/>
         <source>When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.</source>
         <translation>结衣主动说的话连续两次没人回应时，她会认为你不在，进入待机（Standby），直到你点她或给她发消息才醒来。</translation>
     </message>
@@ -1038,7 +1048,7 @@
         <translation>深夜提醒你睡觉，连续用电脑很久时提醒你休息，频率受 Care Level 限制。</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+42"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
     </message>
@@ -2089,26 +2099,51 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>YuisHeart</name>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="+37"/>
-        <location line="+289"/>
+        <location filename="../qml/YuisHeart.qml" line="+60"/>
+        <location line="+343"/>
         <location line="+78"/>
         <location line="+1"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-339"/>
+        <location line="-390"/>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+148"/>
+        <location line="+199"/>
         <source>Recall</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-124"/>
+        <location line="-199"/>
+        <source>Follow-ups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.</source>
+        <translation>结衣记下的、带有将来日期的事。她会在当天给你打气，之后一周内问问结果。在这里移除只是不再跟进，记忆本身会保留。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing to follow up</source>
+        <translation>暂时没有需要跟进的事</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Follow-ups are off (Mental Health Counseling, Care)</source>
+        <translation>跟进已关闭（Mental Health Counseling → Care）</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+21"/>
         <source>Memory</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2238,7 +2273,37 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-10"/>
+        <location line="-370"/>
+        <source>Tomorrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In %1 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Today, cheered on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Asked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>To ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+355"/>
         <source>Delete the whole chat history kept in the recollection log, and clear the chat window? This cannot be undone.</source>
         <translation>删除回忆日志里保存的全部聊天记录，并清空聊天窗口吗？此操作无法撤销。</translation>
     </message>
@@ -2274,8 +2339,8 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>删除全部记忆（心核和碎片），回忆日志保留。删除前会先写一份备份，之后可以重新导入。</translation>
     </message>
     <message>
-        <location line="-350"/>
-        <location line="+366"/>
+        <location line="-401"/>
+        <location line="+417"/>
         <source>Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2488,7 +2553,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1825"/>
+        <location filename="../qml/main-stand.qml" line="+1836"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2498,18 +2563,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2480"/>
+        <location line="+2537"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2463"/>
-        <location line="+2587"/>
+        <location line="-2520"/>
+        <location line="+2644"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3663"/>
+        <location line="-3731"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2520,7 +2585,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2440"/>
+        <location line="+2451"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
@@ -2630,7 +2695,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1736"/>
+        <location line="+1793"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2640,10 +2705,11 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2159"/>
-        <location line="+196"/>
+        <location line="-2216"/>
+        <location line="+244"/>
         <location line="+5"/>
-        <location line="+1949"/>
+        <location line="+11"/>
+        <location line="+1947"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2653,20 +2719,20 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5481"/>
-        <location line="+5512"/>
+        <location line="-5549"/>
+        <location line="+5580"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5519"/>
-        <location line="+5519"/>
+        <location line="-5587"/>
+        <location line="+5587"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2069"/>
-        <location line="+569"/>
+        <location line="-2126"/>
+        <location line="+626"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
