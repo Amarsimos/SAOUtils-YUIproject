@@ -15,6 +15,9 @@ Item {
     property bool sleeping: false
     // Thinking or talking: the heart beats and the light sweeps faster.
     property bool busy: false
+    // Something Yui said was not seen: the heart blinks slowly and a blue dot breathes beside her.
+    property bool unread: false
+    property real blink: 0
     // Vertical float offset (in box units), animated while awake.
     property real hover: 0
     // Animation phases (0 - 1).
@@ -296,8 +299,10 @@ Item {
                 y: (135 - 26) * box.u
                 width: 52 * box.u
                 height: 52 * box.u
-                opacity: crystal.sleeping ? 0.2 + 0.25 * (0.5 - Math.cos(Math.PI * 2 * crystal.beat) / 2) : pulse[0]
-                scale: crystal.sleeping ? 0.9 : pulse[1]
+                readonly property real wave: 0.5 - Math.cos(Math.PI * 2 * crystal.blink) / 2
+
+                opacity: crystal.unread ? 0.25 + 0.75 * wave : crystal.sleeping ? 0.2 + 0.25 * (0.5 - Math.cos(Math.PI * 2 * crystal.beat) / 2) : pulse[0]
+                scale: crystal.unread ? 0.8 + 0.45 * wave : crystal.sleeping ? 0.9 : pulse[1]
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
@@ -354,6 +359,18 @@ Item {
 
             }
 
+        }
+
+        // Unread mark: a breathing blue dot at the upper right.
+        Rectangle {
+            visible: crystal.unread
+            x: 112 * box.u
+            y: 10 * box.u
+            width: Math.max(8, 10 * box.u)
+            height: width
+            radius: width / 2
+            color: "#4BB4EC"
+            opacity: 0.35 + 0.65 * (0.5 - Math.cos(Math.PI * 2 * crystal.blink) / 2)
         }
 
         // Motes of light rising around the crystal and fading.
@@ -425,6 +442,14 @@ Item {
         repeat: true
         running: crystal.visible && !crystal.sleeping
         onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / 24000) % (Math.PI * 2)
+    }
+
+    NumberAnimation on blink {
+        from: 0
+        to: 1
+        duration: 1600
+        loops: Animation.Infinite
+        running: crystal.visible && crystal.unread
     }
 
     NumberAnimation on motes {

@@ -2498,18 +2498,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2431"/>
+        <location line="+2480"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2414"/>
-        <location line="+2541"/>
+        <location line="-2463"/>
+        <location line="+2587"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3617"/>
+        <location line="-3663"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2619,59 +2619,64 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+55"/>
+        <location line="+52"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+159"/>
+        <location line="+186"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2057"/>
+        <location line="+1736"/>
+        <source>New messages</source>
+        <translation>以下是新消息</translation>
+    </message>
+    <message>
+        <location line="+423"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2057"/>
-        <location line="+190"/>
+        <location line="-2159"/>
+        <location line="+196"/>
         <location line="+5"/>
-        <location line="+1853"/>
+        <location line="+1949"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location line="-178"/>
+        <location line="-212"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5389"/>
-        <location line="+5420"/>
+        <location line="-5481"/>
+        <location line="+5512"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5427"/>
-        <location line="+5427"/>
+        <location line="-5519"/>
+        <location line="+5519"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2001"/>
-        <location line="+544"/>
+        <location line="-2069"/>
+        <location line="+569"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1474"/>
+        <location line="+1517"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+149"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2686,8 +2691,8 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-83"/>
-        <location line="+63"/>
+        <location line="-117"/>
+        <location line="+97"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
