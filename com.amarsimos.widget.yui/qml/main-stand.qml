@@ -4529,6 +4529,7 @@ T.Widget {
         scale: (0.8 + 0.2 * widget.collapsedReveal) * widget.formScale("crystal")
         statusColor: widget.crystalColor
         sleeping: widget.sleeping
+        busy: widget.busy
 
         MouseArea {
             id: crystalMouse
