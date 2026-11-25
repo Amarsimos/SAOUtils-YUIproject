@@ -949,7 +949,7 @@
     <message>
         <location line="+6"/>
         <source>When Yui remembers something with a date to come (an exam, an interview), she cheers you on that day and asks how it went in the week after (08:00–22:00). See them in Yui&apos;s Heart, Follow-ups.</source>
-        <translation>结衣记下带有将来日期的事（考试、面试等）时，会在当天给你打气，并在之后一周内问问结果怎么样（08:00–22:00）。可以在 Yui's Heart 的 Follow-ups 里查看。</translation>
+        <translation>结衣记下带有将来日期的事（考试、面试等）时，会在当天给你打气，并在之后一周内问问结果怎么样（08:00–22:00）。可以在 Yui&apos;s Heart 的 Follow-ups 里查看。</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -1899,12 +1899,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="-570"/>
-        <location line="+602"/>
+        <location line="+609"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-29"/>
+        <location line="-36"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1919,7 +1919,17 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+3"/>
+        <source>Follow-up: Today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Follow-up: After</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+31"/>
         <source>Log Requests</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2563,18 +2573,18 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2537"/>
+        <location line="+2557"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2520"/>
-        <location line="+2644"/>
+        <location line="-2540"/>
+        <location line="+2664"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3731"/>
+        <location line="-3751"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2695,7 +2705,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1793"/>
+        <location line="+1813"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2705,8 +2715,9 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2216"/>
-        <location line="+244"/>
+        <location line="-2236"/>
+        <location line="+77"/>
+        <location line="+187"/>
         <location line="+5"/>
         <location line="+11"/>
         <location line="+1947"/>
@@ -2719,20 +2730,20 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5549"/>
-        <location line="+5580"/>
+        <location line="-5569"/>
+        <location line="+5600"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5587"/>
-        <location line="+5587"/>
+        <location line="-5607"/>
+        <location line="+5607"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2126"/>
-        <location line="+626"/>
+        <location line="-2146"/>
+        <location line="+646"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>

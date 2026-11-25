@@ -3904,6 +3904,26 @@ T.Widget {
 
     signal followupsChanged()
 
+    // System Console "Follow-up: Today / After": Yui says it now as if the first follow-up (or an
+    // example exam) were today ("cheer") or yesterday ("ask"); nothing is marked as said.
+    function testFollowup(kind) {
+        var list = followupList(Date.now());
+        var item = list.length > 0 ? list[0] : {
+            "key": "test",
+            "text": Qt.formatDate(new Date(), "M月d日") + "考试"
+        };
+        var due = {
+            "kind": kind,
+            "items": [{
+                "key": item.key,
+                "text": item.text,
+                "days": kind === "cheer" ? 0 : -1
+            }]
+        };
+        var started = yuiSpeaks(Yui.followupInstruction(due, userTitle()), qsTr("Mental Health Counseling"));
+        diag("test follow-up: " + kind + " 「" + item.text + "」" + (started ? "" : ", not now (busy or no API key)"));
+    }
+
     // ---------------------------------------------------------------- Care Scheduler
     // What Yui says by herself (late-night care, rest reminders, the Sunday Report, Spontaneous Talk) is offered here and
     // at most one is said, within a daily budget and a gap set by Care Level (learned in Auto, see
