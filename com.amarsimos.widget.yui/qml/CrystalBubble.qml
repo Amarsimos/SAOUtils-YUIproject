@@ -178,6 +178,28 @@ NVG.View {
                     width: parent.width - 2
                     height: 2
                     color: bubble.accent
+
+                    // Breathing like the chat window's thinking strip (MessageWindow).
+                    SequentialAnimation on opacity {
+                        running: bubble.visible
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            from: 0.25
+                            to: 1
+                            duration: 700
+                            easing.type: Easing.InOutSine
+                        }
+
+                        NumberAnimation {
+                            from: 1
+                            to: 0.25
+                            duration: 700
+                            easing.type: Easing.InOutSine
+                        }
+
+                    }
+
                 }
 
                 Rectangle {
