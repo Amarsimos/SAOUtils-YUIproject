@@ -7,7 +7,7 @@ import QtQuick.Window 2.12
 // Yui's expanded form (character and chat) in its own desktop view, opened by clicking her collapsed
 // form (crystal, pixie or avatar) and closed with ✕ or Esc. The widget keeps all the logic; it puts
 // its expanded layer into host, and moves the view by its chat panel's "Message" title (beginMove /
-// moveTo / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
+// moveBy / endMove). The grip at the bottom-right resizes it; the geometry is remembered.
 // It is an NVG.View so that it is shown where the widget is (desktop or launcher, see compositor),
 // opened and closed like the SAO Utils mail box message panel (com.gpbeta.mail-box MessagePanel.qml).
 NVG.View {
@@ -19,8 +19,6 @@ NVG.View {
     readonly property Item host: hostItem
     readonly property int minimumViewWidth: Math.ceil(yui.characterMinimumWidth * 0.6 + yui.chatPanelMinimumWidth + 40)
     readonly property int minimumViewHeight: 320
-    property point moveStart
-    property point moveOrigin
 
     // popUp is about to start the open animation (next frame).
     property bool openPending: false
@@ -86,12 +84,12 @@ NVG.View {
     }
 
     onXChanged: {
-        if (settling && !placing)
+        if (settling && !placing && !moving)
             follow();
 
     }
     onYChanged: {
-        if (settling && !placing)
+        if (settling && !placing && !moving)
             follow();
 
     }
@@ -115,18 +113,21 @@ NVG.View {
         }
     }
 
-    // Moving by the chat panel's title: global mouse positions.
-    function beginMove(point) {
-        moveStart = point;
-        moveOrigin = Qt.point(x, y);
+    // Moving by the chat panel's title or by Yui: by how far the cursor is from the point grabbed, in
+    // the view's coordinates (global positions jumped with display scaling or several screens).
+    property bool moving: false
+
+    function beginMove() {
+        moving = true;
     }
 
-    function moveTo(point) {
-        x = Math.round(moveOrigin.x + point.x - moveStart.x);
-        y = Math.round(moveOrigin.y + point.y - moveStart.y);
+    function moveBy(dx, dy) {
+        x = Math.round(x + dx);
+        y = Math.round(y + dy);
     }
 
     function endMove() {
+        moving = false;
         saveGeometry();
     }
 
@@ -298,14 +299,15 @@ NVG.View {
                     hoverEnabled: true
                     cursorShape: Qt.SizeFDiagCursor
                     onPressed: {
-                        start = mapToGlobal(mouse.x, mouse.y);
+                        // In the view's coordinates (its top-left stays put), not on the screen.
+                        start = mapToItem(null, mouse.x, mouse.y);
                         origin = Qt.size(view.width, view.height);
                     }
                     onPositionChanged: {
                         if (!pressed)
                             return ;
 
-                        var now = mapToGlobal(mouse.x, mouse.y);
+                        var now = mapToItem(null, mouse.x, mouse.y);
                         view.width = Math.round(Math.max(view.minimumViewWidth, origin.width + now.x - start.x));
                         view.height = Math.round(Math.max(view.minimumViewHeight, origin.height + now.y - start.y));
                     }

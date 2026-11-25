@@ -5380,21 +5380,25 @@ T.Widget {
                 cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 onPressed: {
                     dragging = false;
-                    pressPoint = mapToGlobal(mouse.x, mouse.y);
+                    // The point grabbed, in the view's own coordinates: it stays under the cursor.
+                    pressPoint = mapToItem(null, mouse.x, mouse.y);
                     if (widget.yuiView)
-                        widget.yuiView.beginMove(pressPoint);
+                        widget.yuiView.beginMove();
 
                 }
                 onPositionChanged: {
                     if (!pressed || !widget.yuiView)
                         return ;
 
-                    var now = mapToGlobal(mouse.x, mouse.y);
-                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > 4)
+                    // How far the cursor is from the grabbed point is how far the view moves; measured in
+                    // the view (not on the screen), so scaled or several screens cannot make it jump.
+                    var now = mapToItem(null, mouse.x, mouse.y);
+                    var dx = now.x - pressPoint.x, dy = now.y - pressPoint.y;
+                    if (!dragging && Math.abs(dx) + Math.abs(dy) > 4)
                         dragging = true;
 
                     if (dragging)
-                        widget.yuiView.moveTo(now);
+                        widget.yuiView.moveBy(dx, dy);
 
                 }
                 onReleased: {
@@ -5742,21 +5746,25 @@ T.Widget {
                 cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                 onPressed: {
                     dragging = false;
-                    pressPoint = mapToGlobal(mouse.x, mouse.y);
+                    // The point grabbed, in the view's own coordinates: it stays under the cursor.
+                    pressPoint = mapToItem(null, mouse.x, mouse.y);
                     if (widget.yuiView)
-                        widget.yuiView.beginMove(pressPoint);
+                        widget.yuiView.beginMove();
 
                 }
                 onPositionChanged: {
                     if (!pressed || !widget.yuiView)
                         return ;
 
-                    var now = mapToGlobal(mouse.x, mouse.y);
-                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > dragThreshold)
+                    // How far the cursor is from the grabbed point is how far the view moves; measured in
+                    // the view (not on the screen), so scaled or several screens cannot make it jump.
+                    var now = mapToItem(null, mouse.x, mouse.y);
+                    var dx = now.x - pressPoint.x, dy = now.y - pressPoint.y;
+                    if (!dragging && Math.abs(dx) + Math.abs(dy) > dragThreshold)
                         dragging = true;
 
                     if (dragging)
-                        widget.yuiView.moveTo(now);
+                        widget.yuiView.moveBy(dx, dy);
 
                 }
                 onReleased: {
