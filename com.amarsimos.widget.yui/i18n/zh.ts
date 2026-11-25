@@ -973,8 +973,8 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>Yui mentions the weather in her morning greeting (and an umbrella when it rains) and answers weather questions with it. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.</source>
-        <translation>结衣会在早安问候里提一句天气（下雨时提醒带伞），回答天气问题时也以它为准。在下面选择数据，例如 Weather Data → General Data → Weather Forecast 和 Current Temperature，地点在那里设置。</translation>
+        <source>Yui always knows the weather now: she mentions it in her morning greeting (and an umbrella when it rains), answers weather questions with it, and may care about it when it fits. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.</source>
+        <translation>结衣随时知道现在的天气：早安问候里会提一句（下雨时提醒带伞），回答天气问题时以它为准，合适时也会顺口关心。在下面选择数据，例如 Weather Data → General Data → Weather Forecast 和 Current Temperature，地点在那里设置。</translation>
     </message>
     <message>
         <location line="-14"/>
@@ -2563,7 +2563,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1836"/>
+        <location filename="../qml/main-stand.qml" line="+1843"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2584,7 +2584,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3751"/>
+        <location line="-3764"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2595,7 +2595,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2451"/>
+        <location line="+2464"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
@@ -2730,14 +2730,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5569"/>
-        <location line="+5600"/>
+        <location line="-5576"/>
+        <location line="+5607"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5607"/>
-        <location line="+5607"/>
+        <location line="-5614"/>
+        <location line="+5614"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>

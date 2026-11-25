@@ -970,16 +970,14 @@ function moodFrom(value) {
     };
 }
 
-// Mental Record (Daily Mood Check), added to the system prompt: when today's mood is not recorded yet,
-// Yui is asked to ask about it once at a fitting moment and record it; when the last recorded days
-// were low (an average of 2 or less over the last three), to care more. recent: [{day, score, note}],
-// oldest first; recordedToday: whether today's is among them.
-function moodContext(title, recordedToday, recent) {
-    var text = "";
+// Mental Record (Daily Mood Check): what Yui is asked about the mood, for the Now block's guidance
+// (nowGuidance). recent: [{day, score, note}], the last of them low on average: she cares more.
+function moodAsks(title, recordedToday, recent) {
+    var asks = [];
     if (!recordedToday)
-        text += "\n\n（心情记录：今天还没问过" + title + "的心情。在自然的时候（比如问候或聊到近况时）问一句今天心情怎么样，不要每句都问；" + title + "说了之后，在回复最后用 <<mood:1到5的分数|一句话概括>> 记下来（5 最好，1 最差）。）";
+        asks.push("今天还没问过" + title + "的心情，在自然的时候（比如问候或聊到近况时）问一句，不要每句都问；" + title + "说了之后，在回复最后用 <<mood:1到5的分数|一句话概括>> 记下来（5 最好，1 最差）。");
     else
-        text += "\n\n（心情记录：今天的心情已经记下了。" + title + "的心情有明显变化时，可以用 <<mood:分数|一句话>> 更新。）";
+        asks.push(title + "的心情有明显变化时，可以用 <<mood:分数|一句话>> 更新。");
 
     var last = (recent || []).slice(-3);
     if (last.length === 3) {
@@ -987,46 +985,42 @@ function moodContext(title, recordedToday, recent) {
             return sum + entry.score;
         }, 0) / last.length;
         if (average <= 2)
-            text += "\n（" + title + "最近几天的心情都不太好（" + last.map(function(entry) {
+            asks.push(title + "最近几天心情偏低（" + last.map(function(entry) {
                 return entry.day.slice(5) + " " + entry.score + "/5" + (entry.note ? " " + entry.note : "");
-            }).join("；") + "）。请多关心、多倾听，温柔地陪着，不要说教。）";
+            }).join("；") + "），多关心、多倾听，温柔地陪着，不要说教。");
 
     }
-    return text;
+    return asks;
 }
 
-// Bond (Mental Health Counseling): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of meeting
-// ("yyyy-MM-dd") are always told as facts; on the day itself (and its anniversary) Yui is also asked
-// to celebrate, once (celebrated is the day last celebrated). today is "yyyy-MM-dd".
-function bondContext(title, birthday, meetingDay, today, celebrated) {
+// Bond (Mental Health Counseling): the player's birthday ("MM-DD" or "yyyy-MM-dd") and the day of
+// meeting ("yyyy-MM-dd"), always told as facts.
+function bondFacts(title, birthday, meetingDay) {
     var facts = [];
-    var days = [];
-    var monthDay = today.slice(5);
     var birth = String(birthday || "").trim();
-    if (/^(\d{4}-)?\d{2}-\d{2}$/.test(birth)) {
+    if (/^(\d{4}-)?\d{2}-\d{2}$/.test(birth))
         facts.push(title + "的生日是 " + Number(birth.slice(-5, -3)) + " 月 " + Number(birth.slice(-2)) + " 日");
-        if (birth.slice(-5) === monthDay)
-            days.push("今天就是" + title + "的生日");
 
-    }
     var meeting = String(meetingDay || "").trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting)) {
-        var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
+    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting))
         facts.push("结衣和" + title + "相遇的日子是 " + Number(meeting.slice(0, 4)) + " 年 " + Number(meeting.slice(5, 7)) + " 月 " + Number(meeting.slice(8)) + " 日");
-        if (years > 0 && meeting.slice(5) === monthDay)
-            days.push("今天是相遇 " + years + " 周年的纪念日");
 
-    }
-    if (facts.length === 0)
-        return "";
+    return facts.length > 0 ? "\n\n（羁绊：" + facts.join("；") + "。被问到时以此为准。）" : "";
+}
 
-    var text = "\n\n（羁绊：" + facts.join("；") + "。被问到时以此为准。";
-    if (days.length > 0 && celebrated !== today)
-        text += days.join("，也") + "，请在这次回复里用结衣的方式真诚地祝贺（只在今天第一次说话时提一次）。";
-    else if (days.length > 0)
-        text += days.join("，也") + "，今天已经祝贺过了，不必再刻意重复。";
+// The Bond's days that are today ("yyyy-MM-dd"): ["今天是爸爸的生日", "今天是相遇 2 周年的纪念日"].
+function bondDays(title, birthday, meetingDay, today) {
+    var days = [];
+    var birth = String(birthday || "").trim();
+    if (/^(\d{4}-)?\d{2}-\d{2}$/.test(birth) && birth.slice(-5) === today.slice(5))
+        days.push("今天是" + title + "的生日");
 
-    return text + "）";
+    var meeting = String(meetingDay || "").trim();
+    var years = Number(today.slice(0, 4)) - Number(meeting.slice(0, 4));
+    if (/^\d{4}-\d{2}-\d{2}$/.test(meeting) && years > 0 && meeting.slice(5) === today.slice(5))
+        days.push("今天是相遇 " + years + " 周年的纪念日");
+
+    return days;
 }
 
 // The next time of day "HH:mm" after now (today, or tomorrow when it has passed), in ms; NaN when
@@ -1200,13 +1194,12 @@ function mediaCommand(value) {
 // "" when there is none. Media Player's playback state is not reliable (a playing track can read
 // as paused, 1), so only a playing one (2) is said to play. info: {title, artist, player, playing}.
 // Said firmly, as replies earlier in the chat (and the Log Recall) may say she cannot read it.
-function mediaContext(info, title) {
+// Now Playing, as said in the Now block: "倉木麻衣《I can do it now》（网易云音乐）".
+function mediaTrack(info) {
     if (!info || !info.title)
         return "";
 
-    title = title || "爸爸";
-    var track = (info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》") + (info.player ? "，用 " + info.player : "");
-    return "\n\n（结衣能看到" + title + "电脑上" + (info.playing === true ? "正在播放" : "播放器里") + "的曲目，这是程序刚刚读到的：" + track + "。" + title + "问在放什么歌时，直接说出歌名和歌手；以前说过「读不到」的话已经不对了。不相关时不用提起。）";
+    return (info.artist ? info.artist : "") + "《" + info.title + "》" + (info.player ? "（" + info.player + "）" : "");
 }
 
 // Now Playing: said beside the latest message when the track is new since the last request, so a
@@ -1412,11 +1405,6 @@ function careFeedback(text) {
     return "";
 }
 
-// Weather Report: whether the user's message is about the weather, so it is sent with it.
-function weatherWanted(query) {
-    return /天气|下雨|下雪|带伞|雨伞|气温|温度|冷不冷|热不热|穿什么|weather|rain/i.test(String(query || ""));
-}
-
 // A memory Yui writes, made to stay true later (pure): relative days and years ("明天考试") become
 // dates from when it is written ("10月28日考试"), and a bare statement of today's date or the time,
 // which is no memory at all, becomes "" (dropped). now: ms.
@@ -1437,6 +1425,55 @@ function datedMemory(text, now) {
         value = value.replace(pair[0], pair[1]);
     });
     return value;
+}
+
+// ---------------------------------------------------------------- Now
+// What is true right now, as one line at the very end of the system prompt (small models heed the end
+// most): only the facts there are. facts: {now (ms), awake (ms Yui has been awake, said from 30 min),
+// sinceChat (ms since the last chat, said from 6 h), weather, track (mediaTrack), playing, load (0
+// normal, 1 high, 2 very high), mood ({score, note}, today's), days (bondDays)}.
+var NOW_AWAKE_FROM = 30 * 60000;
+var NOW_AWAY_FROM = 6 * 3600000;
+
+function nowPeriod(hour) {
+    return hour < 5 ? "深夜" : hour < 9 ? "早上" : hour < 11 ? "上午" : hour < 13 ? "中午" : hour < 18 ? "下午" : hour < 23 ? "晚上" : "深夜";
+}
+
+function nowBlock(facts, title) {
+    var date = new Date(facts.now);
+    var weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+    var pad = function(n) {
+        return (n < 10 ? "0" : "") + n;
+    };
+    var parts = [(date.getMonth() + 1) + "月" + date.getDate() + "日 " + weekdays[date.getDay()] + " " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + " " + nowPeriod(date.getHours())];
+    if (facts.awake >= NOW_AWAKE_FROM)
+        parts.push("结衣醒着陪" + title + " " + formatDuration(facts.awake));
+
+    if (facts.sinceChat >= NOW_AWAY_FROM)
+        parts.push("距上次聊天 " + formatDuration(facts.sinceChat));
+
+    if (facts.weather)
+        parts.push(facts.weather);
+
+    if (facts.track)
+        parts.push((facts.playing ? "正在播放 " : "播放器里是 ") + facts.track);
+
+    if (facts.load === 1)
+        parts.push("电脑负载偏高");
+    else if (facts.load >= 2)
+        parts.push("电脑负载很高");
+    if (facts.mood)
+        parts.push("今天心情 " + facts.mood.score + "/5" + (facts.mood.note ? " " + facts.mood.note : ""));
+
+    (facts.days || []).forEach(function(day) {
+        parts.push(day);
+    });
+    return "\n\n（此刻：" + parts.join("｜") + "）";
+}
+
+// Right after the Now block: it is to be trusted, and what Yui is asked to do now (asks).
+function nowGuidance(asks) {
+    return "\n（以上是程序刚刚读到的，以此为准，以前说过的不同的话已经不对了；和话题无关的不用提起。" + (asks || []).join("") + "）";
 }
 
 // ---------------------------------------------------------------- Follow-ups
