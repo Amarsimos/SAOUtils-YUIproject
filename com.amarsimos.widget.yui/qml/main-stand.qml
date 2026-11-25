@@ -541,7 +541,7 @@ T.Widget {
     }
 
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + timeContext() + Yui.recallContext(title, recall(query)) + moodExtras(title) + bondExtras(title) + notesExtras(title, query) + weatherExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + mediaExtras(title);
+        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + Yui.bondFacts(title, widget.settings.player_birthday, widget.settings.meeting_day) + Yui.recallContext(title, recall(query)) + notesExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + nowExtras(title);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -631,12 +631,6 @@ T.Widget {
         }).join("，");
     }
 
-    // Sent when the message is about the weather.
-    function weatherExtras(title, query) {
-        var line = Yui.weatherWanted(query) ? weatherLine() : "";
-        return line ? "\n\n（天气数据：现在 " + line + "。回答天气相关的问题时以此为准，不要编造。）" : "";
-    }
-
     // ---------------------------------------------------------------- Media
     // System Console, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
     // System Media Control action and System Media Data, not reimplemented here.
@@ -693,10 +687,10 @@ T.Widget {
     property string mediaSentTrack: ""
     property string mediaNote: ""
 
-    function mediaExtras(title) {
+    function mediaExtras() {
         widget.mediaNote = "";
         if (widget.settings.now_playing === false)
-            return "";
+            return null;
 
         var info = mediaInfo();
         // A new track (or the first one sent) is also said beside the latest message: small models
@@ -708,7 +702,7 @@ T.Widget {
         widget.mediaSentTrack = key;
         // Logged with each request, to see why a track was or was not sent.
         diag("media: " + (mediaLoaded ? (info ? info.title + " (state " + info.state + ")" : "no track") : "Media Player not loaded (" + mediaData.status + ")"));
-        return Yui.mediaContext(info, title);
+        return info;
     }
 
     // System Console: what Media Player reads now, then Play / Pause.
@@ -886,31 +880,63 @@ T.Widget {
         return found.text;
     }
 
-    // Bond (Mental Health Counseling): the player's birthday and the day of meeting, always known, celebrated once that day
-    // (marked when the reply comes, bond_celebrated).
-    function bondExtras(title) {
-        var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
-        var text = Yui.bondContext(title, widget.settings.player_birthday, widget.settings.meeting_day, today, widget.settings.bond_celebrated);
-        // Asked to celebrate today: marked done when the reply comes.
-        if (text.indexOf("请在这次回复里") !== -1)
-            bondPending = today;
+    // Bond: celebrating a day is asked once (marked when the reply comes, bond_celebrated).
+    property string bondPending: ""
+    // When the user last chatted before the message being answered (sendMessage sets last_active first).
+    property double chatBefore: 0
 
-        return text;
+    // The Now block (Yui.nowBlock) at the end of the system prompt, with what she is asked to do now:
+    // late-night care, today's mood (Mental Record), celebrating a Bond day, low days.
+    function nowExtras(title) {
+        // Sent with every request: a mistake here must not stop Yui answering, so it falls back to the time.
+        try {
+            return nowBlockText(title);
+        } catch (e) {
+            diag("now block failed, only the time is sent: " + e);
+            return Yui.nowBlock({
+                "now": Date.now()
+            }, title) + Yui.nowGuidance([]);
+        }
     }
 
-    property string bondPending: ""
+    function nowBlockText(title) {
+        var now = Date.now();
+        var today = Qt.formatDate(new Date(now), "yyyy-MM-dd");
+        var asks = [];
+        if (new Date(now).getHours() < 5)
+            asks.push("现在是深夜，适当关心" + title + "早点休息。");
 
-    // Mental Record (Daily Mood Check, Mental Health Counseling): asking about today's mood, and care when the
-    // last days were low (Yui.moodContext).
-    function moodExtras(title) {
-        if (!featureEnabled("daily_mood") || !database)
-            return "";
+        var mood = null;
+        if (featureEnabled("daily_mood") && database) {
+            var recent = moodsSince(7);
+            mood = recent.filter(function(entry) {
+                return entry.day === today;
+            })[0] || null;
+            asks = asks.concat(Yui.moodAsks(title, !!mood, recent));
+        }
+        var days = Yui.bondDays(title, widget.settings.player_birthday, widget.settings.meeting_day, today);
+        if (days.length > 0 && widget.settings.bond_celebrated !== today) {
+            asks.push("请在这次回复里用结衣的方式真诚地祝贺（只在今天第一次说话时提一次）。");
+            bondPending = today;
+        }
+        var lastChat = widget.settings.last_active || 0;
+        // Answering the user's message: last_active is that message; the chat before it counts.
+        if (now - lastChat < 60000)
+            lastChat = chatBefore;
 
-        var recent = moodsSince(7);
-        var today = Qt.formatDate(new Date(), "yyyy-MM-dd");
-        return Yui.moodContext(title, recent.some(function(entry) {
-            return entry.day === today;
-        }), recent);
+        var info = mediaExtras();
+        var block = Yui.nowBlock({
+            "now": now,
+            "awake": sleeping ? 0 : now - sessionStart,
+            "sinceChat": lastChat > 0 ? now - lastChat : 0,
+            "weather": weatherLine(),
+            "track": Yui.mediaTrack(info),
+            "playing": !!info && info.playing === true,
+            "load": crystalLevel,
+            "mood": mood,
+            "days": days
+        }, title);
+        return block + Yui.nowGuidance(asks);
     }
 
     // Bumped whenever a mood is recorded or deleted (Mental Health Counseling, Mental Record).
@@ -963,14 +989,6 @@ T.Widget {
         } catch (e) {
             diag("deleting the mood failed: " + e);
         }
-    }
-
-    // Appended to the system prompt on every request, so Yui knows the current date and time.
-    function timeContext() {
-        var now = new Date();
-        var weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-        var lateNight = now.getHours() < 5 ? "现在是深夜，适当关心对方早点休息。" : "";
-        return "\n\n（系统信息：当前本地时间是 " + Qt.formatDateTime(now, "yyyy年M月d日") + " " + weekdays[now.getDay()] + " " + Qt.formatDateTime(now, "HH:mm") + "。回答与时间、日期有关的问题时以此为准。" + lateNight + "）";
     }
 
     // Yui-style first line of an HTTP error message; the raw error follows it.
@@ -1783,6 +1801,7 @@ T.Widget {
             });
             return true;
         }
+        chatBefore = widget.settings.last_active || 0;
         widget.settings.last_active = Date.now();
         appendMessage("user", text, false);
         var history = buildHistory();

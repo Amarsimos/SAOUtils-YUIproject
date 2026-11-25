@@ -423,23 +423,22 @@ test("Mental Record mood tag and context", () => {
     assert.strictEqual(JSON.stringify(Yui.moodFrom("9")), JSON.stringify({ score: 5, note: "" }));
     assert.strictEqual(Yui.moodFrom("开心"), null);
     assert.strictEqual(Yui.parseReply("<<mood:3>>好的").text, "好的");
-    assert.ok(Yui.moodContext("爸爸", false, []).includes("今天还没问过"));
-    assert.ok(Yui.moodContext("爸爸", true, []).includes("已经记下"));
+    assert.ok(Yui.moodAsks("爸爸", false, [])[0].includes("今天还没问过"));
+    assert.ok(Yui.moodAsks("爸爸", true, [])[0].includes("明显变化"));
     const low = [{ day: "2026-10-22", score: 2, note: "" }, { day: "2026-10-23", score: 1, note: "加班" }, { day: "2026-10-24", score: 2, note: "" }];
-    assert.ok(Yui.moodContext("爸爸", true, low).includes("10-23 1/5 加班"));
-    assert.ok(!Yui.moodContext("爸爸", true, low.slice(1)).includes("不太好"));
+    assert.ok(Yui.moodAsks("爸爸", true, low)[1].includes("10-23 1/5 加班"));
+    assert.strictEqual(Yui.moodAsks("爸爸", true, low.slice(1)).length, 1);
 });
 
 test("Bond birthday and anniversary", () => {
-    const birthday = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "");
-    assert.ok(birthday.includes("10 月 24 日") && birthday.includes("请在这次回复里"));
-    assert.ok(Yui.bondContext("爸爸", "2000-10-24", "2024-10-24", "2026-10-24", "").includes("2 周年"));
-    const done = Yui.bondContext("爸爸", "10-24", "", "2026-10-24", "2026-10-24");
-    assert.ok(done.includes("10 月 24 日") && done.includes("已经祝贺过") && !done.includes("请在这次回复里"));
-    assert.ok(!Yui.bondContext("爸爸", "", "2026-10-24", "2026-10-24", "").includes("周年"));
-    const other = Yui.bondContext("爸爸", "05-01", "2025-03-02", "2026-10-24", "");
-    assert.ok(other.includes("5 月 1 日") && other.includes("2025 年 3 月 2 日") && !other.includes("今天"));
-    assert.strictEqual(Yui.bondContext("爸爸", "生日", "", "2026-10-24", ""), "");
+    assert.ok(Yui.bondFacts("爸爸", "10-24", "").includes("10 月 24 日"));
+    same(Yui.bondDays("爸爸", "10-24", "", "2026-10-24"), ["今天是爸爸的生日"]);
+    same(Yui.bondDays("爸爸", "2000-10-24", "2024-10-24", "2026-10-24"), ["今天是爸爸的生日", "今天是相遇 2 周年的纪念日"]);
+    same(Yui.bondDays("爸爸", "", "2026-10-24", "2026-10-24"), []);
+    const other = Yui.bondFacts("爸爸", "05-01", "2025-03-02");
+    assert.ok(other.includes("5 月 1 日") && other.includes("2025 年 3 月 2 日"));
+    same(Yui.bondDays("爸爸", "05-01", "2025-03-02", "2026-10-24"), []);
+    assert.strictEqual(Yui.bondFacts("爸爸", "生日", ""), "");
 });
 
 test("Closing programs is left to the confirmation", () => {
@@ -538,8 +537,6 @@ test("Sword Skills and Weather Report", () => {
     assert.strictEqual(Yui.parseReply("好的<<skill:开始工作>>", [], { allowed: {} }).skill, "");
     assert.ok(Yui.featureInstructions("爸爸", "", { skills: ["开始工作"] }, "tags").includes("<<skill:名字>>"));
     assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<skill:"));
-    assert.ok(Yui.weatherWanted("明天要带伞吗"));
-    assert.ok(!Yui.weatherWanted("帮我开一下浏览器"));
 });
 
 test("Alarm days in words", () => {
@@ -629,9 +626,9 @@ test("Media", () => {
     assert.ok(Yui.featureInstructions("爸爸", "", on, "tags").includes("<<media:"));
     assert.ok(!Yui.featureInstructions("爸爸", "", {}, "tags").includes("<<media:"));
     assert.ok(!Yui.featureInstructions("爸爸", "", on, "tools").includes("<<media:"));
-    assert.ok(Yui.mediaContext({ title: "Yui", artist: "Kajiura", player: "网易云音乐", playing: true }).includes("正在播放的曲目，这是程序刚刚读到的：Kajiura -《Yui》，用 网易云音乐。"));
-    assert.ok(Yui.mediaContext({ title: "Yui", playing: false }).includes("播放器里的曲目，这是程序刚刚读到的：《Yui》"));
-    assert.strictEqual(Yui.mediaContext({ title: "" }), "");
+    assert.strictEqual(Yui.mediaTrack({ title: "Yui", artist: "Kajiura", player: "网易云音乐" }), "Kajiura《Yui》（网易云音乐）");
+    assert.strictEqual(Yui.mediaTrack({ title: "Yui" }), "《Yui》");
+    assert.strictEqual(Yui.mediaTrack({ title: "" }), "");
     assert.ok(Yui.mediaChangeNote({ title: "I can do it now", artist: "倉木麻衣" }).includes("倉木麻衣 -《I can do it now》"));
     assert.strictEqual(Yui.mediaChangeNote(null), "");
 });
@@ -695,6 +692,21 @@ test("Care Scheduler", () => {
     assert.strictEqual(Yui.careFeedback("今天好累"), "");
     const liked = []; liked[21] = [4, 3]; liked[9] = [5, 2]; liked[14] = [3, 1];
     same(Yui.careLikedHours(liked), ["21:00", "09:00"]);
+});
+
+test("Now block", () => {
+    const now = new Date(2026, 10, 26, 21, 30).getTime();
+    // only what there is
+    assert.strictEqual(Yui.nowBlock({ now }, "爸爸"), "\n\n（此刻：11月26日 周四 21:30 晚上）");
+    const all = Yui.nowBlock({ now, awake: 130 * 60000, sinceChat: 2 * 86400000, weather: "小雨，8℃", track: "倉木麻衣《I can do it now》", playing: true, load: 1, mood: { score: 3, note: "有点累" }, days: ["今天是爸爸的生日"] }, "爸爸");
+    assert.strictEqual(all, "\n\n（此刻：11月26日 周四 21:30 晚上｜结衣醒着陪爸爸 2 小时 10 分钟｜距上次聊天 2 天｜小雨，8℃｜正在播放 倉木麻衣《I can do it now》｜电脑负载偏高｜今天心情 3/5 有点累｜今天是爸爸的生日）");
+    // thresholds: awake from 30 min, away from 6 h; a paused track
+    const short = Yui.nowBlock({ now, awake: 20 * 60000, sinceChat: 3 * 3600000, track: "《Yui》", playing: false }, "爸爸");
+    assert.ok(!short.includes("醒着") && !short.includes("上次聊天") && short.includes("播放器里是 《Yui》"));
+    assert.strictEqual(Yui.nowPeriod(3), "深夜");
+    assert.strictEqual(Yui.nowPeriod(7), "早上");
+    assert.strictEqual(Yui.nowPeriod(23), "深夜");
+    assert.ok(Yui.nowGuidance(["请祝贺。"]).endsWith("不用提起。请祝贺。）"));
 });
 
 test("Follow-ups", () => {

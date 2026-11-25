@@ -145,7 +145,7 @@ NVG.Window {
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Yui mentions the weather in her morning greeting (and an umbrella when it rains) and answers weather questions with it. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.")
+                            text: qsTr("Yui always knows the weather now: she mentions it in her morning greeting (and an umbrella when it rains), answers weather questions with it, and may care about it when it fits. Choose the values below, e.g. Weather Data → General Data → Weather Forecast and Current Temperature, and set the place there.")
                         }
 
                         P.DataPreference {
