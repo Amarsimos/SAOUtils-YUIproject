@@ -744,13 +744,13 @@ function logLine(row, title) {
     return when + "  " + who + ": " + String(row.message || "").replace(/\r?\n/g, "\n                   ");
 }
 
-// The greeting when the user comes back (Login Greeting): "long" after 3 days or more away, "morning"
+// The greeting when the user comes back (Login Greeting): "long" after 2 days or more away, "morning"
 // for the first time on a new day in the morning (5–11 h), "back" after half an hour, else "".
 function greetingKind(lastActive, now) {
     if (!lastActive || now - lastActive < 30 * 60000)
         return "";
 
-    if (now - lastActive >= 3 * 86400000)
+    if (now - lastActive >= 2 * 86400000)
         return "long";
 
     var last = new Date(lastActive);
@@ -1474,6 +1474,142 @@ function nowBlock(facts, title) {
 // Right after the Now block: it is to be trusted, and what Yui is asked to do now (asks).
 function nowGuidance(asks) {
     return "\n（以上是程序刚刚读到的，以此为准，以前说过的不同的话已经不对了；和话题无关的不用提起。" + (asks || []).join("") + "）";
+}
+
+// ---------------------------------------------------------------- Care moments
+// Mood Care: the last 3 moods average 2 or less and the latest is at most 3 days old. recent: [{day
+// ("yyyy-MM-dd"), score, note}] oldest first. Returns the 3 entries, or null.
+function moodLow(recent, now) {
+    var last = (recent || []).slice(-3);
+    if (last.length < 3)
+        return null;
+
+    var average = last.reduce(function(sum, entry) {
+        return sum + entry.score;
+    }, 0) / 3;
+    var latest = last[2].day.split("-");
+    var age = dayStart(now) - new Date(Number(latest[0]), Number(latest[1]) - 1, Number(latest[2])).getTime();
+    return average <= 2 && age <= 3 * 86400000 ? last : null;
+}
+
+function moodCareInstruction(entries, title) {
+    return "（系统提示：" + title + "最近几天的心情都不太好（" + entries.map(function(entry) {
+        return entry.day.slice(5) + " " + entry.score + "/5" + (entry.note ? " " + entry.note : "");
+    }).join("；") + "）。请结衣主动、温柔地关心一下，问问要不要和结衣说说，不要说教，也不要列一串建议。一两句话，不要提起这条提示。）";
+}
+
+// Weather Changes: a reading is {at (ms), text, temp (number or NaN)}; history: earlier readings,
+// oldest first. Returns {kind: "rain" | "snow" | "cold", from, to} when it has just started raining or
+// snowing, or the temperature fell 5° or more within 3 hours; else null.
+var PRECIPITATION = /雨|雪|rain|snow|shower|drizzle|storm/i;
+var SNOW = /雪|snow/i;
+
+function weatherChange(history, current) {
+    var before = (history || []).filter(function(reading) {
+        return reading.at < current.at && current.at - reading.at <= 3 * 3600000;
+    });
+    if (before.length === 0)
+        return null;
+
+    var last = before[before.length - 1];
+    if (current.text && last.text && PRECIPITATION.test(current.text) && !PRECIPITATION.test(last.text))
+        return {
+        "kind": SNOW.test(current.text) ? "snow" : "rain",
+        "from": last.text,
+        "to": current.text
+    };
+
+    if (!isNaN(current.temp)) {
+        var warmest = -Infinity;
+        before.forEach(function(reading) {
+            if (!isNaN(reading.temp) && reading.temp > warmest)
+                warmest = reading.temp;
+
+        });
+        if (warmest - current.temp >= 5)
+            return {
+            "kind": "cold",
+            "from": warmest + "°",
+            "to": current.temp + "°"
+        };
+
+    }
+    return null;
+}
+
+function weatherChangeInstruction(change, title) {
+    var what = change.kind === "cold" ? "气温降下来了（" + change.from + " → " + change.to + "）" : "外面开始" + (change.kind === "snow" ? "下雪" : "下雨") + "了（之前是" + change.from + "，现在是" + change.to + "）";
+    return "（系统提示：" + what + "。请结衣主动跟" + title + "说一声，" + (change.kind === "cold" ? "提醒注意保暖、别着凉" : "提醒要出门的话记得带伞，也可以聊聊下雨天") + "。一两句话，不要提起这条提示。）";
+}
+
+// Spontaneous Talk's hooks: something of right now to start from. facts: {now, track, playing, busyMinutes
+// (high load for so long), weather, temp, awake (ms), mood ({score}), soon ([{text, days}], follow-ups
+// 1-3 days ahead), bondSoon ([{name, days}], 1-7 days ahead), memory (an older memory's text), yearAgo
+// (a memory written a year ago today), chattedToday}. Returns [{key, text, special}], special ones
+// (rare days) are picked first.
+var HOLIDAYS = {
+    "01-01": "元旦",
+    "02-14": "情人节",
+    "03-08": "妇女节",
+    "05-01": "劳动节",
+    "06-01": "儿童节",
+    "10-01": "国庆节",
+    "10-31": "万圣节",
+    "12-24": "平安夜",
+    "12-25": "圣诞节",
+    "12-31": "一年的最后一天"
+};
+
+function chatHooks(facts, title) {
+    var date = new Date(facts.now);
+    var hour = date.getHours(), minutes = hour * 60 + date.getMinutes(), weekday = date.getDay();
+    var late = hour < 5 || hour >= 23;
+    var hooks = [];
+    var add = function(key, when, text, special) {
+        if (when)
+            hooks.push({
+            "key": key,
+            "text": text,
+            "special": !!special
+        });
+
+    };
+    var md = dayKey(facts.now).slice(5);
+    var tomorrow = new Date(facts.now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    add("holiday", !!HOLIDAYS[md], "今天是" + HOLIDAYS[md] + "，可以聊聊今天", true);
+    add("year_ago", !!facts.yearAgo, "去年的今天，" + title + "说过「" + facts.yearAgo + "」，可以一起回忆一下", true);
+    add("followup_soon", !!(facts.soon && facts.soon.length), facts.soon && facts.soon.length ? "再过 " + facts.soon[0].days + " 天就是「" + facts.soon[0].text + "」了，问问准备得怎么样" : "", true);
+    add("bond_soon", !!(facts.bondSoon && facts.bondSoon.length), facts.bondSoon && facts.bondSoon.length ? "再过 " + facts.bondSoon[0].days + " 天就是" + facts.bondSoon[0].name + "了，结衣可以悄悄期待一下" : "", true);
+    add("late_music", late && facts.playing && !!facts.track, "这么晚了" + title + "还在听" + facts.track + "，聊聊这首歌，也关心一下早点睡");
+    add("music", !late && facts.playing && !!facts.track, title + "正在听" + facts.track + "，可以聊聊这首歌或这位歌手");
+    add("busy_pc", facts.busyMinutes >= 30, "电脑已经连续很忙 " + facts.busyMinutes + " 分钟了，问问" + title + "是在忙什么大工程");
+    add("friday_night", weekday === 5 && hour >= 18 && hour < 23, "周五晚上了，这周辛苦了，问问周末有什么打算");
+    add("weekend_morning", (weekday === 0 || weekday === 6) && hour >= 8 && hour < 12, "周末的早上，问问今天想做点什么");
+    add("monday_morning", weekday === 1 && hour >= 8 && hour < 11, "新的一周开始了，给" + title + "打打气");
+    add("lunch", minutes >= 690 && minutes < 780, "到午饭时间了，问问吃了没、吃了什么");
+    add("dinner", minutes >= 1050 && minutes < 1170, "到晚饭时间了，问问晚饭吃了吗");
+    add("month_end", tomorrow.getDate() === 1, "这个月今天就结束了，可以一起回顾一下这个月");
+    add("rain", !!facts.weather && PRECIPITATION.test(facts.weather), "外面在下" + (SNOW.test(facts.weather) ? "雪" : "雨") + "，聊聊这样的天气");
+    add("cold", facts.temp <= 5, "现在只有 " + facts.temp + "°，提醒注意保暖");
+    add("hot", facts.temp >= 30, "现在有 " + facts.temp + "°，好热，提醒多喝水");
+    add("long_company", facts.awake >= 3 * 3600000, "结衣今天已经陪了" + title + "很久了，说说陪着的感受，顺便提醒歇一会儿");
+    add("good_mood", !!facts.mood && facts.mood.score >= 4, title + "今天心情不错，问问有什么好事");
+    add("memory", !!facts.memory, "结衣想起了以前记下的一件事：「" + facts.memory + "」，可以自然地聊起来");
+    add("first_today", !facts.chattedToday && hour >= 10, "今天" + title + "还没和结衣说过话，打个招呼，问问今天过得怎么样");
+    return hooks;
+}
+
+// One hook for now, not one used today (used: keys); special ones first, then at random (rnd 0 - 1).
+function pickChatHook(hooks, used, rnd) {
+    var open = (hooks || []).filter(function(hook) {
+        return (used || []).indexOf(hook.key) === -1;
+    });
+    var special = open.filter(function(hook) {
+        return hook.special;
+    });
+    var from = special.length > 0 ? special : open;
+    return from.length > 0 ? from[Math.min(from.length - 1, Math.floor(rnd * from.length))] : null;
 }
 
 // ---------------------------------------------------------------- Follow-ups
