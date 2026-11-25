@@ -7,7 +7,8 @@ import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
 // "Yui's Heart" window (next to Cardinal System, Equipment, Mental Health Counseling and System Console),
-// in pages: Memories (view, add and edit them, YuisHeartPage.qml), Recall (what is remembered and sent
+// in pages: Memories (view, add and edit them, YuisHeartPage.qml), Follow-ups (memories about a day to
+// come, which Yui brings up), Recall (what is remembered and sent
 // with each request) and Local Memory (export, import, backups, the recollection log, forgetting all;
 // always the last page).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
@@ -29,6 +30,28 @@ NVG.Window {
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, logRecallPreference, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
+
+    // Follow-ups page: the memories about a day to come, soonest first.
+    property var followupItems: []
+
+    function refreshFollowups() {
+        followupItems = targetWidget.followupList(Date.now());
+    }
+
+    function followupState(item) {
+        if (item.phase === "ahead")
+            return item.days === 1 ? qsTr("Tomorrow") : qsTr("In %1 days").arg(item.days);
+
+        if (item.phase === "today")
+            return item.stage ? qsTr("Today, cheered on") : qsTr("Today");
+
+        return item.stage === "asked" ? qsTr("Asked") : qsTr("To ask");
+    }
+
+    Connections {
+        target: heartWindow.targetWidget
+        onFollowupsChanged: heartWindow.refreshFollowups()
+    }
 
     function refreshLogSize() {
         logSize = targetWidget.messageLogCount();
@@ -59,11 +82,14 @@ NVG.Window {
                 id: tabs
 
                 onShownIndexChanged: {
+                    if (shownIndex === 1)
+                        heartWindow.refreshFollowups();
+
                     if (shownIndex === model.length - 1)
                         heartWindow.refreshLogSize();
 
                 }
-                model: [qsTr("Memories"), qsTr("Recall"), qsTr("Local Memory")]
+                model: [qsTr("Memories"), qsTr("Follow-ups"), qsTr("Recall"), qsTr("Local Memory")]
             }
 
             StackLayout {
@@ -74,6 +100,57 @@ NVG.Window {
                 // ---------------------------------------------------------------- Memories
                 YuisHeartPage {
                     yui: heartWindow.targetWidget
+                }
+
+                // ---------------------------------------------------------------- Follow-ups
+                SettingsPage {
+                    SettingNote {
+                        besidePreferences: true
+                        text: qsTr("Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.")
+                    }
+
+                    Label {
+                        visible: heartWindow.followupItems.length === 0
+                        Layout.alignment: Qt.AlignHCenter
+                        opacity: 0.7
+                        text: heartWindow.targetWidget.featureEnabled("followups") ? qsTr("Nothing to follow up") : qsTr("Follow-ups are off (Mental Health Counseling, Care)")
+                    }
+
+                    Repeater {
+                        model: heartWindow.followupItems
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 16
+                            Layout.rightMargin: 16
+                            spacing: 10
+
+                            Label {
+                                text: modelData.due.slice(5).replace("-", "/")
+                                font.bold: true
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                                text: modelData.text
+                            }
+
+                            Label {
+                                opacity: 0.7
+                                text: heartWindow.followupState(modelData)
+                            }
+
+                            Button {
+                                text: qsTr("Remove")
+                                onClicked: heartWindow.targetWidget.dismissFollowup(modelData.key)
+                            }
+
+                        }
+
+                    }
+
                 }
 
                 // ---------------------------------------------------------------- Recall

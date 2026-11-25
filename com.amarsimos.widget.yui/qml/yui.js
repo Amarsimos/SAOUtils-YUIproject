@@ -1439,6 +1439,141 @@ function datedMemory(text, now) {
     return value;
 }
 
+// ---------------------------------------------------------------- Follow-ups
+// A memory with a date to come ("11月28日考试", dated by datedMemory) is followed up: on the day Yui
+// cheers the user on, and in the 7 days after she asks how it went. Birthdays and anniversaries are
+// left to the Bond reminders (they come every year).
+var FOLLOWUP_AHEAD_DAYS = 60;
+var FOLLOWUP_AFTER_DAYS = 7;
+
+function dayStart(ms) {
+    var d = new Date(ms);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function dayKey(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+}
+
+// The day a memory is about (ms at midnight), or 0. Without a year, the year that puts it nearest to
+// when it was written (December's "1月5日" is next year). written: ms.
+function followupDate(text, written) {
+    var value = String(text || "");
+    if (/生日|纪念日|周年/.test(value))
+        return 0;
+
+    var m = /(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]/.exec(value);
+    if (!m)
+        return 0;
+
+    var month = Number(m[2]) - 1, day = Number(m[3]);
+    if (month > 11 || day < 1 || day > 31)
+        return 0;
+
+    var base = new Date(written);
+    var make = function(year) {
+        return new Date(year, month, day).getTime();
+    };
+    if (m[1])
+        return make(Number(m[1]));
+
+    var best = make(base.getFullYear());
+    [base.getFullYear() - 1, base.getFullYear() + 1].forEach(function(year) {
+        if (Math.abs(make(year) - written) < Math.abs(best - written))
+            best = make(year);
+
+    });
+    return best;
+}
+
+// The follow-ups of Yui's Heart now: [{key, id, text, due ("yyyy-MM-dd"), days (due - today), phase,
+// stage}], soonest first. phase: "ahead" (to come), "today", "after" (up to 7 days past). A memory about
+// a day already past when written is a record, not followed up; one more than 60 days ahead waits.
+// stages: {key: "cheered" | "asked" | "dismissed"} (dismissed ones are left out).
+function followups(entries, now, stages) {
+    var today = dayStart(now);
+    var list = [];
+    (entries || []).forEach(function(entry) {
+        var written = entry.created || now;
+        var due = followupDate(entry.text, written);
+        if (!due || due < dayStart(written))
+            return ;
+
+        var days = Math.round((due - today) / 86400000);
+        if (days > FOLLOWUP_AHEAD_DAYS || days < -FOLLOWUP_AFTER_DAYS)
+            return ;
+
+        var key = (entry.id || entry.text) + "@" + dayKey(due);
+        var stage = (stages || {})[key] || "";
+        if (stage === "dismissed")
+            return ;
+
+        list.push({
+            "key": key,
+            "id": entry.id,
+            "text": entry.text,
+            "due": dayKey(due),
+            "days": days,
+            "phase": days > 0 ? "ahead" : days === 0 ? "today" : "after",
+            "stage": stage,
+            // Written on the day itself: no cheering on, only asking afterwards.
+            "sameDay": due === dayStart(written)
+        });
+    });
+    list.sort(function(a, b) {
+        return a.days - b.days;
+    });
+    return list;
+}
+
+// What is due to be said now: {kind: "cheer" | "ask", items}, or null. Only 08:00 - 22:00; asking
+// after comes before cheering on (the oldest first).
+function followupsDue(list, hour) {
+    if (hour < 8 || hour >= 22)
+        return null;
+
+    var ask = (list || []).filter(function(item) {
+        return item.phase === "after" && item.stage !== "asked";
+    }).reverse();
+    if (ask.length > 0)
+        return {
+            "kind": "ask",
+            "items": ask
+        };
+
+    var cheer = (list || []).filter(function(item) {
+        return item.phase === "today" && !item.sameDay && item.stage === "";
+    });
+    return cheer.length > 0 ? {
+        "kind": "cheer",
+        "items": cheer
+    } : null;
+}
+
+function followupWhen(days) {
+    return days === 0 ? "就是今天" : days === -1 ? "那是昨天的事" : days === -2 ? "那是前天的事" : "那是 " + (-days) + " 天前的事";
+}
+
+// The instruction for Yui to bring them up by herself (Care Scheduler).
+function followupInstruction(due, title) {
+    var said = due.items.map(function(item) {
+        return "「" + item.text + "」（" + followupWhen(item.days) + "）";
+    }).join("；");
+    if (due.kind === "cheer")
+        return "（系统提示：" + title + "之前说过：" + said + "。请结衣主动给" + title + "打打气、关心一下，一两句话，不要提起这条提示。）";
+
+    return "（系统提示：" + title + "之前说过：" + said + "。请结衣自然地问问" + title + "结果怎么样、过得如何，一两句话，不要提起这条提示。）";
+}
+
+// Beside the user's own message when one is due (only in the request): she may bring it up.
+function followupNote(due, title) {
+    var said = due.items.map(function(item) {
+        return "「" + item.text + "」（" + followupWhen(item.days) + "）";
+    }).join("；");
+    return "\n\n（结衣记得：" + title + "之前说过" + said + "。合适的话可以顺口" + (due.kind === "cheer" ? "关心、打气" : "问问怎么样了") + "，和这次的话题不搭就不提。）";
+}
+
 // Quick Replies: a <<suggest:>> tag's value ("a|b|c") -> up to three different short replies.
 // A quick reply asking Yui to do something on the computer ("帮我打开记事本", "下一首", "提醒我8点起床").
 var SUGGESTED_ACTION = /帮我(?:打开|关|开|启动|搜|查|找|放|播|切|调|设|定|记|删|下载|安装)|打开|关掉|关闭|启动|播放|暂停|切歌|下一首|上一首|音量|静音|搜索|搜一下|查一下|找文件|闹钟|提醒我|叫我起床/;

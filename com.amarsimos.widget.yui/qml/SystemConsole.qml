@@ -669,15 +669,22 @@ NVG.Window {
                                     }, {
                                         "label": qsTr("Care Tick"),
                                         "tag": "care"
+                                    }, {
+                                        "label": qsTr("Follow-up: Today"),
+                                        "tag": "followup_cheer"
+                                    }, {
+                                        "label": qsTr("Follow-up: After"),
+                                        "tag": "followup_ask"
                                     }]
 
                                     // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
                                     // made-up streamed reply in the chat (neither makes an API request),
                                     // "Test Link Start" plays the startup effect, "Test Media" logs the track
-                                    // playing and plays / pauses it, "Care Tick" runs the care scheduler at once (leaving out the gap).
+                                    // playing and plays / pauses it, "Care Tick" runs the care scheduler at once (leaving out the gap),
+                                    // "Follow-up: Today / After" has Yui cheer on / ask about a follow-up as if due now.
                                     Button {
                                         text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag.indexOf("followup_") === 0 ? consoleWindow.targetWidget.testFollowup(modelData.tag.slice(9)) : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
                                     }
 
                                 }

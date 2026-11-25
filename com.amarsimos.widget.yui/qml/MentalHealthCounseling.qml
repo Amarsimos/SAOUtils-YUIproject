@@ -23,7 +23,7 @@ NVG.Window {
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var companionPreferences: [greetPreference, spontaneousPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
-    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, moodPreference, weeklyPreference]
+    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, followupsPreference, moodPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshReports() {
@@ -308,6 +308,20 @@ NVG.Window {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("Yui reminds you to sleep late at night and to rest after long sessions, as often as Care Level allows.")
+                        }
+
+                        P.SwitchPreference {
+                            id: followupsPreference
+
+                            name: "followups"
+                            defaultValue: true
+                            label: qsTr("Follow-ups")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When Yui remembers something with a date to come (an exam, an interview), she cheers you on that day and asks how it went in the week after (08:00–22:00). See them in Yui's Heart, Follow-ups.")
                         }
 
                         P.SwitchPreference {
