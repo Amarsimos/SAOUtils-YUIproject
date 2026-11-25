@@ -62,6 +62,33 @@ NVG.Window {
         authorityGroup.save();
     }
 
+
+    // Run a Test: "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a made-up
+    // streamed reply (neither makes an API request), "Test Link Start" plays the startup effect, "Test
+    // Media" logs the track and plays / pauses it, "Care Tick" runs the care scheduler at once, the
+    // follow-up, mood and weather tests have Yui say it now; a <<tag>> is a desktop action.
+    function runTest(tag) {
+        var yui = targetWidget;
+        if (tag === "bubble")
+            yui.testBubble();
+        else if (tag === "stream")
+            yui.testStreamReply();
+        else if (tag === "linkstart")
+            yui.testLinkStart();
+        else if (tag === "media")
+            yui.testMedia();
+        else if (tag === "care")
+            yui.testCareTick();
+        else if (tag.indexOf("followup_") === 0)
+            yui.testFollowup(tag.slice(9));
+        else if (tag === "moodcare")
+            yui.testMoodCare();
+        else if (tag === "weatherchange")
+            yui.testWeatherChange();
+        else
+            yui.testAction(tag);
+    }
+
     title: qsTr("System Console")
     visible: true
     minimumWidth: 420
@@ -634,63 +661,44 @@ NVG.Window {
                                 besidePreferences: true
                                 // The dialog takes its size from its content: wrapped at a set width.
                                 wrapWidth: 360
-                                text: qsTr("Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.")
+                                text: qsTr("Actions try each desktop action: every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking. Care has Yui say what she would say by herself, at once. Display shows the bubble, a streamed reply and the startup effect without asking the AI.")
                             }
 
-                            CenteredFlow {
-                                Repeater {
-                                    model: [{
-                                        "label": qsTr("Launch Notepad"),
-                                        "tag": "<<launch:notepad>>"
-                                    }, {
-                                        "label": qsTr("Close Notepad"),
-                                        "tag": "<<kill:notepad.exe>>"
-                                    }, {
-                                        "label": qsTr("Find File"),
-                                        "tag": "<<find:notepad.exe>>"
-                                    }, {
-                                        "label": qsTr("Open Link"),
-                                        "tag": "<<open:https://www.bilibili.com>>"
-                                    }, {
-                                        "label": qsTr("Protected Process"),
-                                        "tag": "<<kill:explorer.exe>>"
-                                    }, {
-                                        "label": qsTr("Test Bubble"),
-                                        "tag": ""
-                                    }, {
-                                        "label": qsTr("Test Streaming"),
-                                        "tag": "stream"
-                                    }, {
-                                        "label": qsTr("Test Link Start"),
-                                        "tag": "linkstart"
-                                    }, {
-                                        "label": qsTr("Test Media"),
-                                        "tag": "media"
-                                    }, {
-                                        "label": qsTr("Care Tick"),
-                                        "tag": "care"
-                                    }, {
-                                        "label": qsTr("Follow-up: Today"),
-                                        "tag": "followup_cheer"
-                                    }, {
-                                        "label": qsTr("Follow-up: After"),
-                                        "tag": "followup_ask"
-                                    }, {
-                                        "label": qsTr("Test Mood Care"),
-                                        "tag": "moodcare"
-                                    }, {
-                                        "label": qsTr("Test Weather Change"),
-                                        "tag": "weatherchange"
-                                    }]
+                            // In three groups: desktop actions, care (what Yui says by herself), display.
+                            Repeater {
+                                model: [{
+                                    "title": qsTr("Actions"),
+                                    "tests": [[qsTr("Launch Notepad"), "<<launch:notepad>>"], [qsTr("Close Notepad"), "<<kill:notepad.exe>>"], [qsTr("Find File"), "<<find:notepad.exe>>"], [qsTr("Open Link"), "<<open:https://www.bilibili.com>>"], [qsTr("Protected Process"), "<<kill:explorer.exe>>"], [qsTr("Test Media"), "media"]]
+                                }, {
+                                    "title": qsTr("Care"),
+                                    "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"]]
+                                }, {
+                                    "title": qsTr("Display"),
+                                    "tests": [[qsTr("Test Bubble"), "bubble"], [qsTr("Test Streaming"), "stream"], [qsTr("Test Link Start"), "linkstart"]]
+                                }]
 
-                                    // "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a
-                                    // made-up streamed reply in the chat (neither makes an API request),
-                                    // "Test Link Start" plays the startup effect, "Test Media" logs the track
-                                    // playing and plays / pauses it, "Care Tick" runs the care scheduler at once (leaving out the gap),
-                                    // "Follow-up: Today / After" has Yui cheer on / ask about a follow-up as if due now.
-                                    Button {
-                                        text: modelData.label
-                                        onClicked: modelData.tag === "linkstart" ? consoleWindow.targetWidget.testLinkStart() : modelData.tag === "media" ? consoleWindow.targetWidget.testMedia() : modelData.tag === "care" ? consoleWindow.targetWidget.testCareTick() : modelData.tag.indexOf("followup_") === 0 ? consoleWindow.targetWidget.testFollowup(modelData.tag.slice(9)) : modelData.tag === "moodcare" ? consoleWindow.targetWidget.testMoodCare() : modelData.tag === "weatherchange" ? consoleWindow.targetWidget.testWeatherChange() : modelData.tag === "stream" ? consoleWindow.targetWidget.testStreamReply() : modelData.tag ? consoleWindow.targetWidget.testAction(modelData.tag) : consoleWindow.targetWidget.testBubble()
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    Label {
+                                        Layout.leftMargin: 16
+                                        text: modelData.title
+                                        font.bold: true
+                                        opacity: 0.8
+                                    }
+
+                                    CenteredFlow {
+                                        Repeater {
+                                            model: modelData.tests
+
+                                            Button {
+                                                text: modelData[0]
+                                                onClicked: consoleWindow.runTest(modelData[1])
+                                            }
+
+                                        }
+
                                     }
 
                                 }

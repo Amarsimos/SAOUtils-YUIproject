@@ -783,7 +783,7 @@
     <name>MentalHealthCounseling</name>
     <message>
         <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
-        <location line="+517"/>
+        <location line="+525"/>
         <location line="+64"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
@@ -794,8 +794,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-379"/>
-        <location line="+368"/>
+        <location line="-387"/>
+        <location line="+376"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
@@ -805,29 +805,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-466"/>
+        <location line="-312"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-27"/>
-        <location line="+126"/>
-        <source>Companion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-126"/>
-        <location line="+317"/>
+        <location line="-189"/>
+        <location line="+325"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-317"/>
+        <location line="-325"/>
         <source>Records</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+181"/>
         <source>Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -837,17 +831,11 @@
         <translation>你回来时（启动或把她叫醒时）结衣会打招呼：每天第一次在早上见面时说早安，隔两天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Presence</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+14"/>
         <source>While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).</source>
-        <translation>聊天窗口关着时，结衣偶尔会主动说话（会调用 API）。频率由 Care 页的 Care Level 决定。</translation>
+        <translation type="vanished">聊天窗口关着时，结衣偶尔会主动说话（会调用 API）。频率由 Care 页的 Care Level 决定。</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="-142"/>
         <source>Music</source>
         <translation type="unfinished"></translation>
     </message>
@@ -932,17 +920,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Reminders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+62"/>
         <source>Rest Reminders</source>
         <translation>Rest Reminders</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+46"/>
         <source>Follow-ups</source>
         <translation type="unfinished"></translation>
     </message>
@@ -952,7 +935,7 @@
         <translation>结衣记下带有将来日期的事（考试、面试等）时，会在当天给你打气，并在之后一周内问问结果怎么样（08:00–22:00）。可以在 Yui&apos;s Heart 的 Follow-ups 里查看。</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-24"/>
         <source>Mood Care</source>
         <translation type="unfinished"></translation>
     </message>
@@ -962,17 +945,16 @@
         <translation>最近三次心情记录都偏低时（Daily Mood Check），结衣会温柔地问你要不要聊聊，每天最多一次（09:00–22:00）。</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+26"/>
         <source>Weather Changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
         <source>When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report&apos;s values.</source>
-        <translation>开始下雨、下雪，或三小时内降温 5° 以上时，结衣会提醒你（带伞、注意保暖；07:00–22:00）。需要先设置 Weather Report 的数据。</translation>
+        <translation type="vanished">开始下雨、下雪，或三小时内降温 5° 以上时，结衣会提醒你（带伞、注意保暖；07:00–22:00）。需要先设置 Weather Report 的数据。</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-46"/>
         <source>Daily Mood Check</source>
         <translation type="unfinished"></translation>
     </message>
@@ -982,12 +964,12 @@
         <translation>结衣每天问一次你的心情并记录下来（Mental Record）；连续几天心情低落时，她会更加关心你。</translation>
     </message>
     <message>
-        <location line="-250"/>
+        <location line="-46"/>
         <source>Spontaneous Talk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="-181"/>
         <source>Weather Report</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1008,7 +990,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+334"/>
+        <location line="+386"/>
         <source>30 days ago</source>
         <translation>30 天前</translation>
     </message>
@@ -1053,22 +1035,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-243"/>
+        <location line="-89"/>
         <source>When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.</source>
         <translation>结衣主动说的话连续两次没人回应时，她会认为你不在，进入待机（Standby），直到你点她或给她发消息才醒来。</translation>
     </message>
     <message>
-        <location line="+162"/>
+        <location line="-44"/>
         <source>In these hours Yui makes no small talk. Late-night care still comes, as it only does while you are at the computer.</source>
         <translation>这个时段内结衣不闲聊。深夜关怀照常，因为它只在你还在用电脑时才会出现。</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="-177"/>
+        <location line="+82"/>
+        <source>Perception</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+117"/>
+        <source>Small Talk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>While the chat is closed, Yui sometimes speaks up by herself (uses the API), often starting from something of right now. How often follows Care Level above.</source>
+        <translation>聊天窗口关着时，结衣有时会主动说话（会调用 API），常常从当下的事说起。频率由上面的 Care Level 决定。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Well-being</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Yui reminds you to sleep late at night and to rest after long sessions, as often as Care Level allows.</source>
         <translation>深夜提醒你睡觉，连续用电脑很久时提醒你休息，频率受 Care Level 限制。</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+32"/>
+        <source>Your Days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report&apos;s values (Perception).</source>
+        <translation>开始下雨、下雪，或三小时内降温 5° 以上时，结衣会提醒你（带伞、注意保暖；07:00–22:00）。需要先在 Perception 页设置 Weather Report 的数据。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
     </message>
@@ -1600,7 +1618,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+473"/>
+        <location filename="../qml/SystemConsole.qml" line="+500"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1789,11 +1807,12 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+18"/>
+        <location line="+290"/>
         <source>Actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="-274"/>
         <source>Open Web Pages and Search</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1878,88 +1897,102 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.</source>
-        <translation>逐个测试桌面代行功能。每个按钮都会发一条测试消息，并像真实操作一样请求确认；受保护进程应当不经询问直接被拦截。</translation>
+        <translation type="vanished">逐个测试桌面代行功能。每个按钮都会发一条测试消息，并像真实操作一样请求确认；受保护进程应当不经询问直接被拦截。</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+15"/>
         <source>Launch Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Close Notepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Find File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Open Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Protected Process</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
         <source>Test Bubble</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Test Streaming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-570"/>
-        <location line="+615"/>
+        <location line="-559"/>
+        <location line="+596"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-42"/>
+        <location line="-37"/>
         <source>Test Link Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-6"/>
         <source>Test Media</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-7"/>
+        <source>Actions try each desktop action: every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking. Care has Yui say what she would say by herself, at once. Display shows the bubble, a streamed reply and the startup effect without asking the AI.</source>
+        <translation>Actions 测试各个桌面代行：每个按钮都会发一条测试消息，并像真正的操作一样请求确认；受保护进程应当不经询问直接拒绝。Care 让结衣立刻说出她会主动说的话。Display 展示气泡、流式回复和启动特效，不会请求 AI。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Care</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Care Tick</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Follow-up: Today</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Follow-up: After</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Test Mood Care</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+0"/>
         <source>Test Weather Change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+2"/>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+45"/>
         <source>Log Requests</source>
         <translation type="unfinished"></translation>
     </message>
