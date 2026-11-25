@@ -4066,7 +4066,6 @@ T.Widget {
         } else {
             closeView();
         }
-        widget.settings.chat_hidden = !visible;
     }
 
     // The widget's rectangle on screen (in the launcher, in its space): the chat view is placed by it.
@@ -4326,10 +4325,7 @@ T.Widget {
             applyCollapsedSize(); // lowers the minimum size again once applied
         else
             releaseMinimumSize();
-        // Open as it was left: a new widget starts collapsed, the chat reopens only if it was left open.
-        if (widget.settings.chat_hidden === false)
-            Qt.callLater(openView);
-
+        // Always starts collapsed, whether the chat was open or not when SAO Utils was closed.
         if (toolsEnabled && widget.settings.raid_end > Date.now()) {
             raidEnd = widget.settings.raid_end;
             raidActive = true;
