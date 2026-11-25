@@ -61,6 +61,7 @@ Replies of small local models cleaned up: thinking written into the reply (befor
 **Now Playing** (Mental Health Counseling, Companion, Music; needs the Media Player package): Yui knows the song in the player and can talk about it; **Control Media** (System Console, off by default) lets her play, pause, skip and change the volume through Media Player's own action.
 **Care Scheduler**: everything Yui says by herself (late-night care, rest reminders, the Sunday Report, Spontaneous Talk) goes through one scheduler that says at most one thing at a time, within a daily number and a gap set by **Care Level** (Mental Health Counseling, Care: Auto learns from your responses, 20 a day and once every half hour to start; or Quiet, Normal, Chatty) and outside **Quiet Hours** (no small talk, 00:00–08:00 by default, SAO Utils' time pickers). Telling her to be quiet stops her for the day; asking her to talk more makes her talk more.
 Honest actions: a reply that says Yui did something on the computer when nothing was carried out, or promises a reminder she cannot give, gets a note under it; she is told what she can and cannot do.
+**Unread**: when Yui says something while the chat is closed and you miss it, her collapsed form keeps a mark (the crystal's heart blinks slowly and a blue dot breathes; a dot beside the pixie or the character) until you open the chat or click the bubble; the chat then opens at a "New messages" line, her unread messages lined in SAO orange.
 
 ### Changed
 
@@ -93,9 +94,18 @@ Honest actions: a reply that says Yui did something on the computer when nothing
 - Regenerate is called Say Again and keeps the facts (song, time, memories) while wording it anew.
 - Quick Replies are only talk, never asking Yui to do something on the computer.
 - Clear Log (Yui's Heart) clears the chat window too.
+- **Yui's Heart** is a briolette like the pendant in the anime: a sky-blue teardrop covered in diamond
+  facets, lit as a real solid and turning slowly. The status color is in the glow and the heart inside,
+  which beats faster while she is busy.
+- The speech bubble pops up with the message sound; its strip breathes and is sky blue, yellow or red
+  only when the crystal warns.
+- Yui always starts collapsed, even if the chat was open when SAO Utils closed.
+- Care Tick (System Console) always makes her say something, Quiet Hours and today's number aside.
 
 ### Fixed
 
+- The speech bubble's text uses the Message Font: on a Japanese system it mixed glyphs of different
+  fonts and weights.
 - Misspelled or full-width tags (for example <<emphy:happy>>) are no longer shown in the chat.
 - The System Console log's scroll bar is at the right, as tall as the log, and can be dragged.
 - When the reply names no expression, Yui guesses one from it.
