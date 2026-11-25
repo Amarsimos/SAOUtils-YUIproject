@@ -3980,17 +3980,17 @@ T.Widget {
         if (force)
             state = {
             "day": state.day,
-            "count": state.count,
+            "count": 0,
             "said": state.said,
             "last": 0,
-            "mutedUntil": state.mutedUntil
+            "mutedUntil": 0
         };
 
         var result = Yui.carePick(candidates, state, {
             "now": now,
             "score": careScoreNow(),
-            "quiet": quietNow(date),
-            "hours": widget.settings.care_hours,
+            "quiet": !force && quietNow(date),
+            "hours": force ? undefined : widget.settings.care_hours,
             "hour": date.getHours()
         });
         var line = "care: offered [" + candidates.map(function(c) {
@@ -4028,7 +4028,8 @@ T.Widget {
 
     }
 
-    // System Console "Care Tick": the scheduler at once, leaving out the gap.
+    // System Console "Care Tick": the scheduler at once, leaving out the gap, today's number, being told
+    // to be quiet, Quiet Hours and the hours she is seldom answered in (a test should say something).
     function testCareTick() {
         diag("test care tick");
         careTick(Date.now(), true);
