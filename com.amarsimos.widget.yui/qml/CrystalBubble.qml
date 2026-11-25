@@ -327,7 +327,7 @@ NVG.View {
         }
 
         ScriptAction {
-            script: if (bubble.sound) NVG.SystemCall.playSound(NVG.SFX.NotifySystem)
+            script: if (bubble.sound) NVG.SystemCall.playSound(NVG.SFX.NotifyMessage)
         }
 
         NumberAnimation {
