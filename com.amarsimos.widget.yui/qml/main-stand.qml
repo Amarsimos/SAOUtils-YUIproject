@@ -3689,7 +3689,9 @@ T.Widget {
             });
         }
         // From the level itself: crystalColor may not be updated yet inside onCrystalLevelChanged.
-        crystalBubble.show(title, text, collapsedForm === "crystal" ? levelColors[crystalLevel] : levelColors[0], collapsedScreenRect());
+        // Usually the crystal's sky blue; yellow or red only when the crystal warns.
+        var level = collapsedForm === "crystal" ? crystalLevel : 0;
+        crystalBubble.show(title, text, level > 0 ? levelColors[level] : "#4BB4EC", collapsedScreenRect());
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
