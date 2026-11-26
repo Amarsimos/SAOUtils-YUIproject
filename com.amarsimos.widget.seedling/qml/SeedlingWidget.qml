@@ -4,6 +4,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
+import "sandbox.js" as Sandbox
 
 // A Seedling widget: shows the QML kept in its settings (code), after the safety check. Its menu opens
 // the workbench, where the code is written, previewed, tried on the desktop and saved back here.
@@ -42,6 +43,33 @@ T.Widget {
             }).join("\n") || String(e);
         }
         return problem;
+    }
+
+    // S2 prototype (Seedling Settings' Test): code shown in the widget through the sandbox, not saved
+    // and not checked (the probes are meant to run).
+    property var sandboxShown: null
+
+    function showSandboxed(source) {
+        if (created) {
+            created.destroy();
+            created = null;
+        }
+        if (sandboxShown) {
+            sandboxShown.destroy();
+            sandboxShown = null;
+        }
+        problem = "";
+        try {
+            var made = Sandbox.create(source, content, Qt.resolvedUrl("Sandbox.qml"), "SeedlingSandbox");
+            if (made.error) {
+                problem = made.error;
+                return ;
+            }
+            created = made.item;
+            sandboxShown = made.sandbox;
+        } catch (e) {
+            problem = String(e);
+        }
     }
 
     // Saves code as this widget's content (from the workbench), the frame taking its size.

@@ -246,6 +246,18 @@ NVG.Window {
                             return [p.name, "probewidget:" + p.key];
                         })
                     }, {
+                        "title": "S2 Sandbox · Workbench",
+                        "note": qsTr("Seedling Development Plan, S2 prototype: the same probes created through the sandbox (sandbox.js). P1 and P3 should find nothing of the workbench or Yui now; P2 still climbs (S3 will refuse parent chains); P4 - P8 are left to S3."),
+                        "tests": Probes.PROBES.map(function(p) {
+                            return [p.name, "sandbox:" + p.key];
+                        })
+                    }, {
+                        "title": "S2 Sandbox · Widget",
+                        "note": qsTr("The same, shown in this widget through the sandbox (not saved: the widget's own code comes back when it is shown again, e.g. after a restart)."),
+                        "tests": Probes.PROBES.map(function(p) {
+                            return [p.name, "sandboxwidget:" + p.key];
+                        })
+                    }, {
                         "title": "Desktop",
                         "note": qsTr("Try puts the code on the desktop for a while; Save to Widget saves it to this widget, whose frame takes its size."),
                         "tests": [["Try", "try"], ["Save to Widget", "save"]]
@@ -315,6 +327,17 @@ NVG.Window {
     }
 
     function run(tag) {
+        if (tag.indexOf("sandbox:") === 0) {
+            var workbench = bench();
+            if (workbench)
+                workbench.previewSandboxed(probeCode(tag.slice(8)));
+
+            return ;
+        }
+        if (tag.indexOf("sandboxwidget:") === 0) {
+            targetWidget.showSandboxed(probeCode(tag.slice(14)));
+            return ;
+        }
         if (tag.indexOf("probe:") === 0) {
             load(probeCode(tag.slice(6)));
             return ;

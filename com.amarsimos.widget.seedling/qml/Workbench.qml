@@ -8,6 +8,7 @@ import QtGraphicalEffects 1.0
 import QtQuick.Window 2.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
+import "sandbox.js" as Sandbox
 
 // The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
 // it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
@@ -305,11 +306,47 @@ NVG.View {
         }
     }
 
+    // S2 prototype (Seedling Settings' Test): code shown in the preview through the sandbox, with no
+    // safety check (the probes are meant to run). The sandbox goes with the preview.
+    property var previewSandbox: null
+
+    function previewSandboxed(code) {
+        if (preview) {
+            preview.destroy();
+            preview = null;
+        }
+        if (previewSandbox) {
+            previewSandbox.destroy();
+            previewSandbox = null;
+        }
+        showVersions = false;
+        showProblems = false;
+        try {
+            var made = Sandbox.create(code, previewStage, Qt.resolvedUrl("Sandbox.qml"), "SeedlingSandbox");
+            if (made.error) {
+                result = "error";
+                status = made.error;
+                return ;
+            }
+            preview = made.item;
+            previewSandbox = made.sandbox;
+            result = "ok";
+            status = qsTr("Shown in the sandbox (test).");
+        } catch (e) {
+            result = "error";
+            status = String(e);
+        }
+    }
+
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
         if (preview) {
             preview.destroy();
             preview = null;
+        }
+        if (previewSandbox) {
+            previewSandbox.destroy();
+            previewSandbox = null;
         }
         var code = editor.text;
         if (code.trim() === "") {
