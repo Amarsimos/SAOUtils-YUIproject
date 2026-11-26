@@ -3922,6 +3922,7 @@ T.Widget {
 
         // Seedling's Generate (the workbench's request) is written by Yui.
         seedlingProbe.bench.writer = widget;
+        seedlingProbe.bench.widgetsChanged.connect(seedlingWidgetsChanged);
         seedlingInstalled = true;
         return seedlingProbe.bench;
     }
@@ -3952,7 +3953,7 @@ T.Widget {
             return onDone("Seedling 没有安装", false);
 
         if (bench.widgets.length === 0)
-            return onDone("桌面上还没有 Seedling 挂件，先从挂件库放一个吧", false);
+            return seedlingAskPlace(request, onDone, onProgress);
 
         if (seedlingJob)
             return onDone("结衣还在写上一个挂件，等一下哦", false);
@@ -4048,6 +4049,52 @@ T.Widget {
             });
         };
         ask(bench.currentCode(), "");
+    }
+
+    // No Seedling widget on the desktop (no ground for the seed to grow in): Yui says so in her own
+    // words and offers to open SAO Utils' widget manager (SystemCall.manageWidgets, there is no call
+    // that places a widget); the request waits, and once a Seedling widget is placed she goes on.
+    property var seedlingWaiting: null
+
+    function seedlingAskPlace(request, onDone, onProgress) {
+        var title = userTitle();
+        seedlingWaiting = {
+            "request": request,
+            "onDone": onDone,
+            "onProgress": onProgress
+        };
+        if (onProgress)
+            onProgress({
+            "stage": "waiting",
+            "lines": 0,
+            "seconds": 0,
+            "attempt": 0,
+            "problem": ""
+        });
+
+        askConfirm(qsTr("Navigation"), title + "，结衣找不到能让种子发芽的地方……\n桌面上还没有「Seedling」，程序没办法具现化呢。\n要打开挂件库吗？把 Seedling 放到桌面上，结衣就接着写哦～", function() {
+            var opened = NVG.SystemCall.manageWidgets();
+            diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
+        }, false, function() {
+            var waiting = seedlingWaiting;
+            seedlingWaiting = null;
+            diag("seedling: no widget on the desktop, the widget manager was not opened");
+            if (waiting)
+                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false);
+
+        });
+    }
+
+    // A Seedling widget was placed (Bench.widgets changed) while a request waits: carry on.
+    function seedlingWidgetsChanged() {
+        var bench = seedlingProbe ? seedlingProbe.bench : null;
+        if (!seedlingWaiting || !bench || bench.widgets.length === 0)
+            return ;
+
+        var waiting = seedlingWaiting;
+        seedlingWaiting = null;
+        diag("seedling: a widget was placed, writing goes on");
+        seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
     }
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.

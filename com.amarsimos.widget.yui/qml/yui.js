@@ -2621,5 +2621,8 @@ function seedlingNoteLine(state) {
     if (state.stage === "checking")
         return head + "检查、渲染中… · " + state.seconds + " 秒";
 
+    if (state.stage === "waiting")
+        return "🌱 ⏳ 等你在桌面放好 Seedling，结衣就开始写";
+
     return head + (state.lines > 0 ? "结衣正在写挂件 · " + state.lines + " 行" : "结衣在想怎么写…") + " · " + state.seconds + " 秒";
 }
