@@ -530,7 +530,7 @@ NVG.View {
         Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: "#C8C8C8"
+            border.color: "#B9B9B9"
         }
 
     ColumnLayout {
@@ -1005,6 +1005,63 @@ NVG.View {
         }
 
     }
+
+
+        // The edge of SAO Utils' own dialogs (measured from its theme's dialog.png): a grey line, inside it a
+        // white line (88 %), then a faint light fading inward over 4 px at the left and right.
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            color: "transparent"
+            border.color: "#E0FFFFFF"
+            border.width: 1
+        }
+
+        Rectangle {
+            x: 2
+            y: 2
+            width: 4
+            height: parent.height - 4
+
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+
+                GradientStop {
+                    position: 0
+                    color: "#59FFFFFF"
+                }
+
+                GradientStop {
+                    position: 1
+                    color: "#00FFFFFF"
+                }
+
+            }
+
+        }
+
+        Rectangle {
+            x: parent.width - 6
+            y: 2
+            width: 4
+            height: parent.height - 4
+
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+
+                GradientStop {
+                    position: 0
+                    color: "#00FFFFFF"
+                }
+
+                GradientStop {
+                    position: 1
+                    color: "#59FFFFFF"
+                }
+
+            }
+
+        }
 
     }
 
