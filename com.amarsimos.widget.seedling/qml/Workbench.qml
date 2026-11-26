@@ -3,6 +3,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "safety.js" as Safety
+import "link" 1.0 as Link
 
 // The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
 // it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
@@ -117,6 +118,30 @@ NVG.View {
         versionIndex = versions.length - 1;
         var problem = targetWidget.apply(code);
         status = problem ? problem : qsTr("Saved to the widget (version %1).").arg(versionIndex + 1);
+    }
+
+    function currentCode() {
+        return editor.text;
+    }
+
+    // Generate: Yui (MHCP-YUI) writes what the request field asks for, or changes the code to it.
+    function generate() {
+        var request = requestField.text.trim();
+        if (!request)
+            return ;
+
+        result = "ok";
+        status = qsTr("Yui is writing it...");
+        var refused = Link.Bench.generate(request, function(message, ok) {
+            if (!ok) {
+                result = "error";
+                status = message;
+            }
+        });
+        if (refused) {
+            result = "error";
+            status = refused;
+        }
     }
 
     // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
@@ -388,9 +413,13 @@ NVG.View {
                     spacing: 8
 
                     TextField {
+                        id: requestField
+
                         Layout.fillWidth: true
-                        enabled: false
-                        placeholderText: qsTr("Describe the widget and the AI writes it (coming later)")
+                        enabled: Link.Bench.writer !== null
+                        selectByMouse: true
+                        placeholderText: enabled ? qsTr("Describe the widget (or what to change) and Yui writes it") : qsTr("Generate needs MHCP-YUI")
+                        onAccepted: bench.generate()
 
                         background: Rectangle {
                             color: "#F9F9F9"
@@ -401,7 +430,8 @@ NVG.View {
 
                     Chip {
                         text: "Generate"
-                        enabled: false
+                        enabled: requestField.enabled && requestField.text.trim() !== ""
+                        onClicked: bench.generate()
                     }
 
                     Chip {
