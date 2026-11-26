@@ -11,6 +11,9 @@ import "sandbox.js" as Sandbox
 T.Widget {
     id: widget
 
+    // The name in SAO Utils' own right-click menu and settings (blank without it).
+    title: "Seedling"
+
     property Component workbenchComponent: Qt.createComponent("Workbench.qml")
     property var workbench: null
     // The object made from the code, or null.
