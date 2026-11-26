@@ -36,8 +36,6 @@ T.Widget {
         }
         try {
             created = Qt.createQmlObject(source, content, "Seedling");
-            implicitWidth = Math.max(20, created.width);
-            implicitHeight = Math.max(20, created.height);
         } catch (e) {
             problem = (e.qmlErrors || []).map(function(error) {
                 return "Line " + error.lineNumber + ", column " + error.columnNumber + ": " + error.message;
@@ -46,10 +44,40 @@ T.Widget {
         return problem;
     }
 
-    // Saves code as this widget's content (from the workbench).
+    // Saves code as this widget's content (from the workbench), the frame taking its size.
     function apply(source) {
         settings.code = source;
-        return show(source);
+        var problem = show(source);
+        if (!problem && created)
+            fitFrame(Math.ceil(created.width), Math.ceil(created.height));
+
+        return problem;
+    }
+
+    // How SAO Utils treats a widget's implicit size (as in MHCP-YUI's applyFrameSize): for a resizable
+    // widget it is only the minimum, so the frame keeps its old size and the new content was cut off
+    // until the frame was resized by hand. So: the implicit size, resizing off for a moment so the
+    // frame takes it, then resizing back on with a small minimum again.
+    property bool applyingFrameSize: false
+
+    function fitFrame(w, h) {
+        implicitWidth = Math.max(20, w);
+        implicitHeight = Math.max(20, h);
+        width = implicitWidth;
+        height = implicitHeight;
+        applyingFrameSize = true;
+        frameTimer.restart();
+    }
+
+    Timer {
+        id: frameTimer
+
+        interval: 200
+        onTriggered: {
+            widget.applyingFrameSize = false;
+            widget.implicitWidth = 20;
+            widget.implicitHeight = 20;
+        }
     }
 
     // Opens the workbench (or brings it forward) and returns it.
@@ -71,8 +99,10 @@ T.Widget {
         return workbench;
     }
 
-    implicitWidth: 200
-    implicitHeight: 120
+    resizable: !applyingFrameSize
+    // The empty card's size; once there is code, the frame takes the code's size (fitFrame).
+    implicitWidth: code ? 20 : 200
+    implicitHeight: code ? 20 : 120
     Component.onCompleted: {
         show(code);
         Link.Bench.register(widget);
