@@ -4,6 +4,8 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "link" 1.0 as Link
+import "templates.js" as Templates
 
 // Seedling Settings (the Seedling widget's menu): General (Code Editor, Network) and Test, which
 // tries the workbench's states without the AI and without a request: a widget, a compile error, the
@@ -22,8 +24,12 @@ NVG.Window {
     function reset() {
         codePreference.value = false;
         networkPreference.value = false;
+        stylePreference.value = Templates.DEFAULT_STYLE;
+        seedlingModelPreference.value = "";
         targetWidget.settings.show_code = false;
         targetWidget.settings.allow_network = false;
+        targetWidget.settings.widget_style = "";
+        targetWidget.settings.seedling_model = "";
         if (targetWidget.workbench)
             targetWidget.workbench.render(true);
 
@@ -182,6 +188,62 @@ NVG.Window {
                         visible: settingsWindow.help
                         besidePreferences: true
                         text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
+                    }
+
+                    // How Yui writes this widget's code (shown when MHCP-YUI is there). Kept in Seedling,
+                    // so it stays when Seedling works on its own.
+                    Heading {
+                        visible: Link.Bench.writer !== null
+                        text: "Yui"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        visible: Link.Bench.writer !== null
+
+                        P.TextAreaPreference {
+                            id: stylePreference
+
+                            property bool ready: false
+
+                            label: "Widget Style"
+                            Component.onCompleted: {
+                                value = String(settingsWindow.targetWidget.settings.widget_style || "").trim() || Templates.DEFAULT_STYLE;
+                                ready = true;
+                            }
+                            // The default is kept as "" (a later default then applies).
+                            onValueChanged: {
+                                if (ready)
+                                    settingsWindow.targetWidget.settings.widget_style = value.trim() === Templates.DEFAULT_STYLE ? "" : value.trim();
+
+                            }
+                        }
+
+                        P.TextFieldPreference {
+                            id: seedlingModelPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.advanced
+                            label: "Seedling Model"
+                            hint: qsTr("model id; empty: the same as the chat")
+                            Component.onCompleted: {
+                                value = String(settingsWindow.targetWidget.settings.seedling_model || "");
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    settingsWindow.targetWidget.settings.seedling_model = value.trim();
+
+                            }
+                        }
+
+                    }
+
+                    SettingNote {
+                        visible: settingsWindow.help && Link.Bench.writer !== null
+                        besidePreferences: true
+                        text: qsTr("Widget Style: what Yui's widgets look like (colors, fonts, mood), sent with every widget she writes; what you say in the chat comes first. Reset brings back the SAO style. Seedling Model (Advanced): the model that writes the code, on Yui's server; empty uses the chat's model.")
                     }
 
                 }

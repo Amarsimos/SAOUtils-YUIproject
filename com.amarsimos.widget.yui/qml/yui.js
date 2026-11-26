@@ -2522,6 +2522,20 @@ function seedlingCodePrompt(allowNetwork, editing) {
         "14. 挂件自己的设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。再写一行 // @name 挂件名。这类属性不要叫 source 或 url。用户会在挂件的右键 Settings... 里调这些设置，记住的东西由 Seedling 自动保存。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
+// Widget Style (Seedling Settings) for the code prompt: how the widget looks unless the request says
+// otherwise. "" when there is none.
+function seedlingStyleNote(style) {
+    style = String(style || "").trim();
+    return style ? "\n\n外观（要求里另外说了风格时，以要求为准）：" + style : "";
+}
+
+// A template of the same kind (Seedling's templates.js) for the code prompt: a way to write it, not
+// something to copy. "" when none fits.
+function seedlingTemplateNote(code) {
+    code = String(code || "").trim();
+    return code ? "\n\n参考：一个同类挂件的写法（只参考结构和 @setting / @keep 的用法，按这次的要求和上面的外观来写，不要照抄内容）：\n```qml\n" + code + "\n```" : "";
+}
+
 // How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's
 // old_string / new_string, the SEARCH text must be found exactly once).
 var SEEDLING_EDIT_RULES = ["",

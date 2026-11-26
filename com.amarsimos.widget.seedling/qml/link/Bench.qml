@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQml 2.12
+import "../templates.js" as Templates
 
 // Seedling's door for other extensions (MHCP-YUI): the Seedling widgets on the desktop register here,
 // and preview(code, title, onResult) shows code in the workbench of the one registered last, then
@@ -19,6 +20,24 @@ QtObject {
 
         var widget = target();
         return widget.workbench ? widget.workbench.currentCode() : (widget.code || "");
+    }
+
+    // What Yui's writing follows, set in the target widget's Seedling Settings (kept in Seedling, so
+    // it stays when Seedling works on its own): Widget Style (or the default) and Seedling Model ("":
+    // the chat's model).
+    function writingStyle() {
+        var style = widgets.length > 0 ? String(target().settings.widget_style || "").trim() : "";
+        return style || Templates.DEFAULT_STYLE;
+    }
+
+    function writingModel() {
+        return widgets.length > 0 ? String(target().settings.seedling_model || "").trim() : "";
+    }
+
+    // A template of the same kind as request, for Yui to look at ("" when none fits).
+    function templateFor(request) {
+        var found = Templates.match(request);
+        return found ? found.code : "";
     }
 
     // Whether the target widget may go online (its Network).

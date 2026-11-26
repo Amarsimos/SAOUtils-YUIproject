@@ -243,5 +243,25 @@ test("templates (templates.js): each passes the safety check (Weather only for g
     assert.strictEqual(T.find("todo").name, "Todo");
 });
 
+test("templates: a request finds the template of its kind; Widget Style has a default", () => {
+    const T = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    assert.strictEqual(T.match("帮我做一个考研倒计时").key, "countdown");
+    assert.strictEqual(T.match("想要一个每天喝水打卡的").key, "habit");
+    assert.strictEqual(T.match("番茄钟").key, "pomodoro");
+    assert.strictEqual(T.match("显示东京天气").key, "weather");
+    assert.strictEqual(T.match("一只会眨眼的猫"), null);
+    assert.ok(T.DEFAULT_STYLE.indexOf("#F1AA03") !== -1);
+});
+
+test("Yui's code prompt: Widget Style and the template are added only when there are some", () => {
+    const Y = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    assert.strictEqual(Y.seedlingStyleNote(""), "");
+    assert.strictEqual(Y.seedlingTemplateNote("  "), "");
+    assert.ok(Y.seedlingStyleNote("极简黑白").indexOf("极简黑白") !== -1);
+    assert.ok(Y.seedlingTemplateNote("Item {}").indexOf("```qml\nItem {}\n```") !== -1);
+});
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);

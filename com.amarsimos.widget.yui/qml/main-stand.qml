@@ -3823,11 +3823,18 @@ T.Widget {
         var current = bench.currentCode();
         var editing = current.trim() !== "";
         var config = Object.assign({}, activeConfig());
-        var model = String(widget.settings.seedling_model || "").trim();
+        // Seedling Model and Widget Style are Seedling's (its Settings, so they stay when it works on its
+        // own). A model set here before (Cardinal System) moves to the widget the first time.
+        var oldModel = String(widget.settings.seedling_model || "").trim();
+        var target = bench.target();
+        if (oldModel && target && target.settings.seedling_model === undefined)
+            target.settings.seedling_model = oldModel;
+
+        var model = bench.writingModel ? bench.writingModel() : oldModel;
         if (model)
             config.model = model;
 
-        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing);
+        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing) + Yui.seedlingStyleNote(bench.writingStyle ? bench.writingStyle() : "") + Yui.seedlingTemplateNote(!editing && bench.templateFor ? bench.templateFor(request) : "");
         config.noTools = true;
         // Room for a whole widget (thinking models count their thinking too).
         config.maxTokens = Math.max(16384, maxTokens);
