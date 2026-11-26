@@ -2286,7 +2286,7 @@ T.Widget {
         var target = url + "?t=" + Date.now();
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", target, false);
+            request.open("GET", target, false); // sync-ok: a local file
             request.send(null);
             var text = request.responseText || "";
             diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
@@ -2890,7 +2890,7 @@ T.Widget {
                 var path = folder + "/heart-backup-" + n + ".json";
                 try {
                     var get = new XMLHttpRequest();
-                    get.open("GET", fileUrl(path), false);
+                    get.open("GET", fileUrl(path), false); // sync-ok: a local file
                     get.send(null);
                     if (get.responseText)
                         found.push(path.replace(/\//g, "\\"));
@@ -2915,7 +2915,7 @@ T.Widget {
         var text = "";
         try {
             var get = new XMLHttpRequest();
-            get.open("GET", String(url), false);
+            get.open("GET", String(url), false); // sync-ok: a local file
             get.send(null);
             text = get.responseText || "";
             diag("import " + url + " -> status " + get.status + ", " + text.length + " chars");
