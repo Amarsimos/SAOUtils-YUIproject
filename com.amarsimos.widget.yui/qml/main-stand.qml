@@ -3761,8 +3761,13 @@ T.Widget {
     property bool seedlingInstalled: false
 
     function seedlingBench() {
-        if (seedlingProbe)
+        if (seedlingProbe) {
+            // Another Yui that was the writer is gone: this one takes over.
+            if (!seedlingProbe.bench.writer)
+                seedlingProbe.bench.writer = widget;
+
             return seedlingProbe.bench;
+        }
 
         if (seedlingInstalled === false && seedlingChecked)
             return null;
@@ -4952,7 +4957,16 @@ T.Widget {
     implicitWidth: 60
     implicitHeight: 400
     visible: true
-    Component.onDestruction: Link.Server.unregister(widget)
+    Component.onDestruction: {
+        Link.Server.unregister(widget);
+        // Seedling's Bench outlives this widget: it must not keep calling a removed Yui.
+        if (seedlingProbe && seedlingProbe.bench) {
+            seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
+            if (seedlingProbe.bench.writer === widget)
+                seedlingProbe.bench.writer = null;
+
+        }
+    }
     Component.onCompleted: {
         Qt.callLater(function() {
             widget.previousForm = widget.collapsedForm;
