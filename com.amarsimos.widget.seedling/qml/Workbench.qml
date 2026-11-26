@@ -27,8 +27,15 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
-    // The preview's scale: 1, or less when the widget is larger than the preview area.
-    readonly property real previewScale: preview && preview.width > 0 && preview.height > 0 ? Math.min(1, previewArea.width / preview.width, previewArea.height / preview.height) : 1
+    // The preview's scale: zoom when set (− / + / 100%, Ctrl + wheel), else Fit: 1, or less when the
+    // widget is larger than the preview area.
+    property real zoom: 0
+    readonly property real fitScale: preview && preview.width > 0 && preview.height > 0 ? Math.min(1, previewArea.width / preview.width, previewArea.height / preview.height) : 1
+    readonly property real previewScale: zoom > 0 ? zoom : fitScale
+
+    function zoomBy(step) {
+        zoom = Math.max(0.25, Math.min(4, Math.round((previewScale + step) * 4) / 4));
+    }
     // The bands are translucent as Yui's chat (her Chat Opacity in Equipment when MHCP-YUI runs, else
     // 80 %); the code, the preview and the text on them stay opaque.
     readonly property real panelAlpha: Link.Bench.writer && Link.Bench.writer.chatOpacity !== undefined ? Link.Bench.writer.chatOpacity : 0.8
@@ -871,10 +878,45 @@ NVG.View {
                             }
 
                             Text {
-                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) + (bench.previewScale < 1 ? " · " + Math.round(bench.previewScale * 100) + "%" : "") : "")
+                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) + " · " + Math.round(bench.previewScale * 100) + "%" : "")
                                 font.family: "SAO UI"
                                 font.pixelSize: 13
                                 color: "#7A7A7A"
+                            }
+
+                            // Zoom: smaller, Fit (the default), 100 %, larger.
+                            Row {
+                                visible: !bench.showVersions && bench.preview !== null
+                                spacing: 4
+
+                                Chip {
+                                    text: "−"
+                                    implicitWidth: 28
+                                    implicitHeight: 24
+                                    onClicked: bench.zoomBy(-0.25)
+                                }
+
+                                Chip {
+                                    text: "Fit"
+                                    implicitHeight: 24
+                                    checked: bench.zoom === 0
+                                    onClicked: bench.zoom = 0
+                                }
+
+                                Chip {
+                                    text: "100%"
+                                    implicitHeight: 24
+                                    checked: bench.zoom === 1
+                                    onClicked: bench.zoom = 1
+                                }
+
+                                Chip {
+                                    text: "+"
+                                    implicitWidth: 28
+                                    implicitHeight: 24
+                                    onClicked: bench.zoomBy(0.25)
+                                }
+
                             }
 
                         }
@@ -892,15 +934,47 @@ NVG.View {
                                 anchors.margins: 12
                                 visible: !bench.showVersions
 
-                                // The widget at its own size, centered; scaled down to fit when it is
-                                // larger than the preview (never up), its real size and the scale noted.
-                                Item {
-                                    id: previewStage
+                                // The widget at its own size, centered and scaled (previewScale); larger
+                                // than the preview it can be dragged or scrolled around. Ctrl + wheel zooms.
+                                Flickable {
+                                    id: previewFlick
 
-                                    anchors.centerIn: parent
-                                    width: bench.preview ? bench.preview.width : 0
-                                    height: bench.preview ? bench.preview.height : 0
-                                    scale: bench.previewScale
+                                    anchors.fill: parent
+                                    clip: true
+                                    contentWidth: Math.max(width, previewStage.width * bench.previewScale)
+                                    contentHeight: Math.max(height, previewStage.height * bench.previewScale)
+                                    boundsBehavior: Flickable.StopAtBounds
+
+                                    Item {
+                                        width: previewFlick.contentWidth
+                                        height: previewFlick.contentHeight
+
+                                        // Ctrl + wheel zooms; the wheel alone goes on to the Flickable
+                                        // (scrolling when larger). A MouseArea: SAO Utils' Qt 5.13 has no
+                                        // WheelHandler.
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            acceptedButtons: Qt.NoButton
+                                            onWheel: {
+                                                if (wheel.modifiers & Qt.ControlModifier)
+                                                    bench.zoomBy(wheel.angleDelta.y > 0 ? 0.25 : -0.25);
+                                                else
+                                                    wheel.accepted = false;
+                                            }
+                                        }
+
+                                        Item {
+                                            id: previewStage
+
+                                            anchors.centerIn: parent
+                                            width: bench.preview ? bench.preview.width : 0
+                                            height: bench.preview ? bench.preview.height : 0
+                                            scale: bench.previewScale
+                                        }
+
+                                    }
+
+
                                 }
 
                             }
