@@ -22,6 +22,25 @@ var MAX_TEXT = 500;
 var MAX_KEEP_BYTES = 65536;
 var MAX_NAME = 40;
 
+// @yui <key>: what Yui (MHCP-YUI) tells about herself and you, read only; fast: every second (timers),
+// else every 10 s. A widget that reads them may not go online (guard).
+var YUI_KEYS = {
+    "companion_days": false,
+    "mood": false,
+    "mood_text": false,
+    "mood_history": false,
+    "boss_raid": true,
+    "raid_timer": true,
+    "raid_cleared": true,
+    "next_alarm": false,
+    "next_alarm_text": false,
+    "quest_log": false,
+    "heart_core": false,
+    "col_ledger": false,
+    "latest_report": false
+};
+var YUI_TYPES = ["string", "int", "real", "double", "bool", "var"];
+
 var SETTING_TYPES = ["string", "int", "real", "double", "bool", "color"];
 var KEEP_TYPES = ["string", "int", "real", "double", "bool", "var"];
 // Address properties: never set from outside (the safety check's address rule stays whole).
@@ -119,6 +138,7 @@ function parse(code) {
         "name": "",
         "settings": [],
         "keeps": [],
+        "yuis": [],
         "notes": []
     };
     var note = function(line, message) {
@@ -129,7 +149,7 @@ function parse(code) {
     };
     var taken = {};
     for (var i = 0; i < lines.length; i++) {
-        var m = /^\s*\/\/\s*@(name|setting|keep)\b\s*[:：]?\s*(.*?)\s*$/i.exec(lines[i]);
+        var m = /^\s*\/\/\s*@(name|setting|keep|yui)\b\s*[:：]?\s*(.*?)\s*$/i.exec(lines[i]);
         if (!m)
             continue;
 
@@ -169,7 +189,24 @@ function parse(code) {
             note(at, "@" + kind + " " + name + ": declared twice");
             continue;
         }
-        if (kind === "setting") {
+        if (kind === "yui") {
+            var key = rest.split(/\s+/)[0];
+            if (!YUI_KEYS.hasOwnProperty(key)) {
+                note(at, "@yui " + name + ": \"" + key + "\" is not something Yui tells (" + Object.keys(YUI_KEYS).join(", ") + ")");
+                continue;
+            }
+            if (YUI_TYPES.indexOf(type) === -1) {
+                note(at, "@yui " + name + ": Yui's values are a string, int, real, bool or var (not " + type + ")");
+                continue;
+            }
+            result.yuis.push({
+                "name": name,
+                "type": typeOf(type),
+                "key": key,
+                "fast": YUI_KEYS[key],
+                "line": at
+            });
+        } else if (kind === "setting") {
             if (SETTING_TYPES.indexOf(type) === -1) {
                 note(at, "@setting " + name + ": a setting is a string, int, real, bool or color (not " + type + ")");
                 continue;
@@ -342,4 +379,55 @@ function apply(item, decls, stored) {
         }
     });
     return given;
+}
+
+// A widget that reads Yui's data (@yui) may not go online, Network or not: what it knows of you must
+// not leave. Check it with allowNetwork false; this turns its "goes online" problems into refusals
+// that are not about Network (so nothing asks to allow it).
+function networkAllowed(decl, allowNetwork) {
+    return allowNetwork === true && decl.yuis.length === 0;
+}
+
+function guard(problems, decl) {
+    if (decl.yuis.length === 0)
+        return problems;
+
+    return problems.map(function(p) {
+        return p.network ? {
+            "line": p.line,
+            "message": p.message.replace(/ \(Network is off\)$/, "") + " (this widget reads Yui's data, so it may not go online)",
+            "network": false
+        } : p;
+    });
+}
+
+// Yui's values given to item: all of them, or only the fast ones (timers). writer: MHCP-YUI (its
+// linkValue(key) -> {current}), or null (then nothing changes: the code's defaults stay).
+function feed(item, yuis, writer, fastOnly) {
+    if (!item || !writer || typeof writer.linkValue !== "function")
+        return ;
+
+    for (var i = 0; i < yuis.length; i++) {
+        if (fastOnly && !yuis[i].fast)
+            continue;
+
+        var found = null;
+        try {
+            found = writer.linkValue(yuis[i].key);
+        } catch (e) {
+            found = null;
+        }
+        if (!found)
+            continue;
+
+        var fit = coerce({
+            "type": yuis[i].type,
+            "min": null,
+            "max": null,
+            "choices": null
+        }, found.current);
+        if (fit.ok && JSON.stringify(item[yuis[i].name]) !== JSON.stringify(fit.value))
+            item[yuis[i].name] = fit.value;
+
+    }
 }

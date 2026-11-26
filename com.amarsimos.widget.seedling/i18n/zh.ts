@@ -61,7 +61,7 @@
 <context>
     <name>SeedlingWidget</name>
     <message>
-        <location filename="../qml/SeedlingWidget.qml" line="469" />
+        <location filename="../qml/SeedlingWidget.qml" line="485" />
         <source>Right-click: Workbench</source>
         <translation>右键：Workbench</translation>
     </message>
@@ -84,12 +84,17 @@
         <translation>挂件的代码现在无法运行，能运行后设置项会再出现。</translation>
     </message>
     <message>
-        <location filename="../qml/WidgetSettings.qml" line="167" />
+        <location filename="../qml/WidgetSettings.qml" line="165" />
+        <source>Reads from Yui: %1. A widget that reads Yui's data never goes online.</source>
+        <translation>读取结衣的数据：%1。读取结衣数据的挂件不会联网。</translation>
+    </message>
+    <message>
+        <location filename="../qml/WidgetSettings.qml" line="176" />
         <source>Clear what this widget remembers (%1)? It starts again from its defaults.</source>
         <translation>要清除这个挂件记住的内容（%1）吗？它会回到默认状态。</translation>
     </message>
     <message>
-        <location filename="../qml/WidgetSettings.qml" line="185" />
+        <location filename="../qml/WidgetSettings.qml" line="194" />
         <source>Restore all settings of %1 to their defaults?</source>
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
@@ -114,48 +119,48 @@ Let it go online?</source>
 允许它联网吗？</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="351" />
+        <location filename="../qml/Workbench.qml" line="364" />
         <source>Write QML on the left, or pick one of the Examples.</source>
         <translation>在左侧编写 QML，或从 Examples 中选一个。</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="353" />
+        <location filename="../qml/Workbench.qml" line="366" />
         <source>Tell Yui in her chat what widget you want; she writes it here.</source>
         <translation>在结衣的聊天里说想要什么挂件，她会写在这里。</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="353" />
+        <location filename="../qml/Workbench.qml" line="366" />
         <source>To write the code yourself, turn on Advanced, then Code Editor in Seedling Settings.</source>
         <translation>要自己写代码，请在 Seedling Settings 里打开 Advanced → Code Editor。</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="380" />
-        <location filename="../qml/Workbench.qml" line="406" />
+        <location filename="../qml/Workbench.qml" line="395" />
+        <location filename="../qml/Workbench.qml" line="424" />
         <source>Line %1: %2</source>
         <translation>第 %1 行：%2</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="383" />
+        <location filename="../qml/Workbench.qml" line="398" />
         <source>Refused by the safety check · </source>
         <translation>被安全检查拒绝 · </translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="409" />
+        <location filename="../qml/Workbench.qml" line="427" />
         <source>Rendered, %1 × %2 · safety check passed</source>
         <translation>已渲染，%1 × %2 · 通过安全检查</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="409" />
+        <location filename="../qml/Workbench.qml" line="427" />
         <source> · %1 declaration(s) not used</source>
         <translation> · %1 条声明未生效</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="419" />
+        <location filename="../qml/Workbench.qml" line="437" />
         <source>Line %1, column %2: %3</source>
         <translation>第 %1 行，第 %2 列：%3</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="445" />
+        <location filename="../qml/Workbench.qml" line="463" />
         <source>Not saved: this widget goes online, and going online was not allowed.</source>
         <translation>未保存：这个挂件需要联网，但没有允许联网。</translation>
     </message>
@@ -167,28 +172,28 @@ Allow it to go online and save?</source>
 允许联网并保存吗？</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="472" />
+        <location filename="../qml/Workbench.qml" line="490" />
         <source>Saved to the widget (version %1).</source>
         <translation>已保存到挂件（版本 %1）。</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="506" />
-        <location filename="../qml/Workbench.qml" line="537" />
+        <location filename="../qml/Workbench.qml" line="524" />
+        <location filename="../qml/Workbench.qml" line="555" />
         <source>Thinking...</source>
         <translation>思考中...</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="619" />
+        <location filename="../qml/Workbench.qml" line="637" />
         <source>Changed %1 place(s) · +%2 −%3 lines · %4</source>
         <translation>修改了 %1 处 · +%2 −%3 行 · %4</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1346" />
+        <location filename="../qml/Workbench.qml" line="1364" />
         <source>%1 saved</source>
         <translation>%1 已保存</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1690" />
+        <location filename="../qml/Workbench.qml" line="1708" />
         <source>Generate needs MHCP-YUI (or Seedling's own AI, coming later)</source>
         <translation>Generate 需要 MHCP-YUI（Seedling 自己的 AI 以后再加）</translation>
     </message>

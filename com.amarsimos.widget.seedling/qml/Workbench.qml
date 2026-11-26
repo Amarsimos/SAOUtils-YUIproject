@@ -334,6 +334,19 @@ NVG.View {
 
     // The last render's @setting / @keep declarations that do not take effect (props.js notes).
     property var declNotes: []
+    // The preview's @yui declarations: Yui's values given to it (timers every second, the rest every 10 s).
+    property var previewYuis: []
+    property int previewTicks: 0
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: !!bench.preview && bench.previewYuis.length > 0
+        onTriggered: {
+            bench.previewTicks = (bench.previewTicks + 1) % 10;
+            Props.feed(bench.preview, bench.previewYuis, Link.Bench.writer, bench.previewTicks !== 0);
+        }
+    }
 
     // The widget's settings changed (its Settings window): given to the preview too.
     function applySettings() {
@@ -357,6 +370,7 @@ NVG.View {
     function render(quiet) {
         clearPreview();
         declNotes = [];
+        previewYuis = [];
         var code = editor.text;
         if (code.trim() === "") {
             errorLines = [];
@@ -366,7 +380,8 @@ NVG.View {
             status = emptyHint();
             return false;
         }
-        var problems = Safety.check(code, settings.allow_network === true);
+        // A widget reading Yui's data (@yui) may not go online, Network or not (refused, not asked).
+        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code), settings.allow_network === true)), Props.parse(code));
         refusedProblems = problems;
 
         if (problems.length > 0) {
@@ -399,6 +414,9 @@ NVG.View {
             // listed in Problems as notes (they do not stop it).
             var decl = Props.parse(code);
             Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
+            // Yui's values too (read only, so the preview shows them as the widget will).
+            previewYuis = decl.yuis;
+            Props.feed(preview, decl.yuis, Link.Bench.writer, false);
             declNotes = decl.notes;
             problemList = decl.notes.map(function(n) {
                 return {

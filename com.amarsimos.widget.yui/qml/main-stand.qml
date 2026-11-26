@@ -3403,6 +3403,18 @@ T.Widget {
                 "maximum": heartCoreCapacity
             };
 
+        // The last 30 days' moods, [{day: "yyyy-MM-dd", score: 1 - 5}] (Seedling's @yui, a mood
+        // calendar; not a data value: it is a list).
+        if (name === "mood_history")
+            return {
+                "current": moodsSince(30).map(function(row) {
+                    return {
+                        "day": row.day,
+                        "score": row.score
+                    };
+                })
+            };
+
         return null;
     }
 

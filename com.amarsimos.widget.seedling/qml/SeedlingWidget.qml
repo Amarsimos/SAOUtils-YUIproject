@@ -39,7 +39,9 @@ T.Widget {
         if (!source)
             return "";
 
-        var problems = Safety.check(source, settings.allow_network === true);
+        // A widget reading Yui's data (@yui) may not go online, Network or not.
+        var decl = Props.parse(source);
+        var problems = Props.guard(Safety.check(source, Props.networkAllowed(decl, settings.allow_network === true)), decl);
         if (problems.length > 0) {
             problem = Safety.describe(problems);
             return problem;
@@ -76,6 +78,20 @@ T.Widget {
         settings.prop_keep = kept;
         Props.apply(created, decl.keeps, kept);
         keptJson = JSON.stringify(kept);
+        Props.feed(created, decl.yuis, Link.Bench.writer, false);
+    }
+
+    // Yui's values (@yui): the timers every second, the rest every 10 s.
+    property int yuiTicks: 0
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: !!widget.created && widget.shownDecl.yuis.length > 0
+        onTriggered: {
+            widget.yuiTicks = (widget.yuiTicks + 1) % 10;
+            Props.feed(widget.created, widget.shownDecl.yuis, Link.Bench.writer, widget.yuiTicks !== 0);
+        }
     }
 
     // Kept values saved when they changed (every 2 s, and before what is shown goes).
