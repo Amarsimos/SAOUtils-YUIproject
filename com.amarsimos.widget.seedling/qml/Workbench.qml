@@ -74,6 +74,8 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    // The height of the headers above the boxes (both columns).
+    readonly property int headerHeight: 28
     // Chinese (or Japanese) text: SAO UI has no such characters and the system picked any font for
     // them. The Message Font of Yui's Equipment (MHCP-YUI running), else her default; English stays in
     // SAO UI.
@@ -990,11 +992,22 @@ NVG.View {
                         Layout.preferredWidth: 1
                         spacing: 5
 
-                        Text {
-                            text: "Code"
-                            font.family: "SAO UI"
-                            font.pixelSize: 15
-                            color: "#5F5F5F"
+                        // The header, as tall as the right side's (with or without its buttons), so the
+                        // code, preview, versions and problems boxes line up and do not jump.
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: bench.headerHeight
+                            Layout.minimumHeight: bench.headerHeight
+                            Layout.maximumHeight: bench.headerHeight
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Code"
+                                font.family: "SAO UI"
+                                font.pixelSize: 15
+                                color: "#5F5F5F"
+                            }
+
                         }
 
                         // The code, set into the band.
@@ -1191,8 +1204,13 @@ NVG.View {
                         Layout.preferredWidth: 1
                         spacing: 5
 
+                        // The header: one fixed height whatever buttons it shows (Preview's zoom,
+                        // Problems' copy / send, none for Versions).
                         RowLayout {
                             Layout.fillWidth: true
+                            Layout.preferredHeight: bench.headerHeight
+                            Layout.minimumHeight: bench.headerHeight
+                            Layout.maximumHeight: bench.headerHeight
 
                             Text {
                                 text: bench.showVersions ? "Versions" : bench.showProblems ? "Problems" : "Preview"
