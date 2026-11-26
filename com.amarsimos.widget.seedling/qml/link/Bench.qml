@@ -26,8 +26,16 @@ QtObject {
         return widgets.length > 0 && widgets[widgets.length - 1].settings.allow_network === true;
     }
 
-    // The workbench Yui writes into (beginWriting), or null.
-    property var writingBench: null
+    // The widget Yui writes for (beginWriting), or null. Its workbench is looked up each time, not
+    // kept: closed while she writes, it is gone (the progress is then not shown), and the result opens
+    // it again (preview() opens it).
+    property var writingWidget: null
+
+    // The workbench of the widget being written for while it is open, else null.
+    function writingBench() {
+        var widget = writingWidget;
+        return widget && widgets.indexOf(widget) !== -1 ? widget.workbench : null;
+    }
 
     // Opens the workbench of the last widget in its writing state; returns it, or null. keep: the code
     // stays (Yui changes it with edits) instead of being written anew.
@@ -35,31 +43,34 @@ QtObject {
         if (widgets.length === 0)
             return null;
 
-        var bench = widgets[widgets.length - 1].openWorkbench();
+        writingWidget = widgets[widgets.length - 1];
+        var bench = writingWidget.openWorkbench();
         if (bench)
             bench.beginWriting(String(title || ""), keep === true);
 
-        writingBench = bench;
         return bench;
     }
 
     function streamCode(code) {
-        if (writingBench)
-            writingBench.streamCode(code);
+        var bench = writingBench();
+        if (bench)
+            bench.streamCode(code);
 
     }
 
     function setPhase(text) {
-        if (writingBench)
-            writingBench.setPhase(text);
+        var bench = writingBench();
+        if (bench)
+            bench.setPhase(text);
 
     }
 
     function endWriting(ok, message) {
-        if (writingBench)
-            writingBench.endWriting(ok, message);
+        var bench = writingBench();
+        if (bench)
+            bench.endWriting(ok, message);
 
-        writingBench = null;
+        writingWidget = null;
     }
 
     // Stop (the workbench): the writer ends its request; what was written stays.
