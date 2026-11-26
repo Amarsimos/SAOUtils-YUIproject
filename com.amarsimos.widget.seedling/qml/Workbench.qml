@@ -1566,61 +1566,12 @@ NVG.View {
 
                             }
 
-                            // SAVED / NOT SAVED, stamped on the box for a moment after Save.
-                            Text {
+                            // SAVED / NOT SAVED after Save, as Yui's Boss Raid banner (SaveBanner.qml).
+                            SaveBanner {
                                 id: stamp
 
-                                function show(saved) {
-                                    text = saved ? "SAVED" : "NOT SAVED";
-                                    color = saved ? "#F1AA03" : "#C82864";
-                                    stampAnimation.restart();
-                                }
-
-                                anchors.centerIn: parent
+                                anchors.fill: parent
                                 z: 20
-                                opacity: 0
-                                font.family: "SAO UI"
-                                font.pixelSize: 40
-                                font.letterSpacing: 6
-                                style: Text.Outline
-                                styleColor: "#CCFFFFFF"
-
-                                SequentialAnimation {
-                                    id: stampAnimation
-
-                                    ParallelAnimation {
-                                        NumberAnimation {
-                                            target: stamp
-                                            property: "opacity"
-                                            from: 0
-                                            to: 1
-                                            duration: 120
-                                        }
-
-                                        NumberAnimation {
-                                            target: stamp
-                                            property: "scale"
-                                            from: 1.4
-                                            to: 1
-                                            duration: 180
-                                            easing.type: Easing.OutBack
-                                        }
-
-                                    }
-
-                                    PauseAnimation {
-                                        duration: 700
-                                    }
-
-                                    NumberAnimation {
-                                        target: stamp
-                                        property: "opacity"
-                                        to: 0
-                                        duration: 400
-                                    }
-
-                                }
-
                             }
 
                             // The target frame's corners, and what is there when nothing is shown.
