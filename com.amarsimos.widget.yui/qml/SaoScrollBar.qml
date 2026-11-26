@@ -11,7 +11,9 @@ ScrollBar {
     // A thumb of this many pixels whatever the content's length (0: proportional, at least
     // minimumSize), and this width when not hovered.
     property real fixedThumb: 0
-    property real thumbWidth: 5
+    // Even widths (thumb, hovered thumb, track 2, caps 6), each placed on whole pixels: an odd width
+    // sat half a pixel off the caps and the track.
+    property real thumbWidth: 4
     readonly property bool highlighted: hovered || pressed
     readonly property bool shown: active || hovered
 
@@ -20,13 +22,13 @@ ScrollBar {
     minimumSize: fixedThumb > 0 && height > 0 ? Math.min(1, fixedThumb / height) : 0.08
 
     contentItem: Item {
-        implicitWidth: Math.max(8, control.thumbWidth + 3)
+        implicitWidth: Math.max(8, control.thumbWidth + 2)
         implicitHeight: 40
         opacity: control.shown ? 1 : 0
 
         Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: control.highlighted ? control.thumbWidth + 3 : control.thumbWidth
+            x: Math.round((parent.width - width) / 2)
+            width: control.highlighted ? control.thumbWidth + 2 : control.thumbWidth
             height: parent.height
             radius: width / 2
             // SAO orange on hover / drag, as in the SAO theme of SAO Utils.
@@ -65,7 +67,7 @@ ScrollBar {
 
         // Track line
         Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: Math.round((parent.width - width) / 2)
             y: 6
             width: 2
             height: parent.height - 12
@@ -78,7 +80,7 @@ ScrollBar {
             model: 2
 
             Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: Math.round((parent.width - width) / 2)
                 y: index === 0 ? 1 : parent.height - height - 1
                 width: 6
                 height: 6

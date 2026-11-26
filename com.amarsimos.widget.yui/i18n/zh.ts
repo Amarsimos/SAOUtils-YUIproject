@@ -19,12 +19,12 @@
         <translation>找到 %1 个核心</translation>
     </message>
     <message>
-        <location line="+244"/>
+        <location line="+246"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-157"/>
+        <location line="-158"/>
         <location line="+68"/>
         <location line="+29"/>
         <source>Warning</source>
@@ -62,7 +62,7 @@
         <translation>要删除人格 %1 吗？</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+134"/>
         <source>Seed Server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -167,13 +167,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+61"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-59"/>
-        <location line="+63"/>
+        <location line="-76"/>
+        <location line="+80"/>
         <location line="+22"/>
         <location line="+70"/>
         <location line="+22"/>
@@ -195,12 +195,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-125"/>
+        <location line="-142"/>
         <source>The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.</source>
         <translation>结衣单次回复的最大长度（单位 token），也就限制了每次的费用。默认为 0，即不限制（此时 Claude 仍按 1024 发送）。思考型模型的思考过程也计入这个长度，上限太低可能导致回复被截断。</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+154"/>
         <source>Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.</source>
         <translation>越高结衣越少重复自己说过的话（presence penalty）。Default 表示交给服务器决定。</translation>
     </message>
@@ -260,25 +260,25 @@
         <translation>结衣对你的称呼，会替换人格数据中的 {{user_title}}。</translation>
     </message>
     <message>
-        <location line="-518"/>
+        <location line="-535"/>
         <location line="+210"/>
         <source>Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-210"/>
-        <location line="+478"/>
+        <location line="+495"/>
         <source>Core Tuning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-478"/>
-        <location line="+712"/>
+        <location line="-495"/>
+        <location line="+729"/>
         <source>Personality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-472"/>
+        <location line="-489"/>
         <source>Thinking Depth</source>
         <translation>Thinking Depth</translation>
     </message>
@@ -304,11 +304,11 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>How much thinking models think before answering. Off makes them much faster; models that always think (e.g. Claude Opus 5.5, newer Gemini) go as low as they can. Default leaves it to the server; Low, Medium and High ask for more, in each server's own way (reasoning effort, thinking level or budget).</source>
+        <source>How much thinking models think before answering. Off makes them much faster; models that always think (e.g. Claude Opus 5.5, newer Gemini) go as low as they can. Default leaves it to the server; Low, Medium and High ask for more, in each server&apos;s own way (reasoning effort, thinking level or budget).</source>
         <translation>思考型模型回答前要想多久。Off 会快很多；一直会思考的模型（如 Claude Opus 5.5、较新的 Gemini）会降到它能到的最低档。Default 交给服务器决定；Low、Medium、High 让它多想一些，按各家自己的方式设置（推理强度、思考档位或思考预算）。</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+92"/>
         <source>Top P</source>
         <translation>Top P</translation>
     </message>
@@ -343,7 +343,7 @@
         <translation>Seed</translation>
     </message>
     <message>
-        <location line="-351"/>
+        <location line="-368"/>
         <source>Server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -363,7 +363,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+50"/>
+        <source>Seedling Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>model id; empty: the same as the chat</source>
+        <translation>模型 ID；留空则与聊天相同</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The model that writes widget code for Seedling, on the same server. Coding is easier for a stronger model; empty uses the chat&apos;s model.</source>
+        <translation>为 Seedling 写挂件代码的模型，使用同一个服务器。写代码对能力强的模型更容易；留空则使用聊天的模型。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Sampling</source>
         <translation type="unfinished"></translation>
     </message>
@@ -545,7 +560,7 @@
 <context>
     <name>Equipment</name>
     <message>
-        <location filename="../qml/Equipment.qml" line="+211"/>
+        <location filename="../qml/Equipment.qml" line="+216"/>
         <source>Equipment</source>
         <translation type="unfinished"></translation>
     </message>
@@ -851,10 +866,6 @@
         <translation>你回来时（启动或把她叫醒时）结衣会打招呼：每天第一次在早上见面时说早安，隔两天以上说好久不见，其余离开半小时以上时欢迎你回来。</translation>
     </message>
     <message>
-        <source>While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).</source>
-        <translation type="vanished">聊天窗口关着时，结衣偶尔会主动说话（会调用 API）。频率由 Care 页的 Care Level 决定。</translation>
-    </message>
-    <message>
         <location line="-142"/>
         <source>Music</source>
         <translation type="unfinished"></translation>
@@ -968,10 +979,6 @@
         <location line="+26"/>
         <source>Weather Changes</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report&apos;s values.</source>
-        <translation type="vanished">开始下雨、下雪，或三小时内降温 5° 以上时，结衣会提醒你（带伞、注意保暖；07:00–22:00）。需要先设置 Weather Report 的数据。</translation>
     </message>
     <message>
         <location line="-46"/>
@@ -1139,7 +1146,7 @@
 <context>
     <name>MessageWindow</name>
     <message>
-        <location filename="../qml/MessageWindow.qml" line="+461"/>
+        <location filename="../qml/MessageWindow.qml" line="+467"/>
         <source>Confirm...</source>
         <translation type="unfinished">确认……</translation>
     </message>
@@ -1245,107 +1252,6 @@
     <message>
         <location filename="../qml/ResetTabButton.qml" line="+31"/>
         <source>Reset This Tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>Seedling</name>
-    <message>
-        <location filename="../qml/Seedling.qml" line="+21"/>
-        <source>Clock</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Color Block</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Animation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Broken</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Rendered: %1 × %2</source>
-        <translation>已渲染：%1 × %2</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Line %1, column %2: %3</source>
-        <translation>第 %1 行，第 %2 列：%3</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Shown in Yui.</source>
-        <translation>已显示在结衣中。</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <location line="+217"/>
-        <source>Seedling</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-193"/>
-        <source>Type or paste QML for a widget, then Render it here, Pop Out a quick test copy onto the desktop (drag its top bar to move it; it closes with SAO Utils), or name it and Save to My Widgets to keep it as a real widget.</source>
-        <translation>输入或粘贴挂件的 QML 代码：点 Render 在这里预览；点 Pop Out 在桌面上放一个临时测试副本（拖动顶部细条移动，关闭 SAO Utils 后消失）；或者起个名字，点 Save to My Widgets 保存为真正的挂件。</translation>
-    </message>
-    <message>
-        <location line="+64"/>
-        <source>Show in Yui (live)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+52"/>
-        <source>Widget name</source>
-        <translation>挂件名称</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Save to My Widgets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Saving...</source>
-        <translation>正在保存……</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Saved to My Widgets: %1
-Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not listed yet).</source>
-        <translation>已保存到「我的挂件」：%1
-打开挂件库 → 我的挂件即可放到桌面（如果还没出现，请重新打开挂件库）。</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Could not save the widget. See the log in System Console.</source>
-        <translation>挂件保存失败，请查看 System Console 中的日志。</translation>
-    </message>
-    <message>
-        <location line="-124"/>
-        <source>Examples:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+77"/>
-        <source>Render</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Pop Out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>Close All (%1)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1638,7 +1544,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+500"/>
+        <location filename="../qml/SystemConsole.qml" line="+504"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1917,10 +1823,6 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Try each desktop action. Every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking.</source>
-        <translation type="vanished">逐个测试桌面代行功能。每个按钮都会发一条测试消息，并像真实操作一样请求确认；受保护进程应当不经询问直接被拦截。</translation>
-    </message>
-    <message>
         <location line="+15"/>
         <source>Launch Notepad</source>
         <translation type="unfinished"></translation>
@@ -1946,7 +1848,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>Test Bubble</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1956,8 +1858,8 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-559"/>
-        <location line="+596"/>
+        <location line="-562"/>
+        <location line="+599"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1967,7 +1869,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6"/>
+        <location line="-9"/>
         <source>Test Media</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1977,7 +1879,32 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>Actions 测试各个桌面代行：每个按钮都会发一条测试消息，并像真正的操作一样请求确认；受保护进程应当不经询问直接拒绝。Care 让结衣立刻说出她会主动说的话。Display 展示气泡、流式回复和启动特效，不会请求 AI。</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
+        <source>Test Place Seedling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Seedling: Write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Seedling: Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Seedling: Fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Seedling: Network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Care</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2646,7 +2573,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1862"/>
+        <location filename="../qml/main-stand.qml" line="+1892"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2656,18 +2583,19 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2730"/>
+        <location line="+2997"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2713"/>
-        <location line="+2837"/>
+        <location line="-2980"/>
+        <location line="+2101"/>
+        <location line="+989"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3952"/>
+        <location line="-4240"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2678,13 +2606,13 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2479"/>
+        <location line="+2386"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1499"/>
+        <location line="-1371"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2731,7 +2659,7 @@ You can change this in System Console.</source>
 可以在 System Console 中修改。</translation>
     </message>
     <message>
-        <location line="+442"/>
+        <location line="+439"/>
         <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
         <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
     </message>
@@ -2741,12 +2669,7 @@ You can change this in System Console.</source>
         <translation>已删除全部记忆。备份：%1</translation>
     </message>
     <message>
-        <location line="+274"/>
-        <source>Line %1, column %2: %3</source>
-        <translation type="unfinished">第 %1 行，第 %2 列：%3</translation>
-    </message>
-    <message>
-        <location line="+155"/>
+        <location line="+304"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
@@ -2772,7 +2695,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+225"/>
+        <location line="+236"/>
         <source>Weekly Report</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2783,23 +2706,53 @@ You can change this in System Console.</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+186"/>
+        <location line="+152"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1995"/>
+        <location line="+128"/>
+        <source>The edits did not fit · Thinking about the whole code...</source>
+        <translation>修改没能对上 · 正在重新思考整段代码...</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Thinking about the fix (%1 / 2): %2</source>
+        <translation>正在思考修复方法（%1 / 2）：%2</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Checking and rendering...</source>
+        <translation>正在检查并渲染...</translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <source>Changing · %1 place(s)</source>
+        <translation>正在修改 · %1 处</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Writing · %1 lines</source>
+        <translation>正在编写 · %1 行</translation>
+    </message>
+    <message>
+        <location line="+2241"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
     <message>
-        <location line="+423"/>
+        <location line="+239"/>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+121"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2418"/>
-        <location line="+155"/>
+        <location line="-2822"/>
+        <location line="+573"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2807,40 +2760,34 @@ You can change this in System Console.</source>
         <location line="+11"/>
         <location line="+2"/>
         <location line="+5"/>
-        <location line="+1956"/>
+        <location line="+1943"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location line="-212"/>
+        <location line="-146"/>
         <source>Message to Yui...</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5777"/>
-        <location line="+5808"/>
+        <location line="-6134"/>
+        <location line="+6167"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5815"/>
-        <location line="+5815"/>
+        <location line="-6174"/>
+        <location line="+6174"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2328"/>
-        <location line="+819"/>
-        <source>Seedling Widget</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+1526"/>
+        <location line="+19"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+149"/>
+        <location line="+79"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2852,12 +2799,6 @@ You can change this in System Console.</source>
     <message>
         <location line="+5"/>
         <source>Yui&apos;s Heart</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-117"/>
-        <location line="+97"/>
-        <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

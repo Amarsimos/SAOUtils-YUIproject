@@ -95,7 +95,7 @@ function bareTagPattern() {
 
 function tagPattern() {
     // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -253,71 +253,6 @@ function linkLine(text, linkColor) {
 function linkedPath(link) {
     link = String(link || "");
     return link.indexOf("yui-path:") === 0 ? decodeURIComponent(link.slice(9)).replace(/\//g, "\\") : "";
-}
-
-// Widget type of this package (package.json: com.amarsimos.widget.yui, /widget/mhcp-yui), as SAO Utils
-// names it. A Seedling widget saved to "My Widgets" is this widget with seedling_widget and seedling_code in its
-// settings.
-var WIDGET_SOURCE = "nvg://yui.widget.amarsimos.com/widget/mhcp-yui";
-
-// The files of a "My Widgets" preset (Storages/system/widget-preset/<folder>/) for a Seedling widget, in
-// the format SAO Utils saves them: preset.json, and settings.xml with each value as JSON text.
-// The code is stored URL-encoded (seedling_code_uri): SAO Utils' settings reader lost the line breaks
-// of a plain JSON string, joining the code into one line. now: ISO date. Returns {preset, settings}.
-function seedlingPresetFiles(title, code, width, height, now) {
-    var values = {
-        // Marks a saved Seedling widget: only then does the widget start in seedling widget mode.
-        "seedling_widget": true,
-        "seedling_title": String(title),
-        "seedling_code_uri": encodeURIComponent(String(code)),
-        "seedling_width": Math.round(width),
-        "seedling_height": Math.round(height)
-    };
-    var lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<map>"];
-    for (var key in values)
-        lines.push('    <value name="' + key + '">' + escapeHtml(JSON.stringify(values[key])) + "</value>");
-    lines.push("</map>", "");
-    return {
-        "preset": JSON.stringify({
-            "create": now,
-            "source": WIDGET_SOURCE,
-            "title": String(title),
-            "settings": "settings.xml",
-            "edit": now
-        }, null, 2),
-        "settings": lines.join("\n")
-    };
-}
-
-// Seedling's settings were called lab_* before it got its name (Widget Lab). Moves each one to its
-// seedling_* name (a value already there wins) and removes the old key; returns whether any moved.
-// Also used for widgets placed from "My Widgets" presets saved before the rename.
-var SEEDLING_KEYS = ["code", "code_uri", "editor_code", "height", "in_yui", "sized", "slot_x", "slot_y", "title", "widget", "width"];
-
-function migrateSeedlingKeys(settings) {
-    var moved = false;
-    SEEDLING_KEYS.forEach(function(key) {
-        if (settings["lab_" + key] === undefined)
-            return ;
-
-        if (settings["seedling_" + key] === undefined)
-            settings["seedling_" + key] = settings["lab_" + key];
-
-        delete settings["lab_" + key];
-        moved = true;
-    });
-    return moved;
-}
-
-// The QML of a saved Seedling widget's settings (seedling_code_uri, or seedling_code from before it was encoded).
-function seedlingCode(settings) {
-    if (!settings)
-        return "";
-
-    if (settings.seedling_code_uri)
-        return decodeURIComponent(settings.seedling_code_uri);
-
-    return String(settings.seedling_code || "");
 }
 
 // Lines of an es.exe -export-txt result file (BOM and blank lines removed).
@@ -853,7 +788,9 @@ function parseReply(text, userProtected, options) {
         // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
         "suggestions": [],
         // <<media:>> (System Console, Media): the media commands to run (see mediaCommand), in order.
-        "media": []
+        "media": [],
+        // <<seedling:>> (Seedling installed): what the widget should be or how to change it, "" when none.
+        "seedling": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -899,6 +836,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "suggest") {
             if (allowed.suggest !== false)
                 result.suggestions = suggestionsFrom(value);
+
+        } else if (kind === "seedling") {
+            if (allowed.seedling === true)
+                result.seedling = value;
 
         } else if (kind === "media") {
             var command = mediaCommand(value);
@@ -2085,6 +2026,9 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.media === true)
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
 
+    if (allowed.seedling === true)
+        lines.push(SEEDLING_INSTRUCTION.replace(/\{t\}/g, title));
+
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
@@ -2540,4 +2484,332 @@ function systemCall(text, title, loads) {
         "reply": "警告！无法识别的系统指令……" + title + "，是不是念错咒语了？试试 System Call, Inspect Entire Command List 吧 (・_・;)",
         "effect": null
     };
+}
+
+
+// ---------------------------------------------------------------- Seedling (companion plugin)
+// With Seedling installed Yui can have a desktop widget made: in the chat she answers as herself and
+// adds <<seedling:what the widget should be / how to change it>>; the program then asks for the code
+// in a request of its own (seedlingCodePrompt), shows it in Seedling's workbench and, when it does not
+// compile or the safety check refuses it, asks again with the error (twice at most).
+// Seedling's Send to Yui starts with this: such a message goes straight to the code flow (sendMessage).
+var SEEDLING_FIX_PREFIX = "帮我修好这个挂件：";
+
+var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
+
+// The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on;
+// editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
+// do) instead of being written out again.
+function seedlingCodePrompt(allowNetwork, editing) {
+    // The rules follow Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js, S3 of
+    // "Seedling Development Plan.md"), each with what to write instead, so the code passes the first
+    // time. The check is what keeps widgets safe; these rules only save rewrites.
+    return [editing ? "你是一个只写 QML 的程序，负责修改一个 SAO Utils 桌面小挂件的代码。" : "你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
+        "代码会先经过安全检查，不符合下面规则的会被拒绝。规则：",
+        "1. 只能 import：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12。不能 import 文件、文件夹或其他模块（包括 QtQuick.Window、NERvGear）。",
+        "2. Qt.* 只能用颜色、日期、几何和绑定：Qt.rgba / rgb / hsla / lighter / darker / tint、Qt.formatDate / formatTime / formatDateTime、Qt.point / size / rect、Qt.binding、Qt.callLater，以及 Qt.AlignCenter 这类常量。",
+        "3. 不能用：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。",
+        "4. 方括号 [ ] 里只能写数字（list[0]）、直接写出的字段名（data[\"temp\"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量：按值查表用 switch 或对象的点号（colors.sunny）。",
+        "5. parent 只能用来取尺寸和锚线（parent.width、parent.height、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。",
+        "6. 循环只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不要改计数器，也不要往 list 里 push 让它变长；计数器在循环外不要再赋别的值，也不要拿它的名字当函数参数。地址属性（source、url）赋值时也要以写全的 \"https://主机/...\" 开头；用 .open( 、.source 的写法，不要写成 [\"open\"]。",
+        "7. 根元素写明 width 和 height，都不超过 2000；Timer 的 interval 不小于 16（毫秒）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。",
+        allowNetwork ? "8. 可以联网：用 XMLHttpRequest；地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；Image 的 source 也一样。只能用 http / https。" : "8. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；只能用 http / https。不要为了装饰去加载网络图片。",
+        "9. 不能读写本地文件：不能出现 file:、qrc:、C:/ 这类地址，source 只能是写全的 https 地址、空字符串，或代码里自己元素的 id（给效果用）。",
+        "10. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
+        editing ? "11. 修改时按下面的「修改方式」只输出改动。" : "11. 输出完整的代码。",
+        "12. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
+        "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
+}
+
+// How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's
+// old_string / new_string, the SEARCH text must be found exactly once).
+var SEEDLING_EDIT_RULES = ["",
+    "修改方式：用 SEARCH/REPLACE 块只输出改动，不要输出完整代码。格式：",
+    "<<<<<<< SEARCH",
+    "（从现有代码里一字不差复制的几行，包括缩进）",
+    "=======",
+    "（换成的内容；要删除就留空）",
+    ">>>>>>> REPLACE",
+    "规则：",
+    "- SEARCH 必须和现有代码完全一致（包括空格和缩进），只包含要改的行，加上前后一两行上下文，保证它在代码里只出现一次。",
+    "- 要改多处就写多个块，按代码从上到下的顺序。",
+    "- 只输出这些块，不要解释，不要输出完整代码。",
+    "- 只有改动超过一半时，才改为输出一个完整的 ```qml 代码块。"];
+
+// The user message of that request: what is wanted, the code so far (when changing it) and, when
+// asked again, what went wrong. whole: the complete code is asked for (the last way out when the
+// edits do not fit).
+function seedlingCodeRequest(request, currentCode, problem, whole) {
+    var parts = [];
+    if (currentCode)
+        parts.push("现在的代码：\n```qml\n" + currentCode + "\n```");
+
+    parts.push((currentCode ? "要修改的地方：" : "要做的挂件：") + request);
+    if (problem)
+        parts.push(problem);
+
+    if (whole)
+        parts.push("这一次请不要用 SEARCH/REPLACE，直接输出改好后的完整代码（一个 ```qml 代码块）。");
+
+    return parts.join("\n\n");
+}
+
+// The QML in a reply of that request: the first ```qml (or ```) block, else the whole text when it
+// looks like QML; "" when there is none.
+function seedlingCodeFrom(text) {
+    var value = cleanReply(text);
+    var block = /```(?:qml|QML|javascript|js)?[ \t]*\n([\s\S]*?)```/.exec(value);
+    if (block)
+        return block[1].trim() + "\n";
+
+    return /^\s*import\s+Qt/.test(value) ? value.trim() + "\n" : "";
+}
+
+// The code of a reply still streaming in: what follows ```qml (up to a closing ```), else "".
+function seedlingPartialCode(text) {
+    var value = String(text || "").replace(/<think>[\s\S]*?(<\/think>|$)/g, "");
+    var start = /```(?:qml|QML|javascript|js)?[ \t]*\n/.exec(value);
+    if (!start)
+        return "";
+
+    var rest = value.slice(start.index + start[0].length);
+    var end = rest.indexOf("```");
+    return end === -1 ? rest : rest.slice(0, end);
+}
+
+// What Yui says while a widget is written, as a message of her own that changes as it goes (the
+// numbers and the errors are only in the workbench): thinking while nothing has come out yet, then
+// writing / changing (the chat makes its characters hop while it goes on).
+// state: {stage: "writing" | "editing" | "fixing" | "checking" | "waiting", lines, edits, seconds}.
+function seedlingNoteLine(state, title) {
+    var dots = "";
+    var output = state.lines > 0 || state.edits > 0;
+    if (state.stage === "waiting")
+        return "等" + (title || "你") + "把 Seedling 放到桌面上哦～";
+
+    if (state.stage === "checking")
+        return "写好啦，结衣在看它能不能好好动起来" + dots;
+
+    if (state.stage === "fixing")
+        return output ? "结衣在修正" + dots : "唔，有个地方不太对，结衣在想办法" + dots;
+
+    if (!output)
+        return "结衣在想该怎么做" + dots;
+
+    return state.stage === "editing" ? "结衣在改" + dots : "结衣在写程序" + dots;
+}
+
+// The last words of that message. kind: "done", "edited", "failed", "stopped", "declined", "missing"
+// or "busy".
+function seedlingChatLine(kind, title) {
+    var t = title || "你";
+    return {
+        "done": "做好啦！" + t + "在 Seedling 里看看吧～满意的话点 ○ 收下哦 (｡･ω･｡)",
+        "edited": "改好啦～" + t + "看看是不是这样？(✿^‿^)",
+        "failed": "呜……这次没能做好 (T_T) 哪里不对写在 Seedling 里了",
+        "stopped": "好的，结衣停下来啦",
+        "declined": "那这次就先不做啦，想做的时候再叫结衣哦～",
+        "missing": "结衣找不到 Seedling 呢……(・_・;)",
+        "busy": "结衣还在做上一个，等一下下哦～",
+        "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"
+    }[kind] || "呜……这次没能做好 (T_T)";
+}
+
+// The reply of the code request was cut off: a ```qml block opened and never closed.
+function seedlingCodeCut(text) {
+    var value = cleanReply(text);
+    return /```(?:qml|QML|javascript|js)?[ \t]*\n/.test(value) && !/```(?:qml|QML|javascript|js)?[ \t]*\n[\s\S]*?```/.test(value);
+}
+
+// ---- SEARCH / REPLACE edits (Seedling)
+// The blocks in a reply: [{search, replace}], in order ([] when there are none).
+function seedlingEdits(text) {
+    var value = cleanReply(text).replace(/\r\n/g, "\n");
+    var re = /<{5,9} ?SEARCH[^\n]*\n([\s\S]*?)\n?={5,9}[ \t]*\n([\s\S]*?)\n?>{5,9} ?REPLACE/g;
+    var blocks = [];
+    var m;
+    while ((m = re.exec(value)) !== null)
+        blocks.push({
+        "search": m[1],
+        "replace": m[2]
+    });
+    return blocks;
+}
+
+// How many SEARCH blocks a reply still streaming in has begun.
+function seedlingEditCount(text) {
+    var found = String(text || "").match(/<{5,9} ?SEARCH/g);
+    return found ? found.length : 0;
+}
+
+function seedlingTrimLines(lines) {
+    return lines.map(function(line) {
+        return line.trim();
+    });
+}
+
+// Where the search lines are in the code lines (trimmed, so indentation and trailing spaces do not
+// count): the start indexes of every match.
+function seedlingLooseMatches(codeLines, searchLines) {
+    var want = seedlingTrimLines(searchLines);
+    var have = seedlingTrimLines(codeLines);
+    var starts = [];
+    for (var i = 0; i + want.length <= have.length; i++) {
+        var same = true;
+        for (var j = 0; j < want.length && same; j++)
+            same = have[i + j] === want[j];
+        if (same)
+            starts.push(i);
+    }
+    return starts;
+}
+
+// The lines of the code most like the search (for telling the model what it missed).
+function seedlingNearest(codeLines, searchLines) {
+    var want = seedlingTrimLines(searchLines);
+    var have = seedlingTrimLines(codeLines);
+    var best = -1;
+    var bestScore = 0;
+    for (var i = 0; i + want.length <= have.length; i++) {
+        var score = 0;
+        for (var j = 0; j < want.length; j++)
+            if (want[j] && have[i + j] === want[j])
+                score++;
+        if (score > bestScore) {
+            bestScore = score;
+            best = i;
+        }
+    }
+    return best < 0 ? "" : codeLines.slice(best, best + want.length).join("\n");
+}
+
+// Applies the blocks to code, all or nothing (as Aider: exactly first, then ignoring indentation and
+// trailing spaces, the replacement indented as the code found; found more than once does not count).
+// Returns {ok, code, failed: [{index (1-based), reason "missing" | "many", nearest}], changed:
+// [0-based line numbers changed or added in the new code], added, removed}.
+function seedlingApplyEdits(code, blocks) {
+    var original = String(code || "").replace(/\r\n/g, "\n");
+    var text = original;
+    var failed = [];
+    for (var b = 0; b < blocks.length; b++) {
+        var search = blocks[b].search;
+        var replace = blocks[b].replace;
+        if (!search.trim()) {
+            failed.push({ "index": b + 1, "reason": "missing", "nearest": "" });
+            continue;
+        }
+        var first = text.indexOf(search);
+        if (first !== -1 && text.indexOf(search, first + 1) === -1) {
+            // An empty replacement takes its line break with it (no blank line left behind).
+            var length = search.length + (replace === "" && text.charAt(first + search.length) === "\n" ? 1 : 0);
+            text = text.slice(0, first) + replace + text.slice(first + length);
+            continue;
+        }
+        if (first !== -1) {
+            failed.push({ "index": b + 1, "reason": "many", "nearest": "" });
+            continue;
+        }
+        var lines = text.split("\n");
+        var searchLines = search.split("\n");
+        while (searchLines.length > 1 && !searchLines[searchLines.length - 1].trim())
+            searchLines.pop();
+        var starts = seedlingLooseMatches(lines, searchLines);
+        if (starts.length !== 1) {
+            failed.push({ "index": b + 1, "reason": starts.length > 1 ? "many" : "missing", "nearest": starts.length > 1 ? "" : seedlingNearest(lines, searchLines) });
+            continue;
+        }
+        // Re-indented by the difference between the code's indentation and the search's.
+        var start = starts[0];
+        var codeIndent = /^\s*/.exec(lines[start])[0];
+        var searchIndent = /^\s*/.exec(searchLines[0])[0];
+        var replaceLines = replace === "" ? [] : replace.split("\n").map(function(line) {
+            if (!line.trim())
+                return line;
+
+            if (line.indexOf(searchIndent) === 0)
+                return codeIndent + line.slice(searchIndent.length);
+
+            return codeIndent + line.replace(/^\s*/, "");
+        });
+        lines.splice.apply(lines, [start, searchLines.length].concat(replaceLines));
+        text = lines.join("\n");
+    }
+    if (failed.length > 0)
+        return { "ok": false, "code": original, "failed": failed, "changed": [], "added": 0, "removed": 0 };
+
+    var diff = seedlingLineDiff(original.split("\n"), text.split("\n"));
+    return { "ok": true, "code": text, "failed": [], "changed": diff.changed, "added": diff.added, "removed": diff.removed };
+}
+
+// Lines of after not in the longest common subsequence with before: changed or added (0-based), and
+// how many lines were added and removed.
+function seedlingLineDiff(before, after) {
+    var n = before.length;
+    var m = after.length;
+    var table = [];
+    for (var i = 0; i <= n; i++) {
+        table.push(new Array(m + 1));
+        for (var j = 0; j <= m; j++)
+            table[i][j] = 0;
+    }
+    for (i = n - 1; i >= 0; i--)
+        for (j = m - 1; j >= 0; j--)
+            table[i][j] = before[i] === after[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
+    var kept = [];
+    i = 0;
+    j = 0;
+    while (i < n && j < m) {
+        if (before[i] === after[j]) {
+            kept.push(j);
+            i++;
+            j++;
+        } else if (table[i + 1][j] >= table[i][j + 1]) {
+            i++;
+        } else {
+            j++;
+        }
+    }
+    var changed = [];
+    for (j = 0; j < m; j++)
+        if (kept.indexOf(j) === -1)
+            changed.push(j);
+    return { "changed": changed, "added": m - kept.length, "removed": n - kept.length };
+}
+
+// What to tell the model when its blocks did not fit (none of them was applied).
+function seedlingEditProblem(failed) {
+    var lines = ["上一次的 SEARCH/REPLACE 块没有套用（只要有一个块对不上，全部都不会生效）："];
+    failed.forEach(function(item) {
+        if (item.reason === "many")
+            lines.push("- 第 " + item.index + " 个块的 SEARCH 在代码里出现了不止一处，请多带几行上下文，让它只匹配一处。");
+        else
+            lines.push("- 第 " + item.index + " 个块的 SEARCH 在代码里没有找到。" + (item.nearest ? "代码里最接近的是：\n```\n" + item.nearest + "\n```" : ""));
+    });
+    lines.push("请重新输出全部的 SEARCH/REPLACE 块，SEARCH 要从现有代码里一字不差地复制。");
+    return lines.join("\n");
+}
+
+// What the code writer said it could not do (its "// SEEDLING-NOTE:" line), "" when nothing.
+function seedlingNoteOf(code) {
+    var m = /\/\/\s*SEEDLING-NOTE:\s*(.+)/.exec(String(code || ""));
+    return m ? m[1].trim() : "";
+}
+
+// Whether the code goes online (asks the Internet for something).
+function seedlingGoesOnline(code) {
+    var text = String(code || "").replace(/\/\/.*$/gm, "");
+    return /\bXMLHttpRequest\b|\bWebSocket\b|["']https?:\/\//i.test(text);
+}
+
+// What Yui adds to her last words: that it goes online, and what it could not do (the writer's note).
+function seedlingExtra(code, title) {
+    var parts = [];
+    if (seedlingGoesOnline(code))
+        parts.push("它会联网获取数据哦。");
+
+    var note = seedlingNoteOf(code);
+    if (note)
+        parts.push("不过有一点要告诉" + (title || "你") + "：" + note);
+
+    return parts.join("");
 }

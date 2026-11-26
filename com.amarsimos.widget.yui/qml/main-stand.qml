@@ -26,10 +26,6 @@ T.Widget {
     property var quickInputDialogInstance: null
     property Component skillSlotsDialog: Qt.createComponent("SkillSlots.qml")
     property var skillSlotsDialogInstance: null
-    property Component seedlingDialog: Qt.createComponent("Seedling.qml")
-    property var seedlingDialogInstance: null
-    // Widgets popped out of the Seedling (SeedlingWidget.qml views), not saved.
-    property var seedlingWidgets: []
     property var cardinalSystemDialogInstance: null
     // Shared with CardinalSystem.qml. settings.provider stores a provider id and
     // settings.provider_settings[id] stores { model, custom_model, api_endpoint, api_key }.
@@ -125,9 +121,6 @@ T.Widget {
     // How many messages are kept in settings.chat_history across restarts.
     // Yui's Heart window: chat messages shown again after a restart, Auto Memory (Yui writes her
     // memories herself), the heart core's size and how many daily backups are kept.
-    // Seedling is set aside for now: not in Yui's menu, and its item is not shown in Yui at start.
-    // Seedling widgets already saved to "My Widgets" still work and keep their own menu.
-    readonly property bool seedlingEnabled: false
     // The small tools (Skill Slots) are set aside for now (Yui.TOOLS_ENABLED).
     readonly property bool toolsEnabled: Yui.TOOLS_ENABLED
     readonly property int maxSavedMessages: widget.settings.saved_messages > 0 ? widget.settings.saved_messages : 50
@@ -156,10 +149,10 @@ T.Widget {
     // set) or "avatar" (the character image itself).
     readonly property string collapsedForm: styles.collapsed_form === "crystal" ? "crystal" : (pixieMode ? "pixie" : "avatar")
     onCollapsedFormChanged: {
-        if (widget.settings.initialized && !seedlingMode)
+        if (widget.settings.initialized)
             Qt.callLater(applyCollapsedSize);
 
-        if (formChosen && !seedlingMode && previousForm && (previousForm === "crystal") !== (collapsedForm === "crystal")) {
+        if (formChosen && previousForm && (previousForm === "crystal") !== (collapsedForm === "crystal")) {
             morphFrom = previousForm;
             formMorphAnimation.restart();
         }
@@ -538,6 +531,8 @@ T.Widget {
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
             "media": full && mediaReady,
+            // Seedling (companion plugin) installed: Yui can have a desktop widget written.
+            "seedling": seedlingInstalled,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -1053,6 +1048,13 @@ T.Widget {
             testStreaming = false;
             return fakeStream(onFinished, onDelta);
         }
+        // System Console's Seedling tests: the code request answered from the queue, no API.
+        if (config && config.rawSystem !== undefined && seedlingFakeReplies.length > 0) {
+            var queued = seedlingFakeReplies.slice();
+            var fake = queued.shift();
+            seedlingFakeReplies = queued;
+            return fakeStream(onFinished, onDelta, fake);
+        }
         config = config || activeConfig();
         var format = config.provider.format;
         // Regenerating: a note the user does not see asks for another answer, a little warmer when a
@@ -1060,8 +1062,11 @@ T.Widget {
         var regenerate = regenerating;
         regenerating = false;
         var temperatureNow = temperature >= 0 && regenerate ? Math.min(2, temperature + 0.3) : temperature;
+        // config.rawSystem: a request of the program's own (Seedling's code) with just this system
+        // prompt: no personality, feature instructions, reminders or notes.
+        var raw = config.rawSystem !== undefined;
         var tuning = Yui.tuningFields(format, config.provider.id, {
-            "maxTokens": maxTokens,
+            "maxTokens": config.maxTokens || maxTokens,
             "temperature": temperatureNow,
             "topP": topP,
             "topK": topK,
@@ -1089,8 +1094,8 @@ T.Widget {
         var mode = tools.length > 0 ? "tools" : "tags";
         var title = config.userTitle || userTitle();
         // The priority rules first, then the personality, then the feature instructions and memories.
-        systemPrompt = Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
-        if (smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
+        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
+        if (!raw && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var latest = messages[messages.length - 1];
             messages[messages.length - 1] = {
@@ -1099,10 +1104,10 @@ T.Widget {
             };
         }
         // Say Again: asked to answer differently, gemma changed the song too, so the track is said again.
-        if (regenerate && !widget.mediaNote && widget.mediaSentTrack)
+        if (!raw && regenerate && !widget.mediaNote && widget.mediaSentTrack)
             widget.mediaNote = Yui.mediaChangeNote(mediaInfo());
 
-        if (widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
+        if (!raw && widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var asked = messages[messages.length - 1];
             messages[messages.length - 1] = {
@@ -1135,7 +1140,11 @@ T.Widget {
         var sawEvents = false;
         var streamError = "";
         // Give up when no data arrives for a while, so the chat never stays busy forever.
-        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 60000 }", widget);
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 120000 }", widget);
+        // config.timeout (ms): longer for requests that think long before anything comes (Seedling).
+        if (config.timeout > 0)
+            timer.interval = config.timeout;
+
         var sentAt = Date.now();
         // Tool calls of the reply: [{id, name, arguments (JSON text)}], streamed in by index.
         var toolCalls = [];
@@ -1627,6 +1636,15 @@ T.Widget {
                 if (reply.suggestions.length > 0)
                     chatModel.setProperty(index, "suggestions", JSON.stringify(reply.suggestions));
 
+                // <<seedling:>>: the widget is written in a request of its own; Yui tells how it goes in a
+                // message of her own after this reply, which changes as it goes (seedlingSay).
+                if (reply.seedling) {
+                    var seedlingRequest = reply.seedling;
+                    Qt.callLater(function() {
+                        seedlingStart(seedlingRequest);
+                    });
+                }
+
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1640,7 +1658,7 @@ T.Widget {
                     note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
 
                 // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
-                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && Yui.claimsDone(text)) {
+                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && !reply.seedling && Yui.claimsDone(text)) {
                     note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
                     diag("claimed an action, none carried out");
                 }
@@ -1807,6 +1825,16 @@ T.Widget {
                 }
 
                 setEmotion(call.effect ? "surprised" : "normal");
+            });
+            return true;
+        }
+        // Seedling's Send to Yui ("帮我修好这个挂件：" + the problems): straight to the code flow, no
+        // chat request deciding it.
+        if (text.indexOf(Yui.SEEDLING_FIX_PREFIX) === 0 && seedlingBench() && !seedlingJob) {
+            var problems = text.slice(Yui.SEEDLING_FIX_PREFIX.length).trim();
+            appendMessage("user", text, false, true);
+            afterUserMessage(function() {
+                seedlingStart("修好这些问题：\n" + problems);
             });
             return true;
         }
@@ -2258,7 +2286,7 @@ T.Widget {
         var target = url + "?t=" + Date.now();
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", target, false);
+            request.open("GET", target, false); // sync-ok: a local file
             request.send(null);
             var text = request.responseText || "";
             diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
@@ -2300,9 +2328,6 @@ T.Widget {
 
     // Periodic checks (every 30 s): system status reports and proactive care.
     function tick() {
-        if (seedlingMode)
-            return ;
-
         var now = Date.now();
         checkSystemStatus(now);
         careTick(now, false);
@@ -2796,131 +2821,6 @@ T.Widget {
         }
     }
 
-    // ---------------------------------------------------------------- Seedling widgets in "My Widgets"
-    // Seedling "Save to My Widgets": a preset folder in Storages/system/widget-preset (as SAO Utils
-    // saves them; see Yui.seedlingPresetFiles) whose widget is this widget type with seedling_widget / seedling_code in its
-    // settings, so it opens in seedling widget mode. The folder is made with mkdir (files cannot create
-    // folders), then preset.json and settings.xml are written and preview (an Item) is saved as
-    // preview.png. onDone(folder) with the folder's Windows path, or "" when it failed.
-    function saveSeedlingPreset(title, code, preview, onDone) {
-        var root = String(NVG.Utils.storagePath("system")).replace(/\\/g, "/").replace(/\/+$/, "") + "/widget-preset";
-        var folder = root + "/custom-" + Date.now().toString(16);
-        var windowsFolder = folder.replace(/\//g, "\\");
-        var files = Yui.seedlingPresetFiles(title, code, preview.width, preview.height, new Date().toISOString());
-        var command = 'cmd /c mkdir "' + windowsFolder + '"';
-        diag("save seedling widget: command(" + command + ") -> " + NVG.SystemCall.command(command) + " (not used)");
-        // mkdir runs on its own: try the first file a few times until the folder is there.
-        var tries = 0;
-        var writeAll = function() {
-            writeFileChecked(folder + "/preset.json", files.preset, function(ok) {
-                if (!ok) {
-                    if (++tries < 10)
-                        delayTimer.start(writeAll);
-                    else
-                        onDone("");
-                    return ;
-                }
-                writeFileChecked(folder + "/settings.xml", files.settings, function(ok) {
-                    if (!ok) {
-                        onDone("");
-                        return ;
-                    }
-                    preview.grabToImage(function(result) {
-                        var saved = result.saveToFile(folder + "/preview.png");
-                        diag("save seedling widget: preview.png -> " + saved);
-                        onDone(windowsFolder);
-                    });
-                });
-            });
-        };
-        delayTimer.start(writeAll);
-    }
-
-    // Runs a function once after 300 ms (used while waiting for mkdir).
-    QtObject {
-        id: delayTimer
-
-        property var pending: null
-        property Timer timer: Timer {
-            interval: 300
-            onTriggered: {
-                var run = delayTimer.pending;
-                delayTimer.pending = null;
-                if (run)
-                    run();
-
-            }
-        }
-
-        function start(run) {
-            pending = run;
-            timer.restart();
-        }
-
-    }
-
-    // ---------------------------------------------------------------- Seedling item in Yui
-    // Seedling "Show in Yui (live)": the code becomes an Item inside this widget (seedlingSlot), reloaded
-    // whenever the code changes. Returns "" when it loaded, or the compile errors ("line:column
-    // message" lines); on errors the last working item stays.
-    property var yuiSeedlingItem: null
-
-    function loadIntoYui(code) {
-        var created;
-        try {
-            created = Qt.createQmlObject(code, seedlingSlot, "Seedling");
-        } catch (e) {
-            return (e.qmlErrors || []).map(function(error) {
-                return qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message);
-            }).join("\n") || String(e);
-        }
-        if (yuiSeedlingItem)
-            yuiSeedlingItem.destroy();
-
-        yuiSeedlingItem = created;
-        return "";
-    }
-
-    function clearYuiSeedling() {
-        if (yuiSeedlingItem)
-            yuiSeedlingItem.destroy();
-
-        yuiSeedlingItem = null;
-    }
-
-    // Seedling widget mode: this widget was created from a saved Seedling widget (seedling_widget and seedling_code in
-    // its settings).
-    // Yui is not started; the widget only shows the code.
-    property bool seedlingMode: false
-    property var seedlingObject: null
-
-    function startSeedlingWidget() {
-        seedlingMode = true;
-        // Hide everything of Yui (the lab content is added afterwards).
-        for (var i = 0; i < widget.children.length; i++)
-            widget.children[i].visible = false;
-        var code = Yui.seedlingCode(widget.settings);
-        try {
-            seedlingObject = Qt.createQmlObject(code, widget, "SeedlingWidget");
-        } catch (e) {
-            var errors = (e.qmlErrors || []).map(function(error) {
-                return error.lineNumber + ":" + error.columnNumber + " " + error.message;
-            });
-            console.log("seedling widget failed:", errors.join("; ") || e);
-            // How the code arrived (line breaks shown as \n), to see what the settings reader did.
-            console.log("seedling widget code starts:", JSON.stringify(code.slice(0, 120)));
-            seedlingObject = Qt.createQmlObject('import QtQuick 2.12; Text { color: "red"; text: "Seedling widget error" }', widget, "SeedlingWidgetError");
-        }
-        // The saved size once, as for Yui's first start; afterwards SAO Utils restores the frame.
-        if (!widget.settings.seedling_sized) {
-            widget.settings.seedling_sized = true;
-            applyFrameSize(widget.settings.seedling_width || seedlingObject.width || 200, widget.settings.seedling_height || seedlingObject.height || 120);
-        } else {
-            widget.implicitWidth = 20;
-            widget.implicitHeight = 20;
-        }
-    }
-
     // The heart as a file; withMessages adds the complete chat history (private conversations).
     function heartDocument(withMessages) {
         var document = {
@@ -2990,7 +2890,7 @@ T.Widget {
                 var path = folder + "/heart-backup-" + n + ".json";
                 try {
                     var get = new XMLHttpRequest();
-                    get.open("GET", fileUrl(path), false);
+                    get.open("GET", fileUrl(path), false); // sync-ok: a local file
                     get.send(null);
                     if (get.responseText)
                         found.push(path.replace(/\//g, "\\"));
@@ -3015,7 +2915,7 @@ T.Widget {
         var text = "";
         try {
             var get = new XMLHttpRequest();
-            get.open("GET", String(url), false);
+            get.open("GET", String(url), false); // sync-ok: a local file
             get.send(null);
             text = get.responseText || "";
             diag("import " + url + " -> status " + get.status + ", " + text.length + " chars");
@@ -3396,6 +3296,17 @@ T.Widget {
         });
     }
 
+    // Seedling's Send to Yui: the chat opens and the text is sent at once (a fix starts the code flow).
+    function sendToChat(text) {
+        if (!showChat)
+            openView();
+
+        Qt.callLater(function() {
+            if (!sendMessage(text))
+                prefillChat(text);
+        });
+    }
+
     // What an action did, said like Yui's other local messages: in the chat, and in the bubble while
     // it is closed.
     function actionSay(title, text) {
@@ -3759,41 +3670,6 @@ T.Widget {
         diag("bubble: " + title + " / " + String(text).slice(0, 40));
     }
 
-    // Seedling "Pop Out": the QML as a SeedlingWidget view on the desktop, next to this widget (each one a
-    // little further down and right, so they do not cover each other).
-    function popOutSeedling(code) {
-        var component = Qt.createComponent("SeedlingWidget.qml");
-        if (component.status !== Component.Ready) {
-            diag("seedling: pop out unavailable: " + component.errorString());
-            return null;
-        }
-        var corner = widget.mapToGlobal(0, 0);
-        var offset = 30 * (seedlingWidgets.length % 8);
-        var view = component.createObject(widget, {
-            "code": code,
-            "label": qsTr("Seedling Widget") + " " + (seedlingWidgets.length + 1),
-            "x": corner.x + 40 + offset,
-            "y": corner.y + 40 + offset
-        });
-        followHostView(view, function() {
-            return widget.hostView ? widget.hostView.z : 0;
-        });
-        seedlingWidgets = seedlingWidgets.concat([view]);
-        view.removed.connect(function() {
-            seedlingWidgets = seedlingWidgets.filter(function(other) {
-                return other !== view;
-            });
-        });
-        diag("seedling: popped out at " + Math.round(view.x) + "," + Math.round(view.y));
-        return view;
-    }
-
-    function closeSeedlings() {
-        seedlingWidgets.slice().forEach(function(view) {
-            view.remove();
-        });
-    }
-
     // Yui's collapsed form on screen, including its floating up and down (the pixie floats by a
     // transform, which the mapping includes; the crystal by its own hover).
     function collapsedScreenRect() {
@@ -3836,15 +3712,16 @@ T.Widget {
     }
 
     // A fake streamed completion with requestCompletion's callbacks and an abort().
-    function fakeStream(onFinished, onDelta) {
-        var full = "（测试回复，没有调用 API）
+    // text: the reply to stream (Seedling's tests); else the chat's test reply.
+    function fakeStream(onFinished, onDelta, text) {
+        var full = text !== undefined ? text : "（测试回复，没有调用 API）
 嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
         var shown = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
-        timer.interval = 8000;
+        timer.interval = text !== undefined ? 3000 : 8000;
         timer.triggered.connect(function() {
-            timer.interval = 60;
-            shown = Math.min(full.length, shown + 2);
+            timer.interval = text !== undefined ? 40 : 60;
+            shown = Math.min(full.length, shown + (text !== undefined ? 14 : 2));
             if (shown < full.length) {
                 if (onDelta)
                     onDelta(full.slice(0, shown));
@@ -3874,6 +3751,424 @@ T.Widget {
         var samples = [["", title + "～结衣在这里哦！(｡･ω･｡)"], ["", "嗯……" + title + "已经对着屏幕好久了呢。结衣刚才在想，等这件事忙完，要不要一起去看看窗外的风景？外面的天空说不定很漂亮哦！不过在那之前，先喝一口水吧～这句话故意写得很长，用来测试气泡最多显示六行时的省略效果。"], [qsTr("Navigation Report"), "警告！系统负荷过高：GPU 98%……" + title + "，要不要看看是什么程序在占用呢？(・_・;)"], [qsTr("Mental Health Counseling"), "已经连续使用电脑 2 小时了哦，" + title + "，休息一下眼睛吧 (´・ω・`)"]];
         var sample = samples[testBubbleCount++ % samples.length];
         showBubble("Yui", sample[1]);
+    }
+
+    // ---------------------------------------------------------------- Seedling (companion plugin)
+    // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
+    // Probe.qml, so Yui still loads when Seedling is not installed. null when it is missing.
+    property var seedlingProbe: null
+    // Seedling was found (checked shortly after start, see seedlingCheck).
+    property bool seedlingInstalled: false
+
+    function seedlingBench() {
+        if (seedlingProbe) {
+            // Another Yui that was the writer is gone: this one takes over.
+            if (!seedlingProbe.bench.writer)
+                seedlingProbe.bench.writer = widget;
+
+            return seedlingProbe.bench;
+        }
+
+        if (seedlingInstalled === false && seedlingChecked)
+            return null;
+
+        var component = Qt.createComponent(Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml"));
+        if (component.status !== Component.Ready) {
+            diag("seedling: not installed (" + component.errorString().trim() + ")");
+            return null;
+        }
+        seedlingProbe = component.createObject(widget);
+        if (!seedlingProbe)
+            return null;
+
+        // Seedling's Generate (the workbench's request) is written by Yui.
+        seedlingProbe.bench.writer = widget;
+        seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
+        seedlingInstalled = true;
+        return seedlingProbe.bench;
+    }
+
+    property bool seedlingChecked: false
+
+    Timer {
+        id: seedlingCheck
+
+        interval: 1500
+        running: true
+        onTriggered: {
+            widget.seedlingBench();
+            widget.seedlingChecked = true;
+        }
+    }
+
+    // Writes the widget request asks for (or the change to the one in the workbench) in a request of
+    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shown live: the workbench opens
+    // at once and the code streams into it; when it does not compile or is refused, it is asked again
+    // with the error (twice at most). onProgress(state), optional, every second and at each step (see
+    // Yui.seedlingNoteLine); onDone(message, ok) at the end.
+    property var seedlingJob: null
+
+    function seedlingWrite(request, onDone, onProgress) {
+        var bench = seedlingBench();
+        if (!bench)
+            return onDone("Seedling 没有安装", false, "missing");
+
+        if (bench.widgets.length === 0)
+            return seedlingAskPlace(request, onDone, onProgress);
+
+        if (seedlingJob)
+            return onDone("结衣还在写上一个挂件，等一下哦", false, "busy");
+
+        // Code there already: changed with SEARCH / REPLACE edits; else written whole.
+        var current = bench.currentCode();
+        var editing = current.trim() !== "";
+        var config = Object.assign({}, activeConfig());
+        var model = String(widget.settings.seedling_model || "").trim();
+        if (model)
+            config.model = model;
+
+        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing);
+        config.noTools = true;
+        // Room for a whole widget (thinking models count their thinking too).
+        config.maxTokens = Math.max(16384, maxTokens);
+        // Thinking models say nothing while they think, longer over code (most of all when changing
+        // it): 4 minutes before giving up, not the chat's 1.
+        config.timeout = 240000;
+        var state = {
+            "stage": editing ? "editing" : "writing",
+            "lines": 0,
+            "edits": 0,
+            "seconds": 0,
+            "attempt": 0,
+            "problem": ""
+        };
+        var started = Date.now();
+        var ticker = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000; repeat: true }", widget);
+        var job = {
+            "handle": null,
+            "stopped": false
+        };
+        // The last way out was taken: the whole code asked for once after the edits did not fit.
+        var wholeTaken = false;
+        var progress = function() {
+            state.seconds = Math.round((Date.now() - started) / 1000);
+            if (onProgress)
+                onProgress(state);
+
+        };
+        // message: for the workbench and the log; kind: what the chat says (Yui.seedlingChatLine).
+        // extra: what Yui adds to her last words (Yui.seedlingExtra).
+        var finish = function(message, ok, kind, extra) {
+            ticker.stop();
+            ticker.destroy();
+            seedlingJob = null;
+            bench.endWriting(ok, message);
+            diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
+            onDone(message, ok, kind || (ok ? "done" : "failed"), extra || "");
+        };
+        var ask;
+        // Asks again with what went wrong (twice at most); when editing, after that once more for the
+        // whole code.
+        var retry = function(problem, code, whole) {
+            if (state.attempt >= 2) {
+                if (editing && !whole && !wholeTaken) {
+                    wholeTaken = true;
+                    state.stage = "writing";
+                    state.lines = 0;
+                    state.edits = 0;
+                    bench.setPhase(qsTr("The edits did not fit · Thinking about the whole code..."));
+                    progress();
+                    return ask(code, problem, true);
+                }
+                return finish("改了几次还是不行：" + String(problem).split("\n")[0], false);
+            }
+            state.attempt++;
+            state.stage = "fixing";
+            state.problem = String(problem).split("\n")[0];
+            state.lines = 0;
+            state.edits = 0;
+            bench.setPhase(qsTr("Thinking about the fix (%1 / 2): %2").arg(state.attempt).arg(state.problem));
+            progress();
+            ask(code, problem, whole);
+        };
+        var show = function(code, changes, whole) {
+            state.stage = "checking";
+            bench.setPhase(qsTr("Checking and rendering..."));
+            progress();
+            var refused = bench.preview(code, request, function(result) {
+                diag("seedling: " + result.result + " " + result.status);
+                if (result.ok)
+                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done", Yui.seedlingExtra(code, userTitle()));
+
+                // Not allowed online (the user said no): said so, not rewritten without it behind
+                // their back.
+                if (result.networkDeclined)
+                    return finish("没有允许联网", false, "offline");
+
+                retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
+            }, changes);
+            if (refused)
+                finish(refused, false);
+
+        };
+        ask = function(code, problem, whole) {
+            var edits = editing && !whole;
+            job.handle = requestCompletion([{
+                "role": "user",
+                "content": Yui.seedlingCodeRequest(request, code, problem, editing && whole)
+            }], function(text, isError) {
+                if (job.stopped)
+                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false, "stopped");
+
+                if (isError)
+                    return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
+
+                var blocks = edits ? Yui.seedlingEdits(text) : [];
+                if (blocks.length > 0) {
+                    var applied = Yui.seedlingApplyEdits(code, blocks);
+                    diag("seedling: " + blocks.length + " edit(s), " + (applied.ok ? "applied" : applied.failed.length + " did not fit"));
+                    if (!applied.ok)
+                        return retry(Yui.seedlingEditProblem(applied.failed), code, false);
+
+                    return show(applied.code, {
+                        "lines": applied.changed,
+                        "added": applied.added,
+                        "removed": applied.removed,
+                        "count": blocks.length
+                    }, false);
+                }
+                // Cut off (too long for the limit): asked again for a shorter one.
+                if (Yui.seedlingCodeCut(text))
+                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。", code, true);
+
+                var qml = Yui.seedlingCodeFrom(text);
+                if (!qml) {
+                    if (edits)
+                        return retry("没有找到 SEARCH/REPLACE 块。请按格式输出要改的地方。", code, false);
+
+                    return finish("模型没有给出代码", false);
+                }
+                show(qml, null, true);
+            }, config, function(soFar) {
+                var count = edits ? Yui.seedlingEditCount(soFar) : 0;
+                if (count > 0) {
+                    if (count !== state.edits) {
+                        state.edits = count;
+                        bench.setPhase(qsTr("Changing · %1 place(s)").arg(count));
+                        progress();
+                    }
+                    return ;
+                }
+                // Written whole (also when she chose to while editing): streamed into the editor.
+                var partial = Yui.seedlingPartialCode(soFar);
+                if (!partial)
+                    return ;
+
+                bench.streamCode(partial);
+                var lines = partial.split("\n").length;
+                if (lines !== state.lines) {
+                    state.lines = lines;
+                    state.stage = state.stage === "editing" ? "writing" : state.stage;
+                    bench.setPhase(qsTr("Writing · %1 lines").arg(lines));
+                    progress();
+                }
+            });
+        };
+        ticker.triggered.connect(progress);
+        ticker.start();
+        seedlingJob = job;
+        bench.beginWriting(request, editing);
+        progress();
+        ask(current, "", false);
+    }
+
+    // No Seedling widget on the desktop (no ground for the seed to grow in): Yui says so in her own
+    // words and offers to open SAO Utils' widget manager (SystemCall.manageWidgets, there is no call
+    // that places a widget); the request waits, and once a Seedling widget is placed she goes on.
+    property var seedlingWaiting: null
+
+    // test: from System Console's Test Place Seedling; once a widget is placed nothing is written.
+    function seedlingAskPlace(request, onDone, onProgress, test) {
+        var title = userTitle();
+        seedlingWaiting = {
+            "request": request,
+            "onDone": onDone,
+            "onProgress": onProgress,
+            "test": test === true
+        };
+        if (onProgress)
+            onProgress({
+            "stage": "waiting",
+            "lines": 0,
+            "seconds": 0,
+            "attempt": 0,
+            "problem": ""
+        });
+
+        // SAO Utils' message box shows about three short lines (more is cut off with "...").
+        askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
+            var opened = NVG.SystemCall.manageWidgets();
+            diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
+        }, false, function() {
+            var waiting = seedlingWaiting;
+            seedlingWaiting = null;
+            diag("seedling: no widget on the desktop, the widget manager was not opened");
+            if (waiting)
+                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
+
+        });
+    }
+
+    // A Seedling widget was placed (Bench.widgets changed) while a request waits: carry on.
+    function seedlingPlaced() {
+        var bench = seedlingProbe ? seedlingProbe.bench : null;
+        if (!seedlingWaiting || !bench || bench.widgets.length === 0)
+            return ;
+
+        var waiting = seedlingWaiting;
+        seedlingWaiting = null;
+        if (waiting.test) {
+            diag("test place seedling: a widget was placed (test, nothing is written)");
+            waiting.onDone("placed", true);
+            return ;
+        }
+        diag("seedling: a widget was placed, writing goes on");
+        seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
+    }
+
+    // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
+    // desktop (asked even when one is), with what follows written in the log.
+    function testSeedlingPlace() {
+        if (!seedlingBench()) {
+            diag("test place seedling: Seedling is not installed");
+            return ;
+        }
+        seedlingAskPlace("test", function(message, ok) {
+            diag("test place seedling: " + (ok ? "done, " : "not done, ") + message);
+        }, function(state) {
+            diag("test place seedling: " + Yui.seedlingNoteLine(state, userTitle()));
+        }, true);
+    }
+
+    // A Seedling widget written for request: Yui's thinking message saying the steps, ending with her
+    // last words (the reply's <<seedling:>>, and System Console's tests).
+    function seedlingStart(request) {
+        var said = seedlingSay();
+        seedlingWrite(request, function(message, ok, kind, extra) {
+            said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
+        }, function(state) {
+            said.update(Yui.seedlingNoteLine(state, userTitle()));
+        });
+    }
+
+    // System Console's Seedling tests: the code request's replies, made up (no API), in order.
+    property var seedlingFakeReplies: []
+
+    // kind: "write" (a clock), "edit" (the code there, one color changed), "fix" (a mistake, then
+    // fixed when the error comes back), "network" (asks the Internet). The whole way runs as for a
+    // real request: the thinking message, the Bench (the widget fixed at the start), the workbench,
+    // the safety check, Stop in the chat, the last words. Log: "seedling test".
+    function testSeedlingWrite(kind) {
+        var bench = seedlingBench();
+        if (!bench) {
+            diag("seedling test: Seedling is not installed");
+            return ;
+        }
+        if (!showChat)
+            openView();
+
+        var fence = function(code) {
+            return "```qml\n" + code + "```";
+        };
+        var clock = "import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n";
+        if (kind === "edit") {
+            var current = bench.currentCode();
+            var line = current.split("\n").filter(function(l) {
+                return /^\s*color:\s*"#/.test(l);
+            })[0];
+            if (!line) {
+                diag("seedling test: no code with a color to change; Write first");
+                return ;
+            }
+            seedlingFakeReplies = ["<<<<<<< SEARCH\n" + line + "\n=======\n" + line.replace(/"#[0-9A-Fa-f]+"/, "\"#E6C82864\"") + "\n>>>>>>> REPLACE\n"];
+        } else if (kind === "fix") {
+            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        colr: \"white\"\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"), fence(clock)];
+        } else if (kind === "network") {
+            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    id: root\n    width: 220; height: 80; radius: 8\n    color: \"#E61F2630\"\n    property string temp: \"--\"\n\n    Text { anchors.centerIn: parent; color: \"white\"; font.pixelSize: 28; text: root.temp }\n\n    Component.onCompleted: {\n        var request = new XMLHttpRequest();\n        request.onreadystatechange = function() {\n            if (request.readyState === XMLHttpRequest.DONE)\n                root.temp = request.status === 200 ? \"online\" : \"offline\";\n        };\n        request.open(\"GET\", \"https://www.bing.com/\");\n        request.send();\n    }\n}\n")];
+        } else {
+            seedlingFakeReplies = [fence(clock)];
+        }
+        var target = bench.target();
+        diag("seedling test: " + kind + " for " + (bench.labelOf(target) || "the only Seedling widget"));
+        seedlingStart("(test) " + kind);
+    }
+
+    // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
+    function seedlingPreview(code, title, onResult) {
+        var bench = seedlingBench();
+        if (!bench)
+            return "Seedling is not installed";
+
+        return bench.preview(code, title, onResult);
+    }
+
+    // Stop (Seedling's workbench): ends the request being written; what was written stays.
+    function seedlingStop() {
+        if (!seedlingJob)
+            return ;
+
+        seedlingJob.stopped = true;
+        if (seedlingJob.handle)
+            seedlingJob.handle.abort();
+
+    }
+
+    // How a Seedling widget is going, in Yui's thinking message (MessageWindow's "YUI正在思考" with the
+    // hopping dots, here saying the step: seedlingNoteLine), which becomes her last words when it ends,
+    // as a reply does (kept in the conversation; in the bubble too while the chat is closed).
+    function seedlingSay() {
+        var index = chatModel.count;
+        var session = widget.chatSession;
+        chatModel.append({
+            "author": "ai",
+            "message": Yui.seedlingNoteLine({
+                "stage": "writing",
+                "lines": 0,
+                "edits": 0,
+                "seconds": 0
+            }, userTitle()),
+            "pending": true,
+            "isError": false,
+            "local": true,
+            "note": "",
+            "action": "",
+            "actionState": "",
+            "suggestions": ""
+        });
+        chatView.stickToBottom = true;
+        // Still this message (the chat may have been reset meanwhile).
+        var mine = function() {
+            var item = widget.chatSession === session && index < chatModel.count ? chatModel.get(index) : null;
+            return item && item.author === "ai" && item.pending;
+        };
+        return {
+            "update": function(text) {
+                if (mine())
+                    chatModel.setProperty(index, "message", text);
+
+            },
+            "end": function(text) {
+                if (!mine())
+                    return ;
+
+                chatModel.set(index, {
+                    "message": text,
+                    "pending": false
+                });
+                scheduleSave();
+                announce("Seedling", text);
+            }
+        };
     }
 
     // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
@@ -4566,9 +4861,9 @@ T.Widget {
     }
 
     function releaseMinimumSize() {
-        // The widget only shows a collapsed form (or a seedling widget): it can be made quite small.
-        widget.implicitWidth = seedlingMode ? 20 : 40;
-        widget.implicitHeight = seedlingMode ? 20 : 60;
+        // The widget only shows a collapsed form: it can be made quite small.
+        widget.implicitWidth = 40;
+        widget.implicitHeight = 60;
     }
 
     function showDialog(component, instanceProperty) {
@@ -4590,14 +4885,23 @@ T.Widget {
         });
     }
 
-    title: seedlingMode ? (widget.settings.seedling_title || qsTr("Seedling Widget")) : qsTr("MHCP-YUI")
+    title: qsTr("MHCP-YUI")
     solid: true
     resizable: !applyingFrameSize
     // Implicit size acts as the minimum frame size (see applyFrameSize); set from code only.
     implicitWidth: 60
     implicitHeight: 400
     visible: true
-    Component.onDestruction: Link.Server.unregister(widget)
+    Component.onDestruction: {
+        Link.Server.unregister(widget);
+        // Seedling's Bench outlives this widget: it must not keep calling a removed Yui.
+        if (seedlingProbe && seedlingProbe.bench) {
+            seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
+            if (seedlingProbe.bench.writer === widget)
+                seedlingProbe.bench.writer = null;
+
+        }
+    }
     Component.onCompleted: {
         Qt.callLater(function() {
             widget.previousForm = widget.collapsedForm;
@@ -4614,25 +4918,6 @@ T.Widget {
         if (widget.settings.spontaneous_talk === undefined && widget.settings.idle_chat_minutes === 0)
             widget.settings.spontaneous_talk = false;
 
-        if (Yui.migrateSeedlingKeys(widget.settings))
-            console.log("migrated: lab_* settings renamed to seedling_*");
-
-        // A saved Seedling widget (from "My Widgets") carries seedling_widget; only then is seedling_code shown.
-        if ((widget.settings.seedling_widget === true || widget.settings.seedling_widget === "true") && Yui.seedlingCode(widget.settings)) {
-            startSeedlingWidget();
-            return ;
-        }
-        // Repair: an earlier version kept the Seedling editor text in Yui's own settings as
-        // seedling_code, which turned Yui into a seedling widget. Keep the text as editor text and clear the rest.
-        if (widget.settings.seedling_code !== undefined) {
-            if (!widget.settings.seedling_editor_code)
-                widget.settings.seedling_editor_code = widget.settings.seedling_code;
-
-            ["seedling_code", "seedling_title", "seedling_width", "seedling_height", "seedling_sized"].forEach(function(key) {
-                delete widget.settings[key];
-            });
-            console.log("repaired: Seedling editor text moved out of seedling_code");
-        }
         // The SAO Utils action and data (YuiAction.qml, YuiData.qml) reach this Yui through Link.Server.
         Link.Server.register(widget);
         // Apply the default size only once, so a size chosen by the user survives restarts.
@@ -4677,10 +4962,6 @@ T.Widget {
             widget.firstNewMessage = chatModel.count;
             widget.chatReady = true;
         });
-        // The Seedling item shown in Yui, if it was on.
-        if (seedlingEnabled && widget.settings.seedling_in_yui && widget.settings.seedling_editor_code)
-            loadIntoYui(widget.settings.seedling_editor_code);
-
     }
 
     // Any mouse movement over the widget counts as the user being around.
@@ -5118,7 +5399,7 @@ T.Widget {
         interval: 15000
         repeat: true
         triggeredOnStart: true
-        running: widget.toolsEnabled && widget.chatReady && !widget.seedlingMode && widget.settings.alarm_enabled !== false
+        running: widget.toolsEnabled && widget.chatReady && widget.settings.alarm_enabled !== false
         onTriggered: widget.checkAlarms(Date.now())
     }
 
@@ -5217,7 +5498,6 @@ T.Widget {
         id: expandedLayer
 
         anchors.fill: parent
-        visible: !seedlingMode
 
         NVG.BackgroundSource {
             id: backgroundImage
@@ -5606,7 +5886,7 @@ T.Widget {
                 Rectangle {
                     anchors.fill: parent
                     color: "#D8D8D8"
-                    border.color: "#C8C8C8"
+                    border.color: "#B9B9B9"
                     border.width: 1
                 }
 
@@ -5680,6 +5960,62 @@ T.Widget {
                     width: parent.width - 2
                     height: chatPanel.inputHeight - 2
                     color: "#FFFFFF"
+                }
+
+                // The edge of SAO Utils' own dialogs (measured from its theme's dialog.png): a grey line, inside it a
+                // white line (88 %), then a faint light fading inward over 4 px at the left and right.
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    color: "transparent"
+                    border.color: "#E0FFFFFF"
+                    border.width: 1
+                }
+
+                Rectangle {
+                    x: 2
+                    y: 2
+                    width: 4
+                    height: parent.height - 4
+
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+
+                        GradientStop {
+                            position: 0
+                            color: "#59FFFFFF"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#00FFFFFF"
+                        }
+
+                    }
+
+                }
+
+                Rectangle {
+                    x: parent.width - 6
+                    y: 2
+                    width: 4
+                    height: parent.height - 4
+
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+
+                        GradientStop {
+                            position: 0
+                            color: "#00FFFFFF"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: "#59FFFFFF"
+                        }
+
+                    }
+
                 }
 
             }
@@ -5779,7 +6115,9 @@ T.Widget {
                 Layout.topMargin: -6
                 Layout.bottomMargin: -9
                 topMargin: 6
-                bottomMargin: 9
+                // The newest message stops just above the bottom fade (9 px + its 24 px), so it is never
+                // under it while it pops up or grows.
+                bottomMargin: 33
                 model: chatModel
                 spacing: 10
                 clip: true
@@ -5921,6 +6259,8 @@ T.Widget {
                         actionLabel: widget.actionLabel(messageItem.action)
                         actionState: model.actionState
                         thinking: model.pending
+                        // Seedling's steps say what she is doing (a pending message of hers with words).
+                        thinkingLabel: model.pending && model.message && model.message !== "..." ? model.message : "YUI正在思考"
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         // Quick Replies: under Yui's latest message only, while nothing else is going on.
                         suggestions: !messageItem.fromUser && model.suggestions && index === chatModel.count - 1 && !widget.busy ? JSON.parse(model.suggestions) : []
@@ -5958,9 +6298,11 @@ T.Widget {
                 // True while the view scrolls itself to the end (not the user scrolling).
                 property bool scrollingToEnd: false
 
+                // To the end including bottomMargin (Qt 5's positionViewAtEnd() leaves it out, which put
+                // the newest message under the bottom fade).
                 function scrollToEnd() {
                     scrollingToEnd = true;
-                    positionViewAtEnd();
+                    contentY = Math.max(originY - topMargin, originY + contentHeight + bottomMargin - height);
                     scrollingToEnd = false;
                 }
 
@@ -6105,12 +6447,15 @@ T.Widget {
                     Layout.preferredWidth: widget.sendButtonWidth
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignBottom
-                    // Turns into a stop button while a reply is being generated.
-                    text: widget.busy ? qsTr("Cancel") : qsTr("Send")
-                    enabled: widget.busy || textInput.text.trim().length > 0
+                    // Turns into a stop button while a reply is being generated, and while Yui writes a
+                    // Seedling widget (as the workbench's Stop, which is small and may be closed).
+                    text: widget.busy ? qsTr("Cancel") : widget.seedlingJob ? qsTr("Stop") : qsTr("Send")
+                    enabled: widget.busy || widget.seedlingJob !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
                             widget.stopReply();
+                        else if (widget.seedlingJob)
+                            widget.seedlingStop();
                         else
                             textInput.submit();
                         textInput.forceActiveFocus();
@@ -6132,65 +6477,6 @@ T.Widget {
             Behavior on opacity {
                 NumberAnimation {
                     duration: 200
-                }
-
-            }
-
-        }
-
-        // Where the Seedling item is shown in Yui (see loadIntoYui): over the expanded form, at the saved
-        // position. While hovered a thin bar appears above it: drag it to move the item in the widget.
-        Item {
-            id: seedlingSlot
-
-            z: 30
-            visible: (widget.settingsRevision, !seedlingMode && showChat && !!widget.yuiSeedlingItem && widget.settings.seedling_in_yui === true)
-            x: Math.max(0, Math.min(expandedLayer.width - width, widget.settings.seedling_slot_x !== undefined ? widget.settings.seedling_slot_x : 16))
-            y: Math.max(14, Math.min(expandedLayer.height - height, widget.settings.seedling_slot_y !== undefined ? widget.settings.seedling_slot_y : 30))
-            width: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.width : 0
-            height: widget.yuiSeedlingItem ? widget.yuiSeedlingItem.height : 0
-
-            HoverHandler {
-                id: seedlingSlotHover
-            }
-
-            Rectangle {
-                z: 100
-                y: -14
-                width: Math.max(60, parent.width)
-                height: 14
-                radius: 4
-                color: "#CC1A1D24"
-                opacity: seedlingSlotHover.hovered || seedlingSlotDrag.pressed ? 1 : 0
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "⠿ " + qsTr("Seedling")
-                    color: "#DDFFFFFF"
-                    font.pixelSize: 9
-                }
-
-                MouseArea {
-                    id: seedlingSlotDrag
-
-                    property point start
-                    property point origin
-
-                    anchors.fill: parent
-                    cursorShape: Qt.SizeAllCursor
-                    onPressed: {
-                        start = mapToItem(expandedLayer, mouse.x, mouse.y);
-                        origin = Qt.point(seedlingSlot.x, seedlingSlot.y);
-                    }
-                    onPositionChanged: {
-                        var now = mapToItem(expandedLayer, mouse.x, mouse.y);
-                        seedlingSlot.x = Math.max(0, Math.min(expandedLayer.width - seedlingSlot.width, origin.x + now.x - start.x));
-                        seedlingSlot.y = Math.max(14, Math.min(expandedLayer.height - seedlingSlot.height, origin.y + now.y - start.y));
-                    }
-                    onReleased: {
-                        widget.settings.seedling_slot_x = Math.round(seedlingSlot.x);
-                        widget.settings.seedling_slot_y = Math.round(seedlingSlot.y);
-                    }
                 }
 
             }
@@ -6255,18 +6541,7 @@ T.Widget {
 
     }
 
-    menu: seedlingMode ? seedlingMenu : yuiMenu
-
-    // A seedling widget's menu: only the Seedling.
-    Menu {
-        id: seedlingMenu
-
-        Action {
-            text: qsTr("Seedling") + "..."
-            onTriggered: showDialog(widget.seedlingDialog, "seedlingDialogInstance")
-        }
-
-    }
+    menu: yuiMenu
 
     Menu {
         id: yuiMenu
@@ -6294,7 +6569,6 @@ T.Widget {
         // Skill Slots (set aside, see toolsEnabled): its menu entry goes back here, after Mental Health
         // Counseling.
 
-        // Seedling (set aside, see seedlingEnabled): its menu entry goes back here, before System Console.
         Action {
             text: qsTr("System Console") + "..."
             onTriggered: showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance")

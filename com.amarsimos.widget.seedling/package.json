@@ -1,0 +1,37 @@
+{
+    "name": "com.amarsimos.widget.seedling",
+    "version": "0.1.0",
+
+    "title": {
+        "en": "Seedling",
+        "zh": "Seedling 萌芽"
+    },
+
+    "description": {
+        "en": "Seedling\nWrite a small widget in QML, preview it and save it to the widget. Works on its own; with MHCP-YUI installed, Yui can write widgets for you.",
+        "zh": "Seedling 萌芽\n用 QML 写一个小挂件，预览，保存到挂件。可以单独使用；装了 MHCP-YUI 时，结衣也能帮你写。"
+    },
+
+    "homepage": "https://moe.amarsimos.top",
+
+    "main": "module.qml",
+
+    "author": {
+        "name": "Amarsimos",
+        "email": "amarsimoss@gmail.com",
+        "url": "https://moe.amarsimos.top"
+    },
+
+    "dependencies": {
+
+    },
+
+    "resources": [
+        {
+            "location": "/widget/seedling",
+            "catalog": "widget",
+            "title": "Seedling",
+            "entry": "qml/SeedlingWidget.qml"
+        }
+    ]
+}

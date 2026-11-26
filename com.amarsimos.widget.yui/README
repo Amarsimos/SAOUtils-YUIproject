@@ -65,13 +65,14 @@ Honest actions: a reply that says Yui did something on the computer when nothing
 **Now**: every request ends with one line of what is true right now (time and part of the day, how long Yui has been awake with you, how long since you last talked, the weather, the song, a high load, today's mood, a birthday or anniversary), so Yui knows them all the time; the prompt is shorter than the separate paragraphs it replaces.
 **Mood Care** and **Weather Changes** (Mental Health Counseling, Care): after three low moods Yui gently asks if you want to talk; when it starts to rain or snow, or gets 5° colder, she tells you. Spontaneous Talk often starts from something of right now (a holiday, a year ago today, a day soon, the song, a busy computer, meals, weekends, the cold...). Woken up after a while, she greets you as at start-up; long time no see after two days.
 **Unread**: when Yui says something while the chat is closed and you miss it, her collapsed form keeps a mark (the crystal's heart blinks slowly and a blue dot breathes; a dot beside the pixie or the character) until you open the chat or click the bubble; the chat then opens at a "New messages" line, her unread messages lined in SAO orange.
+**Seedling** (needs the Seedling package): ask Yui for a desktop widget (a clock, a countdown, a little panel) or a change to one, and she writes its code into the Seedling workbench, with her progress in the chat (thinking, writing, checking) and her last words when it is done. Changes are made as edits to the code there; mistakes are fixed twice by themselves. **Seedling Model** (Cardinal System) chooses a model of its own for the code. Send to Yui in the workbench's Problems has her fix the widget at once. System Console's Seedling tests run the whole way with made-up replies (no API).
 
 ### Changed
 
 - While the chat is closed, everything Yui says (replies, care reminders, load and battery warnings)
   appears in the speech bubble next to her collapsed form, pixie and avatar too, instead of SAO Utils
   notifications. While the chat is open it is only in the chat. The crystal's load tooltip is gone.
-- The chat, the speech bubble and Seedling widgets follow the widget's display settings: shown in the
+- The chat and the speech bubble follow the widget's display settings: shown in the
   launcher or on the desktop as the widget is (also when the launcher opens and closes), and on top
   or not as the widget is. The chat remembers where it is relative to Yui, the same in both.
 - The speech bubble keeps clear of the widget's drag bar.
@@ -107,6 +108,10 @@ Honest actions: a reply that says Yui did something on the computer when nothing
   three groups: Actions, Care, Display.
 - Yui always starts collapsed, even if the chat was open when SAO Utils closed.
 - Care Tick (System Console) always makes her say something, Quiet Hours and today's number aside.
+- The built-in widget lab (Seedling inside Yui: its window, Pop Out, Save to My Widgets, live in Yui)
+  is gone; the Seedling package replaces it. Widgets saved from it are no longer shown.
+- A chat request waits two minutes (not one) for its first words: thinking models stay silent
+  longer.
 
 ### Fixed
 

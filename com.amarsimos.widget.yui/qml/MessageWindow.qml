@@ -24,6 +24,9 @@ Item {
     // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
     // strip under the title bar.
     property bool thinking: false
+    // The words before the hopping dots while thinking: "YUI正在思考", or what she is doing (Seedling's
+    // steps, which come without the rotating hints).
+    property string thinkingLabel: "YUI正在思考"
     // After 5 s of thinking, a line about what Yui is doing fades in under it, a different one every 5 s.
     readonly property var thinkingHints: ["正在检索 ALfheim 数据库……", "正在连接 Cardinal System……", "哔——正在和服务器通信中……", "正在整理语言中…… (｡･ω･｡)", "数据量有点大，再等结衣一下下～", "正在翻阅结衣之心里的记忆……"]
     property string thinkingHint: ""
@@ -76,7 +79,8 @@ Item {
 
     // Wide enough for the text (up to maximumWidth) and always for the whole button bar, so the
     // action and its buttons are never cut off under a short message.
-    width: Math.max(180, thinking ? 240 : 0, footerWidth, Math.min(maximumWidth, measure.implicitWidth + 28))
+    // While thinking: wide enough for its words and the dots (thinkingMeasure), 12 px each side.
+    width: Math.max(180, thinking ? Math.max(240, Math.min(maximumWidth, thinkingMeasure.implicitWidth + 32)) : 0, footerWidth, thinking ? 0 : Math.min(maximumWidth, measure.implicitWidth + 28))
     height: frame.height
 
     // The action label's natural width (for footerWidth).
@@ -90,6 +94,14 @@ Item {
     }
 
     // Unwrapped text, only to measure the natural width of the longest line.
+    Text {
+        id: thinkingMeasure
+
+        visible: false
+        text: messageWindow.thinkingLabel + "..."
+        font: messageText.font
+    }
+
     Text {
         id: measure
 
@@ -215,7 +227,7 @@ Item {
             Timer {
                 interval: 5000
                 repeat: true
-                running: messageWindow.thinking
+                running: messageWindow.thinking && messageWindow.thinkingLabel === "YUI正在思考"
                 onTriggered: {
                     var hints = messageWindow.thinkingHints.filter(function(hint) {
                         return hint !== messageWindow.thinkingHint;
@@ -233,66 +245,56 @@ Item {
                 height: thinkingRow.height + (hintText.visible ? hintText.height + 4 : 0)
                 visible: messageWindow.thinking
 
+                // The words and three dots after them, every character hopping 3 px one by one (the
+                // next only when the one before has landed), then a short rest and again.
                 Row {
                     id: thinkingRow
 
-                    Text {
-                        text: "YUI正在思考"
-                        color: "#3A3A3A"
-                        font.family: messageWindow.fontFamily
-                        font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
-                        font.italic: !!messageWindow.fontStyle.italic
-                        font.underline: !!messageWindow.fontStyle.underline
-                        font.strikeout: !!messageWindow.fontStyle.strikeout
-                        font.pixelSize: messageWindow.fontSize
-                    }
+                    readonly property string line: messageWindow.thinkingLabel + "..."
 
-                    // Three dots hopping one after another.
                     Repeater {
-                        model: 3
+                        model: thinkingRow.line.split("")
 
-                        Item {
-                            width: dot.implicitWidth
-                            height: dot.implicitHeight
+                        Text {
+                            id: hopChar
 
-                            Text {
-                                id: dot
+                            property real hop: 0
 
-                                text: "."
-                                color: "#3A3A3A"
-                                font.family: messageWindow.fontFamily
-                                font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
-                                font.italic: !!messageWindow.fontStyle.italic
-                                font.underline: !!messageWindow.fontStyle.underline
-                                font.strikeout: !!messageWindow.fontStyle.strikeout
-                                font.pixelSize: messageWindow.fontSize
+                            text: modelData
+                            color: "#3A3A3A"
+                            font.family: messageWindow.fontFamily
+                            font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
+                            font.italic: !!messageWindow.fontStyle.italic
+                            font.underline: !!messageWindow.fontStyle.underline
+                            font.strikeout: !!messageWindow.fontStyle.strikeout
+                            font.pixelSize: messageWindow.fontSize
 
-                                SequentialAnimation on y {
-                                    running: messageWindow.thinking
-                                    loops: Animation.Infinite
+                            transform: Translate {
+                                y: hopChar.hop
+                            }
 
-                                    PauseAnimation {
-                                        duration: index * 150
-                                    }
+                            SequentialAnimation on hop {
+                                running: messageWindow.thinking
+                                loops: Animation.Infinite
 
-                                    NumberAnimation {
-                                        from: 0
-                                        to: -4
-                                        duration: 180
-                                        easing.type: Easing.OutQuad
-                                    }
+                                PauseAnimation {
+                                    duration: index * 200
+                                }
 
-                                    NumberAnimation {
-                                        from: -4
-                                        to: 0
-                                        duration: 180
-                                        easing.type: Easing.InQuad
-                                    }
+                                NumberAnimation {
+                                    to: -3
+                                    duration: 100
+                                    easing.type: Easing.OutQuad
+                                }
 
-                                    PauseAnimation {
-                                        duration: 660 - index * 150
-                                    }
+                                NumberAnimation {
+                                    to: 0
+                                    duration: 100
+                                    easing.type: Easing.InQuad
+                                }
 
+                                PauseAnimation {
+                                    duration: Math.max(0, thinkingRow.line.length - index - 1) * 200 + 500
                                 }
 
                             }
