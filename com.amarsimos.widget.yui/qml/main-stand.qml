@@ -5600,19 +5600,13 @@ T.Widget {
                 // visible lines about 12 px inside the title and input bars.
                 layer.enabled: true
 
-                // Gray edge, then a white highlight inside it.
+                // Drawn as SAO_UI-Window (the original's message window; colors measured from it): a
+                // title band #E4E4E4 to #F9F9F9, a grey band #D8D8D8 shaded black 20% to 0 at its top and
+                // bottom, a white band (here the input bar).
                 Rectangle {
                     anchors.fill: parent
-                    color: "#DDDDDD"
-                    border.color: "#BBBBBB"
-                    border.width: 1
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    color: "transparent"
-                    border.color: "#FFFFFF"
+                    color: "#D8D8D8"
+                    border.color: "#C8C8C8"
                     border.width: 1
                 }
 
@@ -5620,108 +5614,72 @@ T.Widget {
                 Rectangle {
                     id: titleBar
 
-                    x: 2
-                    y: 2
-                    width: parent.width - 4
-                    height: chatPanel.titleHeight - 3
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    height: chatPanel.titleHeight - 1
                     gradient: Gradient {
                         GradientStop {
                             position: 0
-                            color: "#F8F8F8"
+                            color: "#E4E4E4"
                         }
 
                         GradientStop {
                             position: 1
-                            color: "#FCFCFC"
+                            color: "#F9F9F9"
                         }
 
                     }
                 }
 
-                // Dark line under the title bar, then an inner shadow into the message area.
+                // The grey band's shade under the title band and above the input bar.
                 Rectangle {
-                    x: 2
+                    x: 1
                     y: titleBar.y + titleBar.height
-                    width: parent.width - 4
-                    height: 1
-                    color: "#BCBCBC"
-                }
-
-                Rectangle {
-                    x: 2
-                    y: titleBar.y + titleBar.height + 1
-                    width: parent.width - 4
-                    height: Math.min(12, Math.max(0, inputBar.y - y - 2))
+                    width: parent.width - 2
+                    height: Math.min(11, Math.max(0, (inputBar.y - y) / 2))
                     gradient: Gradient {
                         GradientStop {
                             position: 0
-                            color: "#C3C3C3"
+                            color: "#33040404"
                         }
 
                         GradientStop {
                             position: 1
-                            color: "#DDDDDD"
-                        }
-
-                    }
-                }
-
-                // The message area darkening toward the input bar, then a dark and a light line.
-                Rectangle {
-                    x: 2
-                    y: inputBar.y - 2 - height
-                    width: parent.width - 4
-                    height: Math.min(12, Math.max(0, inputBar.y - 2 - (titleBar.y + titleBar.height + 1)))
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: "#DDDDDD"
-                        }
-
-                        GradientStop {
-                            position: 1
-                            color: "#C8C8C8"
+                            color: "#00040404"
                         }
 
                     }
                 }
 
                 Rectangle {
-                    x: 2
-                    y: inputBar.y - 2
-                    width: parent.width - 4
-                    height: 1
-                    color: "#C0C0C0"
-                }
+                    x: 1
+                    y: inputBar.y - height
+                    width: parent.width - 2
+                    height: Math.min(11, Math.max(0, (inputBar.y - titleBar.y - titleBar.height) / 2))
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#00040404"
+                        }
 
-                Rectangle {
-                    x: 2
-                    y: inputBar.y - 1
-                    width: parent.width - 4
-                    height: 1
-                    color: "#E3E3E3"
+                        GradientStop {
+                            position: 1
+                            color: "#33040404"
+                        }
+
+                    }
                 }
 
                 // Input bar.
                 Rectangle {
                     id: inputBar
 
-                    x: 2
-                    y: parent.height - 2 - height
-                    width: parent.width - 4
-                    height: chatPanel.inputHeight - 4
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: "#F4F4F4"
-                        }
-
-                        GradientStop {
-                            position: 1
-                            color: "#F8F8F8"
-                        }
-
-                    }
+                    x: 1
+                    y: parent.height - 1 - height
+                    width: parent.width - 2
+                    height: chatPanel.inputHeight - 2
+                    color: "#FFFFFF"
                 }
 
             }
@@ -5732,7 +5690,7 @@ T.Widget {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: 9
                 text: "Message"
-                color: "#8C8C8C"
+                color: "#4D4D4D"
                 font.family: "SAO UI"
                 font.pixelSize: 20
             }

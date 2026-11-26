@@ -104,8 +104,9 @@ Item {
 
         width: parent.width
         height: header.height + body.height + footer.height
-        radius: 3
-        color: "#F8F8F8"
+        // As SAO_UI-Window: title band, shaded grey band, white band (the footer).
+        radius: 2
+        color: "#FFFFFF"
         border.color: "#C8C8C8"
         border.width: 1
 
@@ -121,12 +122,12 @@ Item {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: "#FFFFFF"
+                    color: "#E4E4E4"
                 }
 
                 GradientStop {
                     position: 1
-                    color: "#EEEEEE"
+                    color: "#F9F9F9"
                 }
 
             }
@@ -136,7 +137,7 @@ Item {
                 width: parent.width - 16
                 horizontalAlignment: Text.AlignHCenter
                 text: messageWindow.sender
-                color: "#777777"
+                color: "#4D4D4D"
                 font.family: "SAO UI"
                 font.pixelSize: 15
                 elide: Text.ElideRight
@@ -184,7 +185,7 @@ Item {
             y: header.y + header.height
             width: parent.width - 2
             height: (messageWindow.thinking ? thinkingColumn.height : messageText.implicitHeight) + 20
-            color: "#E4E4E4"
+            color: "#D8D8D8"
             clip: true
 
             // A streamed reply grows smoothly as its text arrives (only once the window has popped up,
@@ -199,17 +200,40 @@ Item {
 
             }
 
+            // Shaded black 20% to 0 at its top and bottom.
             Rectangle {
                 width: parent.width
-                height: 1
-                color: "#CFCFCF"
+                height: Math.min(7, parent.height / 2)
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#33040404"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#00040404"
+                    }
+
+                }
             }
 
             Rectangle {
                 anchors.bottom: parent.bottom
                 width: parent.width
-                height: 1
-                color: "#D6D6D6"
+                height: Math.min(7, parent.height / 2)
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#00040404"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#33040404"
+                    }
+
+                }
             }
 
             Timer {
