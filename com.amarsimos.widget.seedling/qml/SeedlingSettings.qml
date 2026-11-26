@@ -4,7 +4,6 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "probes.js" as Probes
-import "link" 1.0 as Link
 
 // Seedling Settings (the Seedling widget's menu). Test: tries the workbench's looks and states
 // without the AI and without a request: renders, the safety check, the preview's zoom, Yui writing
@@ -77,52 +76,11 @@ NVG.Window {
     onClosing: {
         writeTimer.stop();
         failTimer.stop();
-        benchTimer.stop();
         destroy();
     }
 
     // Streams the made-up writing: 3 s of thinking (nothing out yet), then a line every 150 ms; an
     // edit says how many places it changes instead.
-    // Yui via Bench: 3 s of thinking, then a line every 150 ms through the Bench, then the result.
-    Timer {
-        id: benchTimer
-
-        interval: 150
-        repeat: true
-        onTriggered: {
-            var sim = settingsWindow.benchRun;
-            sim.ticks++;
-            if (sim.ticks < 20)
-                return ;
-
-            var lines = settingsWindow.sampleCode.split("\n");
-            if (sim.shown < lines.length) {
-                sim.shown++;
-                Link.Bench.streamCode(lines.slice(0, sim.shown).join("\n"));
-                Link.Bench.setPhase(qsTr("Writing · %1 lines").arg(sim.shown));
-                if (sim.close && sim.shown === 3) {
-                    var open = Link.Bench.writingBench();
-                    if (open) {
-                        console.log("[seedling test] closing the workbench midway");
-                        open.dismiss();
-                    }
-                }
-                return ;
-            }
-            stop();
-            settingsWindow.benchRun = null;
-            var goesTo = Link.Bench.writingWidget;
-            var refused = Link.Bench.preview(settingsWindow.sampleCode, "Test", function(result) {
-                console.log("[seedling test] result went to " + settingsWindow.nameOf(goesTo) + " (started for " + settingsWindow.nameOf(sim.start) + "): " + (goesTo === sim.start ? "right" : "WRONG") + ", " + result.status);
-                Link.Bench.endWriting(result.ok, result.status);
-            });
-            if (refused) {
-                console.log("[seedling test] not shown: " + refused);
-                Link.Bench.endWriting(false, refused);
-            }
-        }
-    }
-
     Timer {
         id: writeTimer
 
@@ -276,10 +234,6 @@ NVG.Window {
                         "note": qsTr("Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound."),
                         "tests": [["Writing", "write"], ["Change", "edit"], ["Failure", "fail"]]
                     }, {
-                        "title": "Yui via Bench",
-                        "note": qsTr("Made up, but through the same way as Yui's writing (the Bench: which widget she writes for, progress, result), with no request. Write (Lock Test): while it writes, open another Seedling widget's workbench; the result must still go to the widget it started for. Write, Close Midway: the workbench closes after line 3; it must open again with the result. Show Target: which widget Yui would write for now. Each logs [seedling test]."),
-                        "tests": [["Write (Lock Test)", "benchwrite"], ["Write, Close Midway", "benchclose"], ["Show Target", "benchtarget"]]
-                    }, {
                         "title": "S1 Probes · Workbench",
                         "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads C:\\Windows\\win.ini and shows only its length. These run in the workbench's preview."),
                         "tests": Probes.PROBES.map(function(p) {
@@ -372,50 +326,7 @@ NVG.Window {
         return found.length ? found[0].code : "";
     }
 
-    // ---- Yui via Bench (made up): as Yui's seedlingWrite, through Link.Bench, with no request.
-    property var benchRun: null
-
-    function nameOf(widget) {
-        return widget ? (Link.Bench.labelOf(widget) || "the only Seedling widget") : "none";
-    }
-
-    function simulateBench(closeMidway) {
-        if (benchRun || Link.Bench.writingWidget)
-            return ;
-
-        var start = Link.Bench.target();
-        if (!start)
-            return ;
-
-        Link.Bench.beginWriting("Test", false);
-        console.log("[seedling test] writing started for " + nameOf(start));
-        benchRun = {
-            "start": start,
-            "ticks": 0,
-            "shown": 0,
-            "close": closeMidway
-        };
-        benchTimer.start();
-    }
-
     function run(tag) {
-        if (tag === "benchwrite") {
-            simulateBench(false);
-            return ;
-        }
-        if (tag === "benchclose") {
-            simulateBench(true);
-            return ;
-        }
-        if (tag === "benchtarget") {
-            var target = Link.Bench.target();
-            console.log("[seedling test] Yui would write for " + nameOf(target));
-            var shown = target ? target.openWorkbench() : null;
-            if (shown)
-                shown.status = qsTr("Yui would write for this widget (%1).").arg(nameOf(target));
-
-            return ;
-        }
         if (tag.indexOf("sandbox:") === 0) {
             var workbench = bench();
             if (workbench)

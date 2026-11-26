@@ -1055,6 +1055,13 @@ T.Widget {
             testStreaming = false;
             return fakeStream(onFinished, onDelta);
         }
+        // System Console's Seedling tests: the code request answered from the queue, no API.
+        if (config && config.rawSystem !== undefined && seedlingFakeReplies.length > 0) {
+            var queued = seedlingFakeReplies.slice();
+            var fake = queued.shift();
+            seedlingFakeReplies = queued;
+            return fakeStream(onFinished, onDelta, fake);
+        }
         config = config || activeConfig();
         var format = config.provider.format;
         // Regenerating: a note the user does not see asks for another answer, a little warmer when a
@@ -1641,12 +1648,7 @@ T.Widget {
                 if (reply.seedling) {
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
-                        var said = seedlingSay();
-                        seedlingWrite(seedlingRequest, function(message, ok, kind, extra) {
-                            said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
-                        }, function(state) {
-                            said.update(Yui.seedlingNoteLine(state, userTitle()));
-                        });
+                        seedlingStart(seedlingRequest);
                     });
                 }
 
@@ -3859,15 +3861,16 @@ T.Widget {
     }
 
     // A fake streamed completion with requestCompletion's callbacks and an abort().
-    function fakeStream(onFinished, onDelta) {
-        var full = "（测试回复，没有调用 API）
+    // text: the reply to stream (Seedling's tests); else the chat's test reply.
+    function fakeStream(onFinished, onDelta, text) {
+        var full = text !== undefined ? text : "（测试回复，没有调用 API）
 嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
         var shown = 0;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
-        timer.interval = 8000;
+        timer.interval = text !== undefined ? 3000 : 8000;
         timer.triggered.connect(function() {
-            timer.interval = 60;
-            shown = Math.min(full.length, shown + 2);
+            timer.interval = text !== undefined ? 40 : 60;
+            shown = Math.min(full.length, shown + (text !== undefined ? 14 : 2));
             if (shown < full.length) {
                 if (onDelta)
                     onDelta(full.slice(0, shown));
@@ -4245,6 +4248,59 @@ T.Widget {
         }, function(state) {
             diag("test place seedling: " + Yui.seedlingNoteLine(state, userTitle()));
         }, true);
+    }
+
+    // A Seedling widget written for request: Yui's thinking message saying the steps, ending with her
+    // last words (the reply's <<seedling:>>, and System Console's tests).
+    function seedlingStart(request) {
+        var said = seedlingSay();
+        seedlingWrite(request, function(message, ok, kind, extra) {
+            said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
+        }, function(state) {
+            said.update(Yui.seedlingNoteLine(state, userTitle()));
+        });
+    }
+
+    // System Console's Seedling tests: the code request's replies, made up (no API), in order.
+    property var seedlingFakeReplies: []
+
+    // kind: "write" (a clock), "edit" (the code there, one color changed), "fix" (a mistake, then
+    // fixed when the error comes back), "network" (asks the Internet). The whole way runs as for a
+    // real request: the thinking message, the Bench (the widget fixed at the start), the workbench,
+    // the safety check, Stop in the chat, the last words. Log: "seedling test".
+    function testSeedlingWrite(kind) {
+        var bench = seedlingBench();
+        if (!bench) {
+            diag("seedling test: Seedling is not installed");
+            return ;
+        }
+        if (!showChat)
+            openView();
+
+        var fence = function(code) {
+            return "```qml\n" + code + "```";
+        };
+        var clock = "import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n";
+        if (kind === "edit") {
+            var current = bench.currentCode();
+            var line = current.split("\n").filter(function(l) {
+                return /^\s*color:\s*"#/.test(l);
+            })[0];
+            if (!line) {
+                diag("seedling test: no code with a color to change; Write first");
+                return ;
+            }
+            seedlingFakeReplies = ["<<<<<<< SEARCH\n" + line + "\n=======\n" + line.replace(/"#[0-9A-Fa-f]+"/, "\"#E6C82864\"") + "\n>>>>>>> REPLACE\n"];
+        } else if (kind === "fix") {
+            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        colr: \"white\"\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"), fence(clock)];
+        } else if (kind === "network") {
+            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    id: root\n    width: 220; height: 80; radius: 8\n    color: \"#E61F2630\"\n    property string temp: \"--\"\n\n    Text { anchors.centerIn: parent; color: \"white\"; font.pixelSize: 28; text: root.temp }\n\n    Component.onCompleted: {\n        var request = new XMLHttpRequest();\n        request.onreadystatechange = function() {\n            if (request.readyState === XMLHttpRequest.DONE)\n                root.temp = request.status === 200 ? \"online\" : \"offline\";\n        };\n        request.open(\"GET\", \"https://www.bing.com/\");\n        request.send();\n    }\n}\n")];
+        } else {
+            seedlingFakeReplies = [fence(clock)];
+        }
+        var target = bench.target();
+        diag("seedling test: " + kind + " for " + (bench.labelOf(target) || "the only Seedling widget"));
+        seedlingStart("(test) " + kind);
     }
 
     // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
