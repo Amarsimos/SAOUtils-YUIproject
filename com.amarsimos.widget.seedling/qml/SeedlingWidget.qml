@@ -178,14 +178,15 @@ T.Widget {
         anchors.fill: parent
     }
 
+    // Inside the widget's bounds (drawn outside them it was cut off, so nothing showed), with a light
+    // orange over the whole widget, so the flash is plain to see.
     Rectangle {
         id: savedRing
 
         anchors.fill: parent
-        anchors.margins: -3
         z: 10
         radius: 4
-        color: "transparent"
+        color: "#40F1AA03"
         border.color: "#F1AA03"
         border.width: 3
         opacity: 0
@@ -199,6 +200,10 @@ T.Widget {
                 from: 0
                 to: 1
                 duration: 150
+            }
+
+            PauseAnimation {
+                duration: 250
             }
 
             NumberAnimation {
