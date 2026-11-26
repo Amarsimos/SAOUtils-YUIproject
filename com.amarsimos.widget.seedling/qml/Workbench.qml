@@ -893,6 +893,8 @@ NVG.View {
                                 // A ScrollView's own scroll bar has to be placed by hand (a Flickable's
                                 // places itself): at its right edge, its whole height.
                                 ScrollBar.vertical: SaoScrollBar {
+                                    // Above the content (the code covered its whole width and took the clicks).
+                                    z: 10
                                     parent: codeScroll
                                     x: codeScroll.width - width
                                     y: codeScroll.topPadding
@@ -927,6 +929,8 @@ NVG.View {
 
                                     readOnly: bench.writing
                                     leftPadding: 50
+                                    // Room at the right for the scroll bar.
+                                    rightPadding: 16
                                     selectionColor: "#80F1AA03"
                                     selectedTextColor: "#3A3A3A"
                                     onTextChanged: {
@@ -1163,6 +1167,8 @@ NVG.View {
                                     contentHeight: Math.max(height, previewStage.height * bench.previewScale)
                                     boundsBehavior: Flickable.StopAtBounds
                                     ScrollBar.vertical: SaoScrollBar {
+                                        // Above the content (the code covered its whole width and took the clicks).
+                                        z: 10
                                         onLight: true
                                     }
 
@@ -1207,6 +1213,8 @@ NVG.View {
                                 clip: true
                                 model: bench.versions.length
                                 ScrollBar.vertical: SaoScrollBar {
+                                    // Above the content (the code covered its whole width and took the clicks).
+                                    z: 10
                                     onLight: true
                                 }
 
@@ -1267,6 +1275,8 @@ NVG.View {
                                 clip: true
                                 model: bench.problemList
                                 ScrollBar.vertical: SaoScrollBar {
+                                    // Above the content (the code covered its whole width and took the clicks).
+                                    z: 10
                                     onLight: true
                                 }
 
