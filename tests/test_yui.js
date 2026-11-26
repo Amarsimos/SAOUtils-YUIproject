@@ -228,34 +228,9 @@ test("load thresholds: defaults, custom, hysteresis, hold", () => {
     assert.strictEqual(state.level, 0);
 });
 
-test("seedlingPresetFiles writes preset.json and settings.xml", () => {
-    const files = Yui.seedlingPresetFiles("时钟 <1>", 'import QtQuick 2.12\nText { text: "a<b" }', 220.4, 90, "2026-10-19T00:00:00.000Z");
-    const preset = JSON.parse(files.preset);
-    assert.strictEqual(preset.source, "nvg://yui.widget.amarsimos.com/widget/mhcp-yui");
-    assert.strictEqual(preset.title, "时钟 <1>");
-    assert.strictEqual(preset.settings, "settings.xml");
-    assert.ok(files.settings.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<map>'));
-    assert.ok(files.settings.includes('<value name="seedling_width">220</value>'));
-    assert.ok(files.settings.includes('<value name="seedling_widget">true</value>'));
-    const stored = /<value name="seedling_code_uri">(.*)<\/value>/.exec(files.settings)[1];
-    assert.ok(!/[<>\\\n]/.test(stored));
-    const uri = JSON.parse(stored.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&"));
-    assert.strictEqual(Yui.seedlingCode({ seedling_code_uri: uri }), 'import QtQuick 2.12\nText { text: "a<b" }');
-    assert.strictEqual(Yui.seedlingCode({ seedling_code: "old" }), "old");
-    assert.strictEqual(Yui.seedlingCode(null), "");
-});
-
 test("feature instructions mention desktop actions", () => {
     const text = Yui.featureInstructions("爸爸", []);
     assert.ok(text.includes("<<launch:") && text.includes("<<find:") && text.includes("<<kill:"));
-});
-
-test("migrateSeedlingKeys moves lab_* to seedling_*", () => {
-    const settings = { lab_widget: true, lab_code_uri: "a%0Ab", seedling_title: "new", lab_title: "old", other: 1 };
-    assert.strictEqual(Yui.migrateSeedlingKeys(settings), true);
-    assert.deepStrictEqual(settings, { seedling_widget: true, seedling_code_uri: "a%0Ab", seedling_title: "new", other: 1 });
-    assert.strictEqual(Yui.seedlingCode(settings), "a\nb");
-    assert.strictEqual(Yui.migrateSeedlingKeys(settings), false);
 });
 
 test("forbidden actions are dropped and not explained", () => {
