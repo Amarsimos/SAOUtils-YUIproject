@@ -200,42 +200,6 @@ Item {
 
             }
 
-            // Shaded black 20% to 0 at its top and bottom.
-            Rectangle {
-                width: parent.width
-                height: Math.min(7, parent.height / 2)
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "#33040404"
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: "#00040404"
-                    }
-
-                }
-            }
-
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: Math.min(7, parent.height / 2)
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "#00040404"
-                    }
-
-                    GradientStop {
-                        position: 1
-                        color: "#33040404"
-                    }
-
-                }
-            }
-
             Timer {
                 interval: 5000
                 repeat: true
