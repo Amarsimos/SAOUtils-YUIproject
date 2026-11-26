@@ -2563,16 +2563,24 @@ var SEEDLING_INSTRUCTION = "- 桌面小挂件（Seedling）：当{t}明确请你
 // editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
 // do) instead of being written out again.
 function seedlingCodePrompt(allowNetwork, editing) {
+    // The rules follow Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js, S3 of
+    // "Seedling Development Plan.md"), each with what to write instead, so the code passes the first
+    // time. The check is what keeps widgets safe; these rules only save rewrites.
     return [editing ? "你是一个只写 QML 的程序，负责修改一个 SAO Utils 桌面小挂件的代码。" : "你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
-        "规则：",
-        "1. 只能 import 这些模块：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12、QtQuick.Window 2.12；不能 import 文件、文件夹或其他模块。",
-        "2. 不能用 NVG / NERvGear、SystemCall、Qt.openUrlExternally、Qt.createQmlObject、Qt.createComponent、Loader 的 source、eval、LocalStorage，不能读写本地文件（file:）。",
-        allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。不要为了装饰去加载网络图片。",
-        "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
-        "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
-        editing ? "6. 修改时按下面的「修改方式」只输出改动。" : "6. 输出完整的代码。",
-        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
-        "8. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
+        "代码会先经过安全检查，不符合下面规则的会被拒绝。规则：",
+        "1. 只能 import：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12。不能 import 文件、文件夹或其他模块（包括 QtQuick.Window、NERvGear）。",
+        "2. Qt.* 只能用颜色、日期、几何和绑定：Qt.rgba / rgb / hsla / lighter / darker / tint、Qt.formatDate / formatTime / formatDateTime、Qt.point / size / rect、Qt.binding、Qt.callLater，以及 Qt.AlignCenter 这类常量。",
+        "3. 不能用：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。",
+        "4. 方括号 [ ] 里只能写数字（list[0]）、直接写出的字段名（data[\"temp\"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量：按值查表用 switch 或对象的点号（colors.sunny）。",
+        "5. parent 只能用来取尺寸和锚线（parent.width、parent.height、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。",
+        "6. 循环只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器在循环外不要再赋别的值。",
+        "7. 根元素写明 width 和 height，都不超过 2000；Timer 的 interval 不小于 16（毫秒）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。",
+        allowNetwork ? "8. 可以联网：用 XMLHttpRequest；地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；Image 的 source 也一样。只能用 http / https。" : "8. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；只能用 http / https。不要为了装饰去加载网络图片。",
+        "9. 不能读写本地文件：不能出现 file:、qrc:、C:/ 这类地址，source 只能是写全的 https 地址、空字符串，或代码里自己元素的 id（给效果用）。",
+        "10. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
+        editing ? "11. 修改时按下面的「修改方式」只输出改动。" : "11. 输出完整的代码。",
+        "12. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
+        "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
 // How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's

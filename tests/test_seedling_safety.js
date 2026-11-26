@@ -145,6 +145,24 @@ const allow = {
 };
 Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 
+// ---- Yui's code prompt (yui.js, seedlingCodePrompt) says the same as the check (S6): the modules it
+// allows are exactly the check's, the Qt functions it names are allowed, and its examples pass.
+const Y = {};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+const prompt = Y.seedlingCodePrompt(false, false);
+const importRule = prompt.split("\n").find((line) => line.indexOf("1. 只能 import") === 0);
+const promptModules = importRule.split("。")[0].replace("1. 只能 import：", "").split("、").map((m) => m.trim().split(" ")[0]);
+assert.deepStrictEqual(promptModules.slice().sort(), Array.from(S.ALLOWED_MODULES).sort(), "the prompt's modules: " + promptModules.join(", "));
+const qtRule = prompt.split("\n").find((line) => line.indexOf("2. Qt.*") === 0);
+(qtRule.match(/(?:Qt\.|\/ )([a-z][A-Za-z]+)/g) || []).map((m) => m.replace(/^Qt\.|^\/ /, "")).forEach((name) => {
+    assert.ok(S.QT_ALLOWED.indexOf(name) !== -1, "the prompt names Qt." + name + ", which the check refuses");
+});
+expect("prompt example: data[\"temp\"]", script("var data = {}; var t = data[\"temp\"];"), false, "pass");
+expect("prompt example: colors.sunny", script("var colors = {sunny: \"red\"}; var c = colors.sunny;"), false, "pass");
+expect("prompt example: address + city", script("var city = \"Tokyo\"; var r = new XMLHttpRequest(); r.open(\"GET\", \"https://api.example.com/data?q=\" + city);"), true, "pass");
+expect("prompt example: for in", script("var obj = {a: 1}; for (var k in obj) console.log(k);"), false, "pass");
+assert.ok(prompt.indexOf("QtQuick.Window") !== -1 && importRule.indexOf("包括 QtQuick.Window") !== -1, "the prompt says QtQuick.Window is not allowed");
+
 // Messages say the line
 const lined = S.check("import QtQuick 2.12\nItem {\n    Component.onCompleted: Qt.quit()\n}\n", false);
 assert.strictEqual(lined[0].line, 3);
