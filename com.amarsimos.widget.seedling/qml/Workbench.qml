@@ -34,6 +34,30 @@ NVG.View {
         return prefix + problemList[0].text + (problemList.length > 1 ? "  (+" + (problemList.length - 1) + ")" : "");
     }
 
+    // All the problems, one per line.
+    function problemsText() {
+        return problemList.map(function(problem) {
+            return problem.text;
+        }).join("\n");
+    }
+
+    function copyProblems() {
+        clipboardHelper.text = problemsText();
+        clipboardHelper.selectAll();
+        clipboardHelper.copy();
+        clipboardHelper.text = "";
+        status = qsTr("Copied %1 problem(s).").arg(problemList.length);
+    }
+
+    // Yui's chat opens with the problems written in its input box, to send (or add to) yourself.
+    function sendProblemsToYui() {
+        var yui = Link.Bench.writer;
+        if (!yui || !yui.prefillChat)
+            return ;
+
+        yui.prefillChat("帮我看看这个挂件哪里有问题：\n" + problemsText());
+    }
+
     // Problems: a click puts the cursor at the line (with Code Editor on).
     function goToLine(line) {
         if (line <= 0 || !showCode)
@@ -1084,6 +1108,26 @@ NVG.View {
                                 color: "#7A7A7A"
                             }
 
+                            // Problems: all of them copied, or sent to Yui's chat (with MHCP-YUI).
+                            Row {
+                                visible: bench.showProblems
+                                spacing: 4
+
+                                Chip {
+                                    text: "Copy All"
+                                    implicitHeight: 24
+                                    onClicked: bench.copyProblems()
+                                }
+
+                                Chip {
+                                    visible: Link.Bench.writer !== null && Link.Bench.writer.prefillChat !== undefined
+                                    text: "Send to Yui"
+                                    implicitHeight: 24
+                                    onClicked: bench.sendProblemsToYui()
+                                }
+
+                            }
+
                             // Zoom: smaller, Fit (the default), 100 %, larger.
                             Row {
                                 visible: bench.previewShown && bench.preview !== null
@@ -1280,7 +1324,7 @@ NVG.View {
 
                             }
 
-                            // Problems: every one in full; a click goes to its line.
+                            // Problems: every one in full, selectable; a click on its red bar goes to its line.
                             ListView {
                                 anchors.fill: parent
                                 anchors.margins: 2
@@ -1306,13 +1350,18 @@ NVG.View {
                                         color: "#C82864"
                                     }
 
-                                    Text {
+                                    // Selectable, to copy a part (Ctrl + C).
+                                    TextEdit {
                                         id: problemText
 
                                         x: 20
                                         y: 8
                                         width: parent.width - 28
                                         wrapMode: Text.Wrap
+                                        readOnly: true
+                                        selectByMouse: true
+                                        selectionColor: "#80F1AA03"
+                                        selectedTextColor: "#3A3A3A"
                                         text: modelData.text
                                         font.family: "SAO UI"
                                         font.pixelSize: 14
@@ -1326,10 +1375,13 @@ NVG.View {
                                         color: "#E6E6E6"
                                     }
 
+                                    // The red bar goes to the line (the text is for selecting).
                                     MouseArea {
                                         id: problemArea
 
-                                        anchors.fill: parent
+                                        x: 0
+                                        width: 18
+                                        height: parent.height
                                         hoverEnabled: true
                                         cursorShape: modelData.line > 0 && bench.showCode ? Qt.PointingHandCursor : Qt.ArrowCursor
                                         onClicked: bench.goToLine(modelData.line)
@@ -1575,6 +1627,13 @@ NVG.View {
         repeat: true
         running: bench.writing
         onTriggered: bench.writingSeconds = Math.round((Date.now() - bench.writingSince) / 1000)
+    }
+
+    // For copying to the clipboard (QML has no clipboard of its own): never shown.
+    TextEdit {
+        id: clipboardHelper
+
+        visible: false
     }
 
     Timer {
