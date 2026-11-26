@@ -2567,7 +2567,7 @@ function seedlingCodePrompt(allowNetwork, editing) {
         "规则：",
         "1. 只能 import 这些模块：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12、QtQuick.Window 2.12；不能 import 文件、文件夹或其他模块。",
         "2. 不能用 NVG / NERvGear、SystemCall、Qt.openUrlExternally、Qt.createQmlObject、Qt.createComponent、Loader 的 source、eval、LocalStorage，不能读写本地文件（file:）。",
-        allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 不能联网：不能用 XMLHttpRequest、WebSocket，不能加载 http / https 地址。",
+        allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。不要为了装饰去加载网络图片。",
         "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
         "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
         editing ? "6. 修改时按下面的「修改方式」只输出改动。" : "6. 输出完整的代码。",
