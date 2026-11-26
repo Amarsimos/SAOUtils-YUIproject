@@ -78,6 +78,12 @@ T.Widget {
         }
     }
 
+    // Saved from the workbench: an SAO orange ring flashes around the widget, so it is clear which
+    // widget it went to.
+    function flashSaved() {
+        savedFlash.restart();
+    }
+
     // Saves code as this widget's content (from the workbench), the frame taking its size.
     function apply(source) {
         settings.code = source;
@@ -168,6 +174,41 @@ T.Widget {
         id: content
 
         anchors.fill: parent
+    }
+
+    Rectangle {
+        id: savedRing
+
+        anchors.fill: parent
+        anchors.margins: -3
+        z: 10
+        radius: 4
+        color: "transparent"
+        border.color: "#F1AA03"
+        border.width: 3
+        opacity: 0
+
+        SequentialAnimation {
+            id: savedFlash
+
+            NumberAnimation {
+                target: savedRing
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: 150
+            }
+
+            NumberAnimation {
+                target: savedRing
+                property: "opacity"
+                to: 0
+                duration: 900
+                easing.type: Easing.InQuad
+            }
+
+        }
+
     }
 
     // Nothing to show yet, or the code does not run: a small card that opens the workbench.

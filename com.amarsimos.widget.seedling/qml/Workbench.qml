@@ -275,7 +275,8 @@ NVG.View {
 
     // Refused only for going online (Network off): asks with SAO Utils' message box whether this
     // widget may go online; then(allowed) after the answer (allowed: Network turned on, rendered again).
-    function askNetwork(then) {
+    // question: the message box's text (default: the plain question).
+    function askNetwork(then, question) {
         if (networkAsking || settings.allow_network === true)
             return then(false);
 
@@ -291,7 +292,7 @@ NVG.View {
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": qsTr("Network"),
-                "text": qsTr("This widget needs to go online.\nLet it go online?"),
+                "text": question || qsTr("This widget needs to go online.\nLet it go online?"),
                 "modal": true
             });
             if (answer && typeof answer.then === "function")
@@ -409,13 +410,22 @@ NVG.View {
     }
 
     // Saves the code to the widget, and as a new version when it changed.
-    // Save (○): only saves; it asks nothing (S5). Refused only for going online: not saved, and the
-    // status says to allow it with Run (Code Editor) first.
+    // Save (○). Refused only for going online: asks whether to allow it and save (decided 2026-11-26:
+    // Save is the user's own step, so a question then is no interruption); a yes saves it. It always
+    // says how it went: a sound, a stamp on the preview (SAVED / NOT SAVED), a flash of the widget on
+    // the desktop when saved, the status shaking when not.
     function save() {
         if (!render(true)) {
-            if (result === "unsafe" && Safety.onlyNetwork(refusedProblems))
-                status = qsTr("Not saved: this widget goes online and Network is off. Press Run to allow it first.");
-
+            if (result === "unsafe" && Safety.onlyNetwork(refusedProblems)) {
+                askNetwork(function(allowed) {
+                    if (allowed && result === "ok")
+                        save();
+                    else
+                        saveFailed(qsTr("Not saved: this widget goes online, and going online was not allowed."));
+                }, qsTr("This widget goes online, and Network is off.\nAllow it to go online and save?"));
+                return ;
+            }
+            saveFailed("");
             return ;
         }
 
@@ -434,7 +444,31 @@ NVG.View {
         }
         versionIndex = versions.length - 1;
         var problem = targetWidget.apply(code);
-        status = problem ? problem : qsTr("Saved to the widget (version %1).").arg(versionIndex + 1);
+        if (problem) {
+            saveFailed(problem);
+            return ;
+        }
+        status = qsTr("Saved to the widget (version %1).").arg(versionIndex + 1);
+        NVG.SystemCall.playSound(NVG.SFX.ProgramReady);
+        stamp.show(true);
+        if (targetWidget.flashSaved)
+            targetWidget.flashSaved();
+
+    }
+
+    // Not saved: the warning sound, NOT SAVED on the preview, the status shaking (message: what to say,
+    // "" keeps the render's), Problems flashing when there are some.
+    function saveFailed(message) {
+        if (message) {
+            result = "error";
+            status = message;
+        }
+        NVG.SystemCall.playSound(NVG.SFX.NotifyWarning);
+        stamp.show(false);
+        statusShake.restart();
+        if (problemList.length > 0)
+            problemsFlash.restart();
+
     }
 
     function currentCode() {
@@ -927,10 +961,15 @@ NVG.View {
                     }
 
                     Chip {
+                        id: problemsChip
+
+                        // Flashes (lit for a moment, twice) when a Save fails with problems.
+                        property bool flash: false
+
                         visible: bench.problemList.length > 0
                         text: "Problems (" + bench.problemList.length + ")"
                         icon: "help"
-                        checked: bench.showProblems
+                        checked: bench.showProblems || flash
                         onClicked: {
                             bench.showProblems = !bench.showProblems;
                             bench.showVersions = false;
@@ -1513,6 +1552,63 @@ NVG.View {
 
                             }
 
+                            // SAVED / NOT SAVED, stamped on the box for a moment after Save.
+                            Text {
+                                id: stamp
+
+                                function show(saved) {
+                                    text = saved ? "SAVED" : "NOT SAVED";
+                                    color = saved ? "#F1AA03" : "#C82864";
+                                    stampAnimation.restart();
+                                }
+
+                                anchors.centerIn: parent
+                                z: 20
+                                opacity: 0
+                                font.family: "SAO UI"
+                                font.pixelSize: 40
+                                font.letterSpacing: 6
+                                style: Text.Outline
+                                styleColor: "#CCFFFFFF"
+
+                                SequentialAnimation {
+                                    id: stampAnimation
+
+                                    ParallelAnimation {
+                                        NumberAnimation {
+                                            target: stamp
+                                            property: "opacity"
+                                            from: 0
+                                            to: 1
+                                            duration: 120
+                                        }
+
+                                        NumberAnimation {
+                                            target: stamp
+                                            property: "scale"
+                                            from: 1.4
+                                            to: 1
+                                            duration: 180
+                                            easing.type: Easing.OutBack
+                                        }
+
+                                    }
+
+                                    PauseAnimation {
+                                        duration: 700
+                                    }
+
+                                    NumberAnimation {
+                                        target: stamp
+                                        property: "opacity"
+                                        to: 0
+                                        duration: 400
+                                    }
+
+                                }
+
+                            }
+
                             // The target frame's corners, and what is there when nothing is shown.
                             CornerMarks {
                                 anchors.fill: parent
@@ -1595,7 +1691,12 @@ NVG.View {
 
             // What happened, centered between the buttons (as an SAO dialog's message between its ○ and ✕).
             Text {
+                id: statusLine
+
+                property real shake: 0
+
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: shake
                 width: parent.width / 2 - 72
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -1758,6 +1859,81 @@ NVG.View {
         id: clipboardHelper
 
         visible: false
+    }
+
+    // Not saved: the status line shakes left and right.
+    SequentialAnimation {
+        id: statusShake
+
+        NumberAnimation {
+            target: statusLine
+            property: "shake"
+            to: -8
+            duration: 50
+        }
+
+        NumberAnimation {
+            target: statusLine
+            property: "shake"
+            to: 8
+            duration: 80
+        }
+
+        NumberAnimation {
+            target: statusLine
+            property: "shake"
+            to: -5
+            duration: 70
+        }
+
+        NumberAnimation {
+            target: statusLine
+            property: "shake"
+            to: 0
+            duration: 60
+        }
+
+    }
+
+    SequentialAnimation {
+        id: problemsFlash
+
+        PropertyAction {
+            target: problemsChip
+            property: "flash"
+            value: true
+        }
+
+        PauseAnimation {
+            duration: 180
+        }
+
+        PropertyAction {
+            target: problemsChip
+            property: "flash"
+            value: false
+        }
+
+        PauseAnimation {
+            duration: 120
+        }
+
+        PropertyAction {
+            target: problemsChip
+            property: "flash"
+            value: true
+        }
+
+        PauseAnimation {
+            duration: 180
+        }
+
+        PropertyAction {
+            target: problemsChip
+            property: "flash"
+            value: false
+        }
+
     }
 
     Timer {
