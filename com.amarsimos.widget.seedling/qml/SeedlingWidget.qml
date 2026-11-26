@@ -60,7 +60,9 @@ T.Widget {
             problem = qsTr("Paused: all Seedling widgets are paused (Seedling Settings).");
             return ;
         }
-        if (code && readFile(guardFile) === "1") {
+        var mark = readFile(guardFile);
+        console.log("[seedling] start-up: " + widget.name + ", running mark \"" + mark + "\", paused no");
+        if (code && mark === "1") {
             heldBack = true;
             problem = qsTr("Not run: SAO Utils froze or was closed while this widget was starting last time. Right-click: Run Anyway, or fix it in the Workbench.");
             return ;
