@@ -331,6 +331,7 @@ T.Widget {
         "pixie_size": 160,
         "collapsed_form": "pixie",
         "crystal_size": 120,
+        "crystal_spin": 40,
         "bubble_seconds": 8,
         "bubble_opacity": 80,
         "chat_opacity": 80,
@@ -493,13 +494,16 @@ T.Widget {
         return true;
     }
 
-    // Wake Yui up when she is asleep; returns true when she was.
+    // Wake Yui up when she is asleep; returns true when she was. Back after a while, she greets you as on
+    // start-up (Login Greeting: welcome back, good morning, long time no see); else a line of her own.
     function wakeUp() {
         noteActivity();
         if (!awaken())
             return false;
 
-        appendMessage("ai", Yui.wakeLine(userTitle()), false, true);
+        if (!welcomeBack())
+            appendMessage("ai", Yui.wakeLine(userTitle()), false, true);
+
         return true;
     }
 
@@ -1758,7 +1762,7 @@ T.Widget {
         var now = Date.now();
         var kind = Yui.greetingKind(lastActive, now);
         if (!featureEnabled("greet_on_start") || kind === "")
-            return ;
+            return false;
 
         var title = userTitle();
         var away = Yui.formatDuration(now - lastActive);
@@ -1768,8 +1772,11 @@ T.Widget {
             "back": "距离上次聊天已经过了 " + away + "。请以结衣的身份欢迎" + title + "回来，可以结合现在的时间和之前聊过的内容。"
         }[kind];
         diag("login greeting: " + kind);
-        if (yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）"))
+        var spoke = yuiSpeaks("（系统提示：" + title + "回来了，" + how + "一两句话即可，不要提起这条提示。）");
+        if (spoke)
             careSaid("greeting", now);
+
+        return spoke;
     }
 
     function sendMessage(text) {
@@ -3879,9 +3886,158 @@ T.Widget {
             "avatar": "小小的立绘"
         }[collapsedForm] || "小小的立绘";
         var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
-        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "。请结衣主动对" + title + "说一句简短的话：闲聊、问候，或者结合时间和之前聊过的事关心一下。一两句话即可，不要提起这条提示。）");
-        diag("idle chatter: " + (started ? "requested" : "not now (busy or no API key)"));
+        var now = Date.now();
+        var hook = widget.busy ? null : chatHook(now, title);
+        var start = hook ? "可以从这个由头说起：" + hook.text + "。" : "闲聊、问候，或者结合时间和之前聊过的事关心一下。";
+        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "，这只是背景，不要说起自己的样子或待在哪里。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
+        diag("idle chatter" + (hook ? " (" + hook.key + ")" : "") + ": " + (started ? "requested" : "not now (busy or no API key)"));
         return started;
+    }
+
+    // ---------------------------------------------------------------- Care moments
+    // Weather readings of the last 3 hours ({at, text, temp}), and a change found in them (Weather Changes).
+    property var weatherReadings: []
+    property var weatherNews: null
+    // Since when the load has been high (0: it is not), for Spontaneous Talk's "busy computer".
+    property double busySince: 0
+
+    function weatherNow(now) {
+        var text = weatherSource.configuration && weatherSource.value && weatherSource.value.status === 1 ? String(weatherText.result || "") : "";
+        var temp = temperatureSource.configuration && temperatureSource.value && temperatureSource.value.status === 1 ? parseFloat(temperatureText.result) : NaN;
+        return {
+            "at": now,
+            "text": text,
+            "temp": temp
+        };
+    }
+
+    // Every care tick: a reading every 10 minutes (or when it changes), checked against the last 3 hours.
+    function trackSurroundings(now) {
+        busySince = crystalLevel >= 1 ? (busySince || now) : 0;
+        if (widget.settings.weather_report === false)
+            return ;
+
+        var current = weatherNow(now);
+        if (!current.text && isNaN(current.temp))
+            return ;
+
+        var readings = weatherReadings.filter(function(reading) {
+            return now - reading.at <= 3 * 3600000;
+        });
+        var last = readings[readings.length - 1];
+        if (last && now - last.at < 600000 && last.text === current.text && (last.temp === current.temp || (isNaN(last.temp) && isNaN(current.temp))))
+            return ;
+
+        var change = Yui.weatherChange(readings, current);
+        if (change) {
+            weatherNews = {
+                "change": change,
+                "at": now
+            };
+            diag("weather change: " + change.kind + " " + change.from + " → " + change.to);
+        }
+        readings.push(current);
+        weatherReadings = readings;
+    }
+
+    // The Bond's days 1 - 7 days ahead: [{name, days}].
+    function bondSoon(now, title) {
+        var soon = [];
+        var check = function(value, name) {
+            var m = /(\d{2})-(\d{2})$/.exec(String(value || "").trim());
+            if (!m)
+                return ;
+
+            var today = new Date(now);
+            var next = new Date(today.getFullYear(), Number(m[1]) - 1, Number(m[2]));
+            if (next.getTime() < Yui.dayStart(now))
+                next.setFullYear(next.getFullYear() + 1);
+
+            var days = Math.round((next.getTime() - Yui.dayStart(now)) / 86400000);
+            if (days >= 1 && days <= 7)
+                soon.push({
+                "name": name,
+                "days": days
+            });
+
+        };
+        check(widget.settings.player_birthday, title + "的生日");
+        check(widget.settings.meeting_day, "和" + title + "相遇的纪念日");
+        return soon;
+    }
+
+    // What Spontaneous Talk may start from now (Yui.chatHooks), one not used today.
+    function chatHook(now, title) {
+        var today = Qt.formatDate(new Date(now), "yyyy-MM-dd");
+        var lastYear = new Date(now);
+        lastYear.setFullYear(lastYear.getFullYear() - 1);
+        var yearAgoDay = Yui.dayKey(lastYear.getTime());
+        var older = heartCache.filter(function(entry) {
+            return entry.kind !== "core" && now - (entry.created || now) > 7 * 86400000;
+        });
+        var yearAgo = heartCache.filter(function(entry) {
+            return entry.created && Yui.dayKey(entry.created) === yearAgoDay;
+        })[0];
+        var info = widget.settings.now_playing !== false && mediaLoaded ? mediaInfo() : null;
+        var mood = featureEnabled("daily_mood") ? moodsSince(1).filter(function(entry) {
+            return entry.day === today;
+        })[0] : null;
+        var weather = weatherNow(now);
+        var hooks = Yui.chatHooks({
+            "now": now,
+            "track": Yui.mediaTrack(info),
+            "playing": !!info && info.playing === true,
+            "busyMinutes": busySince ? Math.round((now - busySince) / 60000) : 0,
+            "weather": weather.text,
+            "temp": isNaN(weather.temp) ? undefined : weather.temp,
+            "awake": sleeping ? 0 : now - sessionStart,
+            "mood": mood || null,
+            "soon": featureEnabled("followups") ? followupList(now).filter(function(item) {
+                return item.phase === "ahead" && item.days <= 3;
+            }) : [],
+            "bondSoon": bondSoon(now, title),
+            "memory": older.length > 0 ? older[Math.floor(Math.random() * older.length)].text : "",
+            "yearAgo": yearAgo ? yearAgo.text : "",
+            "chattedToday": Qt.formatDate(new Date(widget.settings.last_active || 0), "yyyy-MM-dd") === today
+        }, title);
+        var used = widget.settings.chat_hooks_used && widget.settings.chat_hooks_used.day === today ? widget.settings.chat_hooks_used.keys : [];
+        var hook = Yui.pickChatHook(hooks, used, Math.random());
+        if (hook)
+            widget.settings.chat_hooks_used = {
+            "day": today,
+            "keys": used.concat([hook.key])
+        };
+
+        return hook;
+    }
+
+    // System Console tests: said at once (an example when there is nothing real).
+    function testMoodCare() {
+        var entries = Yui.moodLow(moodsSince(7), Date.now()) || [{
+            "day": Yui.dayKey(Date.now() - 2 * 86400000),
+            "score": 2,
+            "note": "加班"
+        }, {
+            "day": Yui.dayKey(Date.now() - 86400000),
+            "score": 1,
+            "note": "没睡好"
+        }, {
+            "day": Yui.dayKey(Date.now()),
+            "score": 2,
+            "note": ""
+        }];
+        var started = yuiSpeaks(Yui.moodCareInstruction(entries, userTitle()), qsTr("Mental Health Counseling"));
+        diag("test mood care" + (started ? "" : ": not now (busy or no API key)"));
+    }
+
+    function testWeatherChange() {
+        var change = weatherNews ? weatherNews.change : {
+            "kind": "rain",
+            "from": "多云",
+            "to": "小雨"
+        };
+        var started = yuiSpeaks(Yui.weatherChangeInstruction(change, userTitle()), qsTr("Mental Health Counseling"));
+        diag("test weather change: " + change.kind + (started ? "" : ", not now (busy or no API key)"));
     }
 
     // ---------------------------------------------------------------- Follow-ups
@@ -4058,6 +4214,8 @@ T.Widget {
         if (carePending && now - carePending.at > 10 * 60000)
             careRespond("ignored");
 
+        trackSurroundings(now);
+
         if (!force && (raidActive || sleeping || widget.busy || now - lastActivity < 2 * 60000))
             return ;
 
@@ -4081,6 +4239,21 @@ T.Widget {
         if (weeklyReportDue(date))
             candidates.push({
             "kind": "weekly",
+            "priority": "medium"
+        });
+
+        var hour = date.getHours();
+        var lowMoods = featureEnabled("mood_care") && featureEnabled("daily_mood") && hour >= 9 && hour < 22 ? Yui.moodLow(moodsSince(7), now) : null;
+        if (lowMoods)
+            candidates.push({
+            "kind": "mood_care",
+            "priority": "medium"
+        });
+
+        var weatherChange = weatherNews && now - weatherNews.at < 3600000 && featureEnabled("weather_changes") && hour >= 7 && hour < 22 ? weatherNews.change : null;
+        if (weatherChange)
+            candidates.push({
+            "kind": "weather_" + weatherChange.kind,
             "priority": "medium"
         });
 
@@ -4143,6 +4316,13 @@ T.Widget {
             spoke = writingReport;
         } else if (result.pick.kind === "chat") {
             spoke = idleChat();
+        } else if (result.pick.kind === "mood_care") {
+            spoke = yuiSpeaks(Yui.moodCareInstruction(lowMoods, title), qsTr("Mental Health Counseling"));
+        } else if (result.pick.kind.indexOf("weather_") === 0) {
+            spoke = yuiSpeaks(Yui.weatherChangeInstruction(weatherChange, title), qsTr("Mental Health Counseling"));
+            if (spoke)
+                weatherNews = null;
+
         } else if (result.pick.kind.indexOf("followup_") === 0) {
             spoke = yuiSpeaks(Yui.followupInstruction(followupDue, title), qsTr("Mental Health Counseling"));
             if (spoke) {
@@ -4548,6 +4728,7 @@ T.Widget {
 
                 width: parent.width
                 text: actionDialog.text
+                font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                 wrapMode: Text.WrapAnywhere
             }
 
@@ -4679,6 +4860,7 @@ T.Widget {
         sleeping: widget.sleeping
         busy: widget.busy
         unread: widget.hasUnread
+        spinSeconds: widget.styles.crystal_spin !== undefined ? widget.styles.crystal_spin : widget.defaultValues.crystal_spin
 
         MouseArea {
             id: crystalMouse
@@ -5203,21 +5385,25 @@ T.Widget {
                 cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 onPressed: {
                     dragging = false;
-                    pressPoint = mapToGlobal(mouse.x, mouse.y);
+                    // The point grabbed, in the view's own coordinates: it stays under the cursor.
+                    pressPoint = mapToItem(null, mouse.x, mouse.y);
                     if (widget.yuiView)
-                        widget.yuiView.beginMove(pressPoint);
+                        widget.yuiView.beginMove();
 
                 }
                 onPositionChanged: {
                     if (!pressed || !widget.yuiView)
                         return ;
 
-                    var now = mapToGlobal(mouse.x, mouse.y);
-                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > 4)
+                    // How far the cursor is from the grabbed point is how far the view moves; measured in
+                    // the view (not on the screen), so scaled or several screens cannot make it jump.
+                    var now = mapToItem(null, mouse.x, mouse.y);
+                    var dx = now.x - pressPoint.x, dy = now.y - pressPoint.y;
+                    if (!dragging && Math.abs(dx) + Math.abs(dy) > 4)
                         dragging = true;
 
                     if (dragging)
-                        widget.yuiView.moveTo(now);
+                        widget.yuiView.moveBy(dx, dy);
 
                 }
                 onReleased: {
@@ -5565,21 +5751,25 @@ T.Widget {
                 cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                 onPressed: {
                     dragging = false;
-                    pressPoint = mapToGlobal(mouse.x, mouse.y);
+                    // The point grabbed, in the view's own coordinates: it stays under the cursor.
+                    pressPoint = mapToItem(null, mouse.x, mouse.y);
                     if (widget.yuiView)
-                        widget.yuiView.beginMove(pressPoint);
+                        widget.yuiView.beginMove();
 
                 }
                 onPositionChanged: {
                     if (!pressed || !widget.yuiView)
                         return ;
 
-                    var now = mapToGlobal(mouse.x, mouse.y);
-                    if (!dragging && Math.abs(now.x - pressPoint.x) + Math.abs(now.y - pressPoint.y) > dragThreshold)
+                    // How far the cursor is from the grabbed point is how far the view moves; measured in
+                    // the view (not on the screen), so scaled or several screens cannot make it jump.
+                    var now = mapToItem(null, mouse.x, mouse.y);
+                    var dx = now.x - pressPoint.x, dy = now.y - pressPoint.y;
+                    if (!dragging && Math.abs(dx) + Math.abs(dy) > dragThreshold)
                         dragging = true;
 
                     if (dragging)
-                        widget.yuiView.moveTo(now);
+                        widget.yuiView.moveBy(dx, dy);
 
                 }
                 onReleased: {
@@ -5881,6 +6071,7 @@ T.Widget {
 
                             placeholderText: qsTr("Message to Yui...")
                             color: "black"
+                            font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                             wrapMode: TextArea.Wrap
                             selectByMouse: true
                             leftPadding: 10

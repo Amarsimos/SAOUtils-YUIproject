@@ -385,6 +385,7 @@ test("login greeting kinds", () => {
     assert.strictEqual(Yui.greetingKind(at(24, 6), at(24, 9)), "back");
     assert.strictEqual(Yui.greetingKind(at(23, 23), at(24, 14)), "back");
     assert.strictEqual(Yui.greetingKind(at(20, 9), at(24, 9)), "long");
+    assert.strictEqual(Yui.greetingKind(at(22, 8), at(24, 9)), "long");
 });
 
 test("recollection log lines", () => {
@@ -730,6 +731,41 @@ test("Now block", () => {
     assert.strictEqual(Yui.nowPeriod(7), "早上");
     assert.strictEqual(Yui.nowPeriod(23), "深夜");
     assert.ok(Yui.nowGuidance(["请祝贺。"]).endsWith("不用提起。请祝贺。）"));
+});
+
+test("Care moments", () => {
+    const now = new Date(2026, 10, 26, 15, 0).getTime();
+    const low = [{ day: "2026-11-23", score: 2, note: "" }, { day: "2026-11-24", score: 1, note: "加班" }, { day: "2026-11-25", score: 2, note: "" }];
+    same(Yui.moodLow(low, now), low);
+    assert.strictEqual(Yui.moodLow(low.slice(1), now), null);
+    assert.strictEqual(Yui.moodLow(low, new Date(2026, 10, 30).getTime()), null);
+    assert.strictEqual(Yui.moodLow([low[0], low[1], { day: "2026-11-25", score: 4 }], now), null);
+    assert.ok(Yui.moodCareInstruction(low, "爸爸").includes("11-24 1/5 加班"));
+    // weather: rain starting, snow, a 5° fall within 3 h, nothing else
+    const h = 3600000;
+    const was = [{ at: now - 2 * h, text: "多云", temp: 12 }, { at: now - h, text: "多云", temp: 10 }];
+    same(Yui.weatherChange(was, { at: now, text: "小雨", temp: 9 }), { kind: "rain", from: "多云", to: "小雨" });
+    assert.strictEqual(Yui.weatherChange(was, { at: now, text: "小雪", temp: 9 }).kind, "snow");
+    same(Yui.weatherChange(was, { at: now, text: "多云", temp: 7 }), { kind: "cold", from: "12°", to: "7°" });
+    assert.strictEqual(Yui.weatherChange(was, { at: now, text: "多云", temp: 9 }), null);
+    assert.strictEqual(Yui.weatherChange([{ at: now - 4 * h, text: "晴", temp: 20 }], { at: now, text: "小雨", temp: 10 }), null);
+    assert.strictEqual(Yui.weatherChange([{ at: now - h, text: "小雨", temp: 10 }], { at: now, text: "大雨", temp: 10 }), null);
+    assert.ok(Yui.weatherChangeInstruction({ kind: "rain", from: "多云", to: "小雨" }, "爸爸").includes("带伞"));
+    // hooks
+    const keys = f => Yui.chatHooks(Object.assign({ now }, f), "爸爸").map(x => x.key);
+    assert.ok(keys({ playing: true, track: "《Yui》" }).includes("music"));
+    assert.ok(keys({ busyMinutes: 40 }).includes("busy_pc"));
+    assert.ok(keys({ temp: 3 }).includes("cold") && !keys({ temp: 12 }).includes("cold"));
+    assert.ok(keys({ chattedToday: false }).includes("first_today") && !keys({ chattedToday: true }).includes("first_today"));
+    const lateNight = Yui.chatHooks({ now: new Date(2026, 11, 25, 23, 30).getTime(), playing: true, track: "《Yui》" }, "爸爸").map(x => x.key);
+    assert.ok(lateNight.includes("holiday") && lateNight.includes("late_music") && !lateNight.includes("music"));
+    assert.ok(Yui.chatHooks({ now: new Date(2026, 10, 30, 12, 0).getTime() }, "爸爸").some(x => x.key === "month_end"));
+    assert.ok(Yui.chatHooks({ now: new Date(2026, 10, 27, 20, 0).getTime() }, "爸爸").some(x => x.key === "friday_night"));
+    // special first, used ones left out
+    const hooks = [{ key: "music", text: "a" }, { key: "holiday", text: "b", special: true }];
+    assert.strictEqual(Yui.pickChatHook(hooks, [], 0.9).key, "holiday");
+    assert.strictEqual(Yui.pickChatHook(hooks, ["holiday"], 0.9).key, "music");
+    assert.strictEqual(Yui.pickChatHook(hooks, ["holiday", "music"], 0.5), null);
 });
 
 test("Follow-ups", () => {

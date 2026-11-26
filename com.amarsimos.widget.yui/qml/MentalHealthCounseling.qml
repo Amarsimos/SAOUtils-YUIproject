@@ -7,10 +7,10 @@ import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
 // "Mental Health Counseling" window (next to Cardinal System, Equipment, Yui's Heart and System Console):
-// Yui's own task as MHCP-001, caring for the player. The settings are grouped by what they do:
-// Companion (greetings, speaking up by herself, standby, the weather), Care (rest reminders, the daily mood
-// check, the Sunday report) and Bond (birthday and the day of meeting); Records holds no settings, only
-// what was recorded (the daily moods, Yui's weekly reports), to become a window of its own later.
+// Yui's own task as MHCP-001, caring for the player. The settings are grouped by what they are about:
+// Perception (what she knows of right now: the weather, the song), Care (when she speaks up by herself:
+// how often, greetings, small talk, well-being, your days, reports) and Bond (birthday and the day of
+// meeting); Records holds no settings, only what was recorded (the daily moods, Yui's weekly reports).
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never the moods or the reports.
 NVG.Window {
@@ -22,8 +22,8 @@ NVG.Window {
     property var moods: []
     property var reports: []
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
-    readonly property var companionPreferences: [greetPreference, spontaneousPreference, weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
-    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, carePreference, followupsPreference, moodPreference, weeklyPreference]
+    readonly property var perceptionPreferences: [weatherPreference, weatherDataPreference, temperatureDataPreference, nowPlayingPreference]
+    readonly property var carePreferences: [careLevelPreference, quietPreference, quietFromPreference, quietToPreference, greetPreference, spontaneousPreference, carePreference, moodPreference, moodCarePreference, followupsPreference, weatherChangesPreference, weeklyPreference]
     readonly property var bondPreferences: [birthdayPreference, meetingPreference]
 
     function refreshReports() {
@@ -68,7 +68,7 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                model: [qsTr("Companion"), qsTr("Care"), qsTr("Bond"), qsTr("Records")]
+                model: [qsTr("Perception"), qsTr("Care"), qsTr("Bond"), qsTr("Records")]
             }
 
             StackLayout {
@@ -76,59 +76,15 @@ NVG.Window {
                 Layout.fillHeight: true
                 currentIndex: tabs.shownIndex
 
-                // ---------------------------------------------------------------- Companion
-                // Under headings: Greeting, Presence (talking up and standby), Weather.
+                // ---------------------------------------------------------------- Perception
+                // What Yui knows of right now, under headings: Weather, Music.
                 SettingsPage {
                     P.ObjectPreferenceGroup {
-                        id: companionGroup
+                        id: perceptionGroup
 
                         Layout.fillWidth: true
                         defaultValue: counselingWindow.targetWidget.settings
                         syncProperties: true
-
-                        Heading {
-                            text: qsTr("Greeting")
-                        }
-
-                        P.SwitchPreference {
-                            id: greetPreference
-
-                            name: "greet_on_start"
-                            defaultValue: true
-                            label: qsTr("Login Greeting")
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("Yui greets you when you return: good morning on the first morning of a day, long time no see after three days or more, otherwise welcome back after half an hour.")
-                        }
-
-                        Heading {
-                            text: qsTr("Presence")
-                        }
-
-                        P.SwitchPreference {
-                            id: spontaneousPreference
-
-                            name: "spontaneous_talk"
-                            defaultValue: true
-                            label: qsTr("Spontaneous Talk")
-                        }
-
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("While the chat is closed, Yui sometimes speaks up by herself (uses the API). How often follows Care Level (Care tab).")
-                        }
-
-                        // Standby has no setting: Yui falls asleep when what she says by herself goes
-                        // unanswered twice (the user seems away), and wakes on any interaction.
-                        SettingNote {
-                            visible: counselingWindow.targetWidget.settingsHelp
-                            besidePreferences: true
-                            text: qsTr("When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.")
-                        }
 
                         Heading {
                             text: qsTr("Weather")
@@ -194,9 +150,9 @@ NVG.Window {
                     ResetTabButton {
                         yui: counselingWindow.targetWidget
                         windowTitle: counselingWindow.title
-                        tabTitle: qsTr("Companion")
-                        preferences: counselingWindow.companionPreferences
-                        groups: [companionGroup]
+                        tabTitle: qsTr("Perception")
+                        preferences: counselingWindow.perceptionPreferences
+                        groups: [perceptionGroup]
                     }
 
                 }
@@ -293,7 +249,51 @@ NVG.Window {
                         }
 
                         Heading {
-                            text: qsTr("Reminders")
+                            text: qsTr("Greeting")
+                        }
+
+                        P.SwitchPreference {
+                            id: greetPreference
+
+                            name: "greet_on_start"
+                            defaultValue: true
+                            label: qsTr("Login Greeting")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Yui greets you when you return, at start-up or when you wake her up: good morning on the first morning of a day, long time no see after two days or more, otherwise welcome back after half an hour.")
+                        }
+
+                        Heading {
+                            text: qsTr("Small Talk")
+                        }
+
+                        P.SwitchPreference {
+                            id: spontaneousPreference
+
+                            name: "spontaneous_talk"
+                            defaultValue: true
+                            label: qsTr("Spontaneous Talk")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("While the chat is closed, Yui sometimes speaks up by herself (uses the API), often starting from something of right now. How often follows Care Level above.")
+                        }
+
+                        // Standby has no setting: Yui falls asleep when what she says by herself goes
+                        // unanswered twice (the user seems away), and wakes on any interaction.
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When two things Yui says by herself go unanswered, she takes you to be away and falls asleep (Standby) until you click her or write to her.")
+                        }
+
+                        Heading {
+                            text: qsTr("Well-being")
                         }
 
                         P.SwitchPreference {
@@ -311,6 +311,38 @@ NVG.Window {
                         }
 
                         P.SwitchPreference {
+                            id: moodPreference
+
+                            name: "daily_mood"
+                            defaultValue: true
+                            label: qsTr("Daily Mood Check")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.")
+                        }
+
+                        P.SwitchPreference {
+                            id: moodCarePreference
+
+                            name: "mood_care"
+                            defaultValue: true
+                            label: qsTr("Mood Care")
+                        }
+
+                        SettingNote {
+                            visible: counselingWindow.targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("When your last three moods were low (Daily Mood Check), Yui gently asks if you want to talk, once a day at most (09:00–22:00).")
+                        }
+
+                        Heading {
+                            text: qsTr("Your Days")
+                        }
+
+                        P.SwitchPreference {
                             id: followupsPreference
 
                             name: "followups"
@@ -325,17 +357,21 @@ NVG.Window {
                         }
 
                         P.SwitchPreference {
-                            id: moodPreference
+                            id: weatherChangesPreference
 
-                            name: "daily_mood"
+                            name: "weather_changes"
                             defaultValue: true
-                            label: qsTr("Daily Mood Check")
+                            label: qsTr("Weather Changes")
                         }
 
                         SettingNote {
                             visible: counselingWindow.targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Once a day Yui asks how you feel and records it (Mental Record); after a few low days she cares more.")
+                            text: qsTr("When it starts to rain or snow, or gets 5° colder within three hours, Yui tells you (an umbrella, something warm; 07:00–22:00). Needs Weather Report's values (Perception).")
+                        }
+
+                        Heading {
+                            text: qsTr("Reports")
                         }
 
                         P.SwitchPreference {
@@ -620,10 +656,10 @@ NVG.Window {
             settingsWindow: counselingWindow
             // load() is no edit, so the synced groups write the defaults to the settings by save().
             onResetRequested: {
-                counselingWindow.companionPreferences.concat(counselingWindow.carePreferences, counselingWindow.bondPreferences).forEach(function(preference) {
+                counselingWindow.perceptionPreferences.concat(counselingWindow.carePreferences, counselingWindow.bondPreferences).forEach(function(preference) {
                     preference.load();
                 });
-                companionGroup.save();
+                perceptionGroup.save();
                 careGroup.save();
                 bondGroup.save();
             }

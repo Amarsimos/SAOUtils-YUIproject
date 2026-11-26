@@ -63,6 +63,7 @@ Replies of small local models cleaned up: thinking written into the reply (befor
 Honest actions: a reply that says Yui did something on the computer when nothing was carried out, or promises a reminder she cannot give, gets a note under it; she is told what she can and cannot do.
 **Follow-ups** (Mental Health Counseling, Care, on by default): when Yui remembers something with a date to come (an exam, an interview), she cheers you on that day and asks how it went in the week after (08:00–22:00), by herself or beside your own message; Yui's Heart lists them on its new Follow-ups page, where Remove stops one and keeps the memory. System Console's Follow-up: Today / After try it at once.
 **Now**: every request ends with one line of what is true right now (time and part of the day, how long Yui has been awake with you, how long since you last talked, the weather, the song, a high load, today's mood, a birthday or anniversary), so Yui knows them all the time; the prompt is shorter than the separate paragraphs it replaces.
+**Mood Care** and **Weather Changes** (Mental Health Counseling, Care): after three low moods Yui gently asks if you want to talk; when it starts to rain or snow, or gets 5° colder, she tells you. Spontaneous Talk often starts from something of right now (a holiday, a year ago today, a day soon, the song, a busy computer, meals, weekends, the cold...). Woken up after a while, she greets you as at start-up; long time no see after two days.
 **Unread**: when Yui says something while the chat is closed and you miss it, her collapsed form keeps a mark (the crystal's heart blinks slowly and a blue dot breathes; a dot beside the pixie or the character) until you open the chat or click the bubble; the chat then opens at a "New messages" line, her unread messages lined in SAO orange.
 
 ### Changed
@@ -101,6 +102,9 @@ Honest actions: a reply that says Yui did something on the computer when nothing
   which beats faster while she is busy.
 - The speech bubble pops up with the message sound; its strip breathes and is sky blue, yellow or red
   only when the crystal warns.
+- Mental Health Counseling: Perception (what Yui knows: the weather, the song) and Care (when she speaks
+  up: Frequency, Greeting, Small Talk, Well-being, Your Days, Reports). System Console's tests are in
+  three groups: Actions, Care, Display.
 - Yui always starts collapsed, even if the chat was open when SAO Utils closed.
 - Care Tick (System Console) always makes her say something, Quiet Hours and today's number aside.
 

@@ -24,7 +24,9 @@ Item {
     property real beat: 0
     property real sweep: 0
     property real motes: 0
-    // Turn about the vertical axis (radians); a full turn in 24 s while awake.
+    // Turn about the vertical axis (radians) while awake: a full turn in spinSeconds (Equipment, Crystal
+    // Spin; 0 does not turn).
+    property real spinSeconds: 40
     property real spin: 0
     readonly property real unit: Math.min(width / 140, height / 200)
 
@@ -324,14 +326,13 @@ Item {
                 id: streak
 
                 readonly property real offset: {
+                    // The light crosses in the last 1/16 of the cycle (4 s of 64) and waits the rest.
                     var p = crystal.sweep;
-                    if (p < 0.7)
+                    var start = 1 - 1 / 16;
+                    if (p < start)
                         return -120;
 
-                    if (p > 0.9)
-                        return 120;
-
-                    var f = (p - 0.7) / 0.2;
+                    var f = (p - start) * 16;
                     return -120 + 240 * (0.5 - Math.cos(Math.PI * f) / 2);
                 }
 
@@ -431,7 +432,7 @@ Item {
     NumberAnimation on sweep {
         from: 0
         to: 1
-        duration: crystal.busy ? 2500 : 7000
+        duration: crystal.busy ? 16000 : 64000
         loops: Animation.Infinite
         running: crystal.visible && !crystal.sleeping
     }
@@ -440,8 +441,8 @@ Item {
     Timer {
         interval: 33
         repeat: true
-        running: crystal.visible && !crystal.sleeping
-        onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / 24000) % (Math.PI * 2)
+        running: crystal.visible && !crystal.sleeping && crystal.spinSeconds > 0
+        onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / (crystal.spinSeconds * 1000)) % (Math.PI * 2)
     }
 
     NumberAnimation on blink {

@@ -85,6 +85,7 @@ Item {
 
         visible: false
         text: messageWindow.actionLabel
+        font.family: messageWindow.fontFamily
         font.pixelSize: 12
     }
 
@@ -389,6 +390,7 @@ Item {
                     visible: messageWindow.note !== ""
                     width: parent.width
                     text: messageWindow.note
+                    font.family: messageWindow.fontFamily
                     color: "#888888"
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
@@ -416,6 +418,7 @@ Item {
                                 anchors.centerIn: parent
                                 width: Math.min(implicitWidth, parent.width - 18)
                                 text: modelData
+                                font.family: messageWindow.fontFamily
                                 elide: Text.ElideRight
                                 color: suggestionArea.containsMouse ? "#FFFFFF" : "#BB333333"
                                 font.pixelSize: 12
@@ -445,6 +448,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - buttons.width - 8
                         text: messageWindow.actionLabel
+                        font.family: messageWindow.fontFamily
                         color: "#666666"
                         font.pixelSize: 12
                         elide: Text.ElideRight
@@ -474,6 +478,7 @@ Item {
 
                                     anchors.centerIn: parent
                                     text: modelData[0]
+                                    font.family: messageWindow.fontFamily
                                     color: parent.isButton && buttonArea.containsMouse ? "#FFFFFF" : "#BB333333"
                                     font.pixelSize: 12
                                 }
