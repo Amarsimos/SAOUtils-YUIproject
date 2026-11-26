@@ -22,8 +22,8 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
-    readonly property int minimumWidth: 720
-    readonly property int minimumHeight: 520
+    readonly property int leastWidth: 720
+    readonly property int leastHeight: 520
     readonly property int titleHeight: 64
     readonly property int buttonsHeight: 96
     // Open / close animation, as Yui's chat (the SAO Utils mail box message panel): the panel widens
@@ -35,10 +35,10 @@ NVG.View {
     property real contentOpacity: 0
 
     // The close animation has finished and the view is gone.
-    signal closed()
+    signal dismissed()
 
     // Closes as the chat does: the dismiss sound, narrows back to 10 % while fading out, then goes.
-    function close() {
+    function dismiss() {
         if (aniClose.running)
             return ;
 
@@ -172,7 +172,7 @@ NVG.View {
 
     Shortcut {
         sequence: "Esc"
-        onActivated: bench.close()
+        onActivated: bench.dismiss()
     }
 
     ParallelAnimation {
@@ -252,7 +252,7 @@ NVG.View {
                     bench.preview.destroy();
 
                 bench.visible = false;
-                bench.closed();
+                bench.dismissed();
                 bench.destroy();
             }
         }
@@ -636,7 +636,7 @@ NVG.View {
                 x: parent.width * 3 / 4 - width / 2
                 icon: "misc/cancel"
                 size: 56
-                onClicked: bench.close()
+                onClicked: bench.dismiss()
             }
 
         }
@@ -656,8 +656,8 @@ NVG.View {
         cursorShape: Qt.SizeFDiagCursor
         onPressed: grab = Qt.point(mouse.x, mouse.y)
         onPositionChanged: {
-            bench.width = Math.max(bench.minimumWidth, bench.width + mouse.x - grab.x);
-            bench.height = Math.max(bench.minimumHeight, bench.height + mouse.y - grab.y);
+            bench.width = Math.max(bench.leastWidth, bench.width + mouse.x - grab.x);
+            bench.height = Math.max(bench.leastHeight, bench.height + mouse.y - grab.y);
         }
 
         Text {
