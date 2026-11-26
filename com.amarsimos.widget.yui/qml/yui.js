@@ -2632,10 +2632,10 @@ function seedlingPartialCode(text) {
 
 // What Yui says while a widget is written, as a message of her own that changes as it goes (the
 // numbers and the errors are only in the workbench): thinking while nothing has come out yet, then
-// writing / changing; the dots grow with the seconds.
+// writing / changing (the chat makes its characters hop while it goes on).
 // state: {stage: "writing" | "editing" | "fixing" | "checking" | "waiting", lines, edits, seconds}.
 function seedlingNoteLine(state, title) {
-    var dots = ["…", "……", "………"][state.seconds % 3];
+    var dots = "…";
     var output = state.lines > 0 || state.edits > 0;
     if (state.stage === "waiting")
         return "等" + (title || "你") + "把 Seedling 放到桌面上哦～";

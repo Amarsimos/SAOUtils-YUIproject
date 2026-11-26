@@ -4171,6 +4171,62 @@ T.Widget {
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
     }
 
+    // Test Seedling Lines (System Console): one message of Yui's going through every step of writing a
+    // widget (2.5 s each, the characters hopping), ending as done; then each of her other last words as
+    // a message of its own. No request is made.
+    function testSeedlingLines() {
+        var title = userTitle();
+        var steps = [{
+            "stage": "writing", "lines": 0, "edits": 0
+        }, {
+            "stage": "writing", "lines": 12, "edits": 0
+        }, {
+            "stage": "editing", "lines": 0, "edits": 2
+        }, {
+            "stage": "fixing", "lines": 0, "edits": 0
+        }, {
+            "stage": "fixing", "lines": 8, "edits": 0
+        }, {
+            "stage": "checking", "lines": 0, "edits": 0
+        }, {
+            "stage": "waiting", "lines": 0, "edits": 0
+        }];
+        var finals = ["edited", "failed", "stopped", "declined", "missing", "busy"];
+        if (!showChat)
+            openView();
+
+        var said = seedlingSay();
+        var step = 0;
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 2500; repeat: true }", widget);
+        timer.triggered.connect(function() {
+            if (step < steps.length) {
+                var state = steps[step++];
+                state.seconds = step;
+                said.update(Yui.seedlingNoteLine(state, title));
+                return ;
+            }
+            if (step === steps.length) {
+                step++;
+                said.end(Yui.seedlingChatLine("done", title));
+                return ;
+            }
+            var kind = finals[step - steps.length - 2];
+            step++;
+            if (!kind) {
+                timer.stop();
+                timer.destroy();
+                diag("test seedling lines: done");
+                return ;
+            }
+            seedlingSay().end(Yui.seedlingChatLine(kind, title));
+        });
+        said.update(Yui.seedlingNoteLine({
+            "stage": "writing", "lines": 0, "edits": 0, "seconds": 0
+        }, title));
+        timer.start();
+        diag("test seedling lines: " + steps.length + " steps, then " + (finals.length + 1) + " last words");
+    }
+
     // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
     // desktop (asked even when one is), with what follows written in the log.
     function testSeedlingPlace() {
@@ -4233,7 +4289,8 @@ T.Widget {
             "local": true,
             "note": "",
             "action": "",
-            "actionState": "",
+            // Still going on: its characters hop (MessageWindow.live) until its last words.
+            "actionState": "live",
             "suggestions": ""
         });
         chatView.stickToBottom = true;
@@ -4253,6 +4310,7 @@ T.Widget {
                     return ;
 
                 chatModel.setProperty(index, "message", text);
+                chatModel.setProperty(index, "actionState", "");
                 scheduleSave();
                 announce("Seedling", text);
             }
@@ -6304,6 +6362,7 @@ T.Widget {
                         actionLabel: widget.actionLabel(messageItem.action)
                         actionState: model.actionState
                         thinking: model.pending
+                        live: model.actionState === "live"
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         // Quick Replies: under Yui's latest message only, while nothing else is going on.
                         suggestions: !messageItem.fromUser && model.suggestions && index === chatModel.count - 1 && !widget.busy ? JSON.parse(model.suggestions) : []
