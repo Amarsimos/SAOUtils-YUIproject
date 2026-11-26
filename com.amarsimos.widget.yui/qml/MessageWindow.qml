@@ -337,7 +337,8 @@ Item {
 
             }
 
-            // Live: each character hops 3 px in turn, a wave going along the line.
+            // Live: the characters hop 3 px one by one, the next only when the one before has landed
+            // (240 ms each), then a short rest and again from the start.
             Flow {
                 id: liveFlow
 
@@ -370,23 +371,23 @@ Item {
                             loops: Animation.Infinite
 
                             PauseAnimation {
-                                duration: index * 70
+                                duration: index * 240
                             }
 
                             NumberAnimation {
                                 to: -3
-                                duration: 160
+                                duration: 120
                                 easing.type: Easing.OutQuad
                             }
 
                             NumberAnimation {
                                 to: 0
-                                duration: 160
+                                duration: 120
                                 easing.type: Easing.InQuad
                             }
 
                             PauseAnimation {
-                                duration: Math.max(0, messageWindow.text.length - index) * 70 + 500
+                                duration: Math.max(0, messageWindow.text.length - index - 1) * 240 + 600
                             }
 
                         }
