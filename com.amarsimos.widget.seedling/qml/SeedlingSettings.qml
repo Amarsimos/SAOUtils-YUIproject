@@ -23,6 +23,44 @@ NVG.Window {
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
     readonly property bool ownConnection: (Link.Bench.settingsRevision, Link.Bench.yui === null || Link.Bench.setting("connection", "yui") === "own")
+    // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
+    // Restore Registry.
+    readonly property var scanned: (Link.Bench.settingsRevision, Link.Bench.setting("scanned_models", {}))
+    property bool scanning: false
+    property string scanStatus: ""
+
+    function scanCores() {
+        var config = Link.Bench.ownConfig();
+        var id = config.provider;
+        scanning = true;
+        scanStatus = qsTr("Scanning...");
+        var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 30000 }", settingsWindow);
+        var handle = Api.listModels(config, function(models, error) {
+            timer.stop();
+            timer.destroy();
+            scanning = false;
+            if (!models) {
+                scanStatus = qsTr("Scan failed: %1").arg(error);
+                return ;
+            }
+            var all = JSON.parse(JSON.stringify(scanned));
+            all[id] = models;
+            Link.Bench.setSetting("scanned_models", all);
+            scanStatus = qsTr("Found %1 core(s).").arg(models.length);
+        });
+        timer.triggered.connect(function() {
+            handle.abort();
+        });
+        timer.start();
+    }
+
+    function restoreRegistry() {
+        var all = JSON.parse(JSON.stringify(scanned));
+        delete all[Link.Bench.ownConfig().provider];
+        Link.Bench.setSetting("scanned_models", all);
+        scanStatus = "";
+    }
+
     // Link Start! (Link, Connection Test): a very short request through the connection chosen, as
     // MHCP-YUI's; the answer in the Connection Log.
     property bool testing: false
@@ -310,7 +348,7 @@ NVG.Window {
 
                                 Link.Bench.setSetting("provider", Api.PROVIDERS[value].id);
                                 // The first core of the new server.
-                                var models = Api.PROVIDERS[value].models;
+                                var models = settingsWindow.scanned[Api.PROVIDERS[value].id] || Api.PROVIDERS[value].models;
                                 Link.Bench.setSetting("model", models.length ? models[0] : "");
                                 corePreference.value = 0;
                             }
@@ -389,7 +427,8 @@ NVG.Window {
                             id: corePreference
 
                             property bool ready: false
-                            readonly property var models: Api.PROVIDERS[providerPreference.value].models
+                            // The server's scanned list (Scan Cores), else the built-in one.
+                            readonly property var models: settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] || Api.PROVIDERS[providerPreference.value].models
 
                             visible: settingsWindow.ownConnection && models.length > 0
                             label: "Core Program"
@@ -403,12 +442,57 @@ NVG.Window {
                                     Link.Bench.setSetting("model", models[value]);
 
                             }
+                            // Another list (scanned, restored, another server): the core chosen stays
+                            // when it is in it.
+                            onModelsChanged: {
+                                if (!ready)
+                                    return ;
+
+                                var at = models.indexOf(String(Link.Bench.setting("model", "")));
+                                value = Math.max(0, at);
+                                if (at === -1 && models.length > 0)
+                                    Link.Bench.setSetting("model", models[0]);
+
+                            }
                         }
 
                         SettingNote {
                             visible: settingsWindow.help && corePreference.visible
                             besidePreferences: true
                             text: qsTr("The AI model that writes the widgets.")
+                        }
+
+                        RowLayout {
+                            visible: settingsWindow.advanced && settingsWindow.ownConnection
+                            spacing: 12
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Button {
+                                text: "Scan Cores"
+                                enabled: !settingsWindow.scanning
+                                onClicked: settingsWindow.scanCores()
+                            }
+
+                            Button {
+                                text: "Restore Registry"
+                                visible: !!settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id]
+                                onClicked: settingsWindow.restoreRegistry()
+                            }
+
+                        }
+
+                        // What Scan Cores found (or why it failed), under the buttons.
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: settingsWindow.advanced && settingsWindow.ownConnection && text !== ""
+                            text: settingsWindow.scanStatus
+                            elide: Text.ElideRight
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.advanced && settingsWindow.help && settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
                         }
 
                         P.TextFieldPreference {

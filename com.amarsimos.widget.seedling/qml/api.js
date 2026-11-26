@@ -289,3 +289,98 @@ function request(config, system, user, maxTokens, onDelta, onFinished) {
         }
     };
 }
+
+// ---- Scan Cores: the server's own model list (as MHCP-YUI's Cardinal System).
+
+// The address of a server's model list.
+function modelsUrl(config) {
+    var p = provider(config.provider);
+    var endpoint = String(config.endpoint || p.endpoint).trim().replace(/\/+$/, "");
+    if (p.format === "gemini")
+        return endpoint + "?pageSize=1000";
+
+    if (p.format === "anthropic")
+        return endpoint.replace(/\/messages$/, "") + "/models?limit=1000";
+
+    return endpoint.replace(/\/chat\/completions$/, "") + "/models";
+}
+
+// The chat models of a model list response, newest first.
+function modelsFrom(format, response) {
+    var models;
+    if (format === "gemini")
+        // Only models that can chat (generateContent); names come as "models/<id>".
+        models = (response.models || []).filter(function(m) {
+        return (m.supportedGenerationMethods || []).indexOf("generateContent") !== -1;
+    }).map(function(m) {
+        return String(m.name).replace(/^models\//, "");
+    });
+    else
+        models = (response.data || []).map(function(m) {
+        return String(m.id);
+    });
+    // OpenAI-compatible lists also hold embedding, speech, image... models.
+    if (format === "openai")
+        models = models.filter(function(id) {
+        return !/embedding|tts|whisper|dall-e|davinci|babbage|moderation|transcribe|realtime|audio|image|sora/i.test(id);
+    });
+
+    models.sort();
+    models.reverse();
+    return models;
+}
+
+// Asks the server for its models: onFinished(models or null, error). Returns {abort()}.
+function listModels(config, onFinished) {
+    var p = provider(config.provider);
+    var key = String(config.apiKey || "").trim();
+    if (!key && !p.keyOptional) {
+        onFinished(null, "Access Key is not set");
+        return {
+            "abort": function() {
+            }
+        };
+    }
+    var http = new XMLHttpRequest();
+    var done = false;
+    var finish = function(models, error) {
+        if (done)
+            return ;
+
+        done = true;
+        onFinished(models, error);
+    };
+    http.onreadystatechange = function() {
+        if (http.readyState !== XMLHttpRequest.DONE || done)
+            return ;
+
+        try {
+            if (http.status !== 200)
+                return finish(null, "HTTP " + http.status + (http.responseText ? ": " + String(http.responseText).slice(0, 200) : ""));
+
+            var models = modelsFrom(p.format, JSON.parse(http.responseText));
+            finish(models.length ? models : null, models.length ? "" : "the server lists no usable models");
+        } catch (e) {
+            finish(null, "the answer could not be read: " + e.message);
+        }
+    };
+    http.open("GET", modelsUrl(config));
+    if (p.format === "gemini") {
+        http.setRequestHeader("x-goog-api-key", key);
+    } else if (p.format === "anthropic") {
+        http.setRequestHeader("x-api-key", key);
+        http.setRequestHeader("anthropic-version", "2023-06-01");
+    } else if (key) {
+        http.setRequestHeader("Authorization", "Bearer " + key);
+    }
+    http.send();
+    return {
+        "abort": function() {
+            if (done)
+                return ;
+
+            http.abort();
+            finish(null, "timed out");
+        }
+    };
+}

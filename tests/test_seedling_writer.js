@@ -150,5 +150,17 @@ test("api.js: reading the stream, line by line, in pieces", () => {
     assert.strictEqual(A.textOf("openai", { choices: [{ message: { content: "whole" } }] }), "whole");
 });
 
+test("api.js: Scan Cores (the model list's address, chat models only, newest first)", () => {
+    assert.strictEqual(A.modelsUrl({ provider: "deepseek" }), "https://api.deepseek.com/models");
+    assert.strictEqual(A.modelsUrl({ provider: "openai" }), "https://api.openai.com/v1/models");
+    assert.strictEqual(A.modelsUrl({ provider: "anthropic" }), "https://api.anthropic.com/v1/models?limit=1000");
+    assert.strictEqual(A.modelsUrl({ provider: "google" }), "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000");
+    same(A.modelsFrom("openai", { data: [{ id: "gpt-a" }, { id: "text-embedding-3" }, { id: "gpt-b" }, { id: "tts-1" }] }), ["gpt-b", "gpt-a"]);
+    same(A.modelsFrom("gemini", { models: [{ name: "models/gemini-x", supportedGenerationMethods: ["generateContent"] }, { name: "models/embed", supportedGenerationMethods: ["embedContent"] }] }), ["gemini-x"]);
+    same(A.modelsFrom("anthropic", { data: [{ id: "claude-a" }] }), ["claude-a"]);
+    assert.strictEqual(A.modelOf({ model: "picked", customModel: " " }), "picked");
+    assert.strictEqual(A.modelOf({ model: "picked", customModel: "typed" }), "typed");
+});
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);
