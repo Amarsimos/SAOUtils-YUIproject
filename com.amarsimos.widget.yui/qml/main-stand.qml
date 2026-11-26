@@ -1141,6 +1141,10 @@ T.Widget {
         var streamError = "";
         // Give up when no data arrives for a while, so the chat never stays busy forever.
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 60000 }", widget);
+        // config.timeout (ms): longer for requests that think long before anything comes (Seedling).
+        if (config.timeout > 0)
+            timer.interval = config.timeout;
+
         var sentAt = Date.now();
         // Tool calls of the reply: [{id, name, arguments (JSON text)}], streamed in by index.
         var toolCalls = [];
@@ -3969,6 +3973,9 @@ T.Widget {
         config.noTools = true;
         // Room for a whole widget (thinking models count their thinking too).
         config.maxTokens = Math.max(16384, maxTokens);
+        // Thinking models say nothing while they think, longer over code (most of all when changing
+        // it): 4 minutes before giving up, not the chat's 1.
+        config.timeout = 240000;
         var state = {
             "stage": editing ? "editing" : "writing",
             "lines": 0,
