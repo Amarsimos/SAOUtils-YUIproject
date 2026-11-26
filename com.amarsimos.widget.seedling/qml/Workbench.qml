@@ -2,6 +2,9 @@ import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import QtQuick.Shapes 1.12
+// For Qt.application.screens, used to keep the workbench on a screen.
+import QtQuick.Window 2.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
 
@@ -47,6 +50,120 @@ NVG.View {
     property string phase: ""
     property double writingSince: 0
     property int writingSeconds: 0
+
+    // ---- Placed and layered as Yui's chat (YuiView.qml): shown where its widget is (desktop or
+    // launcher) and at its z (on top, normal, at the bottom); opened at the remembered offset from the
+    // widget, the first time beside it on the side with more room, kept in its screen (or the
+    // launcher's space); placed again when the widget moves between the desktop and the launcher.
+    readonly property var hostView: targetWidget.NVG.View.view
+    readonly property bool inLauncher: compositor === NVG.LauncherCompositor
+    property rect anchorRect
+    property bool placing: false
+    property bool moving: false
+    property bool settling: false
+
+    function widgetRect() {
+        var corner = targetWidget.mapToGlobal(0, 0);
+        return Qt.rect(corner.x, corner.y, targetWidget.width, targetWidget.height);
+    }
+
+    // Where it is relative to the widget, and its size (the widget's settings, the same for the
+    // desktop and the launcher).
+    function saveGeometry() {
+        settings.bench_offset = {
+            "dx": Math.round(x - anchorRect.x),
+            "dy": Math.round(y - anchorRect.y),
+            "width": Math.round(width),
+            "height": Math.round(height)
+        };
+    }
+
+    // The area containing a point ({virtualX, virtualY, width, height}), or null: in the launcher its
+    // space, on the desktop the screen there.
+    function areaAt(px, py) {
+        if (inLauncher) {
+            var g = NVG.LauncherCompositor.geometry;
+            if (g.width <= 0 || (px >= g.x && px < g.x + g.width && py >= g.y && py < g.y + g.height))
+                return {
+                "virtualX": g.x,
+                "virtualY": g.y,
+                "width": g.width > 0 ? g.width : 1920,
+                "height": g.height > 0 ? g.height : 1080
+            };
+
+            return null;
+        }
+        var screens = Qt.application.screens;
+        for (var i = 0; i < screens.length; i++) {
+            var screen = screens[i];
+            if (px >= screen.virtualX && px < screen.virtualX + screen.width && py >= screen.virtualY && py < screen.virtualY + screen.height)
+                return screen;
+
+        }
+        return null;
+    }
+
+    function place(anchor) {
+        placing = true;
+        anchorRect = anchor;
+        var saved = settings.bench_offset;
+        width = Math.max(leastWidth, saved ? saved.width : 900);
+        height = Math.max(leastHeight, saved ? saved.height : 620);
+        var area = areaAt(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2) || areaAt(0, 0) || Qt.application.screens[0];
+        var left = area.virtualX, top = area.virtualY, right = left + area.width, bottom = top + area.height;
+        if (saved) {
+            x = anchor.x + saved.dx;
+            y = anchor.y + saved.dy;
+        } else {
+            var roomRight = right - (anchor.x + anchor.width);
+            var roomLeft = anchor.x - left;
+            x = roomRight >= width || roomRight >= roomLeft ? anchor.x + anchor.width : anchor.x - width;
+            y = anchor.y + anchor.height / 2 - height / 2;
+        }
+        x = Math.round(Math.max(left, Math.min(right - width, x)));
+        y = Math.round(Math.max(top, Math.min(bottom - height, y)));
+        placing = false;
+    }
+
+    function follow() {
+        if (visible && !aniClose.running)
+            place(widgetRect());
+
+    }
+
+    // Changing the compositor resets x and y: placed again at once, and kept there while it settles.
+    onCompositorChanged: {
+        z = Qt.binding(function() {
+            return bench.hostView ? bench.hostView.z : 0;
+        });
+        settling = true;
+        settleTimer.restart();
+        follow();
+    }
+    onXChanged: {
+        if (settling && !placing && !moving)
+            follow();
+
+    }
+    onYChanged: {
+        if (settling && !placing && !moving)
+            follow();
+
+    }
+
+    Connections {
+        target: bench.settling ? bench.hostView : null
+        ignoreUnknownSignals: true
+        onXChanged: bench.follow()
+        onYChanged: bench.follow()
+    }
+
+    Timer {
+        id: settleTimer
+
+        interval: 400
+        onTriggered: bench.settling = false
+    }
 
     // The close animation has finished and the view is gone.
     signal dismissed()
@@ -292,12 +409,14 @@ NVG.View {
 
     // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
     color: "transparent"
-    // Always above other windows, as SAO Utils' top-most widgets (the launcher still comes above it).
-    z: NVG.WindowCompositor.TopWidgetZ
-    width: 900
-    height: 620
+    compositor: hostView ? hostView.compositor : NVG.WindowCompositor
+    z: hostView ? hostView.z : 0
+    // It takes the keyboard (the code, the request).
+    acceptFocus: true
+    acceptInput: true
     visible: true
     Component.onCompleted: {
+        place(widgetRect());
         render();
         requestActivate();
         aniOpen.start();
@@ -475,6 +594,7 @@ NVG.View {
                 onPressed: {
                     grab = Qt.point(mouse.x, mouse.y);
                     dragging = false;
+                    bench.moving = true;
                 }
                 onPositionChanged: {
                     if (!pressed)
@@ -488,9 +608,11 @@ NVG.View {
                     bench.y += mouse.y - grab.y;
                 }
                 onReleased: {
-                    if (!dragging && containsMouse)
+                    bench.moving = false;
+                    if (dragging)
+                        bench.saveGeometry();
+                    else if (containsMouse)
                         bench.dismiss();
-
                     dragging = false;
                 }
             }
@@ -886,28 +1008,67 @@ NVG.View {
 
     }
 
-    // Resize from the bottom-right corner.
-    MouseArea {
-        property point grab
-
+    // Resize grip (as Yui's chat): a triangle filling the bottom-right corner, orange while hovered;
+    // only a drag with the button held resizes, by the cursor's distance in the view's coordinates.
+    Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        width: 16
-        height: 16
-        cursorShape: Qt.SizeFDiagCursor
-        onPressed: grab = Qt.point(mouse.x, mouse.y)
-        onPositionChanged: {
-            bench.width = Math.max(bench.leastWidth, bench.width + mouse.x - grab.x);
-            bench.height = Math.max(bench.leastHeight, bench.height + mouse.y - grab.y);
+        width: 18
+        height: 18
+        z: 100
+
+        Shape {
+            anchors.fill: parent
+            layer.enabled: true
+            layer.samples: 4
+
+            ShapePath {
+                fillColor: resizeArea.containsMouse || resizeArea.pressed ? "#F59B00" : "#99707070"
+                strokeColor: "transparent"
+                startX: 18
+                startY: 0
+
+                PathLine {
+                    x: 18
+                    y: 18
+                }
+
+                PathLine {
+                    x: 0
+                    y: 18
+                }
+
+                PathLine {
+                    x: 18
+                    y: 0
+                }
+
+            }
+
         }
 
-        Text {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 2
-            text: "◢"
-            font.pixelSize: 10
-            color: "#C8C8C8"
+        MouseArea {
+            id: resizeArea
+
+            property point start
+            property size origin
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: {
+                start = mapToItem(null, mouse.x, mouse.y);
+                origin = Qt.size(bench.width, bench.height);
+            }
+            onPositionChanged: {
+                if (!pressed)
+                    return ;
+
+                var now = mapToItem(null, mouse.x, mouse.y);
+                bench.width = Math.round(Math.max(bench.leastWidth, origin.width + now.x - start.x));
+                bench.height = Math.round(Math.max(bench.leastHeight, origin.height + now.y - start.y));
+            }
+            onReleased: bench.saveGeometry()
         }
 
     }
