@@ -3813,204 +3813,59 @@ T.Widget {
         }
     }
 
-    // Writes the widget request asks for (or the change to the one in the workbench) in a request of
-    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shown live: the workbench opens
-    // at once and the code streams into it; when it does not compile or is refused, it is asked again
-    // with the error (twice at most). onProgress(state), optional, every second and at each step (see
-    // Yui.seedlingNoteLine); onDone(message, ok) at the end.
+    // A widget written for request by Seedling (its writing flow, section 11 of "Seedling Development
+    // Plan.md"); Yui says how it goes and how it ended. onProgress(state) at each step (see
+    // Yui.seedlingNoteLine); onDone(message, ok, kind, extra) at the end. seedlingJob: set while it is
+    // written (the chat's Send turns into Stop).
     property var seedlingJob: null
 
     function seedlingWrite(request, onDone, onProgress) {
         var bench = seedlingBench();
-        if (!bench)
+        if (!bench || !bench.write)
             return onDone("Seedling 没有安装", false, "missing");
 
         if (bench.widgets.length === 0)
             return seedlingAskPlace(request, onDone, onProgress);
 
-        if (seedlingJob)
-            return onDone("结衣还在写上一个挂件，等一下哦", false, "busy");
-
-        // Code there already: changed with SEARCH / REPLACE edits; else written whole.
-        var current = bench.currentCode();
-        var editing = current.trim() !== "";
-        var config = Object.assign({}, activeConfig());
-        // Seedling Model and Widget Style are Seedling's (its Settings, so they stay when it works on its
-        // own). A model set here before (Cardinal System) moves to the widget the first time.
+        // A Seedling Model set here before (Cardinal System) moves to Seedling the first time.
         var oldModel = String(widget.settings.seedling_model || "").trim();
         if (oldModel && bench.setSetting && !bench.writingModel()) {
             bench.setSetting("model", oldModel);
             widget.settings.seedling_model = "";
         }
-
-        var model = bench.writingModel ? bench.writingModel() : oldModel;
-        if (model)
-            config.model = model;
-
-        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing) + Yui.seedlingStyleNote(bench.writingStyle ? bench.writingStyle() : "") + Yui.seedlingTemplateNote(!editing && bench.templateFor ? bench.templateFor(request) : "");
-        config.noTools = true;
-        // Room for a whole widget (thinking models count their thinking too).
-        config.maxTokens = Math.max(16384, maxTokens);
-        // Thinking models say nothing while they think, longer over code (most of all when changing
-        // it): 4 minutes before giving up, not the chat's 1.
-        config.timeout = 240000;
-        var state = {
-            "stage": editing ? "editing" : "writing",
-            "lines": 0,
-            "edits": 0,
-            "seconds": 0,
-            "attempt": 0,
-            "problem": ""
+        seedlingJob = {
+            "request": request
         };
-        var started = Date.now();
-        var ticker = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000; repeat: true }", widget);
-        var job = {
-            "handle": null,
-            "stopped": false
-        };
-        // The last way out was taken: the whole code asked for once after the edits did not fit.
-        var wholeTaken = false;
-        var progress = function() {
-            state.seconds = Math.round((Date.now() - started) / 1000);
+        bench.write(request, function(state) {
             if (onProgress)
                 onProgress(state);
 
-        };
-        // message: for the workbench and the log; kind: what the chat says (Yui.seedlingChatLine).
-        // extra: what Yui adds to her last words (Yui.seedlingExtra).
-        var finish = function(message, ok, kind, extra) {
-            ticker.stop();
-            ticker.destroy();
+        }, function(kind, message, code) {
             seedlingJob = null;
-            bench.endWriting(ok, message);
-            diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
-            onDone(message, ok, kind || (ok ? "done" : "failed"), extra || "");
-        };
-        var ask;
-        // Asks again with what went wrong (twice at most); when editing, after that once more for the
-        // whole code.
-        var retry = function(problem, code, whole) {
-            if (state.attempt >= 2) {
-                if (editing && !whole && !wholeTaken) {
-                    wholeTaken = true;
-                    state.stage = "writing";
-                    state.lines = 0;
-                    state.edits = 0;
-                    bench.setPhase(qsTr("The edits did not fit · Thinking about the whole code..."));
-                    progress();
-                    return ask(code, problem, true);
-                }
-                return finish("改了几次还是不行：" + String(problem).split("\n")[0], false);
-            }
-            state.attempt++;
-            state.stage = "fixing";
-            state.problem = String(problem).split("\n")[0];
-            state.lines = 0;
-            state.edits = 0;
-            bench.setPhase(qsTr("Thinking about the fix (%1 / 2): %2").arg(state.attempt).arg(state.problem));
-            progress();
-            ask(code, problem, whole);
-        };
-        var show = function(code, changes, whole) {
-            state.stage = "checking";
-            bench.setPhase(qsTr("Checking and rendering..."));
-            progress();
-            var refused = bench.preview(code, request, function(result) {
-                diag("seedling: " + result.result + " " + result.status);
-                // Shown, but some @setting / @keep declarations do not take effect: asked to fix them
-                // once (while a fix is left); otherwise it is done as it is.
-                if (result.ok && result.notes && result.notes.length > 0 && !state.notesAsked && state.attempt < 2) {
-                    state.notesAsked = true;
-                    diag("seedling: declarations not used: " + result.notes.join("; "));
-                    return retry("代码能显示，但这些 @setting / @keep 声明没有生效：
-" + result.notes.join("
-") + (editing && !whole ? "
-请用 SEARCH/REPLACE 块改正。" : "
-请改正后输出完整代码。"), code, whole);
-                }
-                if (result.ok)
-                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done", Yui.seedlingExtra(code, userTitle()));
+            var ok = kind === "done" || kind === "edited";
+            diag("seedling: " + kind + ", " + message);
+            onDone(message, ok, kind, ok ? Yui.seedlingExtra(code, userTitle()) : "");
+        });
+    }
 
-                // Not allowed online (the user said no): said so, not rewritten without it behind
-                // their back.
-                if (result.networkDeclined)
-                    return finish("没有允许联网", false, "offline");
+    // Seedling borrows Yui's connection (Connection: Yui): one request with its own system text, the
+    // Seedling Model when set, room for a whole widget and 4 minutes before giving up (thinking models
+    // say nothing while they think). System Console's Seedling tests are answered here (no API).
+    function seedlingConnection(system, user, model, onDelta, onFinished) {
+        var config = Object.assign({}, activeConfig());
+        if (model)
+            config.model = model;
 
-                retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
-            }, changes);
-            if (refused)
-                finish(refused, false);
-
-        };
-        ask = function(code, problem, whole) {
-            var edits = editing && !whole;
-            job.handle = requestCompletion([{
-                "role": "user",
-                "content": Yui.seedlingCodeRequest(request, code, problem, editing && whole)
-            }], function(text, isError) {
-                if (job.stopped)
-                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false, "stopped");
-
-                if (isError)
-                    return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
-
-                var blocks = edits ? Yui.seedlingEdits(text) : [];
-                if (blocks.length > 0) {
-                    var applied = Yui.seedlingApplyEdits(code, blocks);
-                    diag("seedling: " + blocks.length + " edit(s), " + (applied.ok ? "applied" : applied.failed.length + " did not fit"));
-                    if (!applied.ok)
-                        return retry(Yui.seedlingEditProblem(applied.failed), code, false);
-
-                    return show(applied.code, {
-                        "lines": applied.changed,
-                        "added": applied.added,
-                        "removed": applied.removed,
-                        "count": blocks.length
-                    }, false);
-                }
-                // Cut off (too long for the limit): asked again for a shorter one.
-                if (Yui.seedlingCodeCut(text))
-                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。", code, true);
-
-                var qml = Yui.seedlingCodeFrom(text);
-                if (!qml) {
-                    if (edits)
-                        return retry("没有找到 SEARCH/REPLACE 块。请按格式输出要改的地方。", code, false);
-
-                    return finish("模型没有给出代码", false);
-                }
-                show(qml, null, true);
-            }, config, function(soFar) {
-                var count = edits ? Yui.seedlingEditCount(soFar) : 0;
-                if (count > 0) {
-                    if (count !== state.edits) {
-                        state.edits = count;
-                        bench.setPhase(qsTr("Changing · %1 place(s)").arg(count));
-                        progress();
-                    }
-                    return ;
-                }
-                // Written whole (also when she chose to while editing): streamed into the editor.
-                var partial = Yui.seedlingPartialCode(soFar);
-                if (!partial)
-                    return ;
-
-                bench.streamCode(partial);
-                var lines = partial.split("\n").length;
-                if (lines !== state.lines) {
-                    state.lines = lines;
-                    state.stage = state.stage === "editing" ? "writing" : state.stage;
-                    bench.setPhase(qsTr("Writing · %1 lines").arg(lines));
-                    progress();
-                }
-            });
-        };
-        ticker.triggered.connect(progress);
-        ticker.start();
-        seedlingJob = job;
-        bench.beginWriting(request, editing);
-        progress();
-        ask(current, "", false);
+        config.rawSystem = system;
+        config.noTools = true;
+        config.maxTokens = Math.max(16384, maxTokens);
+        config.timeout = 240000;
+        return requestCompletion([{
+            "role": "user",
+            "content": user
+        }], function(text, isError) {
+            onFinished(text, isError);
+        }, config, onDelta);
     }
 
     // No Seedling widget on the desktop (no ground for the seed to grow in): Yui says so in her own
@@ -4151,12 +4006,9 @@ T.Widget {
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.
     function seedlingStop() {
-        if (!seedlingJob)
-            return ;
-
-        seedlingJob.stopped = true;
-        if (seedlingJob.handle)
-            seedlingJob.handle.abort();
+        var bench = seedlingBench();
+        if (bench && bench.stop)
+            bench.stop();
 
     }
 

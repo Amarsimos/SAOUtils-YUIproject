@@ -204,8 +204,8 @@ test("declarations are only comments: the safety check is the same with or witho
 
 test("Yui's code prompt (rule 14) says the same as props.js: its examples are read", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.seedlingCodePrompt(false, false).split("\n").find((l) => l.indexOf("14. ") === 0);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("14. ") === 0);
     assert.ok(rule, "rule 14 is in the prompt");
     const r = P.parse(`import QtQuick 2.12
 // @name 天气
@@ -325,8 +325,8 @@ Item {
 
 test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.seedlingCodePrompt(false, false).split("\n").find((l) => l.indexOf("15. ") === 0);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("15. ") === 0);
     assert.ok(rule, "rule 15 is in the prompt");
     const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
     assert.deepStrictEqual(named.sort(), Object.keys(P.YUI_KEYS).sort());
@@ -335,11 +335,11 @@ test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", (
 
 test("Yui's code prompt: Widget Style and the template are added only when there are some", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    assert.strictEqual(Y.seedlingStyleNote(""), "");
-    assert.strictEqual(Y.seedlingTemplateNote("  "), "");
-    assert.ok(Y.seedlingStyleNote("极简黑白").indexOf("极简黑白") !== -1);
-    assert.ok(Y.seedlingTemplateNote("Item {}").indexOf("```qml\nItem {}\n```") !== -1);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    assert.strictEqual(Y.styleNote(""), "");
+    assert.strictEqual(Y.templateNote("  "), "");
+    assert.ok(Y.styleNote("极简黑白").indexOf("极简黑白") !== -1);
+    assert.ok(Y.templateNote("Item {}").indexOf("```qml\nItem {}\n```") !== -1);
 });
 
 console.log(passed + " passed, " + failed + " failed");
