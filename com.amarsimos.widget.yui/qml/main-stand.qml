@@ -6402,9 +6402,11 @@ T.Widget {
                 // True while the view scrolls itself to the end (not the user scrolling).
                 property bool scrollingToEnd: false
 
+                // To the end including bottomMargin (Qt 5's positionViewAtEnd() leaves it out, which put
+                // the newest message under the bottom fade).
                 function scrollToEnd() {
                     scrollingToEnd = true;
-                    positionViewAtEnd();
+                    contentY = Math.max(originY - topMargin, originY + contentHeight + bottomMargin - height);
                     scrollingToEnd = false;
                 }
 
