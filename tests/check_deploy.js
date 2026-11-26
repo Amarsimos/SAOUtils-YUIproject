@@ -132,7 +132,7 @@ for (const rel of compared) {
 }
 
 // 6. tests
-for (const test of ["test_yui.js", "test_seedling_safety.js", "test_seedling_props.js"]) {
+for (const test of ["test_yui.js", "test_seedling_safety.js", "test_seedling_props.js", "test_seedling_writer.js"]) {
     if (!fs.existsSync(path.join(root, "tests", test)))
         continue;
     try {
