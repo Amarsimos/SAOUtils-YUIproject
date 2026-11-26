@@ -5774,6 +5774,12 @@ T.Widget {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // The list reaches right up to the title band and down to the input bar, so messages fade
+                // out at the very edges (below); topMargin / bottomMargin keep them where they were.
+                Layout.topMargin: -6
+                Layout.bottomMargin: -9
+                topMargin: 6
+                bottomMargin: 9
                 model: chatModel
                 spacing: 10
                 clip: true
