@@ -27,6 +27,8 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    // The preview's scale: 1, or less when the widget is larger than the preview area.
+    readonly property real previewScale: preview && preview.width > 0 && preview.height > 0 ? Math.min(1, previewArea.width / preview.width, previewArea.height / preview.height) : 1
     // The bands are translucent as Yui's chat (her Chat Opacity in Equipment when MHCP-YUI runs, else
     // 80 %); the code, the preview and the text on them stay opaque.
     readonly property real panelAlpha: Link.Bench.writer && Link.Bench.writer.chatOpacity !== undefined ? Link.Bench.writer.chatOpacity : 0.8
@@ -217,7 +219,7 @@ NVG.View {
             return false;
         }
         try {
-            preview = Qt.createQmlObject(code, previewArea, "Seedling");
+            preview = Qt.createQmlObject(code, previewStage, "Seedling");
             result = "ok";
             status = qsTr("Rendered, %1 × %2 · safety check passed").arg(Math.round(preview.width)).arg(Math.round(preview.height));
             return true;
@@ -869,7 +871,7 @@ NVG.View {
                             }
 
                             Text {
-                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) : "")
+                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) + (bench.previewScale < 1 ? " · " + Math.round(bench.previewScale * 100) + "%" : "") : "")
                                 font.family: "SAO UI"
                                 font.pixelSize: 13
                                 color: "#7A7A7A"
@@ -889,6 +891,18 @@ NVG.View {
                                 anchors.fill: parent
                                 anchors.margins: 12
                                 visible: !bench.showVersions
+
+                                // The widget at its own size, centered; scaled down to fit when it is
+                                // larger than the preview (never up), its real size and the scale noted.
+                                Item {
+                                    id: previewStage
+
+                                    anchors.centerIn: parent
+                                    width: bench.preview ? bench.preview.width : 0
+                                    height: bench.preview ? bench.preview.height : 0
+                                    scale: bench.previewScale
+                                }
+
                             }
 
                             ListView {
