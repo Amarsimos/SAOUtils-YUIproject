@@ -803,7 +803,9 @@ NVG.View {
                     Layout.fillWidth: true
                     spacing: 8
 
+                    // Try: advanced (with Code Editor on), as Examples and Network.
                     Chip {
+                        visible: bench.showCode
                         text: "Try"
                         icon: "run"
                         onClicked: bench.tryOnDesktop()

@@ -187,7 +187,7 @@ NVG.Window {
                         wrapMode: Text.Wrap
                         color: "#888888"
                         font.pixelSize: 12
-                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Examples and Network, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Try, Examples and Network, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
 
                 }
