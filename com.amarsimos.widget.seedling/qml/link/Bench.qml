@@ -29,14 +29,15 @@ QtObject {
     // The workbench Yui writes into (beginWriting), or null.
     property var writingBench: null
 
-    // Opens the workbench of the last widget in its writing state; returns it, or null.
-    function beginWriting(title) {
+    // Opens the workbench of the last widget in its writing state; returns it, or null. keep: the code
+    // stays (Yui changes it with edits) instead of being written anew.
+    function beginWriting(title, keep) {
         if (widgets.length === 0)
             return null;
 
         var bench = widgets[widgets.length - 1].openWorkbench();
         if (bench)
-            bench.beginWriting(String(title || ""));
+            bench.beginWriting(String(title || ""), keep === true);
 
         writingBench = bench;
         return bench;
@@ -90,7 +91,8 @@ QtObject {
     }
 
     // Returns "" when it was shown, or why not.
-    function preview(code, title, onResult) {
+    // changes (optional, Yui's edits): {lines: changed line numbers (0-based), added, removed, count}.
+    function preview(code, title, onResult, changes) {
         if (widgets.length === 0)
             return "no Seedling widget on the desktop";
 
@@ -99,7 +101,7 @@ QtObject {
         if (!bench)
             return "the workbench could not be opened";
 
-        bench.loadExternal(String(code || ""), String(title || ""), onResult);
+        bench.loadExternal(String(code || ""), String(title || ""), onResult, changes || null);
         return "";
     }
 }

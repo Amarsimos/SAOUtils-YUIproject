@@ -38,6 +38,9 @@ NVG.View {
     // Yui is writing (Bench.beginWriting ... endWriting): the code streams into the read-only editor,
     // phase says the step, an orange strip breathes under the title band and Stop ends it.
     property bool writing: false
+    // Lines Yui changed in her last edit (0-based), marked in the editor until the code is typed in.
+    property var changedLines: []
+    property bool loadingExternal: false
     property string phase: ""
     property double writingSince: 0
     property int writingSeconds: 0
@@ -151,20 +154,56 @@ NVG.View {
         }
     }
 
-    function beginWriting(title) {
+    function beginWriting(title, keep) {
         showVersions = false;
         writing = true;
         writingSince = Date.now();
         writingSeconds = 0;
         renderTimer.stop();
-        if (preview) {
-            preview.destroy();
-            preview = null;
-        }
-        editor.text = "";
         result = "ok";
-        setPhase(qsTr("Yui is writing it..."));
+        if (!keep) {
+            if (preview) {
+                preview.destroy();
+                preview = null;
+            }
+            loadingExternal = true;
+            editor.text = "";
+            loadingExternal = false;
+            changedLines = [];
+        }
+        setPhase(keep ? qsTr("Yui is reading the code...") : qsTr("Yui is writing it..."));
         requestActivate();
+    }
+
+    // A version of code, unless it is the last one already.
+    function addVersion(code) {
+        if (!code.trim() || (versions.length > 0 && versions[versions.length - 1].code === code))
+            return ;
+
+        var list = versions.concat([{
+            "code": code,
+            "at": Date.now()
+        }]);
+        if (list.length > 20)
+            list = list.slice(list.length - 20);
+
+        settings.versions = list;
+        versions = list;
+        versionIndex = list.length - 1;
+    }
+
+    // The character position where line n (0-based) starts in the editor.
+    function lineStart(n) {
+        var text = editor.text;
+        var position = 0;
+        for (var i = 0; i < n; i++) {
+            position = text.indexOf("\n", position);
+            if (position === -1)
+                return text.length;
+
+            position++;
+        }
+        return position;
     }
 
     // The code written so far (not rendered: half a widget does not compile).
@@ -172,7 +211,9 @@ NVG.View {
         if (!writing)
             return ;
 
+        loadingExternal = true;
         editor.text = code;
+        loadingExternal = false;
         editor.cursorPosition = editor.length;
     }
 
@@ -195,11 +236,22 @@ NVG.View {
     }
 
     // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
-    function loadExternal(code, title, onResult) {
+    function loadExternal(code, title, onResult, changes) {
         showVersions = false;
+        // Yui's edit: the code before it is kept as a version, so ◀ goes back to it.
+        if (changes)
+            addVersion(editor.text);
+
+        loadingExternal = true;
         editor.text = code;
+        loadingExternal = false;
+        changedLines = changes ? changes.lines : [];
         renderTimer.stop();
         var ok = render();
+        if (ok && changes) {
+            addVersion(code);
+            status = qsTr("Changed %1 place(s) · +%2 −%3 lines · %4").arg(changes.count).arg(changes.added).arg(changes.removed).arg(status);
+        }
         requestActivate();
         if (typeof onResult === "function")
             onResult({
@@ -603,8 +655,13 @@ NVG.View {
                                 color: "#3A3A3A"
                                 text: bench.settings.draft !== undefined ? bench.settings.draft : (bench.settings.code || "")
                                 readOnly: bench.writing
+                                leftPadding: 10
                                 onTextChanged: {
                                     bench.settings.draft = text;
+                                    // Typed in: the marks of Yui's edit no longer fit.
+                                    if (!bench.loadingExternal && bench.changedLines.length > 0)
+                                        bench.changedLines = [];
+
                                     if (!bench.writing)
                                         renderTimer.restart();
 
@@ -612,6 +669,22 @@ NVG.View {
 
                                 background: Rectangle {
                                     color: "#F9F9F9"
+                                }
+
+                                // An orange bar at the left of each line Yui changed (as an editor's change marks).
+                                Repeater {
+                                    model: bench.changedLines
+
+                                    Rectangle {
+                                        readonly property rect line: editor.positionToRectangle(bench.lineStart(modelData))
+
+                                        x: 2
+                                        y: line.y
+                                        width: 4
+                                        height: Math.max(4, line.height)
+                                        color: "#F1AA03"
+                                    }
+
                                 }
 
                             }
