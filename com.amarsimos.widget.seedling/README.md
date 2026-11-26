@@ -29,12 +29,15 @@ another workbench meanwhile.
 
 ### Seedling Settings
 
-- **Code Editor** (General, off by default): the code beside the preview, with **Run** and
+As in MHCP-YUI's settings: **Advanced** (title bar) shows Code Editor and the Test tab, **Help** the
+explanations, **Reset** restores the defaults.
+
+- **Code Editor** (General, Advanced, off by default): the code beside the preview, with **Run** and
   **Examples**, to read or change it. Typing renders it after a moment.
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
   brings it, on Run, or on ○ ("allow it to go online and save?").
-- **Test**: tries the workbench's states without the AI and without any request.
+- **Test** (Advanced): tries the workbench's states without the AI and without any request.
 
 ## Safety
 

@@ -13,6 +13,39 @@ NVG.Window {
     id: settingsWindow
 
     property var targetWidget
+    // As MHCP-YUI's settings windows: Help shows the notes under the settings, Advanced the Code
+    // Editor and the Test tab (each Seedling widget keeps its own).
+    readonly property bool help: targetWidget.settings.show_help === true
+    readonly property bool advanced: targetWidget.settings.show_advanced === true
+
+    // Reset (title bar): the settings back to their defaults (Code Editor and Network off).
+    function reset() {
+        codePreference.value = false;
+        networkPreference.value = false;
+        targetWidget.settings.show_code = false;
+        targetWidget.settings.allow_network = false;
+        if (targetWidget.workbench)
+            targetWidget.workbench.render(true);
+
+    }
+
+    function confirmReset() {
+        try {
+            var answer = NVG.SystemCall.messageBox({
+                "title": qsTr("Warning"),
+                "text": qsTr("Restore all settings of %1 to their defaults?").arg(title),
+                "modal": true
+            });
+            if (answer && typeof answer.then === "function")
+                answer.then(function(result) {
+                if (result !== false && result !== 0)
+                    settingsWindow.reset();
+
+            });
+        } catch (e) {
+            console.log("Seedling: cannot ask about Reset:", e);
+        }
+    }
     readonly property string sampleCode: "import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
     readonly property string brokenCode: "import QtQuick 2.12\n\nRectangle {\n    width: 160; height: 80\n    color: \"#C82864\"\n\n    Text {\n        anchors.centerIn: parent\n        text: \"missing brace\"\n        colr: \"white\"\n    }\n}\n"
     readonly property string unsafeCode: "import QtQuick 2.12\nimport NERvGear 1.0 as NVG\n\nRectangle {\n    width: 120; height: 60\n    MouseArea {\n        anchors.fill: parent\n        onClicked: NVG.SystemCall.execute(\"cmd\")\n    }\n}\n"
@@ -59,6 +92,7 @@ NVG.Window {
                 currentIndex: Math.max(0, Math.min(1, settingsWindow.targetWidget.settings.settings_tab || 0))
                 onCurrentIndexChanged: settingsWindow.targetWidget.settings.settings_tab = currentIndex
                 model: [qsTr("General"), qsTr("Test")]
+                hiddenTabs: settingsWindow.advanced ? [] : [1]
             }
 
             StackLayout {
@@ -70,11 +104,13 @@ NVG.Window {
                 // ---------------------------------------------------------------- General
                 SettingsPage {
                     Heading {
+                        visible: settingsWindow.advanced
                         text: "Workbench"
                     }
 
                     P.PreferenceGroup {
                         Layout.fillWidth: true
+                        visible: settingsWindow.advanced
 
                         // Code Editor (advanced). Off: the workbench shows the preview only.
                         P.SwitchPreference {
@@ -89,6 +125,7 @@ NVG.Window {
                     }
 
                     SettingNote {
+                        visible: settingsWindow.help && settingsWindow.advanced
                         besidePreferences: true
                         text: qsTr("Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
@@ -134,6 +171,7 @@ NVG.Window {
                     }
 
                     SettingNote {
+                        visible: settingsWindow.help
                         besidePreferences: true
                         text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
                     }
@@ -143,6 +181,7 @@ NVG.Window {
                 // ---------------------------------------------------------------- Test
                 SettingsPage {
                     SettingNote {
+                        visible: settingsWindow.help
                         besidePreferences: true
                         text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
                     }
@@ -163,6 +202,7 @@ NVG.Window {
                             }
 
                             SettingNote {
+                                visible: settingsWindow.help
                                 besidePreferences: true
                                 text: modelData.note
                             }
@@ -190,9 +230,36 @@ NVG.Window {
 
         }
 
+        // As MHCP-YUI's SettingsTitleBar: Advanced, Help, Reset.
         header: TitleBar {
             Style.primary: settingsWindow.Style.dialogColor
             text: "Seedling Settings"
+
+            Button {
+                text: "Advanced"
+                flat: true
+                checkable: true
+                checked: settingsWindow.advanced
+                onToggled: settingsWindow.targetWidget.settings.show_advanced = checked
+                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            }
+
+            Button {
+                text: "Help"
+                flat: true
+                checkable: true
+                checked: settingsWindow.help
+                onToggled: settingsWindow.targetWidget.settings.show_help = checked
+                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            }
+
+            Button {
+                text: "Reset"
+                flat: true
+                onClicked: settingsWindow.confirmReset()
+                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            }
+
         }
 
     }

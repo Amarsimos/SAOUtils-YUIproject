@@ -3,32 +3,42 @@
 <context>
     <name>SeedlingSettings</name>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="147" />
+        <location filename="../qml/SeedlingSettings.qml" line="186" />
         <source>Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).</source>
         <translation>测试不经过 AI 试用工作台：这里的按钮都不会发出请求。每个按钮会打开工作台（或使用已打开的工作台）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="93" />
+        <location filename="../qml/SeedlingSettings.qml" line="130" />
         <source>Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.</source>
         <translation>高级：在工作台的预览旁显示代码，并提供 Run 和 Examples，可以查看或修改结衣写的代码。关闭时工作台只显示挂件。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="61" />
+        <location filename="../qml/SeedlingSettings.qml" line="35" />
+        <source>Warning</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="36" />
+        <source>Restore all settings of %1 to their defaults?</source>
+        <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="94" />
         <source>General</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="61" />
+        <location filename="../qml/SeedlingSettings.qml" line="94" />
         <source>Test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="153" />
+        <location filename="../qml/SeedlingSettings.qml" line="192" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="138" />
+        <location filename="../qml/SeedlingSettings.qml" line="176" />
         <source>Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.</source>
         <translation>允许这个挂件联网（天气、汇率、网上的图片等）。默认关闭：安全检查会拒绝联网的代码，结衣也只写不联网的挂件。挂件只因联网被拒绝时，工作台会询问是否允许。</translation>
     </message>
@@ -36,7 +46,7 @@
 <context>
     <name>SeedlingWidget</name>
     <message>
-        <location filename="../qml/SeedlingWidget.qml" line="304" />
+        <location filename="../qml/SeedlingWidget.qml" line="360" />
         <source>Right-click: Workbench</source>
         <translation>右键：Workbench</translation>
     </message>
