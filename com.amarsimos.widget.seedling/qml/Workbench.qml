@@ -364,9 +364,19 @@ NVG.View {
             return qsTr("Write QML on the left, or pick one of the Examples.");
 
         if (Link.Bench.yui)
-            return qsTr("Tell Yui in her chat what widget you want; she writes it here.");
+            return qsTr("Tell Yui in her chat what widget you want, or pick one of the Examples first; she writes it here.");
 
-        return canGenerate ? qsTr("Describe the widget you want below.") : qsTr("Set up the AI in Seedling Settings to have widgets written (or turn on Code Editor to write one yourself).");
+        return canGenerate ? qsTr("Describe the widget you want below, or pick one of the Examples first.") : qsTr("Set up the AI in Seedling Settings to have widgets written (or turn on Code Editor to write one yourself).");
+    }
+
+    // Examples: a template shown (the code there kept as a version first); the AI then changes it as
+    // asked (the workbench has code, so it is changed, not written anew).
+    function loadTemplate(template) {
+        addVersion(editor.text);
+        loadExternal(template.code, template.name, null, null);
+        if (result === "ok")
+            status = qsTr("%1 · %2 · Tell the AI how to change it.").arg(template.name).arg(template.about);
+
     }
 
     // quiet: no question about the network (the caller asks, or has just been answered).
@@ -1071,7 +1081,7 @@ NVG.View {
                         Layout.preferredHeight: 30
                         id: examplesChip
 
-                        visible: bench.showCode
+                        // In both modes: a template to start from, which the AI then changes as asked.
                         text: "Examples"
                         icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
@@ -1122,10 +1132,7 @@ NVG.View {
                                 font.family: "SAO UI"
                                 font.pixelSize: 15
                                 text: modelData.name
-                                onTriggered: {
-                                    editor.text = modelData.code;
-                                    bench.showVersions = false;
-                                }
+                                onTriggered: bench.loadTemplate(modelData)
                             }
 
                         }
