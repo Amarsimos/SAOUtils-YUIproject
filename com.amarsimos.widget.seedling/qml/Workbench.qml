@@ -460,17 +460,36 @@ NVG.View {
 
             }
 
-            // Drag to move: by the cursor's distance from the grabbed point, in the window's own
+            // As Yui's chat title: a click closes, pressing and dragging moves (a drag once the mouse has
+            // moved more than 4 px), by the cursor's distance from the grabbed point in the window's own
             // coordinates (right with display scaling and several screens).
             MouseArea {
                 property point grab
+                property bool dragging: false
 
                 anchors.fill: parent
-                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                onPressed: grab = Qt.point(mouse.x, mouse.y)
+                hoverEnabled: true
+                cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                onPressed: {
+                    grab = Qt.point(mouse.x, mouse.y);
+                    dragging = false;
+                }
                 onPositionChanged: {
+                    if (!pressed)
+                        return ;
+
+                    if (!dragging && Math.abs(mouse.x - grab.x) + Math.abs(mouse.y - grab.y) <= 4)
+                        return ;
+
+                    dragging = true;
                     bench.x += mouse.x - grab.x;
                     bench.y += mouse.y - grab.y;
+                }
+                onReleased: {
+                    if (!dragging && containsMouse)
+                        bench.dismiss();
+
+                    dragging = false;
                 }
             }
 
