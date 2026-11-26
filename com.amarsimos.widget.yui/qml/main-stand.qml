@@ -1147,7 +1147,7 @@ T.Widget {
         var sawEvents = false;
         var streamError = "";
         // Give up when no data arrives for a while, so the chat never stays busy forever.
-        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 60000 }", widget);
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 120000 }", widget);
         // config.timeout (ms): longer for requests that think long before anything comes (Seedling).
         if (config.timeout > 0)
             timer.interval = config.timeout;
