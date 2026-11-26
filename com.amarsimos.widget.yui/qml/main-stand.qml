@@ -3897,6 +3897,17 @@ T.Widget {
             progress();
             var refused = bench.preview(code, request, function(result) {
                 diag("seedling: " + result.result + " " + result.status);
+                // Shown, but some @setting / @keep declarations do not take effect: asked to fix them
+                // once (while a fix is left); otherwise it is done as it is.
+                if (result.ok && result.notes && result.notes.length > 0 && !state.notesAsked && state.attempt < 2) {
+                    state.notesAsked = true;
+                    diag("seedling: declarations not used: " + result.notes.join("; "));
+                    return retry("代码能显示，但这些 @setting / @keep 声明没有生效：
+" + result.notes.join("
+") + (editing && !whole ? "
+请用 SEARCH/REPLACE 块改正。" : "
+请改正后输出完整代码。"), code, whole);
+                }
                 if (result.ok)
                     return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done", Yui.seedlingExtra(code, userTitle()));
 
@@ -4093,6 +4104,9 @@ T.Widget {
             seedlingFakeReplies = ["<<<<<<< SEARCH\n" + line + "\n=======\n" + line.replace(/"#[0-9A-Fa-f]+"/, "\"#E6C82864\"") + "\n>>>>>>> REPLACE\n"];
         } else if (kind === "fix") {
             seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        colr: \"white\"\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"), fence(clock)];
+        } else if (kind === "props") {
+            // A todo list with @name, @setting and @keep: its Settings... and what it remembers.
+            seedlingFakeReplies = [fence("import QtQuick 2.12\nimport QtQuick.Controls 2.12\n\n// @name Todo\nRectangle {\n    id: root\n    width: 240; height: 220; radius: 8\n    color: root.dark ? \"#E61F2630\" : \"#E6F4F4F4\"\n\n    // @setting Title\n    property string heading: \"TODO\"\n    // @setting Theme | Light / Dark\n    property string theme: \"Light\"\n    // @setting Font Size | 12 - 24\n    property int fontSize: 15\n    // @setting Accent\n    property color accent: \"#F1AA03\"\n    // @setting Show Done\n    property bool showDone: true\n    // @keep\n    property var todos: []\n\n    readonly property bool dark: root.theme === \"Dark\"\n\n    Column {\n        anchors.fill: parent\n        anchors.margins: 10\n        spacing: 6\n\n        Text {\n            text: root.heading + \" · \" + root.todos.filter(function(t) { return !t.done; }).length\n            color: root.accent\n            font.pixelSize: root.fontSize + 3\n            font.bold: true\n        }\n\n        TextField {\n            id: input\n            width: parent.width\n            placeholderText: \"+\"\n            onAccepted: {\n                if (input.text.trim() === \"\")\n                    return;\n                root.todos = root.todos.concat([{\"text\": input.text, \"done\": false}]);\n                input.text = \"\";\n            }\n        }\n\n        Repeater {\n            model: root.todos\n            Text {\n                visible: root.showDone || !modelData.done\n                width: parent.width\n                elide: Text.ElideRight\n                text: (modelData.done ? \"✓ \" : \"○ \") + modelData.text\n                color: modelData.done ? \"#888888\" : (root.dark ? \"white\" : \"#333333\")\n                font.pixelSize: root.fontSize\n                font.strikeout: modelData.done\n                MouseArea {\n                    anchors.fill: parent\n                    onClicked: {\n                        var list = root.todos.slice();\n                        list[index] = {\"text\": modelData.text, \"done\": !modelData.done};\n                        root.todos = list;\n                    }\n                }\n            }\n        }\n    }\n}\n")];
         } else if (kind === "network") {
             seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    id: root\n    width: 220; height: 80; radius: 8\n    color: \"#E61F2630\"\n    property string temp: \"--\"\n\n    Text { anchors.centerIn: parent; color: \"white\"; font.pixelSize: 28; text: root.temp }\n\n    Component.onCompleted: {\n        var request = new XMLHttpRequest();\n        request.onreadystatechange = function() {\n            if (request.readyState === XMLHttpRequest.DONE)\n                root.temp = request.status === 200 ? \"online\" : \"offline\";\n        };\n        request.open(\"GET\", \"https://www.bing.com/\");\n        request.send();\n    }\n}\n")];
         } else {

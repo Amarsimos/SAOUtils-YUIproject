@@ -202,5 +202,27 @@ test("declarations are only comments: the safety check is the same with or witho
     assert.deepStrictEqual(plain(S.check(bare, false)), []);
 });
 
+test("Yui's code prompt (rule 14) says the same as props.js: its examples are read", () => {
+    const Y = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.seedlingCodePrompt(false, false).split("\n").find((l) => l.indexOf("14. ") === 0);
+    assert.ok(rule, "rule 14 is in the prompt");
+    const r = P.parse(`import QtQuick 2.12
+// @name 天气
+Item {
+    // @setting 字号 | 12 - 48
+    property int fontSize: 16
+    // @setting 主题 | 浅色 / 深色
+    property string theme: "浅色"
+    // @keep
+    property var todos: []
+}
+`);
+    assert.strictEqual(r.notes.length, 0);
+    assert.strictEqual(r.name, "天气");
+    ["string", "int", "real", "bool", "color"].forEach((t) => assert.ok(rule.indexOf(t) !== -1 && P.SETTING_TYPES.indexOf(t) !== -1, t));
+    ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep", "// @name"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
+});
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);
