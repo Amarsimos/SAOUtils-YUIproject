@@ -958,6 +958,8 @@ NVG.View {
 
                     // Run: advanced (with Code Editor on), as Examples.
                     Chip {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredHeight: 30
                         visible: bench.showCode
                         text: "Run"
                         icon: "run"
@@ -965,6 +967,10 @@ NVG.View {
                     }
 
                     Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
                         text: "Versions"
                         icon: "folder"
                         checked: bench.showVersions
@@ -975,6 +981,10 @@ NVG.View {
                     }
 
                     Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
                         id: problemsChip
 
                         // Flashes (lit for a moment, twice) when a Save fails with problems.
@@ -991,6 +1001,10 @@ NVG.View {
                     }
 
                     Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
                         id: examplesChip
 
                         visible: bench.showCode
@@ -1006,6 +1020,8 @@ NVG.View {
                     // Stop: red and breathing while Yui writes, so it is found at once (also in the
                     // chat: its Send button is Stop then).
                     Chip {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredHeight: 30
                         text: "Stop"
                         icon: "logout"
                         danger: true
