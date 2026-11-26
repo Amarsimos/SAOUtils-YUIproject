@@ -77,6 +77,8 @@ NVG.Window {
             yui.testLinkStart();
         else if (tag === "media")
             yui.testMedia();
+        else if (tag === "seedling")
+            yui.testSeedling();
         else if (tag === "care")
             yui.testCareTick();
         else if (tag.indexOf("followup_") === 0)
@@ -668,7 +670,7 @@ NVG.Window {
                             Repeater {
                                 model: [{
                                     "title": qsTr("Actions"),
-                                    "tests": [[qsTr("Launch Notepad"), "<<launch:notepad>>"], [qsTr("Close Notepad"), "<<kill:notepad.exe>>"], [qsTr("Find File"), "<<find:notepad.exe>>"], [qsTr("Open Link"), "<<open:https://www.bilibili.com>>"], [qsTr("Protected Process"), "<<kill:explorer.exe>>"], [qsTr("Test Media"), "media"]]
+                                    "tests": [[qsTr("Launch Notepad"), "<<launch:notepad>>"], [qsTr("Close Notepad"), "<<kill:notepad.exe>>"], [qsTr("Find File"), "<<find:notepad.exe>>"], [qsTr("Open Link"), "<<open:https://www.bilibili.com>>"], [qsTr("Protected Process"), "<<kill:explorer.exe>>"], [qsTr("Test Media"), "media"], [qsTr("Test Seedling"), "seedling"]]
                                 }, {
                                     "title": qsTr("Care"),
                                     "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"]]
