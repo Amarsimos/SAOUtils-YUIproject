@@ -774,7 +774,7 @@ NVG.Window {
                                 y: logScroll.topPadding
                                 height: logScroll.availableHeight
                                 fixedThumb: 48
-                                thumbWidth: 7
+                                thumbWidth: 6
                             }
 
                             TextArea {
