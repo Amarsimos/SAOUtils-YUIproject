@@ -2595,3 +2595,31 @@ function seedlingCodeFrom(text) {
 
     return /^\s*import\s+Qt/.test(value) ? value.trim() + "\n" : "";
 }
+
+// The code of a reply still streaming in: what follows ```qml (up to a closing ```), else "".
+function seedlingPartialCode(text) {
+    var value = String(text || "").replace(/<think>[\s\S]*?(<\/think>|$)/g, "");
+    var start = /```(?:qml|QML|javascript|js)?[ \t]*\n/.exec(value);
+    if (!start)
+        return "";
+
+    var rest = value.slice(start.index + start[0].length);
+    var end = rest.indexOf("```");
+    return end === -1 ? rest : rest.slice(0, end);
+}
+
+// The live line under Yui's message while a widget is written: a turning mark, the step, how many
+// lines so far and the seconds. state: {stage: "writing" | "fixing" | "checking", lines, seconds,
+// attempt, problem}.
+var SEEDLING_SPINNER = ["◐", "◓", "◑", "◒"];
+function seedlingNoteLine(state) {
+    var mark = SEEDLING_SPINNER[state.seconds % SEEDLING_SPINNER.length];
+    var head = "🌱 " + mark + " ";
+    if (state.stage === "fixing")
+        return head + "第 " + state.attempt + " 次修正中（" + String(state.problem || "").slice(0, 40) + "）· " + state.lines + " 行 · " + state.seconds + " 秒";
+
+    if (state.stage === "checking")
+        return head + "检查、渲染中… · " + state.seconds + " 秒";
+
+    return head + (state.lines > 0 ? "结衣正在写挂件 · " + state.lines + " 行" : "结衣在想怎么写…") + " · " + state.seconds + " 秒";
+}

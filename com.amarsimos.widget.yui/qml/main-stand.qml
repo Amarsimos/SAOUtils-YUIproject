@@ -1640,10 +1640,9 @@ T.Widget {
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
                         seedlingWrite(seedlingRequest, function(message, ok) {
-                            var item = chatModel.get(seedlingIndex);
-                            if (item && item.note !== undefined)
-                                chatModel.setProperty(seedlingIndex, "note", String(item.note).replace(widget.seedlingWorking, (ok ? "🌱 " : "🌱 ⚠ ") + message));
-
+                            setSeedlingNote(seedlingIndex, (ok ? "🌱 ✓ " : "🌱 ⚠ ") + message);
+                        }, function(state) {
+                            setSeedlingNote(seedlingIndex, Yui.seedlingNoteLine(state));
                         });
                     });
                 }
@@ -3903,7 +3902,7 @@ T.Widget {
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
-    readonly property string seedlingWorking: "🌱 Seedling：结衣在写挂件…"
+    readonly property string seedlingWorking: "🌱 ◐ 结衣在想怎么写…"
 
     function seedlingBench() {
         if (seedlingProbe)
@@ -3941,16 +3940,22 @@ T.Widget {
     }
 
     // Writes the widget request asks for (or the change to the one in the workbench) in a request of
-    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shows it in Seedling's workbench
-    // and, when it does not compile or is refused, asks again with the error (twice at most).
-    // onDone(message, ok) tells how it went.
-    function seedlingWrite(request, onDone) {
+    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shown live: the workbench opens
+    // at once and the code streams into it; when it does not compile or is refused, it is asked again
+    // with the error (twice at most). onProgress(state), optional, every second and at each step (see
+    // Yui.seedlingNoteLine); onDone(message, ok) at the end.
+    property var seedlingJob: null
+
+    function seedlingWrite(request, onDone, onProgress) {
         var bench = seedlingBench();
         if (!bench)
             return onDone("Seedling 没有安装", false);
 
         if (bench.widgets.length === 0)
             return onDone("桌面上还没有 Seedling 挂件，先从挂件库放一个吧", false);
+
+        if (seedlingJob)
+            return onDone("结衣还在写上一个挂件，等一下哦", false);
 
         var config = Object.assign({}, activeConfig());
         var model = String(widget.settings.seedling_model || "").trim();
@@ -3960,54 +3965,113 @@ T.Widget {
         config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork());
         config.noTools = true;
         config.maxTokens = Math.max(4096, maxTokens);
-        var retries = 0;
+        var state = {
+            "stage": "writing",
+            "lines": 0,
+            "seconds": 0,
+            "attempt": 0,
+            "problem": ""
+        };
+        var started = Date.now();
+        var ticker = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000; repeat: true }", widget);
+        var job = {
+            "handle": null,
+            "stopped": false
+        };
+        var progress = function() {
+            state.seconds = Math.round((Date.now() - started) / 1000);
+            if (onProgress)
+                onProgress(state);
+
+        };
+        var finish = function(message, ok) {
+            ticker.stop();
+            ticker.destroy();
+            seedlingJob = null;
+            bench.endWriting(ok, message);
+            diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
+            onDone(message, ok);
+        };
+        ticker.triggered.connect(progress);
+        ticker.start();
+        seedlingJob = job;
+        bench.beginWriting(request);
+        progress();
         var ask = function(code, problem) {
-            requestCompletion([{
+            job.handle = requestCompletion([{
                 "role": "user",
                 "content": Yui.seedlingCodeRequest(request, code, problem)
             }], function(text, isError) {
+                if (job.stopped)
+                    return finish("已停止，写到一半的代码留在工作台里", false);
+
                 if (isError)
-                    return onDone("写代码的请求失败了：" + String(text).split("
-")[0], false);
+                    return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
 
                 var qml = Yui.seedlingCodeFrom(text);
                 if (!qml)
-                    return onDone("模型没有给出代码", false);
+                    return finish("模型没有给出代码", false);
 
+                state.stage = "checking";
+                bench.setPhase(qsTr("Checking and rendering..."));
+                progress();
                 var refused = bench.preview(qml, request, function(result) {
                     diag("seedling: " + result.result + " " + result.status);
                     if (result.ok)
-                        return onDone("已在 Seedling 工作台中显示（" + result.width + " × " + result.height + "），满意就点 ○ 保存", true);
+                        return finish("完成 · " + result.width + " × " + result.height + "，满意就点 ○ 保存", true);
 
-                    if (retries++ < 2)
-                        return ask(qml, result.status);
+                    if (state.attempt >= 2)
+                        return finish("改了两次还是不行：" + result.status, false);
 
-                    onDone("改了两次还是不行：" + result.status, false);
+                    state.attempt++;
+                    state.stage = "fixing";
+                    state.problem = result.status;
+                    state.lines = 0;
+                    bench.setPhase(qsTr("Yui is fixing it (%1 / 2): %2").arg(state.attempt).arg(result.status));
+                    progress();
+                    ask(qml, result.status);
                 });
                 if (refused)
-                    onDone(refused, false);
+                    finish(refused, false);
 
-            }, config);
+            }, config, function(soFar) {
+                var partial = Yui.seedlingPartialCode(soFar);
+                if (!partial)
+                    return ;
+
+                bench.streamCode(partial);
+                var lines = partial.split("\n").length;
+                if (lines !== state.lines) {
+                    state.lines = lines;
+                    progress();
+                }
+            });
         };
         ask(bench.currentCode(), "");
     }
 
-    // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
-    function seedlingPreview(code, title, onResult) {
-        var bench = seedlingBench();
-        if (!bench)
-            return "Seedling is not installed";
+    // Stop (Seedling's workbench): ends the request being written; what was written stays.
+    function seedlingStop() {
+        if (!seedlingJob)
+            return ;
 
-        return bench.preview(code, title, onResult);
+        seedlingJob.stopped = true;
+        if (seedlingJob.handle)
+            seedlingJob.handle.abort();
+
     }
 
-    // Test Seedling (System Console): a small clock sent to Seedling, the result written in the log.
-    function testSeedling() {
-        var code = "import QtQuick 2.12\n\nRectangle {\n    width: 180; height: 70; radius: 8\n    color: \"#E61F2630\"\n    Text {\n        anchors.centerIn: parent\n        color: \"white\"; font.pixelSize: 28\n        text: \"From Yui\"\n    }\n}\n";
-        var refused = seedlingPreview(code, "Test from Yui", function(result) {
-            diag("seedling result: " + JSON.stringify(result));
+    // Sets the 🌱 line of the message at index (the other note lines kept).
+    function setSeedlingNote(index, line) {
+        var item = chatModel.get(index);
+        if (!item || item.note === undefined)
+            return ;
+
+        var lines = String(item.note || "").split("\n").filter(function(other) {
+            return other && other.indexOf("🌱") !== 0;
         });
-        diag("test seedling: " + (refused || "sent"));
+        lines.push(line);
+        chatModel.setProperty(index, "note", lines.join("\n"));
     }
 
     // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
