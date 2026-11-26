@@ -3403,6 +3403,18 @@ T.Widget {
                 "maximum": heartCoreCapacity
             };
 
+        // The last 30 days' moods, [{day: "yyyy-MM-dd", score: 1 - 5}] (Seedling's @yui, a mood
+        // calendar; not a data value: it is a list).
+        if (name === "mood_history")
+            return {
+                "current": moodsSince(30).map(function(row) {
+                    return {
+                        "day": row.day,
+                        "score": row.score
+                    };
+                })
+            };
+
         return null;
     }
 
@@ -3783,6 +3795,7 @@ T.Widget {
 
         // Seedling's Generate (the workbench's request) is written by Yui.
         seedlingProbe.bench.writer = widget;
+        Qt.callLater(seedlingOfferConnection);
         seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
         seedlingInstalled = true;
         return seedlingProbe.bench;
@@ -3801,196 +3814,136 @@ T.Widget {
         }
     }
 
-    // Writes the widget request asks for (or the change to the one in the workbench) in a request of
-    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shown live: the workbench opens
-    // at once and the code streams into it; when it does not compile or is refused, it is asked again
-    // with the error (twice at most). onProgress(state), optional, every second and at each step (see
-    // Yui.seedlingNoteLine); onDone(message, ok) at the end.
+    // A widget written for request by Seedling (its writing flow, section 11 of "Seedling Development
+    // Plan.md"); Yui says how it goes and how it ended. onProgress(state) at each step (see
+    // Yui.seedlingNoteLine); onDone(message, ok, kind, extra) at the end. seedlingJob: set while it is
+    // written (the chat's Send turns into Stop).
     property var seedlingJob: null
 
     function seedlingWrite(request, onDone, onProgress) {
         var bench = seedlingBench();
-        if (!bench)
+        if (!bench || !bench.write)
             return onDone("Seedling 没有安装", false, "missing");
 
         if (bench.widgets.length === 0)
             return seedlingAskPlace(request, onDone, onProgress);
 
-        if (seedlingJob)
-            return onDone("结衣还在写上一个挂件，等一下哦", false, "busy");
-
-        // Code there already: changed with SEARCH / REPLACE edits; else written whole.
-        var current = bench.currentCode();
-        var editing = current.trim() !== "";
-        var config = Object.assign({}, activeConfig());
-        var model = String(widget.settings.seedling_model || "").trim();
-        if (model)
-            config.model = model;
-
-        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing);
-        config.noTools = true;
-        // Room for a whole widget (thinking models count their thinking too).
-        config.maxTokens = Math.max(16384, maxTokens);
-        // Thinking models say nothing while they think, longer over code (most of all when changing
-        // it): 4 minutes before giving up, not the chat's 1.
-        config.timeout = 240000;
-        var state = {
-            "stage": editing ? "editing" : "writing",
-            "lines": 0,
-            "edits": 0,
-            "seconds": 0,
-            "attempt": 0,
-            "problem": ""
+        // A Seedling Model set here before (Cardinal System) moves to Seedling the first time.
+        var oldModel = String(widget.settings.seedling_model || "").trim();
+        if (oldModel && bench.setSetting && !bench.writingModel()) {
+            bench.setSetting("custom_model", oldModel);
+            widget.settings.seedling_model = "";
+        }
+        seedlingJob = {
+            "request": request
         };
-        var started = Date.now();
-        var ticker = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000; repeat: true }", widget);
-        var job = {
-            "handle": null,
-            "stopped": false
-        };
-        // The last way out was taken: the whole code asked for once after the edits did not fit.
-        var wholeTaken = false;
-        var progress = function() {
-            state.seconds = Math.round((Date.now() - started) / 1000);
+        bench.write(request, function(state) {
             if (onProgress)
                 onProgress(state);
 
-        };
-        // message: for the workbench and the log; kind: what the chat says (Yui.seedlingChatLine).
-        // extra: what Yui adds to her last words (Yui.seedlingExtra).
-        var finish = function(message, ok, kind, extra) {
-            ticker.stop();
-            ticker.destroy();
+        }, function(kind, message, code) {
             seedlingJob = null;
-            bench.endWriting(ok, message);
-            diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
-            onDone(message, ok, kind || (ok ? "done" : "failed"), extra || "");
+            var ok = kind === "done" || kind === "edited";
+            diag("seedling: " + kind + ", " + message);
+            onDone(message, ok, kind, ok ? Yui.seedlingExtra(code, userTitle()) : "");
+        });
+    }
+
+    // Seedling was set up before Yui (its own Link settings) and Yui has no connection yet: she takes
+    // the same at once (the API is set once; nothing of hers is overwritten, she had none) and says so.
+    // Seedling's server, address, key and model become hers (Cardinal System); a server she does not
+    // list (e.g. Qwen) becomes Custom with its address, a model not in her list Manual Core ID.
+    function seedlingOfferConnection() {
+        var bench = seedlingProbe ? seedlingProbe.bench : null;
+        if (!bench || !bench.ownSetup || widget.settings.seedling_offer_done === true)
+            return ;
+
+        var mine = activeConfig();
+        if (mine.apiKey && mine.endpoint && mine.model)
+            return ;
+
+        var own = bench.ownSetup();
+        if (!own)
+            return ;
+
+        widget.settings.seedling_offer_done = true;
+        (function() {
+            var index = -1;
+            for (var i = 0; i < providers.length; i++)
+                if (providers[i].id === own.provider)
+                    index = i;
+
+            var provider = index === -1 ? providers[providerIndexOf("custom")] : providers[index];
+            var listed = provider.models.indexOf(own.model) !== -1;
+            var all = JSON.parse(JSON.stringify(widget.settings.provider_settings || {}));
+            all[provider.id] = {
+                "model": listed ? own.model : "",
+                "custom_model": listed ? "" : own.model,
+                "api_endpoint": index === -1 ? own.endpoint : own.endpointSet,
+                "api_key": own.apiKey
+            };
+            widget.settings.provider_settings = all;
+            widget.settings.provider = provider.id;
+            diag("seedling: Yui uses Seedling's connection (" + provider.id + ", " + own.model + ")");
+            actionSay(qsTr("Seedling"), "结衣用上了 Seedling 里设置好的 AI（" + own.title + " · " + own.model + "）哦～想换的话在 Cardinal System 里改就好。");
+        })();
+    }
+
+    // What Seedling takes from Yui while she is there: her server's name, its models (the list Scan
+    // Cores found in Cardinal System, else the built-in one) and her chat's model.
+    function seedlingModels() {
+        var provider = providers[providerIndexOf(widget.settings.provider)];
+        var saved = (widget.settings.provider_settings || {})[provider.id] || {};
+        var scanned = saved.fetched_models && saved.fetched_models.length > 0;
+        return {
+            "server": provider.title,
+            "models": scanned ? saved.fetched_models : provider.models,
+            "scanned": scanned,
+            "chatModel": activeConfig().model
         };
-        var ask;
-        // Asks again with what went wrong (twice at most); when editing, after that once more for the
-        // whole code.
-        var retry = function(problem, code, whole) {
-            if (state.attempt >= 2) {
-                if (editing && !whole && !wholeTaken) {
-                    wholeTaken = true;
-                    state.stage = "writing";
-                    state.lines = 0;
-                    state.edits = 0;
-                    bench.setPhase(qsTr("The edits did not fit · Thinking about the whole code..."));
-                    progress();
-                    return ask(code, problem, true);
-                }
-                return finish("改了几次还是不行：" + String(problem).split("\n")[0], false);
-            }
-            state.attempt++;
-            state.stage = "fixing";
-            state.problem = String(problem).split("\n")[0];
-            state.lines = 0;
-            state.edits = 0;
-            bench.setPhase(qsTr("Thinking about the fix (%1 / 2): %2").arg(state.attempt).arg(state.problem));
-            progress();
-            ask(code, problem, whole);
-        };
-        var show = function(code, changes, whole) {
-            state.stage = "checking";
-            bench.setPhase(qsTr("Checking and rendering..."));
-            progress();
-            var refused = bench.preview(code, request, function(result) {
-                diag("seedling: " + result.result + " " + result.status);
-                // Shown, but some @setting / @keep declarations do not take effect: asked to fix them
-                // once (while a fix is left); otherwise it is done as it is.
-                if (result.ok && result.notes && result.notes.length > 0 && !state.notesAsked && state.attempt < 2) {
-                    state.notesAsked = true;
-                    diag("seedling: declarations not used: " + result.notes.join("; "));
-                    return retry("代码能显示，但这些 @setting / @keep 声明没有生效：
-" + result.notes.join("
-") + (editing && !whole ? "
-请用 SEARCH/REPLACE 块改正。" : "
-请改正后输出完整代码。"), code, whole);
-                }
-                if (result.ok)
-                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done", Yui.seedlingExtra(code, userTitle()));
+    }
 
-                // Not allowed online (the user said no): said so, not rewritten without it behind
-                // their back.
-                if (result.networkDeclined)
-                    return finish("没有允许联网", false, "offline");
+    // Scan Cores / Restore Registry for Seedling, on Yui's server; the list is hers (Cardinal System
+    // shows it too). onDone(models or null, error).
+    function seedlingScanModels(onDone) {
+        var provider = providers[providerIndexOf(widget.settings.provider)];
+        fetchModels(activeConfig(), function(models, error) {
+            if (models)
+                seedlingKeepModels(provider.id, models);
 
-                retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
-            }, changes);
-            if (refused)
-                finish(refused, false);
+            onDone(models, error);
+        });
+    }
 
-        };
-        ask = function(code, problem, whole) {
-            var edits = editing && !whole;
-            job.handle = requestCompletion([{
-                "role": "user",
-                "content": Yui.seedlingCodeRequest(request, code, problem, editing && whole)
-            }], function(text, isError) {
-                if (job.stopped)
-                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false, "stopped");
+    function seedlingRestoreModels() {
+        seedlingKeepModels(providers[providerIndexOf(widget.settings.provider)].id, null);
+    }
 
-                if (isError)
-                    return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
+    function seedlingKeepModels(id, models) {
+        var all = JSON.parse(JSON.stringify(widget.settings.provider_settings || {}));
+        all[id] = all[id] || {};
+        all[id].fetched_models = models;
+        widget.settings.provider_settings = all;
+    }
 
-                var blocks = edits ? Yui.seedlingEdits(text) : [];
-                if (blocks.length > 0) {
-                    var applied = Yui.seedlingApplyEdits(code, blocks);
-                    diag("seedling: " + blocks.length + " edit(s), " + (applied.ok ? "applied" : applied.failed.length + " did not fit"));
-                    if (!applied.ok)
-                        return retry(Yui.seedlingEditProblem(applied.failed), code, false);
+    // Seedling borrows Yui's connection (while she is there): one request with its own system text, the
+    // Seedling Model when set, room for a whole widget and 4 minutes before giving up (thinking models
+    // say nothing while they think). System Console's Seedling tests are answered here (no API).
+    function seedlingConnection(system, user, model, onDelta, onFinished) {
+        var config = Object.assign({}, activeConfig());
+        if (model)
+            config.model = model;
 
-                    return show(applied.code, {
-                        "lines": applied.changed,
-                        "added": applied.added,
-                        "removed": applied.removed,
-                        "count": blocks.length
-                    }, false);
-                }
-                // Cut off (too long for the limit): asked again for a shorter one.
-                if (Yui.seedlingCodeCut(text))
-                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。", code, true);
-
-                var qml = Yui.seedlingCodeFrom(text);
-                if (!qml) {
-                    if (edits)
-                        return retry("没有找到 SEARCH/REPLACE 块。请按格式输出要改的地方。", code, false);
-
-                    return finish("模型没有给出代码", false);
-                }
-                show(qml, null, true);
-            }, config, function(soFar) {
-                var count = edits ? Yui.seedlingEditCount(soFar) : 0;
-                if (count > 0) {
-                    if (count !== state.edits) {
-                        state.edits = count;
-                        bench.setPhase(qsTr("Changing · %1 place(s)").arg(count));
-                        progress();
-                    }
-                    return ;
-                }
-                // Written whole (also when she chose to while editing): streamed into the editor.
-                var partial = Yui.seedlingPartialCode(soFar);
-                if (!partial)
-                    return ;
-
-                bench.streamCode(partial);
-                var lines = partial.split("\n").length;
-                if (lines !== state.lines) {
-                    state.lines = lines;
-                    state.stage = state.stage === "editing" ? "writing" : state.stage;
-                    bench.setPhase(qsTr("Writing · %1 lines").arg(lines));
-                    progress();
-                }
-            });
-        };
-        ticker.triggered.connect(progress);
-        ticker.start();
-        seedlingJob = job;
-        bench.beginWriting(request, editing);
-        progress();
-        ask(current, "", false);
+        config.rawSystem = system;
+        config.noTools = true;
+        config.maxTokens = Math.max(16384, maxTokens);
+        config.timeout = 240000;
+        return requestCompletion([{
+            "role": "user",
+            "content": user
+        }], function(text, isError) {
+            onFinished(text, isError);
+        }, config, onDelta);
     }
 
     // No Seedling widget on the desktop (no ground for the seed to grow in): Yui says so in her own
@@ -4104,6 +4057,9 @@ T.Widget {
             seedlingFakeReplies = ["<<<<<<< SEARCH\n" + line + "\n=======\n" + line.replace(/"#[0-9A-Fa-f]+"/, "\"#E6C82864\"") + "\n>>>>>>> REPLACE\n"];
         } else if (kind === "fix") {
             seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        colr: \"white\"\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"), fence(clock)];
+        } else if (kind === "moods") {
+            // A mood calendar reading Yui's data (@yui): her moods of the last 30 days.
+            seedlingFakeReplies = [fence("import QtQuick 2.12\n\n// @name Mood Calendar\nRectangle {\n    id: root\n    width: 250; height: 150; radius: 10\n    color: \"#E6F4F4F4\"\n    border.color: \"#D4D4D4\"\n\n    // @yui mood_history\n    property var moods: []\n    // @yui companion_days\n    property int days: 0\n    // @setting Accent\n    property color accent: \"#F1AA03\"\n\n    // The last 30 days, oldest first: the score of each (0: not recorded).\n    readonly property var cells: {\n        var out = [];\n        var now = new Date();\n        for (var i = 0; i < 30; i++) {\n            var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29 + i);\n            var key = Qt.formatDate(d, \"yyyy-MM-dd\");\n            var score = 0;\n            for (var j = 0; j < root.moods.length; j++)\n                if (root.moods[j].day === key)\n                    score = root.moods[j].score;\n            out.push(score);\n        }\n        return out;\n    }\n\n    function shade(score) {\n        if (score === 0)\n            return \"#E2E2E2\";\n        return Qt.rgba(0.95, 0.67, 0.01, 0.25 + score * 0.15);\n    }\n\n    Text {\n        x: 12; y: 8\n        text: \"MOOD · 30 DAYS\"\n        color: root.accent\n        font.family: \"SAO UI\"\n        font.pixelSize: 15\n    }\n\n    Text {\n        anchors.right: parent.right; anchors.rightMargin: 12\n        y: 8\n        text: \"DAY \" + root.days\n        color: \"#888888\"\n        font.family: \"SAO UI\"\n        font.pixelSize: 15\n    }\n\n    Grid {\n        x: 12; y: 34\n        columns: 10\n        spacing: 4\n\n        Repeater {\n            model: root.cells\n\n            Rectangle {\n                width: 19; height: 19; radius: 4\n                color: root.shade(modelData)\n                border.color: index === 29 ? root.accent : \"transparent\"\n                border.width: 2\n            }\n        }\n    }\n\n    Text {\n        x: 12\n        anchors.bottom: parent.bottom; anchors.bottomMargin: 8\n        text: \"颜色越深，那天心情越好\"\n        color: \"#999999\"\n        font.pixelSize: 11\n    }\n}\n")];
         } else if (kind === "props") {
             // A todo list with @name, @setting and @keep: its Settings... and what it remembers.
             seedlingFakeReplies = [fence("import QtQuick 2.12\nimport QtQuick.Controls 2.12\n\n// @name Todo\nRectangle {\n    id: root\n    width: 240; height: 220; radius: 8\n    color: root.dark ? \"#E61F2630\" : \"#E6F4F4F4\"\n\n    // @setting Title\n    property string heading: \"TODO\"\n    // @setting Theme | Light / Dark\n    property string theme: \"Light\"\n    // @setting Font Size | 12 - 24\n    property int fontSize: 15\n    // @setting Accent\n    property color accent: \"#F1AA03\"\n    // @setting Show Done\n    property bool showDone: true\n    // @keep\n    property var todos: []\n\n    readonly property bool dark: root.theme === \"Dark\"\n\n    Column {\n        anchors.fill: parent\n        anchors.margins: 10\n        spacing: 6\n\n        Text {\n            text: root.heading + \" · \" + root.todos.filter(function(t) { return !t.done; }).length\n            color: root.accent\n            font.pixelSize: root.fontSize + 3\n            font.bold: true\n        }\n\n        TextField {\n            id: input\n            width: parent.width\n            placeholderText: \"+\"\n            onAccepted: {\n                if (input.text.trim() === \"\")\n                    return;\n                root.todos = root.todos.concat([{\"text\": input.text, \"done\": false}]);\n                input.text = \"\";\n            }\n        }\n\n        Repeater {\n            model: root.todos\n            Text {\n                visible: root.showDone || !modelData.done\n                width: parent.width\n                elide: Text.ElideRight\n                text: (modelData.done ? \"✓ \" : \"○ \") + modelData.text\n                color: modelData.done ? \"#888888\" : (root.dark ? \"white\" : \"#333333\")\n                font.pixelSize: root.fontSize\n                font.strikeout: modelData.done\n                MouseArea {\n                    anchors.fill: parent\n                    onClicked: {\n                        var list = root.todos.slice();\n                        list[index] = {\"text\": modelData.text, \"done\": !modelData.done};\n                        root.todos = list;\n                    }\n                }\n            }\n        }\n    }\n}\n")];
@@ -4128,12 +4084,9 @@ T.Widget {
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.
     function seedlingStop() {
-        if (!seedlingJob)
-            return ;
-
-        seedlingJob.stopped = true;
-        if (seedlingJob.handle)
-            seedlingJob.handle.abort();
+        var bench = seedlingBench();
+        if (bench && bench.stop)
+            bench.stop();
 
     }
 

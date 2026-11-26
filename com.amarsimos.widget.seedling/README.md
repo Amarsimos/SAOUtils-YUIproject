@@ -1,8 +1,8 @@
 # Seedling
 
 A desktop widget for SAO Utils 2 whose content is a small piece of QML: a clock, a countdown, a
-little panel, a decoration. Write it yourself in the workbench, or, with **MHCP-YUI** installed, ask
-Yui in her chat and she writes it for you.
+little panel, a decoration. Describe it and an AI writes it (Seedling's own, set up in Seedling
+Settings), write it yourself in the workbench, or, with **MHCP-YUI** installed, ask Yui in her chat.
 
 ## Using it
 
@@ -32,11 +32,23 @@ another workbench meanwhile.
 As in MHCP-YUI's settings: **Advanced** (title bar) shows Code Editor and the Test tab, **Help** the
 explanations, **Reset** restores the defaults.
 
-- **Code Editor** (General, Advanced, off by default): the code beside the preview, with **Run** and
-  **Examples**, to read or change it. Typing renders it after a moment.
+- **Code Editor** (General, Advanced, off by default): the code beside the preview, to read or
+  change it. Typing renders it after a moment. (**Examples** are there in both modes.)
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
-  brings it, on Run, or on ○ ("allow it to go online and save?").
+  brings it, or on ○ ("allow it to go online and save?").
+- **AI** (shared by all Seedling widgets):
+  - With MHCP-YUI, her server, access key and model list are used (nothing to set twice); only the
+    **Core Program** is Seedling's choice ("Same as Yui's chat" by default).
+  - Without her, the **Link** tab is Seedling's own, as in her Cardinal System: **Seed Server**,
+    **Server Address**, **Access Key**, **Core Program** / **Manual Core ID**, **Scan Cores**,
+    **Link Start!**. OpenAI-compatible
+    servers (OpenAI, DeepSeek, Kimi, Qwen, Ollama, any address), Claude and Gemini. The key stays in
+    Seedling's own local data on this computer.
+  - **Widget Style**: what the widgets look like, a text like Yui's personality; SAO style by
+    default. Sent with every widget; what is asked for comes first.
+  - **Test Connection**: one very short request.
+  - Without MHCP-YUI, describe the widget at the foot of the workbench and press Enter.
 - **Test** (Advanced): tries the workbench's states without the AI and without any request.
 
 ## A widget's own settings and memory
@@ -72,6 +84,29 @@ Rectangle {
   `url`) are listed in Problems as notes; Yui is asked to fix them once.
 
 Yui writes these declarations by herself when a widget has something to set or remember.
+
+### Yui's data (@yui)
+
+With MHCP-YUI, a widget can show what Yui knows, read only:
+
+```qml
+// @yui mood_history
+property var moods: []      // the last 30 days: [{day, score}]
+// @yui companion_days
+property int days: 0
+```
+
+Keys: `companion_days`, `mood`, `mood_text`, `mood_history`, `boss_raid`, `raid_timer`,
+`raid_cleared`, `next_alarm`, `next_alarm_text`, `quest_log`, `heart_core`, `col_ledger`,
+`latest_report`. Timers are updated every second, the rest every 10 seconds; without Yui the code's
+defaults stay. **A widget that reads Yui's data never goes online**, Network or not: what it knows
+of you does not leave. Its Settings window says what it reads.
+
+## Templates
+
+The workbench's Examples (Code Editor): SAO Clock, Countdown, Todo, Habit, Pomodoro, Year Progress,
+Weather (online) and Mood Calendar (Yui's data). When Yui writes a new widget of one of these kinds,
+she is shown the template as a reference.
 
 ## Safety
 
@@ -116,3 +151,7 @@ First version, split out of MHCP-YUI's built-in widget lab.
 - Sandbox, token-based safety check, per-widget Network.
 - Chinese translation.
 - A widget's own settings (@setting, right-click Settings...), memory (@keep) and name (@name).
+- Yui's data (@yui, read only; such a widget never goes online).
+- Eight templates as Examples, also shown to Yui as references.
+- Seedling writes widgets itself (its own AI, or MHCP-YUI's connection); MHCP-YUI only talks about it
+  in her chat.

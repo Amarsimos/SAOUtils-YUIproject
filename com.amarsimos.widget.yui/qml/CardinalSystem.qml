@@ -88,7 +88,6 @@ NVG.Window {
         targetWidget.settings.persona = profileNames[shownProfile] || builtInProfile;
         targetWidget.settings.user_title = userTitlePreference.ids[userTitlePreference.value] || "papa";
         targetWidget.settings.max_tokens = maxTokensPreference.value;
-        targetWidget.settings.seedling_model = String(seedlingModelPreference.value || "").trim();
         targetWidget.settings.thinking_depth = thinkingPreference.ids[thinkingPreference.value] || "default";
         targetWidget.settings.temperature = temperaturePreference.value;
         targetWidget.settings.presence_penalty = penaltyPreference.value;
@@ -292,7 +291,6 @@ NVG.Window {
         systemPromptPreference.value = prompt;
         userTitlePreference.value = Math.max(0, userTitlePreference.ids.indexOf(settings.user_title));
         maxTokensPreference.value = settings.max_tokens !== undefined ? settings.max_tokens : 0;
-        seedlingModelPreference.value = settings.seedling_model || "";
         // Off when never set (the older Thinking switch is not read any more).
         thinkingPreference.value = Math.max(0, thinkingPreference.ids.indexOf(settings.thinking_depth || "off"));
         temperaturePreference.value = settings.temperature !== undefined ? settings.temperature : -1;
@@ -304,7 +302,7 @@ NVG.Window {
         actionModePreference.value = settings.action_mode === "tools" ? 1 : 0;
         smallModelPreference.value = settings.small_model === false ? 0 : 1;
         loading = false;
-        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, seedlingModelPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
+        [providerPreference, modelPreference, customModelPreference, apiEndpointPreference, apiKeyPreference, maxTokensPreference, thinkingPreference, temperaturePreference, penaltyPreference, topPPreference, topKPreference, frequencyPreference, seedPreference, actionModePreference, smallModelPreference, userTitlePreference, systemPromptPreference].forEach(function(preference) {
             preference.valueChanged.connect(scheduleApply);
         });
     }
@@ -624,23 +622,6 @@ NVG.Window {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
                             text: qsTr("The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.")
-                        }
-
-                        // Seedling (companion plugin): the model that writes widget code.
-                        P.TextFieldPreference {
-                            id: seedlingModelPreference
-
-                            visible: targetWidget.seedlingInstalled
-                            name: "seedling_model"
-                            label: qsTr("Seedling Model")
-                            display: P.TextFieldPreference.ExpandAll
-                            hint: qsTr("model id; empty: the same as the chat")
-                        }
-
-                        SettingNote {
-                            visible: targetWidget.settingsHelp && targetWidget.seedlingInstalled
-                            besidePreferences: true
-                            text: qsTr("The model that writes widget code for Seedling, on the same server. Coding is easier for a stronger model; empty uses the chat's model.")
                         }
                     }
 

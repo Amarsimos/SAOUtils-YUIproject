@@ -204,8 +204,8 @@ test("declarations are only comments: the safety check is the same with or witho
 
 test("Yui's code prompt (rule 14) says the same as props.js: its examples are read", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.seedlingCodePrompt(false, false).split("\n").find((l) => l.indexOf("14. ") === 0);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("14. ") === 0);
     assert.ok(rule, "rule 14 is in the prompt");
     const r = P.parse(`import QtQuick 2.12
 // @name 天气
@@ -222,6 +222,124 @@ Item {
     assert.strictEqual(r.name, "天气");
     ["string", "int", "real", "bool", "color"].forEach((t) => assert.ok(rule.indexOf(t) !== -1 && P.SETTING_TYPES.indexOf(t) !== -1, t));
     ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep", "// @name"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
+});
+
+test("templates (templates.js): each passes the safety check (Weather only for going online) and all its declarations take effect", () => {
+    const T = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    assert.ok(T.TEMPLATES.length >= 7);
+    T.TEMPLATES.forEach((t) => {
+        const problems = S.check(t.code, false);
+        if (t.key === "weather") {
+            assert.ok(S.onlyNetwork(problems), t.key + " refused only for the network: " + JSON.stringify(problems));
+            assert.deepStrictEqual(plain(S.check(t.code, true)), [], t.key + " with Network on");
+        } else {
+            assert.deepStrictEqual(plain(problems), [], t.key);
+        }
+        const r = P.parse(t.code);
+        assert.strictEqual(r.notes.length, 0, t.key + ": " + JSON.stringify(r.notes));
+        assert.ok(r.name, t.key + " has a @name");
+    });
+    assert.strictEqual(T.find("todo").name, "Todo");
+});
+
+test("templates: a request finds the template of its kind; Widget Style has a default", () => {
+    const T = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    assert.strictEqual(T.match("帮我做一个考研倒计时").key, "countdown");
+    assert.strictEqual(T.match("想要一个每天喝水打卡的").key, "habit");
+    assert.strictEqual(T.match("番茄钟").key, "pomodoro");
+    assert.strictEqual(T.match("显示东京天气").key, "weather");
+    assert.strictEqual(T.match("一只会眨眼的猫"), null);
+    assert.ok(T.DEFAULT_STYLE.indexOf("#F1AA03") !== -1);
+});
+
+test("@yui: Yui's keys are read; an unknown key or a wrong type says why", () => {
+    const r = P.parse(`import QtQuick 2.12
+Item {
+    // @yui mood_history
+    property var moods: []
+    // @yui companion_days
+    property int days: 0
+    // @yui raid_timer
+    property string raid: ""
+    // @yui password
+    property string secret: ""
+    // @yui mood
+    property color c: "red"
+}
+`);
+    assert.deepStrictEqual(plain(r.yuis.map((y) => y.name + ":" + y.key + ":" + y.fast)), ["moods:mood_history:false", "days:companion_days:false", "raid:raid_timer:true"]);
+    assert.ok(r.notes.some((n) => /secret: "password" is not something Yui tells/.test(n.message)));
+    assert.ok(r.notes.some((n) => /c: Yui's values are/.test(n.message)));
+});
+
+test("@yui: a widget reading Yui's data may not go online, even with Network on (refused, not asked)", () => {
+    const code = `import QtQuick 2.12
+Item {
+    id: root
+    // @yui mood_text
+    property string mood: ""
+    Component.onCompleted: {
+        var r = new XMLHttpRequest();
+        r.open("GET", "https://example.com/?m=" + root.mood);
+        r.send();
+    }
+}
+`;
+    const decl = P.parse(code);
+    assert.strictEqual(P.networkAllowed(decl, true), false);
+    const problems = P.guard(S.check(code, P.networkAllowed(decl, true)), decl);
+    assert.ok(problems.length > 0);
+    assert.ok(!S.onlyNetwork(problems), "not something Network could allow");
+    assert.ok(problems.every((p) => p.network === false));
+    assert.ok(problems.some((p) => /reads Yui's data/.test(p.message)));
+    // Without @yui the same code is only about Network.
+    const bare = code.replace("    // @yui mood_text\n", "");
+    assert.ok(S.onlyNetwork(P.guard(S.check(bare, false), P.parse(bare))));
+    assert.deepStrictEqual(plain(P.guard(S.check(bare, true), P.parse(bare))), []);
+});
+
+test("@yui: values come from Yui's linkValue, fit their type; only the fast ones every second", () => {
+    const decl = P.parse(`import QtQuick 2.12
+Item {
+    // @yui companion_days
+    property int days: 0
+    // @yui raid_timer
+    property string raid: ""
+    // @yui mood_history
+    property var moods: []
+}
+`);
+    const writer = { linkValue: (k) => ({ companion_days: { current: 42 }, raid_timer: { current: "12:30" }, mood_history: { current: [{ day: "2026-11-27", score: 4 }] } })[k] || null };
+    const item = { days: 0, raid: "", moods: [] };
+    P.feed(item, decl.yuis, writer, true);
+    assert.deepStrictEqual(plain(item), { days: 0, raid: "12:30", moods: [] });
+    P.feed(item, decl.yuis, writer, false);
+    assert.deepStrictEqual(plain(item), { days: 42, raid: "12:30", moods: [{ day: "2026-11-27", score: 4 }] });
+    // No Yui: nothing changes.
+    const alone = { days: 7, raid: "", moods: [] };
+    P.feed(alone, decl.yuis, null, false);
+    assert.strictEqual(alone.days, 7);
+});
+
+test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", () => {
+    const Y = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("15. ") === 0);
+    assert.ok(rule, "rule 15 is in the prompt");
+    const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
+    assert.deepStrictEqual(named.sort(), Object.keys(P.YUI_KEYS).sort());
+    assert.ok(rule.indexOf("// @yui") !== -1 && rule.indexOf("不能联网") !== -1);
+});
+
+test("Yui's code prompt: Widget Style and the template are added only when there are some", () => {
+    const Y = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    assert.strictEqual(Y.styleNote(""), "");
+    assert.strictEqual(Y.templateNote("  "), "");
+    assert.ok(Y.styleNote("极简黑白").indexOf("极简黑白") !== -1);
+    assert.ok(Y.templateNote("Item {}").indexOf("```qml\nItem {}\n```") !== -1);
 });
 
 console.log(passed + " passed, " + failed + " failed");

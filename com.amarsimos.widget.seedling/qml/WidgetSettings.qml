@@ -18,7 +18,8 @@ NVG.Window {
     function confirm(text, then) {
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Warning"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": text,
                 "modal": true
             });
@@ -156,6 +157,15 @@ NVG.Window {
                 visible: settingsWindow.decl.settings.length === 0 || !settingsWindow.targetWidget.created
                 besidePreferences: true
                 text: settingsWindow.targetWidget.created ? qsTr("This widget has no settings.") : qsTr("The widget's code does not run: its settings come back once it does.")
+            }
+
+            // What it reads of Yui's (@yui): shown, so it is clear (such a widget never goes online).
+            SettingNote {
+                visible: settingsWindow.decl.yuis.length > 0
+                besidePreferences: true
+                text: qsTr("Reads from Yui: %1. A widget that reads Yui's data never goes online.").arg(settingsWindow.decl.yuis.map(function(y) {
+                    return y.key;
+                }).join(", "))
             }
 
             // What the widget remembers (@keep): cleared after asking.

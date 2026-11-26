@@ -4,6 +4,9 @@ import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "link" 1.0 as Link
+import "templates.js" as Templates
+import "api.js" as Api
 
 // Seedling Settings (the Seedling widget's menu): General (Code Editor, Network) and Test, which
 // tries the workbench's states without the AI and without a request: a widget, a compile error, the
@@ -18,12 +21,120 @@ NVG.Window {
     readonly property bool help: targetWidget.settings.show_help === true
     readonly property bool advanced: targetWidget.settings.show_advanced === true
 
+    // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
+    // Seedling's own Link settings are used (and shown): no MHCP-YUI, or she is not set up yet.
+    readonly property bool ownConnection: (linkRevision, yuiRevision, Link.Bench.yui, Link.Bench.connectionKind() === "own")
+    // Which settings changed (Bench.settingChanged), so each binding follows only its own: the
+    // connection, the scanned lists (a single revision for all made binding loops).
+    property int linkRevision: 0
+    property int scannedRevision: 0
+
+    // The core list follows what it is made of (refreshModels, not a binding).
+    onOwnConnectionChanged: corePreference.refreshModels()
+    onScannedChanged: corePreference.refreshModels()
+    onYuiModelsChanged: corePreference.refreshModels()
+
+    Connections {
+        target: Link.Bench
+        onSettingChanged: {
+            if (key === "scanned_models")
+                settingsWindow.scannedRevision++;
+            else if (["provider", "endpoint", "api_key", "custom_model"].indexOf(key) !== -1)
+                settingsWindow.linkRevision++;
+        }
+    }
+    // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
+    // read again after Scan Cores / Restore Registry.
+    property int yuiRevision: 0
+    readonly property var yuiModels: (yuiRevision, Link.Bench.yui && Link.Bench.yui.seedlingModels ? Link.Bench.yui.seedlingModels() : null)
+    // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
+    // Restore Registry.
+    readonly property var scanned: (scannedRevision, Link.Bench.setting("scanned_models", {}))
+    property bool scanning: false
+    property string scanStatus: ""
+
+    // "Same as Yui's chat": the first core with MHCP-YUI (stored as "").
+    readonly property string sameAsChat: qsTr("Same as Yui's chat") + (yuiModels && yuiModels.chatModel ? " (" + yuiModels.chatModel + ")" : "")
+
+    function scanCores() {
+        if (!ownConnection) {
+            scanning = true;
+            scanStatus = qsTr("Scanning...");
+            Link.Bench.yui.seedlingScanModels(function(models, error) {
+                scanning = false;
+                yuiRevision++;
+                scanStatus = models ? qsTr("Found %1 core(s).").arg(models.length) : qsTr("Scan failed: %1").arg(error);
+            });
+            return ;
+        }
+        var config = Link.Bench.ownConfig();
+        var id = config.provider;
+        scanning = true;
+        scanStatus = qsTr("Scanning...");
+        var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 30000 }", settingsWindow);
+        var handle = Api.listModels(config, function(models, error) {
+            timer.stop();
+            timer.destroy();
+            scanning = false;
+            if (!models) {
+                scanStatus = qsTr("Scan failed: %1").arg(error);
+                return ;
+            }
+            var all = JSON.parse(JSON.stringify(scanned));
+            all[id] = models;
+            Link.Bench.setSetting("scanned_models", all);
+            scanStatus = qsTr("Found %1 core(s).").arg(models.length);
+        });
+        timer.triggered.connect(function() {
+            handle.abort();
+        });
+        timer.start();
+    }
+
+    function restoreRegistry() {
+        if (!ownConnection) {
+            Link.Bench.yui.seedlingRestoreModels();
+            yuiRevision++;
+            scanStatus = "";
+            return ;
+        }
+        var all = JSON.parse(JSON.stringify(scanned));
+        delete all[Link.Bench.ownConfig().provider];
+        Link.Bench.setSetting("scanned_models", all);
+        scanStatus = "";
+    }
+
+    // Link Start! (Link, Connection Test): a very short request through the connection chosen, as
+    // MHCP-YUI's; the answer in the Connection Log.
+    property bool testing: false
+    property string testResult: ""
+
+    function testConnection() {
+        var why = Link.Bench.cannotWrite();
+        if (why) {
+            testResult = why;
+            return ;
+        }
+        testing = true;
+        testResult = qsTr("Linking...");
+        var own = Link.Bench.connectionKind() === "own";
+        var model = own ? Api.modelOf(Link.Bench.ownConfig()) : (Link.Bench.writingModel() || qsTr("Yui's chat model"));
+        Link.Bench.ask("Reply with one short line.", "Hello", function() {
+        }, function(text, isError) {
+            testing = false;
+            testResult = (isError ? "" : qsTr("Link established") + " (" + model + "):\n") + String(text).trim();
+        });
+    }
+
     // Reset (title bar): the settings back to their defaults (Code Editor and Network off).
     function reset() {
         codePreference.value = false;
         networkPreference.value = false;
+        stylePreference.value = Templates.DEFAULT_STYLE;
         targetWidget.settings.show_code = false;
         targetWidget.settings.allow_network = false;
+        // The Link settings (server, key, core) stay: Reset does not lose an access key.
+        Link.Bench.setSetting("widget_style", "");
         if (targetWidget.workbench)
             targetWidget.workbench.render(true);
 
@@ -32,7 +143,8 @@ NVG.Window {
     function confirmReset() {
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Warning"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": qsTr("Restore all settings of %1 to their defaults?").arg(title),
                 "modal": true
             });
@@ -91,10 +203,10 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                currentIndex: Math.max(0, Math.min(1, settingsWindow.targetWidget.settings.settings_tab || 0))
+                currentIndex: Math.max(0, Math.min(2, settingsWindow.targetWidget.settings.settings_tab || 0))
                 onCurrentIndexChanged: settingsWindow.targetWidget.settings.settings_tab = currentIndex
-                model: [qsTr("General"), qsTr("Test")]
-                hiddenTabs: settingsWindow.advanced ? [] : [1]
+                model: [qsTr("General"), "Link", qsTr("Test")]
+                hiddenTabs: settingsWindow.advanced ? [] : [2]
             }
 
             StackLayout {
@@ -135,7 +247,7 @@ NVG.Window {
                     SettingNote {
                         visible: settingsWindow.help && settingsWindow.advanced
                         besidePreferences: true
-                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
 
                     Heading {
@@ -184,7 +296,342 @@ NVG.Window {
                         text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
                     }
 
+                    // How the widgets look, for all Seedling widgets (Seedling's own settings).
+                    Heading {
+                        text: "Style"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+
+                        P.TextAreaPreference {
+                            id: stylePreference
+
+                            property bool ready: false
+
+                            label: "Widget Style"
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
+                                ready = true;
+                            }
+                            // The default is kept as "" (a later default then applies).
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("widget_style", value.trim() === Templates.DEFAULT_STYLE ? "" : value.trim());
+
+                            }
+                        }
+
+                    }
+
+                    SettingNote {
+                        visible: settingsWindow.help
+                        besidePreferences: true
+                        text: qsTr("What the widgets the AI writes look like (colors, fonts, mood), sent with every widget, for all Seedling widgets; what is asked for comes first. Reset brings back the SAO style.")
+                    }
+
                 }
+
+                // ---------------------------------------------------------------- Link
+                // As MHCP-YUI's Link tab: the server, the core (model), the connection test. Shared by
+                // all Seedling widgets (Seedling's own settings, Bench.setting).
+                SettingsPage {
+                    Heading {
+                        text: "Server"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        // With MHCP-YUI her server and key are used (nothing to set twice).
+                        SettingNote {
+                            visible: !settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("Yui's server: %1. Widgets are written through it, with the access key set in her Cardinal System.").arg(settingsWindow.yuiModels ? settingsWindow.yuiModels.server : "")
+                        }
+
+                        P.SelectPreference {
+                            id: providerPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection
+                            label: "Seed Server"
+                            model: Api.PROVIDERS.map(function(p) {
+                                return p.title;
+                            })
+                            Component.onCompleted: {
+                                var id = Link.Bench.setting("provider", "openai");
+                                value = Math.max(0, Api.PROVIDERS.map(function(p) {
+                                    return p.id;
+                                }).indexOf(id));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (!ready)
+                                    return ;
+
+                                Link.Bench.setSetting("provider", Api.PROVIDERS[value].id);
+                                corePreference.refreshModels();
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("The AI service that writes the widgets.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: endpointPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection && (settingsWindow.advanced || Api.PROVIDERS[providerPreference.value].id === "custom")
+                            label: "Server Address"
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: Api.PROVIDERS[providerPreference.value].endpoint || "https://.../v1/chat/completions"
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("endpoint", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("endpoint", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && endpointPreference.visible
+                            besidePreferences: true
+                            text: qsTr("The API endpoint URL. Change it only when using a proxy or a self-hosted service; empty uses the server's own.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: keyPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection
+                            label: "Access Key"
+                            display: P.TextFieldPreference.ExpandAll
+                            echoMode: TextInput.Password
+                            hint: Api.PROVIDERS[providerPreference.value].keyOptional ? qsTr("not needed") : ""
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("api_key", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("api_key", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("The API key of this server. It stays on this computer, in Seedling's own data.")
+                        }
+
+                    }
+
+                    Heading {
+                        text: "Core"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.SelectPreference {
+                            id: corePreference
+
+                            property bool ready: false
+                            // Own: the server's scanned list (Scan Cores), else the built-in one. With Yui:
+                            // hers, after "Same as Yui's chat" (her chat's model, the default).
+                            // Set by refreshModels, not bound (a binding over all of these looped).
+                            property var models: []
+
+                            function listNow() {
+                                if (settingsWindow.ownConnection) {
+                                    var p = Api.PROVIDERS[providerPreference.value];
+                                    return settingsWindow.scanned[p.id] || p.models;
+                                }
+                                return [settingsWindow.sameAsChat].concat(settingsWindow.yuiModels ? settingsWindow.yuiModels.models : []);
+                            }
+
+                            // The list again (another server, a scan, Yui there or not); the core chosen
+                            // stays when it is in it.
+                            function refreshModels() {
+                                var next = listNow();
+                                if (JSON.stringify(next) === JSON.stringify(models))
+                                    return ;
+
+                                // The list swap moves the selection by itself: not a choice to save.
+                                refreshing = true;
+                                models = next;
+                                refreshing = false;
+                                Qt.callLater(followModels);
+                            }
+
+                            property bool refreshing: false
+
+                            readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
+
+                            visible: models.length > 0
+                            label: "Core Program"
+                            model: models
+                            // What a choice is saved as: "" for "Same as Yui's chat", else a model id from
+                            // the list (never the shown text of another mode's first item).
+                            function stored(index) {
+                                if (!settingsWindow.ownConnection && index === 0)
+                                    return "";
+
+                                var id = String(models[index] || "");
+                                return id === settingsWindow.sameAsChat ? "" : id;
+                            }
+
+                            function shown() {
+                                var current = String(Link.Bench.setting(key, ""));
+                                return !settingsWindow.ownConnection && current === "" ? 0 : Math.max(0, models.indexOf(current));
+                            }
+
+                            Component.onCompleted: {
+                                models = listNow();
+                                value = shown();
+                                ready = true;
+                                // A saved core not in the list (e.g. saved wrongly before) is put right.
+                                Qt.callLater(followModels);
+                            }
+                            onValueChanged: {
+                                if (ready && !refreshing && value >= 0 && value < models.length)
+                                    Link.Bench.setSetting(key, stored(value));
+
+                            }
+                            // Another list (scanned, restored, another server): the core chosen stays
+                            // when it is in it.
+
+                            function followModels() {
+                                if (!ready)
+                                    return ;
+
+                                var current = String(Link.Bench.setting(key, ""));
+                                var at = !settingsWindow.ownConnection && current === "" ? 0 : models.indexOf(current);
+                                value = Math.max(0, at);
+                                if (at === -1 && models.length > 0)
+                                    Link.Bench.setSetting(key, stored(0));
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && corePreference.visible
+                            besidePreferences: true
+                            text: qsTr("The AI model that writes the widgets.")
+                        }
+
+                        RowLayout {
+                            visible: settingsWindow.advanced
+                            spacing: 12
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Button {
+                                text: "Scan Cores"
+                                enabled: !settingsWindow.scanning
+                                onClicked: settingsWindow.scanCores()
+                            }
+
+                            Button {
+                                text: "Restore Registry"
+                                visible: settingsWindow.ownConnection ? !!settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] : !!(settingsWindow.yuiModels && settingsWindow.yuiModels.scanned)
+                                onClicked: settingsWindow.restoreRegistry()
+                            }
+
+                        }
+
+                        // What Scan Cores found (or why it failed), under the buttons.
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: settingsWindow.advanced && text !== ""
+                            text: settingsWindow.scanStatus
+                            elide: Text.ElideRight
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.advanced && settingsWindow.help
+                            besidePreferences: true
+                            text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: customModelPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.advanced || corePreference.models.length === 0
+                            label: "Manual Core ID"
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: qsTr("model id, e.g. gpt-6-sol")
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("custom_model", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("custom_model", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && customModelPreference.visible
+                            besidePreferences: true
+                            text: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
+                        }
+
+                    }
+
+                    Heading {
+                        text: "Connection Test"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        RowLayout {
+                            spacing: 20
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Button {
+                                text: "Link Start!"
+                                enabled: !settingsWindow.testing
+                                onClicked: settingsWindow.testConnection()
+                            }
+
+                            Button {
+                                text: "Clear Log"
+                                onClicked: settingsWindow.testResult = ""
+                            }
+
+                        }
+
+                        P.TextAreaPreference {
+                            label: "Connection Log"
+                            readOnly: true
+                            hint: qsTr("Press Link Start! to test the connection.")
+                            wrapMode: Text.Wrap
+                            value: settingsWindow.testResult
+                            Layout.fillWidth: true
+                        }
+
+                    }
+
+                }
+
 
                 // ---------------------------------------------------------------- Test
                 SettingsPage {
@@ -192,6 +639,23 @@ NVG.Window {
                         visible: settingsWindow.help
                         besidePreferences: true
                         text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
+                    }
+
+                    // Temporary: Seedling as if MHCP-YUI were not installed (its own AI, the workbench's
+                    // request field, no @yui data). Not saved: back after a restart.
+                    Heading {
+                        text: "Standalone"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            label: "Pretend No Yui"
+                            Component.onCompleted: value = Link.Bench.hideYui
+                            onValueChanged: Link.Bench.hideYui = value === true
+                        }
+
                     }
 
                     Repeater {

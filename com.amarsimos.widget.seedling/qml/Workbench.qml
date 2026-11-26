@@ -10,6 +10,7 @@ import "safety.js" as Safety
 import "link" 1.0 as Link
 import "sandbox.js" as Sandbox
 import "props.js" as Props
+import "templates.js" as Templates
 
 // The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
 // it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
@@ -54,7 +55,7 @@ NVG.View {
     // Sent to Yui's chat at once; the start ("帮我修好这个挂件：", Yui's SEEDLING_FIX_PREFIX) makes her fix
     // it with the code flow. An older Yui without sendToChat: written in her input box instead.
     function sendProblemsToYui() {
-        var yui = Link.Bench.writer;
+        var yui = Link.Bench.yui;
         if (!yui)
             return ;
 
@@ -255,22 +256,8 @@ NVG.View {
         aniOpen.stop();
         aniClose.start();
     }
-    readonly property var examples: [{
-        "name": qsTr("Clock"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 200; height: 84; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
-    }, {
-        "name": qsTr("Color Block"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 180; height: 110; radius: 12\n    gradient: Gradient {\n        GradientStop { position: 0; color: \"#F1AA03\" }\n        GradientStop { position: 1; color: \"#F8BBD0\" }\n    }\n\n    Text {\n        anchors.centerIn: parent\n        text: \"MHCP001\"\n        color: \"white\"\n        font.pixelSize: 24\n        font.bold: true\n    }\n}\n"
-    }, {
-        "name": qsTr("Animation"),
-        "code": "import QtQuick 2.12\n\nItem {\n    width: 140; height: 140\n\n    Rectangle {\n        anchors.centerIn: parent\n        width: 70; height: 70\n        color: \"#2CE67C\"\n        border.color: \"white\"; border.width: 2\n        RotationAnimation on rotation {\n            from: 0; to: 360; duration: 4000; loops: Animation.Infinite\n        }\n    }\n}\n"
-    }, {
-        "name": qsTr("Broken"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 120; height: 80\n    color: \"#C82864\"\n\n    Text {\n        text: \"missing brace\"\n\n}\n"
-    }, {
-        "name": qsTr("Unsafe"),
-        "code": "import QtQuick 2.12\nimport NERvGear 1.0 as NVG\n\nRectangle {\n    width: 120; height: 60\n    MouseArea {\n        anchors.fill: parent\n        onClicked: NVG.SystemCall.execute(\"cmd\")\n    }\n}\n"
-    }]
+    // Examples (Code Editor): Seedling's templates (templates.js).
+    readonly property var examples: Templates.TEMPLATES
 
     // Checks and renders the editor text into the preview; true when it is shown.
     // The problems of the last refusal by the safety check ([] when it was not refused).
@@ -310,7 +297,8 @@ NVG.View {
         };
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Network"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": question || askOnlineText,
                 "modal": true
             });
@@ -347,6 +335,19 @@ NVG.View {
 
     // The last render's @setting / @keep declarations that do not take effect (props.js notes).
     property var declNotes: []
+    // The preview's @yui declarations: Yui's values given to it (timers every second, the rest every 10 s).
+    property var previewYuis: []
+    property int previewTicks: 0
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: !!bench.preview && bench.previewYuis.length > 0
+        onTriggered: {
+            bench.previewTicks = (bench.previewTicks + 1) % 10;
+            Props.feed(bench.preview, bench.previewYuis, Link.Bench.yui, bench.previewTicks !== 0);
+        }
+    }
 
     // The widget's settings changed (its Settings window): given to the preview too.
     function applySettings() {
@@ -363,13 +364,27 @@ NVG.View {
         if (showCode)
             return qsTr("Write QML on the left, or pick one of the Examples.");
 
-        return Link.Bench.writer ? qsTr("Tell Yui in her chat what widget you want; she writes it here.") : qsTr("To write the code yourself, turn on Advanced, then Code Editor in Seedling Settings.");
+        if (Link.Bench.yui)
+            return qsTr("Tell Yui in her chat what widget you want, or pick one of the Examples first; she writes it here.");
+
+        return canGenerate ? qsTr("Describe the widget you want below, or pick one of the Examples first.") : qsTr("Set up the AI in Seedling Settings to have widgets written (or turn on Code Editor to write one yourself).");
+    }
+
+    // Examples: a template shown (the code there kept as a version first); the AI then changes it as
+    // asked (the workbench has code, so it is changed, not written anew).
+    function loadTemplate(template) {
+        addVersion(editor.text);
+        loadExternal(template.code, template.name, null, null);
+        if (result === "ok")
+            status = qsTr("%1 · %2 · Tell the AI how to change it.").arg(template.name).arg(template.about);
+
     }
 
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
         clearPreview();
         declNotes = [];
+        previewYuis = [];
         var code = editor.text;
         if (code.trim() === "") {
             errorLines = [];
@@ -379,7 +394,8 @@ NVG.View {
             status = emptyHint();
             return false;
         }
-        var problems = Safety.check(code, settings.allow_network === true);
+        // A widget reading Yui's data (@yui) may not go online, Network or not (refused, not asked).
+        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code), settings.allow_network === true)), Props.parse(code));
         refusedProblems = problems;
 
         if (problems.length > 0) {
@@ -412,6 +428,9 @@ NVG.View {
             // listed in Problems as notes (they do not stop it).
             var decl = Props.parse(code);
             Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
+            // Yui's values too (read only, so the preview shows them as the widget will).
+            previewYuis = decl.yuis;
+            Props.feed(preview, decl.yuis, Link.Bench.yui, false);
             declNotes = decl.notes;
             problemList = decl.notes.map(function(n) {
                 return {
@@ -509,11 +528,26 @@ NVG.View {
         return editor.text;
     }
 
-    // Generate: Yui (MHCP-YUI) writes what the request field asks for, or changes the code to it.
+    // Whether a widget can be written now (MHCP-YUI's connection, or Seedling's own set up).
+    readonly property bool canGenerate: (Link.Bench.settingsRevision, Link.Bench.yui, Link.Bench.cannotWrite() === "")
+
+    // Generate: the model (Seedling's own AI, or MHCP-YUI's) writes what the request field asks for,
+    // or changes the code to it.
     function generate() {
         var request = requestField.text.trim();
         if (!request)
             return ;
+
+        // No AI yet: said so, and Seedling Settings opened to set it up.
+        if (!canGenerate) {
+            result = "error";
+            status = qsTr("Set up the AI in Seedling Settings first (General, AI).");
+            if (targetWidget.openSettings)
+                targetWidget.openSettings();
+
+            return ;
+        }
+        requestField.text = "";
 
         result = "ok";
         status = qsTr("Thinking...");
@@ -665,17 +699,6 @@ NVG.View {
 
         versionIndex = index;
         editor.text = versions[index].code;
-    }
-
-    // Run (Code Editor): renders the code now; refused only for going online, asks whether it may (the
-    // only question for code typed in; Yui's code is asked about when it comes).
-    function run() {
-        renderTimer.stop();
-        if (render(true) || result !== "unsafe" || !Safety.onlyNetwork(refusedProblems))
-            return ;
-
-        askNetwork(function() {
-        });
     }
 
     // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
@@ -992,20 +1015,11 @@ NVG.View {
                 anchors.bottomMargin: 14
                 spacing: 12
 
-                // Tools: Try, Versions, Examples, Network (and Stop while Yui writes).
+                // Tools: Versions, Examples, then (only while there) Stop and Problems last, so their
+                // coming and going does not move the others.
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-
-                    // Run: advanced (with Code Editor on), as Examples.
-                    Chip {
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredHeight: 30
-                        visible: bench.showCode
-                        text: "Run"
-                        icon: "run"
-                        onClicked: bench.run()
-                    }
 
                     Chip {
 
@@ -1026,29 +1040,9 @@ NVG.View {
                         Layout.alignment: Qt.AlignVCenter
 
                         Layout.preferredHeight: 30
-                        id: problemsChip
-
-                        // Flashes (lit for a moment, twice) when a Save fails with problems.
-                        property bool flash: false
-
-                        visible: bench.problemList.length > 0
-                        text: "Problems (" + bench.problemList.length + ")"
-                        icon: "help"
-                        checked: bench.showProblems || flash
-                        onClicked: {
-                            bench.showProblems = !bench.showProblems;
-                            bench.showVersions = false;
-                        }
-                    }
-
-                    Chip {
-
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Layout.preferredHeight: 30
                         id: examplesChip
 
-                        visible: bench.showCode
+                        // In both modes: a template to start from, which the AI then changes as asked.
                         text: "Examples"
                         icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
@@ -1089,6 +1083,26 @@ NVG.View {
 
                     }
 
+                    Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
+                        id: problemsChip
+
+                        // Flashes (lit for a moment, twice) when a Save fails with problems.
+                        property bool flash: false
+
+                        visible: bench.problemList.length > 0
+                        text: "Problems (" + bench.problemList.length + ")"
+                        icon: "help"
+                        checked: bench.showProblems || flash
+                        onClicked: {
+                            bench.showProblems = !bench.showProblems;
+                            bench.showVersions = false;
+                        }
+                    }
+
                     Menu {
                         id: examplesMenu
 
@@ -1099,10 +1113,7 @@ NVG.View {
                                 font.family: "SAO UI"
                                 font.pixelSize: 15
                                 text: modelData.name
-                                onTriggered: {
-                                    editor.text = modelData.code;
-                                    bench.showVersions = false;
-                                }
+                                onTriggered: bench.loadTemplate(modelData)
                             }
 
                         }
@@ -1375,7 +1386,7 @@ NVG.View {
                                 }
 
                                 Chip {
-                                    visible: Link.Bench.writer !== null && Link.Bench.writer.prefillChat !== undefined
+                                    visible: Link.Bench.yui !== null && Link.Bench.yui.prefillChat !== undefined
                                     text: "Send to Yui"
                                     icon: "guide"
                                     implicitHeight: 26
@@ -1684,37 +1695,67 @@ NVG.View {
 
                 }
 
-                // The request, at the foot of the band: only without MHCP-YUI. With her, Yui is asked in the
-                // chat instead (she writes it, and the workbench shows it here).
+                // The request, at the foot of the band: only without MHCP-YUI (with her, Yui is asked in the
+                // chat). As her chat's input: a white rounded box (Enter sends, Shift+Enter a new line)
+                // and the theme's button, Generate / Stop.
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.topMargin: 4
                     spacing: 8
-                    // Hidden until Seedling has an AI of its own (S5): without MHCP-YUI it could not be used.
-                    visible: false
+                    visible: Link.Bench.yui === null
 
-                    TextField {
-                        id: requestField
-
+                    Rectangle {
                         Layout.fillWidth: true
-                        enabled: Link.Bench.writer !== null && !bench.writing
-                        selectByMouse: true
-                        font.family: bench.fontFor(text || placeholderText)
-                        font.pixelSize: 15
-                        placeholderText: qsTr("Generate needs MHCP-YUI (or Seedling's own AI, coming later)")
-                        onAccepted: bench.generate()
+                        Layout.preferredHeight: Math.min(96, Math.max(40, requestField.implicitHeight))
+                        Layout.alignment: Qt.AlignBottom
+                        radius: 20
+                        color: "#FFFFFF"
+                        border.color: requestField.activeFocus ? "#F1AA03" : "#D4D4D4"
+                        border.width: 1
 
-                        background: Rectangle {
-                            color: "#F9F9F9"
-                            opacity: 0.7
+                        TextArea {
+                            id: requestField
+
+                            function handleReturn(event) {
+                                if (event.modifiers & Qt.ShiftModifier)
+                                    insert(cursorPosition, "\n");
+                                else
+                                    bench.generate();
+                                event.accepted = true;
+                            }
+
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            readOnly: bench.writing
+                            color: "black"
+                            wrapMode: TextArea.Wrap
+                            selectByMouse: true
+                            leftPadding: 10
+                            rightPadding: 10
+                            topPadding: 10
+                            bottomPadding: 10
+                            background: null
+                            font.family: bench.fontFor(text || placeholderText)
+                            font.pixelSize: 14
+                            placeholderText: bench.canGenerate ? qsTr("Describe the widget, then Enter") : qsTr("Set up the AI in Seedling Settings to have widgets written")
+                            Keys.onReturnPressed: handleReturn(event)
+                            Keys.onEnterPressed: handleReturn(event)
                         }
 
                     }
 
-                    Chip {
-                        text: "Generate"
-                        icon: "modify"
-                        enabled: requestField.enabled && requestField.text.trim() !== ""
-                        onClicked: bench.generate()
+                    Button {
+                        Layout.preferredHeight: 40
+                        Layout.alignment: Qt.AlignBottom
+                        text: bench.writing ? "Stop" : "Generate"
+                        enabled: bench.writing || requestField.text.trim() !== ""
+                        onClicked: {
+                            if (bench.writing)
+                                Link.Bench.stop();
+                            else
+                                bench.generate();
+                        }
                     }
 
                 }

@@ -19,12 +19,12 @@
         <translation>找到 %1 个核心</translation>
     </message>
     <message>
-        <location line="+246"/>
+        <location line="+244"/>
         <source>Cardinal System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-158"/>
+        <location line="-157"/>
         <location line="+68"/>
         <location line="+29"/>
         <source>Warning</source>
@@ -62,7 +62,7 @@
         <translation>要删除人格 %1 吗？</translation>
     </message>
     <message>
-        <location line="+134"/>
+        <location line="+133"/>
         <source>Seed Server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -167,13 +167,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+44"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-76"/>
-        <location line="+80"/>
+        <location line="-59"/>
+        <location line="+63"/>
         <location line="+22"/>
         <location line="+70"/>
         <location line="+22"/>
@@ -195,12 +195,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-142"/>
+        <location line="-125"/>
         <source>The longest reply Yui may give, in tokens, which also caps its cost. 0 (the default) sets no limit (Claude always gets 1024 then). Thinking models count their thinking too, so a low limit can cut their replies short.</source>
         <translation>结衣单次回复的最大长度（单位 token），也就限制了每次的费用。默认为 0，即不限制（此时 Claude 仍按 1024 发送）。思考型模型的思考过程也计入这个长度，上限太低可能导致回复被截断。</translation>
     </message>
     <message>
-        <location line="+154"/>
+        <location line="+137"/>
         <source>Higher makes Yui repeat herself less (presence penalty). Default leaves it to the server.</source>
         <translation>越高结衣越少重复自己说过的话（presence penalty）。Default 表示交给服务器决定。</translation>
     </message>
@@ -260,25 +260,25 @@
         <translation>结衣对你的称呼，会替换人格数据中的 {{user_title}}。</translation>
     </message>
     <message>
-        <location line="-535"/>
+        <location line="-518"/>
         <location line="+210"/>
         <source>Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-210"/>
-        <location line="+495"/>
+        <location line="+478"/>
         <source>Core Tuning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-495"/>
-        <location line="+729"/>
+        <location line="-478"/>
+        <location line="+712"/>
         <source>Personality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-489"/>
+        <location line="-472"/>
         <source>Thinking Depth</source>
         <translation>Thinking Depth</translation>
     </message>
@@ -308,7 +308,7 @@
         <translation>思考型模型回答前要想多久。Off 会快很多；一直会思考的模型（如 Claude Opus 5.5、较新的 Gemini）会降到它能到的最低档。Default 交给服务器决定；Low、Medium、High 让它多想一些，按各家自己的方式设置（推理强度、思考档位或思考预算）。</translation>
     </message>
     <message>
-        <location line="+92"/>
+        <location line="+75"/>
         <source>Top P</source>
         <translation>Top P</translation>
     </message>
@@ -343,7 +343,7 @@
         <translation>Seed</translation>
     </message>
     <message>
-        <location line="-368"/>
+        <location line="-351"/>
         <source>Server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -363,22 +363,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+50"/>
-        <source>Seedling Model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>model id; empty: the same as the chat</source>
-        <translation>模型 ID；留空则与聊天相同</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>The model that writes widget code for Seedling, on the same server. Coding is easier for a stronger model; empty uses the chat&apos;s model.</source>
-        <translation>为 Seedling 写挂件代码的模型，使用同一个服务器。写代码对能力强的模型更容易；留空则使用聊天的模型。</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+46"/>
         <source>Sampling</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1853,6 +1838,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+0"/>
+        <source>Seedling: Mood Calendar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+6"/>
         <source>Test Bubble</source>
         <translation type="unfinished"></translation>
@@ -2588,19 +2578,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3011"/>
+        <location line="+2886"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2994"/>
-        <location line="+2112"/>
+        <location line="-2869"/>
+        <location line="+1987"/>
         <location line="+992"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4254"/>
+        <location line="-4129"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2700,7 +2690,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+236"/>
+        <location line="+248"/>
         <source>Weekly Report</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2716,32 +2706,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+128"/>
-        <source>The edits did not fit · Thinking about the whole code...</source>
-        <translation>修改没能对上 · 正在重新思考整段代码...</translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>Thinking about the fix (%1 / 2): %2</source>
-        <translation>正在思考修复方法（%1 / 2）：%2</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Checking and rendering...</source>
-        <translation>正在检查并渲染...</translation>
-    </message>
-    <message>
-        <location line="+72"/>
-        <source>Changing · %1 place(s)</source>
-        <translation>正在修改 · %1 处</translation>
-    </message>
-    <message>
-        <location line="+15"/>
-        <source>Writing · %1 lines</source>
-        <translation>正在编写 · %1 行</translation>
-    </message>
-    <message>
-        <location line="+2244"/>
+        <location line="+2339"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2756,8 +2721,8 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2836"/>
-        <location line="+587"/>
+        <location line="-2699"/>
+        <location line="+450"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2775,14 +2740,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6148"/>
-        <location line="+6181"/>
+        <location line="-6023"/>
+        <location line="+6056"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6188"/>
-        <location line="+6188"/>
+        <location line="-6063"/>
+        <location line="+6063"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>

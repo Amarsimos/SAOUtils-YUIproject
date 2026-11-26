@@ -8,8 +8,8 @@
     },
 
     "description": {
-        "en": "Seedling\nWrite a small widget in QML, preview it and save it to the widget. Works on its own; with MHCP-YUI installed, Yui can write widgets for you.",
-        "zh": "Seedling 萌芽\n用 QML 写一个小挂件，预览，保存到挂件。可以单独使用；装了 MHCP-YUI 时，结衣也能帮你写。"
+        "en": "Seedling\nWrite a small widget in QML, preview it and save it to the widget. Describe it and an AI writes it (set it up in Seedling Settings); with MHCP-YUI installed, just ask Yui.",
+        "zh": "Seedling 萌芽\n用 QML 写一个小挂件，预览，保存到挂件。描述一下，AI 就会写出来（在 Seedling Settings 里设置）；装了 MHCP-YUI 时，直接跟结衣说就行。"
     },
 
     "homepage": "https://moe.amarsimos.top",

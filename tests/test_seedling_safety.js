@@ -177,11 +177,11 @@ const allow = {
 };
 Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 
-// ---- Yui's code prompt (yui.js, seedlingCodePrompt) says the same as the check (S6): the modules it
+// ---- The code prompt (Seedling's writer.js, codePrompt) says the same as the check (S6): the modules it
 // allows are exactly the check's, the Qt functions it names are allowed, and its examples pass.
 const Y = {};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-const prompt = Y.seedlingCodePrompt(false, false);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+const prompt = Y.codePrompt(false, false, true);
 const importRule = prompt.split("\n").find((line) => line.indexOf("1. 只能 import") === 0);
 const promptModules = importRule.split("。")[0].replace("1. 只能 import：", "").split("、").map((m) => m.trim().split(" ")[0]);
 assert.deepStrictEqual(promptModules.slice().sort(), Array.from(S.ALLOWED_MODULES).sort(), "the prompt's modules: " + promptModules.join(", "));
