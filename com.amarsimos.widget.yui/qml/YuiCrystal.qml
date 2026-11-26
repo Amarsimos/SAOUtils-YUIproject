@@ -326,14 +326,13 @@ Item {
                 id: streak
 
                 readonly property real offset: {
+                    // The light crosses in the last 1/16 of the cycle (4 s of 64) and waits the rest.
                     var p = crystal.sweep;
-                    if (p < 0.7)
+                    var start = 1 - 1 / 16;
+                    if (p < start)
                         return -120;
 
-                    if (p > 0.9)
-                        return 120;
-
-                    var f = (p - 0.7) / 0.2;
+                    var f = (p - start) * 16;
                     return -120 + 240 * (0.5 - Math.cos(Math.PI * f) / 2);
                 }
 
@@ -433,7 +432,7 @@ Item {
     NumberAnimation on sweep {
         from: 0
         to: 1
-        duration: crystal.busy ? 2500 : 7000
+        duration: crystal.busy ? 16000 : 64000
         loops: Animation.Infinite
         running: crystal.visible && !crystal.sleeping
     }
