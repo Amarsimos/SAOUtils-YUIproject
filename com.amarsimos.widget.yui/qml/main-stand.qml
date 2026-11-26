@@ -4270,69 +4270,36 @@ T.Widget {
 
     }
 
-    // A message of Yui's that tells how a Seedling widget is going: posted at once, changed with
-    // update(text), and end(text) gives its last words (also in the bubble while the chat is closed,
-    // as her other messages). It stays in the conversation, so she knows what she made.
+    // How a Seedling widget is going: a status line above the chat's input bar while it goes on
+    // (seedlingStatus, its characters hopping; not a message, nothing is kept), then Yui's last words
+    // as a message of hers (kept in the conversation, so she knows what she made; in the bubble too
+    // while the chat is closed).
+    property string seedlingStatus: ""
+
     function seedlingSay() {
-        var index = chatModel.count;
-        var session = widget.chatSession;
-        chatModel.append({
-            "author": "ai",
-            "message": Yui.seedlingNoteLine({
-                "stage": "writing",
-                "lines": 0,
-                "edits": 0,
-                "seconds": 0
-            }, userTitle()),
-            "pending": false,
-            "isError": false,
-            "local": true,
-            "note": "",
-            "action": "",
-            // Still going on: its characters hop (MessageWindow.live) until its last words.
-            "actionState": "live",
-            "suggestions": ""
-        });
-        chatView.stickToBottom = true;
-        // The chat may have been reset meanwhile: then the message is not there any more.
-        var mine = function() {
-            var item = widget.chatSession === session && index < chatModel.count ? chatModel.get(index) : null;
-            return item && item.author === "ai" && item.local;
-        };
+        seedlingStatus = Yui.seedlingNoteLine({
+            "stage": "writing",
+            "lines": 0,
+            "edits": 0,
+            "seconds": 0
+        }, userTitle());
+        var ended = false;
         return {
             "update": function(text) {
-                if (mine())
-                    chatModel.setProperty(index, "message", text);
+                if (!ended)
+                    seedlingStatus = text;
 
             },
             "end": function(text) {
-                if (!mine())
+                if (ended)
                     return ;
 
-                chatModel.setProperty(index, "message", text);
-                chatModel.setProperty(index, "actionState", "");
-                scheduleSave();
+                ended = true;
+                seedlingStatus = "";
+                appendMessage("ai", text, false, true);
                 announce("Seedling", text);
             }
         };
-    }
-
-    // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
-    // bubble next to her collapsed form.
-    function idleChat() {
-        var title = userTitle();
-        var form = {
-            "crystal": "水晶",
-            "pixie": "导航妖精",
-            "avatar": "小小的立绘"
-        }[collapsedForm] || "小小的立绘";
-        var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
-        var now = Date.now();
-        var hook = widget.busy ? null : chatHook(now, title);
-        var start = hook ? "可以从这个由头说起：" + hook.text + "。" : "闲聊、问候，或者结合时间和之前聊过的事关心一下。";
-        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "，这只是背景，不要说起自己的样子或待在哪里。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
-        diag("idle chatter" + (hook ? " (" + hook.key + ")" : "") + ": " + (started ? "requested" : "not now (busy or no API key)"));
-        return started;
     }
 
     // ---------------------------------------------------------------- Care moments
@@ -6364,7 +6331,6 @@ T.Widget {
                         actionLabel: widget.actionLabel(messageItem.action)
                         actionState: model.actionState
                         thinking: model.pending
-                        live: model.actionState === "live"
                         canRegenerate: !messageItem.fromUser && !model.local && index === chatModel.count - 1 && !widget.busy
                         // Quick Replies: under Yui's latest message only, while nothing else is going on.
                         suggestions: !messageItem.fromUser && model.suggestions && index === chatModel.count - 1 && !widget.busy ? JSON.parse(model.suggestions) : []
@@ -6582,6 +6548,19 @@ T.Widget {
 
             }
 
+        }
+
+        // Seedling's status, while Yui writes a widget: a line just above the input bar, in the list's
+        // bottom margin (over its fade), its characters hopping one by one.
+        HopText {
+            x: chatContainer.x + 16
+            y: chatContainer.y + chatView.y + chatView.height - height - 8
+            visible: widget.seedlingStatus !== ""
+            opacity: widget.chatPanelOpacity * widget.messagesOpacity
+            text: "🌱 " + widget.seedlingStatus
+            fontFamily: widget.fontFamilyOf(widget.styles.bubble_font_family)
+            fontSize: 13
+            color: "#5A5A5A"
         }
 
         // Where the Seedling item is shown in Yui (see loadIntoYui): over the expanded form, at the saved

@@ -24,9 +24,6 @@ Item {
     // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
     // strip under the title bar.
     property bool thinking: false
-    // A message that is still going on (Seedling's progress, said by Yui): its characters hop one
-    // after another, as the thinking dots do.
-    property bool live: false
     // After 5 s of thinking, a line about what Yui is doing fades in under it, a different one every 5 s.
     readonly property var thinkingHints: ["正在检索 ALfheim 数据库……", "正在连接 Cardinal System……", "哔——正在和服务器通信中……", "正在整理语言中…… (｡･ω･｡)", "数据量有点大，再等结衣一下下～", "正在翻阅结衣之心里的记忆……"]
     property string thinkingHint: ""
@@ -186,7 +183,7 @@ Item {
             x: 1
             y: header.y + header.height
             width: parent.width - 2
-            height: (messageWindow.thinking ? thinkingColumn.height : messageWindow.live ? liveFlow.height : messageText.implicitHeight) + 20
+            height: (messageWindow.thinking ? thinkingColumn.height : messageText.implicitHeight) + 20
             color: "#E4E4E4"
             clip: true
 
@@ -337,73 +334,12 @@ Item {
 
             }
 
-            // Live: the characters hop 3 px one by one, the next only when the one before has landed
-            // (240 ms each), then a short rest and again from the start.
-            Flow {
-                id: liveFlow
-
-                x: 12
-                y: 10
-                width: parent.width - 24
-                visible: messageWindow.live
-
-                Repeater {
-                    model: messageWindow.live ? messageWindow.text.split("") : []
-
-                    Text {
-                        id: liveChar
-
-                        property real hop: 0
-
-                        text: modelData
-                        color: "#3A3A3A"
-                        font.family: messageWindow.fontFamily
-                        font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal
-                        font.italic: !!messageWindow.fontStyle.italic
-                        font.pixelSize: messageWindow.fontSize
-
-                        transform: Translate {
-                            y: liveChar.hop
-                        }
-
-                        SequentialAnimation on hop {
-                            running: messageWindow.live
-                            loops: Animation.Infinite
-
-                            PauseAnimation {
-                                duration: index * 240
-                            }
-
-                            NumberAnimation {
-                                to: -3
-                                duration: 120
-                                easing.type: Easing.OutQuad
-                            }
-
-                            NumberAnimation {
-                                to: 0
-                                duration: 120
-                                easing.type: Easing.InQuad
-                            }
-
-                            PauseAnimation {
-                                duration: Math.max(0, messageWindow.text.length - index - 1) * 240 + 600
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
             TextEdit {
                 id: messageText
 
                 x: 12
                 y: 10
-                visible: !messageWindow.thinking && !messageWindow.live
+                visible: !messageWindow.thinking
                 width: parent.width - 24
                 text: messageWindow.linkedText || messageWindow.text
                 // Shown verbatim: only the escaped, link-marked text is rich text.
