@@ -118,6 +118,8 @@ NVG.Window {
     }
 
     title: "Seedling"
+    // No system frame: the title band moves the window, the bottom-right corner resizes it.
+    flags: Qt.Window | Qt.FramelessWindowHint
     visible: true
     minimumWidth: 720
     minimumHeight: 520
@@ -148,6 +150,20 @@ NVG.Window {
                 font.family: "SAO UI"
                 font.pixelSize: 30
                 color: bench.ink
+            }
+
+            // Drag to move: by the cursor's distance from the grabbed point, in the window's own
+            // coordinates (right with display scaling and several screens).
+            MouseArea {
+                property point grab
+
+                anchors.fill: parent
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                onPressed: grab = Qt.point(mouse.x, mouse.y)
+                onPositionChanged: {
+                    bench.x += mouse.x - grab.x;
+                    bench.y += mouse.y - grab.y;
+                }
             }
 
             gradient: Gradient {
@@ -474,6 +490,39 @@ NVG.Window {
                 onClicked: bench.close()
             }
 
+        }
+
+    }
+
+    // A thin edge, as the window has no frame of its own.
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: "#C8C8C8"
+    }
+
+    // Resize from the bottom-right corner.
+    MouseArea {
+        property point grab
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        width: 16
+        height: 16
+        cursorShape: Qt.SizeFDiagCursor
+        onPressed: grab = Qt.point(mouse.x, mouse.y)
+        onPositionChanged: {
+            bench.width = Math.max(bench.minimumWidth, bench.width + mouse.x - grab.x);
+            bench.height = Math.max(bench.minimumHeight, bench.height + mouse.y - grab.y);
+        }
+
+        Text {
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 2
+            text: "◢"
+            font.pixelSize: 10
+            color: "#C8C8C8"
         }
 
     }
