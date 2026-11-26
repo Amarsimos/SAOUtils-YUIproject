@@ -884,11 +884,19 @@ NVG.View {
                             }
 
                             ScrollView {
+                                id: codeScroll
+
                                 anchors.fill: parent
                                 anchors.margins: 2
                                 clip: true
                                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                // A ScrollView's own scroll bar has to be placed by hand (a Flickable's
+                                // places itself): at its right edge, its whole height.
                                 ScrollBar.vertical: SaoScrollBar {
+                                    parent: codeScroll
+                                    x: codeScroll.width - width
+                                    y: codeScroll.topPadding
+                                    height: codeScroll.availableHeight
                                     onLight: true
                                 }
                                 contentWidth: availableWidth
@@ -1101,6 +1109,41 @@ NVG.View {
                             Layout.fillHeight: true
                             color: "#F9F9F9"
                             clip: true
+
+                            // A faint grid behind the widget (its transparent parts show it).
+                            Item {
+                                id: previewGrid
+
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                visible: bench.previewShown
+                                clip: true
+
+                                Repeater {
+                                    model: Math.ceil(previewGrid.width / 20)
+
+                                    Rectangle {
+                                        x: index * 20
+                                        width: 1
+                                        height: previewGrid.height
+                                        color: "#E4E8EC"
+                                    }
+
+                                }
+
+                                Repeater {
+                                    model: Math.ceil(previewGrid.height / 20)
+
+                                    Rectangle {
+                                        y: index * 20
+                                        width: previewGrid.width
+                                        height: 1
+                                        color: "#E4E8EC"
+                                    }
+
+                                }
+
+                            }
 
                             Item {
                                 id: previewArea
