@@ -920,8 +920,19 @@ NVG.View {
 
                                     // The top of line n (0-based), after wrapping (width counted so it follows).
                                     function lineTop(n) {
-                                        return width > 0 ? positionToRectangle(starts[Math.min(n, starts.length - 1)]).y : 0;
+                                        return lineRect(n).y;
                                     }
+
+                                    // Line n's rectangle once laid out. Read again whenever the layout
+                                    // changes (layoutStamp): read too early, the numbers stayed where the
+                                    // lines were before and drifted further down the code.
+                                    function lineRect(n) {
+                                        var stamp = layoutStamp;
+                                        return width > 0 ? positionToRectangle(starts[Math.min(n, starts.length - 1)]) : Qt.rect(0, 0, 0, 0);
+                                    }
+
+                                    // Changes with the text, the width and the laid-out height.
+                                    readonly property string layoutStamp: text.length + ":" + width + ":" + contentHeight + ":" + lineCount
 
                                     readOnly: bench.writing
                                     leftPadding: 50
@@ -987,9 +998,15 @@ NVG.View {
                                         model: editor.starts.length
 
                                         Text {
+                                            readonly property rect line: editor.lineRect(index)
+
+                                            // In the middle of its line (the numbers' font is taller than
+                                            // the code's).
                                             x: 0
-                                            y: editor.topPadding + editor.lineTop(index) - editor.topPadding
+                                            y: line.y
                                             width: 34
+                                            height: line.height
+                                            verticalAlignment: Text.AlignVCenter
                                             horizontalAlignment: Text.AlignRight
                                             text: index + 1
                                             font.family: "SAO UI"
@@ -1008,7 +1025,7 @@ NVG.View {
                                             x: 42
                                             y: editor.lineTop(modelData)
                                             width: 4
-                                            height: Math.max(4, editor.positionToRectangle(bench.lineStart(modelData)).height)
+                                            height: Math.max(4, editor.lineRect(modelData).height)
                                             color: "#F1AA03"
                                         }
 
@@ -1021,7 +1038,7 @@ NVG.View {
                                             x: 42
                                             y: editor.lineTop(modelData)
                                             width: 4
-                                            height: Math.max(4, editor.positionToRectangle(bench.lineStart(modelData)).height)
+                                            height: Math.max(4, editor.lineRect(modelData).height)
                                             color: "#C82864"
                                         }
 
