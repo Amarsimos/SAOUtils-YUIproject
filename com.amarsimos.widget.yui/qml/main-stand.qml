@@ -1634,8 +1634,7 @@ T.Widget {
 
                 // <<seedling:>>: the widget is written in a request of its own; the note says how it went.
                 if (reply.seedling) {
-                    note = (note ? note + "
-" : "") + widget.seedlingWorking;
+                    note = (note ? note + "\n" : "") + widget.seedlingWorking;
                     var seedlingIndex = index;
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
@@ -4095,6 +4094,24 @@ T.Widget {
         seedlingWaiting = null;
         diag("seedling: a widget was placed, writing goes on");
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
+    }
+
+    // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
+    function seedlingPreview(code, title, onResult) {
+        var bench = seedlingBench();
+        if (!bench)
+            return "Seedling is not installed";
+
+        return bench.preview(code, title, onResult);
+    }
+
+    // Test Seedling (System Console): a small widget sent to Seedling, the result written in the log.
+    function testSeedling() {
+        var code = "import QtQuick 2.12\n\nRectangle {\n    width: 180; height: 70; radius: 8\n    color: \"#E61F2630\"\n    Text {\n        anchors.centerIn: parent\n        color: \"white\"; font.pixelSize: 28\n        text: \"From Yui\"\n    }\n}\n";
+        var refused = seedlingPreview(code, "Test from Yui", function(result) {
+            diag("seedling result: " + JSON.stringify(result));
+        });
+        diag("test seedling: " + (refused || "sent"));
     }
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.
