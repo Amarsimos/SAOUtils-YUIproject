@@ -323,6 +323,16 @@ Item {
     assert.strictEqual(alone.days, 7);
 });
 
+test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", () => {
+    const Y = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    const rule = Y.seedlingCodePrompt(false, false).split("\n").find((l) => l.indexOf("15. ") === 0);
+    assert.ok(rule, "rule 15 is in the prompt");
+    const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
+    assert.deepStrictEqual(named.sort(), Object.keys(P.YUI_KEYS).sort());
+    assert.ok(rule.indexOf("// @yui") !== -1 && rule.indexOf("不能联网") !== -1);
+});
+
 test("Yui's code prompt: Widget Style and the template are added only when there are some", () => {
     const Y = {};
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);

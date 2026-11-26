@@ -2519,7 +2519,8 @@ function seedlingCodePrompt(allowNetwork, editing) {
         editing ? "11. 修改时按下面的「修改方式」只输出改动。" : "11. 输出完整的代码。",
         "12. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
         "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。",
-        "14. 挂件自己的设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。再写一行 // @name 挂件名。这类属性不要叫 source 或 url。用户会在挂件的右键 Settings... 里调这些设置，记住的东西由 Seedling 自动保存。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
+        "14. 挂件自己的设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。再写一行 // @name 挂件名。这类属性不要叫 source 或 url。用户会在挂件的右键 Settings... 里调这些设置，记住的东西由 Seedling 自动保存。",
+        "15. 挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，int，0 是没记录）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情，var：[{day: \"yyyy-MM-dd\", score: 1-5}]）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，string，每行一条）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网。没有数据时保持属性的默认值，所以默认值要能直接显示。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
 // Widget Style (Seedling Settings) for the code prompt: how the widget looks unless the request says
