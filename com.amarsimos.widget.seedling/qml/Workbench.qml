@@ -1015,7 +1015,8 @@ NVG.View {
                 anchors.bottomMargin: 14
                 spacing: 12
 
-                // Tools: Try, Versions, Examples, Network (and Stop while Yui writes).
+                // Tools: Versions, Examples, then (only while there) Stop and Problems last, so their
+                // coming and going does not move the others.
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -1031,26 +1032,6 @@ NVG.View {
                         onClicked: {
                             bench.showVersions = !bench.showVersions;
                             bench.showProblems = false;
-                        }
-                    }
-
-                    Chip {
-
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Layout.preferredHeight: 30
-                        id: problemsChip
-
-                        // Flashes (lit for a moment, twice) when a Save fails with problems.
-                        property bool flash: false
-
-                        visible: bench.problemList.length > 0
-                        text: "Problems (" + bench.problemList.length + ")"
-                        icon: "help"
-                        checked: bench.showProblems || flash
-                        onClicked: {
-                            bench.showProblems = !bench.showProblems;
-                            bench.showVersions = false;
                         }
                     }
 
@@ -1100,6 +1081,26 @@ NVG.View {
 
                         }
 
+                    }
+
+                    Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
+                        id: problemsChip
+
+                        // Flashes (lit for a moment, twice) when a Save fails with problems.
+                        property bool flash: false
+
+                        visible: bench.problemList.length > 0
+                        text: "Problems (" + bench.problemList.length + ")"
+                        icon: "help"
+                        checked: bench.showProblems || flash
+                        onClicked: {
+                            bench.showProblems = !bench.showProblems;
+                            bench.showVersions = false;
+                        }
                     }
 
                     Menu {
