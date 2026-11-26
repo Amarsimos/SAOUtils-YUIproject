@@ -4726,6 +4726,7 @@ T.Widget {
 
                 width: parent.width
                 text: actionDialog.text
+                font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                 wrapMode: Text.WrapAnywhere
             }
 
@@ -6068,6 +6069,7 @@ T.Widget {
 
                             placeholderText: qsTr("Message to Yui...")
                             color: "black"
+                            font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                             wrapMode: TextArea.Wrap
                             selectByMouse: true
                             leftPadding: 10
