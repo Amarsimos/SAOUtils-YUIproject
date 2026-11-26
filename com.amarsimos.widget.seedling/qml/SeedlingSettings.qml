@@ -1,5 +1,6 @@
 import NERvGear 1.0 as NVG
 import NERvGear.Controls 1.0
+import NERvGear.Preferences 1.0 as P
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
@@ -134,154 +135,159 @@ NVG.Window {
         }
     }
 
+    // As MHCP-YUI's settings windows: tabs (the last one shown is remembered), SAO Utils' own
+    // preferences, notes under them, the test buttons in centered rows.
     Page {
         anchors.fill: parent
 
-        // A Flickable with the SAO scroll bar (a ScrollView would add its wide default one).
-        Flickable {
+        ColumnLayout {
             anchors.fill: parent
-            contentWidth: width
-            contentHeight: settingsColumn.implicitHeight + 16
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: SaoScrollBar {
-                z: 10
-                onLight: true
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            anchors.bottomMargin: 16
+            spacing: 10
+
+            WrapTabBar {
+                id: tabs
+
+                currentIndex: Math.max(0, Math.min(1, settingsWindow.targetWidget.settings.settings_tab || 0))
+                onCurrentIndexChanged: settingsWindow.targetWidget.settings.settings_tab = currentIndex
+                model: [qsTr("General"), qsTr("Test")]
             }
 
-            ColumnLayout {
-                id: settingsColumn
+            StackLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 0
+                currentIndex: tabs.shownIndex
 
-                width: parent.width
-                spacing: 14
-
-                Label {
-                    Layout.fillWidth: true
-                    Layout.margins: 16
-                    Layout.bottomMargin: 0
-                    wrapMode: Text.Wrap
-                    color: "#666666"
-                    text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
-                }
-
-                // General: Code Editor (advanced). Off: the workbench shows the preview only.
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    spacing: 6
-
-                    Label {
-                        text: "General"
-                        font.family: "SAO UI"
-                        font.pixelSize: 18
-                        color: "#4D4D4D"
+                // ---------------------------------------------------------------- General
+                SettingsPage {
+                    Heading {
+                        text: qsTr("Workbench")
                     }
 
-                    CheckBox {
-                        text: "Code Editor"
-                        checked: settingsWindow.targetWidget.settings.show_code === true
-                        onToggled: settingsWindow.targetWidget.settings.show_code = checked
-                    }
-
-                    Label {
+                    P.PreferenceGroup {
                         Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        color: "#888888"
-                        font.pixelSize: 12
+
+                        // Code Editor (advanced). Off: the workbench shows the preview only.
+                        P.SwitchPreference {
+                            id: codePreference
+
+                            label: "Code Editor"
+                            Component.onCompleted: value = settingsWindow.targetWidget.settings.show_code === true
+                            onValueChanged: settingsWindow.targetWidget.settings.show_code = value === true
+                        }
+
+                    }
+
+                    SettingNote {
+                        besidePreferences: true
                         text: qsTr("Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
 
-                    CheckBox {
-                        id: networkBox
+                    Heading {
+                        text: qsTr("Network")
+                    }
 
-                        text: "Network"
-                        checked: settingsWindow.targetWidget.settings.allow_network === true
-                        onToggled: {
-                            settingsWindow.targetWidget.settings.allow_network = checked;
-                            var workbench = settingsWindow.targetWidget.workbench;
-                            if (workbench)
-                                workbench.render(true);
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
 
-                        }
+                        P.SwitchPreference {
+                            id: networkPreference
 
-                        // Turned on by the workbench's question too.
-                        Connections {
-                            target: settingsWindow.targetWidget.workbench || null
-                            ignoreUnknownSignals: true
-                            onStatusChanged: networkBox.checked = settingsWindow.targetWidget.settings.allow_network === true
+                            property bool ready: false
+
+                            label: "Network"
+                            Component.onCompleted: {
+                                value = settingsWindow.targetWidget.settings.allow_network === true;
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (!ready || settingsWindow.targetWidget.settings.allow_network === (value === true))
+                                    return ;
+
+                                settingsWindow.targetWidget.settings.allow_network = value === true;
+                                var workbench = settingsWindow.targetWidget.workbench;
+                                if (workbench)
+                                    workbench.render(true);
+
+                            }
+
+                            // Turned on by the workbench's question too.
+                            Connections {
+                                target: settingsWindow.targetWidget.workbench || null
+                                ignoreUnknownSignals: true
+                                onStatusChanged: networkPreference.value = settingsWindow.targetWidget.settings.allow_network === true
+                            }
+
                         }
 
                     }
 
-                    Label {
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        color: "#888888"
-                        font.pixelSize: 12
+                    SettingNote {
+                        besidePreferences: true
                         text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
                     }
 
                 }
 
-                Repeater {
-                    model: [{
-                        "title": "Render",
-                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / +)."),
-                        "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Empty", "empty"], ["Large Widget", "large"]]
-                    }, {
-                        "title": "Yui's Work",
-                        "note": qsTr("Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound."),
-                        "tests": [["Writing", "write"], ["Change", "edit"], ["Failure", "fail"]]
-                    }, {
-                        "title": "S1 Probes · Workbench",
-                        "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads Windows' win.ini and shows only its length. These run in the workbench's preview."),
-                        "tests": Probes.PROBES.map(function(p) {
-                            return [p.name, "probe:" + p.key];
-                        })
-                    }, {
-                        "title": "S1 Probes · Widget",
-                        "note": qsTr("The same probes saved to this widget, to see what they reach from a widget on the desktop (it replaces the widget's code: go back with Versions in the workbench)."),
-                        "tests": Probes.PROBES.map(function(p) {
-                            return [p.name, "probewidget:" + p.key];
-                        })
-                    }, {
-                        "title": "Desktop",
-                        "note": qsTr("Save to Widget saves the code to this widget, whose frame takes its size."),
-                        "tests": [["Save to Widget", "save"]]
-                    }]
+                // ---------------------------------------------------------------- Test
+                SettingsPage {
+                    SettingNote {
+                        besidePreferences: true
+                        text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
+                    }
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
-                        spacing: 6
+                    Repeater {
+                        model: [{
+                            "title": "Render",
+                            "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / +)."),
+                            "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Empty", "empty"], ["Large Widget", "large"]]
+                        }, {
+                            "title": "Yui's Work",
+                            "note": qsTr("Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound."),
+                            "tests": [["Writing", "write"], ["Change", "edit"], ["Failure", "fail"]]
+                        }, {
+                            "title": "S1 Probes · Workbench",
+                            "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads Windows' win.ini and shows only its length. These run in the workbench's preview."),
+                            "tests": Probes.PROBES.map(function(p) {
+                                return [p.name, "probe:" + p.key];
+                            })
+                        }, {
+                            "title": "S1 Probes · Widget",
+                            "note": qsTr("The same probes saved to this widget, to see what they reach from a widget on the desktop (it replaces the widget's code: go back with Versions in the workbench)."),
+                            "tests": Probes.PROBES.map(function(p) {
+                                return [p.name, "probewidget:" + p.key];
+                            })
+                        }, {
+                            "title": "Desktop",
+                            "note": qsTr("Save to Widget saves the code to this widget, whose frame takes its size."),
+                            "tests": [["Save to Widget", "save"]]
+                        }]
 
-                        Label {
-                            text: modelData.title
-                            font.family: "SAO UI"
-                            font.pixelSize: 18
-                            color: "#4D4D4D"
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            color: "#888888"
-                            font.pixelSize: 12
-                            text: modelData.note
-                        }
-
-                        Flow {
+                        ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 6
 
-                            Repeater {
-                                model: modelData.tests
+                            Heading {
+                                text: modelData.title
+                            }
 
-                                Button {
-                                    text: modelData[0]
-                                    onClicked: settingsWindow.run(modelData[1])
+                            SettingNote {
+                                besidePreferences: true
+                                text: modelData.note
+                            }
+
+                            CenteredFlow {
+                                Repeater {
+                                    model: modelData.tests
+
+                                    Button {
+                                        text: modelData[0]
+                                        onClicked: settingsWindow.run(modelData[1])
+                                    }
+
                                 }
 
                             }
@@ -290,10 +296,6 @@ NVG.Window {
 
                     }
 
-                }
-
-                Item {
-                    Layout.fillHeight: true
                 }
 
             }

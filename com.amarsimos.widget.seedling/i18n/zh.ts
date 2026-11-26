@@ -3,57 +3,77 @@
 <context>
     <name>SeedlingSettings</name>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="97" />
+        <location filename="../qml/SeedlingSettings.qml" line="98" />
         <source>Changing · %1 place(s)</source>
         <translation>正在修改 · %1 处</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="115" />
+        <location filename="../qml/SeedlingSettings.qml" line="116" />
         <source>Writing · %1 lines</source>
         <translation>正在编写 · %1 行</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="132" />
+        <location filename="../qml/SeedlingSettings.qml" line="133" />
         <source>Test: not done (no request was made).</source>
         <translation>测试：未完成（没有发出请求）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="164" />
+        <location filename="../qml/SeedlingSettings.qml" line="239" />
         <source>Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).</source>
         <translation>测试不经过 AI 试用工作台：这里的按钮都不会发出请求。每个按钮会打开工作台（或使用已打开的工作台）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="192" />
+        <location filename="../qml/SeedlingSettings.qml" line="186" />
         <source>Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.</source>
         <translation>高级：在工作台的预览旁显示代码，并提供 Run 和 Examples，可以查看或修改结衣写的代码。关闭时工作台只显示挂件。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="222" />
+        <location filename="../qml/SeedlingSettings.qml" line="155" />
+        <source>General</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="155" />
+        <source>Test</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="167" />
+        <source>Workbench</source>
+        <translation>工作台</translation>
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="190" />
+        <source>Network</source>
+        <translation>Network</translation>
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="230" />
         <source>Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.</source>
         <translation>允许这个挂件联网（天气、汇率、网上的图片等）。默认关闭：安全检查会拒绝联网的代码，结衣也只写不联网的挂件。挂件只因联网被拒绝时，工作台会询问是否允许。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="230" />
+        <location filename="../qml/SeedlingSettings.qml" line="245" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问）、空白（NO SIGNAL），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="234" />
+        <location filename="../qml/SeedlingSettings.qml" line="249" />
         <source>Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound.</source>
         <translation>模拟结衣编写的过程：先思考 3 秒，再逐行写出代码；Change 保留原代码，把改动的两行标成橙色；Failure 以失败音效结束。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="238" />
+        <location filename="../qml/SeedlingSettings.qml" line="253" />
         <source>Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads Windows' win.ini and shows only its length. These run in the workbench's preview.</source>
         <translation>Seedling 开发计划 S1：无害的探针，查看生成的挂件能访问到什么。每个探针在预览中显示发现的内容（SAO Utils 日志中记为 [seedling probe]），不会调用、发送或修改任何东西。P7 读取 Windows 的 win.ini，只显示其长度。这些在工作台的预览中运行。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="244" />
+        <location filename="../qml/SeedlingSettings.qml" line="259" />
         <source>The same probes saved to this widget, to see what they reach from a widget on the desktop (it replaces the widget's code: go back with Versions in the workbench).</source>
         <translation>把同样的探针保存到这个挂件，查看桌面上的挂件能访问到什么（会替换挂件的代码，可用工作台的 Versions 恢复）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="250" />
+        <location filename="../qml/SeedlingSettings.qml" line="265" />
         <source>Save to Widget saves the code to this widget, whose frame takes its size.</source>
         <translation>Save to Widget 把代码保存到这个挂件，挂件框会随代码调整大小。</translation>
     </message>
