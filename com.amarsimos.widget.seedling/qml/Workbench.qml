@@ -527,6 +527,17 @@ NVG.View {
         if (!request)
             return ;
 
+        // No AI yet: said so, and Seedling Settings opened to set it up.
+        if (!canGenerate) {
+            result = "error";
+            status = qsTr("Set up the AI in Seedling Settings first (General, AI).");
+            if (targetWidget.openSettings)
+                targetWidget.openSettings();
+
+            return ;
+        }
+        requestField.text = "";
+
         result = "ok";
         status = qsTr("Thinking...");
         var refused = Link.Bench.generate(request, function(message, ok) {
@@ -1696,37 +1707,67 @@ NVG.View {
 
                 }
 
-                // The request, at the foot of the band: only without MHCP-YUI. With her, Yui is asked in the
-                // chat instead (she writes it, and the workbench shows it here).
+                // The request, at the foot of the band: only without MHCP-YUI (with her, Yui is asked in the
+                // chat). As her chat's input: a white rounded box (Enter sends, Shift+Enter a new line)
+                // and the theme's button, Generate / Stop.
                 RowLayout {
                     Layout.fillWidth: true
+                    Layout.topMargin: 4
                     spacing: 8
-                    // Without MHCP-YUI: Seedling's own AI (Seedling Settings, AI) writes it.
                     visible: Link.Bench.yui === null
 
-                    TextField {
-                        id: requestField
-
+                    Rectangle {
                         Layout.fillWidth: true
-                        enabled: bench.canGenerate && !bench.writing
-                        selectByMouse: true
-                        font.family: bench.fontFor(text || placeholderText)
-                        font.pixelSize: 15
-                        placeholderText: bench.canGenerate ? qsTr("Describe the widget, then Enter") : qsTr("Set up the AI in Seedling Settings to have widgets written")
-                        onAccepted: bench.generate()
+                        Layout.preferredHeight: Math.min(96, Math.max(40, requestField.implicitHeight))
+                        Layout.alignment: Qt.AlignBottom
+                        radius: 20
+                        color: "#FFFFFF"
+                        border.color: requestField.activeFocus ? "#F1AA03" : "#D4D4D4"
+                        border.width: 1
 
-                        background: Rectangle {
-                            color: "#F9F9F9"
-                            opacity: 0.7
+                        TextArea {
+                            id: requestField
+
+                            function handleReturn(event) {
+                                if (event.modifiers & Qt.ShiftModifier)
+                                    insert(cursorPosition, "\n");
+                                else
+                                    bench.generate();
+                                event.accepted = true;
+                            }
+
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            readOnly: bench.writing
+                            color: "black"
+                            wrapMode: TextArea.Wrap
+                            selectByMouse: true
+                            leftPadding: 10
+                            rightPadding: 10
+                            topPadding: 10
+                            bottomPadding: 10
+                            background: null
+                            font.family: bench.fontFor(text || placeholderText)
+                            font.pixelSize: 14
+                            placeholderText: bench.canGenerate ? qsTr("Describe the widget, then Enter") : qsTr("Set up the AI in Seedling Settings to have widgets written")
+                            Keys.onReturnPressed: handleReturn(event)
+                            Keys.onEnterPressed: handleReturn(event)
                         }
 
                     }
 
-                    Chip {
-                        text: "Generate"
-                        icon: "modify"
-                        enabled: requestField.enabled && requestField.text.trim() !== ""
-                        onClicked: bench.generate()
+                    Button {
+                        Layout.preferredHeight: 40
+                        Layout.alignment: Qt.AlignBottom
+                        text: bench.writing ? "Stop" : "Generate"
+                        enabled: bench.writing || requestField.text.trim() !== ""
+                        onClicked: {
+                            if (bench.writing)
+                                Link.Bench.stop();
+                            else
+                                bench.generate();
+                        }
                     }
 
                 }

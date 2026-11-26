@@ -3,27 +3,27 @@
 <context>
     <name>Bench</name>
     <message>
-        <location filename="../qml/link/Bench.qml" line="301" />
+        <location filename="../qml/link/Bench.qml" line="305" />
         <source>The edits did not fit · Thinking about the whole code...</source>
         <translation>修改没能对上 · 正在重新思考整段代码...</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="312" />
+        <location filename="../qml/link/Bench.qml" line="316" />
         <source>Thinking about the fix (%1 / 2): %2</source>
         <translation>正在思考修复方法（%1 / 2）：%2</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="318" />
+        <location filename="../qml/link/Bench.qml" line="322" />
         <source>Checking and rendering...</source>
         <translation>正在检查并渲染...</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="349" />
+        <location filename="../qml/link/Bench.qml" line="353" />
         <source>Changing · %1 place(s)</source>
         <translation>正在修改 · %1 处</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="364" />
+        <location filename="../qml/link/Bench.qml" line="368" />
         <source>Writing · %1 lines</source>
         <translation>正在编写 · %1 行</translation>
     </message>
@@ -96,12 +96,12 @@
         <translation>怎样写挂件，所有 Seedling 挂件共用。Connection：装了 MHCP-YUI 时用结衣的服务器和 Key（Own：用 Seedling 自己的）。Provider、Server Address、API Key、Model：Seedling 自己的 AI；Key 只保存在这台电脑上。Widget Style：挂件长什么样（颜色、字体、氛围），每次写挂件都会带上；要求里另外说的优先。Reset 恢复 SAO 风格。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="381" />
+        <location filename="../qml/SeedlingSettings.qml" line="398" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="385" />
+        <location filename="../qml/SeedlingSettings.qml" line="402" />
         <source>A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them.</source>
         <translation>一个带自己的设置和记忆的待办挂件（@name、@setting、@keep）：用 ○ 保存后，右键挂件可以看到 Settings... 和 Show Done 开关。添加几条待办（回车），重启 SAO Utils 后还在。预览里不会记住。</translation>
     </message>
@@ -235,28 +235,33 @@ Allow it to go online and save?</source>
         <translation>已保存到挂件（版本 %1）。</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="531" />
-        <location filename="../qml/Workbench.qml" line="562" />
+        <location filename="../qml/Workbench.qml" line="533" />
+        <source>Set up the AI in Seedling Settings first (General, AI).</source>
+        <translation>请先在 Seedling Settings 里设置好 AI（General → AI）。</translation>
+    </message>
+    <message>
+        <location filename="../qml/Workbench.qml" line="542" />
+        <location filename="../qml/Workbench.qml" line="573" />
         <source>Thinking...</source>
         <translation>思考中...</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="644" />
+        <location filename="../qml/Workbench.qml" line="655" />
         <source>Changed %1 place(s) · +%2 −%3 lines · %4</source>
         <translation>修改了 %1 处 · +%2 −%3 行 · %4</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1371" />
+        <location filename="../qml/Workbench.qml" line="1382" />
         <source>%1 saved</source>
         <translation>%1 已保存</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1715" />
+        <location filename="../qml/Workbench.qml" line="1753" />
         <source>Describe the widget, then Enter</source>
         <translation>描述想要的挂件，然后回车</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1715" />
+        <location filename="../qml/Workbench.qml" line="1753" />
         <source>Set up the AI in Seedling Settings to have widgets written</source>
         <translation>在 Seedling Settings 里设置好 AI，就能让它写挂件</translation>
     </message>
