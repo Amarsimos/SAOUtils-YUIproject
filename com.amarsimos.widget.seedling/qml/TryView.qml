@@ -31,6 +31,7 @@ NVG.View {
     }
 
     Rectangle {
+        id: bar
         width: view.width
         height: view.barHeight
         radius: 4
@@ -46,7 +47,7 @@ NVG.View {
         }
 
         Text {
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: bar.verticalCenter
             x: 6
             text: "SEEDLING · TRY"
             font.family: "SAO UI"
@@ -72,9 +73,9 @@ NVG.View {
         }
 
         Text {
-            anchors.right: parent.right
+            anchors.right: bar.right
             anchors.rightMargin: 5
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: bar.verticalCenter
             text: "✕"
             color: closeArea.containsMouse ? "#D9473B" : "#8A8A8A"
             font.pixelSize: 11
