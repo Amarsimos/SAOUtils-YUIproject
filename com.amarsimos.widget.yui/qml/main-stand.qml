@@ -5784,6 +5784,47 @@ T.Widget {
                 cacheBuffer: 100000
                 // The messages fade in once the panel has unfolded.
                 opacity: widget.messagesOpacity
+                // Messages fade out over the last 24 px at the top and bottom instead of being cut off,
+                // where there is more to scroll to.
+                layer.enabled: true
+
+                layer.effect: OpacityMask {
+                    maskSource: chatFadeMask
+                }
+
+                Rectangle {
+                    id: chatFadeMask
+
+                    readonly property real edge: Math.min(0.25, 24 / Math.max(1, chatView.height))
+
+                    width: chatView.width
+                    height: chatView.height
+                    visible: false
+
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: chatView.atYBeginning ? "#FFFFFFFF" : "#00FFFFFF"
+                        }
+
+                        GradientStop {
+                            position: chatFadeMask.edge
+                            color: "#FFFFFFFF"
+                        }
+
+                        GradientStop {
+                            position: 1 - chatFadeMask.edge
+                            color: "#FFFFFFFF"
+                        }
+
+                        GradientStop {
+                            position: 1
+                            color: chatView.atYEnd ? "#FFFFFFFF" : "#00FFFFFF"
+                        }
+
+                    }
+
+                }
 
                 ScrollBar.vertical: SaoScrollBar {
                     id: chatScrollBar
