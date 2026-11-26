@@ -4,24 +4,24 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "safety.js" as Safety
 
-// The Seedling workbench, in the look of the SAO game menus: icons of SAO Utils' SAO theme on the
-// left (Edit, Try on Desktop, Versions, Option), the code beside its live preview, a status line, and
-// at the bottom the versions and the SAO ok / cancel buttons (Save to the widget, Close). The draft is
-// kept while closed; Save keeps a version (up to 20).
+// The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
+// it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
+// the tools, the code beside its live preview and what happened, and a white band with the SAO ok /
+// cancel buttons (Save to the widget, Close), each centered in its half. The draft is kept while
+// closed; Save keeps a version (up to 20).
 NVG.Window {
     id: bench
 
     property var targetWidget
     readonly property var settings: targetWidget.settings
-    // The page on the right: "preview", "versions" or "option".
-    property string page: "preview"
+    property bool showVersions: false
     property var preview: null
     // "ok", "error" or "unsafe", and what it says.
     property string result: "ok"
     property string status: ""
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
-    readonly property string orange: "#F1AA03"
+    readonly property color ink: "#4D4D4D"
     readonly property var examples: [{
         "name": qsTr("Clock"),
         "code": "import QtQuick 2.12\n\nRectangle {\n    width: 200; height: 84; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
@@ -33,7 +33,7 @@ NVG.Window {
         "code": "import QtQuick 2.12\n\nItem {\n    width: 140; height: 140\n\n    Rectangle {\n        anchors.centerIn: parent\n        width: 70; height: 70\n        color: \"#2CE67C\"\n        border.color: \"white\"; border.width: 2\n        RotationAnimation on rotation {\n            from: 0; to: 360; duration: 4000; loops: Animation.Infinite\n        }\n    }\n}\n"
     }, {
         "name": qsTr("Broken"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 120; height: 80\n    color: \"#D9473B\"\n\n    Text {\n        text: \"missing brace\"\n\n}\n"
+        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 120; height: 80\n    color: \"#C82864\"\n\n    Text {\n        text: \"missing brace\"\n\n}\n"
     }, {
         "name": qsTr("Unsafe"),
         "code": "import QtQuick 2.12\nimport NERvGear 1.0 as NVG\n\nRectangle {\n    width: 120; height: 60\n    MouseArea {\n        anchors.fill: parent\n        onClicked: NVG.SystemCall.execute(\"cmd\")\n    }\n}\n"
@@ -48,7 +48,7 @@ NVG.Window {
         var code = editor.text;
         if (code.trim() === "") {
             result = "ok";
-            status = qsTr("Write QML on the left, or pick an example in Option.");
+            status = qsTr("Write QML on the left, or pick one of the Examples.");
             return false;
         }
         var problems = Safety.check(code, settings.allow_network === true);
@@ -119,11 +119,11 @@ NVG.Window {
 
     title: "Seedling"
     visible: true
-    minimumWidth: 760
+    minimumWidth: 720
     minimumHeight: 520
     width: 900
     height: 620
-    color: "#EDEDED"
+    color: "#FFFFFF"
     transientParent: targetWidget.NVG.View.window
     onClosing: {
         if (preview)
@@ -133,127 +133,155 @@ NVG.Window {
     }
     Component.onCompleted: render()
 
-    Rectangle {
-        anchors.fill: parent
-
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: "#FBFBFB"
-            }
-
-            GradientStop {
-                position: 1
-                color: "#EBEBEB"
-            }
-
-        }
-
-    }
-
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // The ring menu, as the SAO main menu.
-        ColumnLayout {
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 64
-            Layout.leftMargin: 14
-            Layout.rightMargin: 6
-            spacing: 14
+        // Title band.
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 64
 
-            SaoIcon {
-                icon: "item/modify"
-                caption: "EDIT"
-                checked: bench.page === "preview"
-                onClicked: bench.page = "preview"
+            Text {
+                anchors.centerIn: parent
+                text: "Seedling"
+                font.family: "SAO UI"
+                font.pixelSize: 30
+                color: bench.ink
             }
 
-            SaoIcon {
-                icon: "item/run"
-                caption: "TRY"
-                onClicked: bench.tryOnDesktop()
-            }
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "#E4E4E4"
+                }
 
-            SaoIcon {
-                icon: "item/items"
-                caption: "VERSIONS"
-                checked: bench.page === "versions"
-                onClicked: bench.page = "versions"
-            }
+                GradientStop {
+                    position: 1
+                    color: "#F9F9F9"
+                }
 
-            SaoIcon {
-                icon: "item/option"
-                caption: "OPTION"
-                checked: bench.page === "option"
-                onClicked: bench.page = "option"
             }
 
         }
 
-        ColumnLayout {
+        // Grey band, shaded at its top and bottom (black 20% to 0, as the original).
+        Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 0
+            color: "#D8D8D8"
 
-            // Title, centered, with an orange line under it.
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 50
+            Rectangle {
+                width: parent.width
+                height: 11
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "SEEDLING"
-                    font.family: "SAO UI"
-                    font.pixelSize: 24
-                    font.letterSpacing: 8
-                    color: "#6A6A6A"
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#33040404"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#00040404"
+                    }
+
                 }
 
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: 1
-                    color: "#D4D4D4"
-                }
+            }
 
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: 120
-                    height: 2
-                    color: bench.orange
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 11
+
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "#00040404"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#33040404"
+                    }
+
                 }
 
             }
 
             ColumnLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.margins: 16
+                anchors.fill: parent
+                anchors.margins: 20
+                anchors.topMargin: 18
+                anchors.bottomMargin: 14
                 spacing: 12
 
-                // Describe what you want and the AI writes it: comes in a later stage.
-                SectionTitle {
-                    Layout.fillWidth: true
-                    text: "REQUEST"
-                    note: qsTr("AI comes in a later stage")
-                }
-
+                // Tools: the request (AI, a later stage), Try, Versions, Examples, Network.
                 RowLayout {
                     Layout.fillWidth: true
-                    enabled: false
-                    opacity: 0.6
+                    spacing: 8
 
                     TextField {
                         Layout.fillWidth: true
-                        placeholderText: qsTr("Describe the widget you want...")
+                        enabled: false
+                        placeholderText: qsTr("Describe the widget and the AI writes it (coming later)")
+
+                        background: Rectangle {
+                            color: "#F9F9F9"
+                            opacity: 0.7
+                        }
+
                     }
 
-                    SaoIcon {
-                        icon: "item/add"
-                        size: 30
+                    Chip {
+                        text: "Generate"
+                        enabled: false
+                    }
+
+                    Chip {
+                        text: "Try"
+                        onClicked: bench.tryOnDesktop()
+                    }
+
+                    Chip {
+                        text: "Versions"
+                        checked: bench.showVersions
+                        onClicked: bench.showVersions = !bench.showVersions
+                    }
+
+                    Chip {
+                        id: examplesChip
+
+                        text: "Examples"
+                        onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
+                    }
+
+                    Chip {
+                        text: "Network: " + (bench.settings.allow_network === true ? "On" : "Off")
+                        checked: bench.settings.allow_network === true
+                        onClicked: {
+                            bench.settings.allow_network = !(bench.settings.allow_network === true);
+                            bench.render();
+                        }
+                    }
+
+                    Menu {
+                        id: examplesMenu
+
+                        Repeater {
+                            model: bench.examples
+
+                            MenuItem {
+                                text: modelData.name
+                                onTriggered: {
+                                    editor.text = modelData.code;
+                                    bench.showVersions = false;
+                                }
+                            }
+
+                        }
+
                     }
 
                 }
@@ -267,11 +295,13 @@ NVG.Window {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
+                        spacing: 5
 
-                        SectionTitle {
-                            Layout.fillWidth: true
-                            text: "CODE"
-                            note: qsTr("renders as you type")
+                        Text {
+                            text: "Code"
+                            font.family: "SAO UI"
+                            font.pixelSize: 15
+                            color: "#5F5F5F"
                         }
 
                         ScrollView {
@@ -288,7 +318,7 @@ NVG.Window {
                                 wrapMode: TextArea.Wrap
                                 font.family: "Consolas"
                                 font.pixelSize: 12
-                                color: "#555555"
+                                color: "#3A3A3A"
                                 text: bench.settings.draft !== undefined ? bench.settings.draft : (bench.settings.code || "")
                                 onTextChanged: {
                                     bench.settings.draft = text;
@@ -296,9 +326,7 @@ NVG.Window {
                                 }
 
                                 background: Rectangle {
-                                    color: "white"
-                                    border.color: "#D4D4D4"
-                                    radius: 4
+                                    color: "#F9F9F9"
                                 }
 
                             }
@@ -311,75 +339,81 @@ NVG.Window {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
+                        spacing: 5
 
-                        SectionTitle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: bench.page === "versions" ? "VERSIONS" : bench.page === "option" ? "OPTION" : "PREVIEW"
-                            note: bench.page === "preview" && bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) : ""
+
+                            Text {
+                                text: bench.showVersions ? "Versions" : "Preview"
+                                font.family: "SAO UI"
+                                font.pixelSize: 15
+                                color: "#5F5F5F"
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) : "")
+                                font.pixelSize: 11
+                                color: "#7A7A7A"
+                            }
+
                         }
 
-                        StackLayout {
+                        Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            currentIndex: bench.page === "versions" ? 1 : bench.page === "option" ? 2 : 0
+                            color: "#F9F9F9"
+                            clip: true
 
-                            // Preview on a light grid.
-                            Rectangle {
-                                color: "#F4F6F8"
-                                border.color: "#D4D4D4"
-                                radius: 4
-                                clip: true
+                            Item {
+                                id: previewArea
 
-                                Grid {
-                                    id: grid
-
-                                    anchors.fill: parent
-                                    columns: Math.ceil(width / 20)
-
-                                    Repeater {
-                                        model: grid.columns * Math.ceil(grid.height / 20)
-
-                                        Rectangle {
-                                            width: 20
-                                            height: 20
-                                            color: "transparent"
-                                            border.color: "#E6EAEE"
-                                        }
-
-                                    }
-
-                                }
-
-                                Item {
-                                    id: previewArea
-
-                                    anchors.fill: parent
-                                    anchors.margins: 16
-                                }
-
+                                anchors.fill: parent
+                                anchors.margins: 12
+                                visible: !bench.showVersions
                             }
 
                             ListView {
+                                anchors.fill: parent
+                                visible: bench.showVersions
                                 clip: true
                                 model: bench.versions.length
-                                spacing: 4
 
                                 delegate: Rectangle {
                                     readonly property int number: bench.versions.length - index - 1
+                                    readonly property bool lit: number === bench.versionIndex || versionArea.containsMouse
 
                                     width: ListView.view.width
-                                    height: 32
-                                    radius: 4
-                                    color: number === bench.versionIndex ? "#33F1AA03" : (versionArea.containsMouse ? "#FFFFFF" : "#F7F7F7")
-                                    border.color: "#D4D4D4"
+                                    height: 36
+                                    color: lit ? "#F1AA03" : "transparent"
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        x: 10
-                                        text: "VER " + (parent.number + 1) + "   " + Qt.formatDateTime(new Date(bench.versions[parent.number].at), "yyyy-MM-dd hh:mm")
+                                        x: 12
+                                        text: "Ver " + (parent.number + 1)
                                         font.family: "SAO UI"
-                                        font.pixelSize: 13
-                                        color: "#6A6A6A"
+                                        font.pixelSize: 15
+                                        color: parent.lit ? "#FFFFFF" : bench.ink
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 12
+                                        text: Qt.formatDateTime(new Date(bench.versions[parent.number].at), "MM-dd hh:mm")
+                                        font.pixelSize: 12
+                                        color: parent.lit ? "#FFFFFF" : "#7A7A7A"
+                                    }
+
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        width: parent.width
+                                        height: 1
+                                        color: "#E6E6E6"
                                     }
 
                                     MouseArea {
@@ -389,52 +423,10 @@ NVG.Window {
                                         hoverEnabled: true
                                         onClicked: {
                                             bench.loadVersion(parent.number);
-                                            bench.page = "preview";
+                                            bench.showVersions = false;
                                         }
                                     }
 
-                                }
-
-                            }
-
-                            ColumnLayout {
-                                spacing: 10
-
-                                CheckBox {
-                                    text: qsTr("Network: let the widget go online (XMLHttpRequest, pictures from the Internet)")
-                                    checked: bench.settings.allow_network === true
-                                    onToggled: {
-                                        bench.settings.allow_network = checked;
-                                        bench.render();
-                                    }
-                                }
-
-                                Label {
-                                    text: qsTr("Examples")
-                                    font.bold: true
-                                }
-
-                                Flow {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    Repeater {
-                                        model: bench.examples
-
-                                        Button {
-                                            text: modelData.name
-                                            onClicked: {
-                                                editor.text = modelData.code;
-                                                bench.page = "preview";
-                                            }
-                                        }
-
-                                    }
-
-                                }
-
-                                Item {
-                                    Layout.fillHeight: true
                                 }
 
                             }
@@ -445,114 +437,41 @@ NVG.Window {
 
                 }
 
-                // Status: a breathing dot (green rendered, red error, yellow refused) and what happened.
-                Rectangle {
+                // What happened, centered on the band (as the original's message text).
+                Text {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(28, statusText.implicitHeight + 10)
-                    radius: 14
-                    color: "white"
-                    border.color: "#D4D4D4"
-
-                    Rectangle {
-                        x: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 9
-                        height: 9
-                        radius: 4.5
-                        color: bench.result === "error" ? "#D9473B" : bench.result === "unsafe" ? bench.orange : "#2CE67C"
-
-                        SequentialAnimation on opacity {
-                            loops: Animation.Infinite
-
-                            NumberAnimation {
-                                from: 0.3
-                                to: 1
-                                duration: 700
-                            }
-
-                            NumberAnimation {
-                                from: 1
-                                to: 0.3
-                                duration: 700
-                            }
-
-                        }
-
-                    }
-
-                    Text {
-                        id: statusText
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: 28
-                        width: parent.width - 40
-                        wrapMode: Text.Wrap
-                        text: bench.status
-                        font.pixelSize: 12
-                        color: "#5A5A5A"
-                    }
-
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: bench.status
+                    font.pixelSize: 14
+                    color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
+                    style: bench.result === "ok" ? Text.Raised : Text.Normal
+                    styleColor: "#AAFFFFFF"
                 }
 
             }
 
-            // Footer: versions, Save (ok) and Close (cancel).
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 70
-                color: "#E9E9E9"
+        }
 
-                Rectangle {
-                    width: parent.width
-                    height: 1
-                    color: "#D4D4D4"
-                }
+        // White band: Save (ok) and Close (cancel), each centered in its half.
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 96
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 16
-                    anchors.rightMargin: 16
-                    spacing: 10
+            SaoIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                x: parent.width / 4 - width / 2
+                icon: "misc/ok"
+                size: 56
+                onClicked: bench.save()
+            }
 
-                    SaoIcon {
-                        icon: "misc/prev"
-                        size: 28
-                        enabled: bench.versionIndex > 0
-                        onClicked: bench.loadVersion(bench.versionIndex - 1)
-                    }
-
-                    Text {
-                        text: bench.versions.length ? "VER " + (bench.versionIndex + 1) + " / " + bench.versions.length : "VER -"
-                        font.family: "SAO UI"
-                        font.pixelSize: 14
-                        color: "#8A8A8A"
-                    }
-
-                    SaoIcon {
-                        icon: "misc/next"
-                        size: 28
-                        enabled: bench.versionIndex < bench.versions.length - 1
-                        onClicked: bench.loadVersion(bench.versionIndex + 1)
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
-                    SaoIcon {
-                        icon: "misc/ok"
-                        caption: "SAVE"
-                        onClicked: bench.save()
-                    }
-
-                    SaoIcon {
-                        icon: "misc/cancel"
-                        caption: "CLOSE"
-                        onClicked: bench.close()
-                    }
-
-                }
-
+            SaoIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                x: parent.width * 3 / 4 - width / 2
+                icon: "misc/cancel"
+                size: 56
+                onClicked: bench.close()
             }
 
         }
