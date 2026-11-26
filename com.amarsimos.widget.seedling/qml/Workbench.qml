@@ -96,6 +96,25 @@ NVG.Window {
         status = problem ? problem : qsTr("Saved to the widget (version %1).").arg(versionIndex + 1);
     }
 
+    // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
+    function loadExternal(code, title, onResult) {
+        showVersions = false;
+        editor.text = code;
+        renderTimer.stop();
+        var ok = render();
+        requestActivate();
+        if (typeof onResult === "function")
+            onResult({
+                "ok": ok,
+                "result": result,
+                "status": status,
+                "title": title,
+                "width": preview ? Math.round(preview.width) : 0,
+                "height": preview ? Math.round(preview.height) : 0
+            });
+
+    }
+
     function loadVersion(index) {
         if (index < 0 || index >= versions.length)
             return ;

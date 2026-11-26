@@ -3,6 +3,7 @@ import NERvGear.Templates 1.0 as T
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import "safety.js" as Safety
+import "link" 1.0 as Link
 
 // A Seedling widget: shows the QML kept in its settings (code), after the safety check. Its menu opens
 // the workbench, where the code is written, previewed, tried on the desktop and saved back here.
@@ -51,26 +52,32 @@ T.Widget {
         return show(source);
     }
 
+    // Opens the workbench (or brings it forward) and returns it.
     function openWorkbench() {
         if (workbench) {
             workbench.requestActivate();
-            return ;
+            return workbench;
         }
         workbench = workbenchComponent.createObject(widget, {
             "targetWidget": widget
         });
         if (!workbench) {
             console.log("Seedling: cannot open the workbench:", workbenchComponent.errorString());
-            return ;
+            return null;
         }
         workbench.closing.connect(function() {
             workbench = null;
         });
+        return workbench;
     }
 
     implicitWidth: 200
     implicitHeight: 120
-    Component.onCompleted: show(code)
+    Component.onCompleted: {
+        show(code);
+        Link.Bench.register(widget);
+    }
+    Component.onDestruction: Link.Bench.unregister(widget)
 
     Item {
         id: content
