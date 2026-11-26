@@ -4318,6 +4318,41 @@ T.Widget {
         };
     }
 
+    // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
+    // bubble next to her collapsed form.
+    function idleChat() {
+        var title = userTitle();
+        var form = {
+            "crystal": "水晶",
+            "pixie": "导航妖精",
+            "avatar": "小小的立绘"
+        }[collapsedForm] || "小小的立绘";
+        var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
+        var now = Date.now();
+        var hook = widget.busy ? null : chatHook(now, title);
+        var start = hook ? "可以从这个由头说起：" + hook.text + "。" : "闲聊、问候，或者结合时间和之前聊过的事关心一下。";
+        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "，这只是背景，不要说起自己的样子或待在哪里。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
+        diag("idle chatter" + (hook ? " (" + hook.key + ")" : "") + ": " + (started ? "requested" : "not now (busy or no API key)"));
+        return started;
+    }
+
+    // ---------------------------------------------------------------- Care moments
+    // Weather readings of the last 3 hours ({at, text, temp}), and a change found in them (Weather Changes).
+    property var weatherReadings: []
+    property var weatherNews: null
+    // Since when the load has been high (0: it is not), for Spontaneous Talk's "busy computer".
+    property double busySince: 0
+
+    function weatherNow(now) {
+        var text = weatherSource.configuration && weatherSource.value && weatherSource.value.status === 1 ? String(weatherText.result || "") : "";
+        var temp = temperatureSource.configuration && temperatureSource.value && temperatureSource.value.status === 1 ? parseFloat(temperatureText.result) : NaN;
+        return {
+            "at": now,
+            "text": text,
+            "temp": temp
+        };
+    }
+
     // Every care tick: a reading every 10 minutes (or when it changes), checked against the last 3 hours.
     function trackSurroundings(now) {
         busySince = crystalLevel >= 1 ? (busySince || now) : 0;

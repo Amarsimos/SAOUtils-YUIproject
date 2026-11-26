@@ -423,7 +423,9 @@ NVG.View {
             return ;
 
         var component = Qt.createComponent("TryView.qml");
-        var view = component.createObject(null, {
+        // Owned by the widget: with no parent it was collected at once (gone as soon as it showed), and
+        // it stays when the workbench closes.
+        var view = component.createObject(targetWidget, {
             "code": editor.text
         });
         if (!view)
