@@ -62,22 +62,6 @@ T.Widget {
         sandboxShown = null;
     }
 
-    function showSandboxed(source) {
-        clearShown();
-        problem = "";
-        try {
-            var made = Sandbox.create(source, content, Qt.resolvedUrl("Sandbox.qml"), "SeedlingSandbox");
-            if (made.error) {
-                problem = made.error;
-                return ;
-            }
-            created = made.item;
-            sandboxShown = made.sandbox;
-        } catch (e) {
-            problem = String(e);
-        }
-    }
-
     // Saved from the workbench: an SAO orange ring flashes around the widget, so it is clear which
     // widget it went to.
     function flashSaved() {

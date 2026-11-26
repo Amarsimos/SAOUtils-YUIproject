@@ -328,27 +328,6 @@ NVG.View {
         previewSandbox = null;
     }
 
-    function previewSandboxed(code) {
-        clearPreview();
-        showVersions = false;
-        showProblems = false;
-        try {
-            var made = Sandbox.create(code, previewStage, Qt.resolvedUrl("Sandbox.qml"), "SeedlingSandbox");
-            if (made.error) {
-                result = "error";
-                status = made.error;
-                return ;
-            }
-            preview = made.item;
-            previewSandbox = made.sandbox;
-            result = "ok";
-            status = qsTr("Shown in the sandbox (test).");
-        } catch (e) {
-            result = "error";
-            status = String(e);
-        }
-    }
-
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
         clearPreview();
