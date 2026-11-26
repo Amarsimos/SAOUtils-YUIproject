@@ -178,18 +178,35 @@ T.Widget {
         anchors.fill: parent
     }
 
-    // Inside the widget's bounds (drawn outside them it was cut off, so nothing showed), with a light
-    // orange over the whole widget, so the flash is plain to see.
-    Rectangle {
+    // Inside the widget's bounds (drawn outside them it was cut off, so nothing showed): a soft glow
+    // seeping in from the edge (ten 1 px rings, fainter inward, instead of a hard line), over a faint
+    // orange on the whole widget.
+    Item {
         id: savedRing
 
         anchors.fill: parent
         z: 10
-        radius: 4
-        color: "#40F1AA03"
-        border.color: "#F1AA03"
-        border.width: 3
         opacity: 0
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 4
+            color: "#1FF1AA03"
+        }
+
+        Repeater {
+            model: 10
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: index
+                radius: Math.max(0, 6 - index / 2)
+                color: "transparent"
+                border.width: 1
+                border.color: Qt.rgba(0.945, 0.667, 0.012, 0.85 * Math.pow(1 - index / 10, 2))
+            }
+
+        }
 
         SequentialAnimation {
             id: savedFlash
