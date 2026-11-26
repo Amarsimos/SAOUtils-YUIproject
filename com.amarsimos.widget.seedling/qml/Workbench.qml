@@ -23,6 +23,9 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    // The bands are translucent as Yui's chat (her Chat Opacity in Equipment when MHCP-YUI runs, else
+    // 80 %); the code, the preview and the text on them stay opaque.
+    readonly property real panelAlpha: Link.Bench.writer && Link.Bench.writer.chatOpacity !== undefined ? Link.Bench.writer.chatOpacity : 0.8
     readonly property int leastWidth: 720
     readonly property int leastHeight: 520
     readonly property int titleHeight: 64
@@ -404,7 +407,7 @@ NVG.View {
 
         Rectangle {
             anchors.fill: parent
-            color: "#FFFFFF"
+            color: "transparent"
             border.color: "#C8C8C8"
         }
 
@@ -473,12 +476,12 @@ NVG.View {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: "#E4E4E4"
+                    color: Qt.rgba(0.894, 0.894, 0.894, bench.panelAlpha)
                 }
 
                 GradientStop {
                     position: 1
-                    color: "#F9F9F9"
+                    color: Qt.rgba(0.976, 0.976, 0.976, bench.panelAlpha)
                 }
 
             }
@@ -489,7 +492,7 @@ NVG.View {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "#D8D8D8"
+            color: Qt.rgba(0.847, 0.847, 0.847, bench.panelAlpha)
 
             Rectangle {
                 width: parent.width
@@ -811,10 +814,11 @@ NVG.View {
 
         }
 
-        // White band: Save (ok) and Close (cancel), each centered in its half.
-        Item {
+        // White band (translucent as the rest): Save (ok) and Close (cancel), each centered in its half.
+        Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: bench.buttonsHeight
+            color: Qt.rgba(1, 1, 1, bench.panelAlpha)
 
             SaoIcon {
                 anchors.verticalCenter: parent.verticalCenter
