@@ -515,21 +515,23 @@ NVG.View {
     }
 
     // The shadow of SAO Utils' panels (as Yui's chat panel): a smooth 8 px glow, black from about 12 %
-    // next to the panel to nothing; it opens and closes with the panel.
+    // next to the panel to nothing. Drawn at the panel's full size from the start (following the
+    // opening panel, it was left cut off at a size from the middle of the animation), it fades in with
+    // the content at the end of the opening and out with the panel when closing.
+    Item {
+        id: shadowArea
+
+        anchors.fill: parent
+        anchors.margins: bench.shadowMargin
+    }
+
     RectangularGlow {
-        anchors.fill: panel
+        anchors.fill: shadowArea
         glowRadius: 8
         spread: 0
         cornerRadius: 8
         color: "#1E000000"
-        opacity: panel.opacity
-
-        transform: Scale {
-            origin.x: panel.width / 2
-            origin.y: panel.height / 2
-            xScale: bench.scaleX
-        }
-
+        opacity: Math.min(bench.panelOpacity, bench.contentOpacity)
     }
 
     // The panel: its title and button bands keep their size and move apart as the grey band unfolds.
