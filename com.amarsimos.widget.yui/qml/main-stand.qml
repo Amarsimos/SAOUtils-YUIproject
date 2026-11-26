@@ -3795,6 +3795,7 @@ T.Widget {
 
         // Seedling's Generate (the workbench's request) is written by Yui.
         seedlingProbe.bench.writer = widget;
+        Qt.callLater(seedlingOfferConnection);
         seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
         seedlingInstalled = true;
         return seedlingProbe.bench;
@@ -3846,6 +3847,46 @@ T.Widget {
             diag("seedling: " + kind + ", " + message);
             onDone(message, ok, kind, ok ? Yui.seedlingExtra(code, userTitle()) : "");
         });
+    }
+
+    // Seedling was set up before Yui (its own Link settings) and Yui has no connection yet: she takes
+    // the same at once (the API is set once; nothing of hers is overwritten, she had none) and says so.
+    // Seedling's server, address, key and model become hers (Cardinal System); a server she does not
+    // list (e.g. Qwen) becomes Custom with its address, a model not in her list Manual Core ID.
+    function seedlingOfferConnection() {
+        var bench = seedlingProbe ? seedlingProbe.bench : null;
+        if (!bench || !bench.ownSetup || widget.settings.seedling_offer_done === true)
+            return ;
+
+        var mine = activeConfig();
+        if (mine.apiKey && mine.endpoint && mine.model)
+            return ;
+
+        var own = bench.ownSetup();
+        if (!own)
+            return ;
+
+        widget.settings.seedling_offer_done = true;
+        (function() {
+            var index = -1;
+            for (var i = 0; i < providers.length; i++)
+                if (providers[i].id === own.provider)
+                    index = i;
+
+            var provider = index === -1 ? providers[providerIndexOf("custom")] : providers[index];
+            var listed = provider.models.indexOf(own.model) !== -1;
+            var all = JSON.parse(JSON.stringify(widget.settings.provider_settings || {}));
+            all[provider.id] = {
+                "model": listed ? own.model : "",
+                "custom_model": listed ? "" : own.model,
+                "api_endpoint": index === -1 ? own.endpoint : own.endpointSet,
+                "api_key": own.apiKey
+            };
+            widget.settings.provider_settings = all;
+            widget.settings.provider = provider.id;
+            diag("seedling: Yui uses Seedling's connection (" + provider.id + ", " + own.model + ")");
+            actionSay(qsTr("Seedling"), "结衣用上了 Seedling 里设置好的 AI（" + own.title + " · " + own.model + "）哦～想换的话在 Cardinal System 里改就好。");
+        })();
     }
 
     // What Seedling takes from Yui while she is there: her server's name, its models (the list Scan

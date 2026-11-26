@@ -220,6 +220,25 @@ QtObject {
         return lacking ? "Seedling Settings: " + lacking + " is not set" : "";
     }
 
+    // Seedling's own connection when it is set up, for MHCP-YUI installed after it (she offers to use
+    // the same, so the API is set once): {provider, title, endpoint (in full), apiKey, model}; null
+    // when it is not set up.
+    function ownSetup() {
+        var config = ownConfig();
+        if (Api.missing(config) !== "")
+            return null;
+
+        var p = Api.provider(config.provider);
+        return {
+            "provider": p.id,
+            "title": p.title,
+            "endpoint": String(config.endpoint || "").trim() || p.endpoint,
+            "endpointSet": String(config.endpoint || "").trim(),
+            "apiKey": String(config.apiKey || "").trim(),
+            "model": Api.modelOf(config)
+        };
+    }
+
     function ownConfig() {
         return {
             "provider": setting("provider", "openai"),
