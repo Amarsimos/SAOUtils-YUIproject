@@ -104,11 +104,22 @@ Item {
 
         width: parent.width
         height: header.height + body.height + footer.height
-        // As SAO_UI-Window: title band, shaded grey band, white band (the footer).
+        // As SAO_UI-Window: title band, grey band (lighter than the panel's), white band (the footer).
         radius: 2
         color: "#FFFFFF"
         border.color: "#C8C8C8"
         border.width: 1
+
+        // A soft shadow under the message (behind it, scaled with it), so it stands off the panel.
+        Rectangle {
+            z: -1
+            x: 1
+            y: 2
+            width: parent.width
+            height: parent.height
+            radius: 3
+            color: "#26000000"
+        }
 
         // Title bar.
         Rectangle {
@@ -185,7 +196,7 @@ Item {
             y: header.y + header.height
             width: parent.width - 2
             height: (messageWindow.thinking ? thinkingColumn.height : messageText.implicitHeight) + 20
-            color: "#D8D8D8"
+            color: "#EBEBEB"
             clip: true
 
             // A streamed reply grows smoothly as its text arrives (only once the window has popped up,
