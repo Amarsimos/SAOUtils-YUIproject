@@ -114,7 +114,8 @@ T.Widget {
                 maximumLineCount: 3
                 elide: Text.ElideRight
                 text: widget.problem ? widget.problem : qsTr("Double-click or use the menu to open the workbench")
-                font.pixelSize: 11
+                font.family: "SAO UI"
+                font.pixelSize: 13
                 color: widget.problem ? "#D9473B" : "#9A9A9A"
             }
 

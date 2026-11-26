@@ -553,6 +553,8 @@ NVG.View {
                         Layout.fillWidth: true
                         enabled: Link.Bench.writer !== null
                         selectByMouse: true
+                        font.family: "SAO UI"
+                        font.pixelSize: 15
                         placeholderText: enabled ? qsTr("Describe the widget (or what to change) and Yui writes it") : qsTr("Generate needs MHCP-YUI")
                         onAccepted: bench.generate()
 
@@ -610,6 +612,8 @@ NVG.View {
                             model: bench.examples
 
                             MenuItem {
+                                font.family: "SAO UI"
+                                font.pixelSize: 15
                                 text: modelData.name
                                 onTriggered: {
                                     editor.text = modelData.code;
@@ -718,7 +722,8 @@ NVG.View {
 
                             Text {
                                 text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) : "")
-                                font.pixelSize: 11
+                                font.family: "SAO UI"
+                                font.pixelSize: 13
                                 color: "#7A7A7A"
                             }
 
@@ -766,7 +771,8 @@ NVG.View {
                                         anchors.right: parent.right
                                         anchors.rightMargin: 12
                                         text: Qt.formatDateTime(new Date(bench.versions[parent.number].at), "MM-dd hh:mm")
-                                        font.pixelSize: 12
+                                        font.family: "SAO UI"
+                                        font.pixelSize: 14
                                         color: parent.lit ? "#FFFFFF" : "#7A7A7A"
                                     }
 
@@ -804,7 +810,8 @@ NVG.View {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
-                    font.pixelSize: 14
+                    font.family: "SAO UI"
+                    font.pixelSize: 16
                     color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
                     style: bench.result === "ok" ? Text.Raised : Text.Normal
                     styleColor: "#AAFFFFFF"
