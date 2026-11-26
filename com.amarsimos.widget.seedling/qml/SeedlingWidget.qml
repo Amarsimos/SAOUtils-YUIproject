@@ -6,14 +6,22 @@ import QtQuick.Shapes 1.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
 import "sandbox.js" as Sandbox
+import "props.js" as Props
 
 // A Seedling widget: shows the QML kept in its settings (code), after the safety check. Its menu opens
 // the workbench, where the code is written, previewed, tried on the desktop and saved back here.
 T.Widget {
     id: widget
 
-    // The name in SAO Utils' own right-click menu and settings (blank without it).
-    title: "Seedling"
+    // The name in SAO Utils' own right-click menu and settings (blank without it): the code's @name.
+    title: declared.name || "Seedling"
+
+    // The saved code's @name / @setting / @keep (props.js).
+    readonly property var declared: Props.parse(code)
+    // The declarations of what is shown now (the code being saved may not be settings.code yet).
+    property var shownDecl: Props.parse("")
+    // The kept values as last saved (JSON), to see whether they changed.
+    property string keptJson: ""
 
     property Component workbenchComponent: Qt.createComponent("Workbench.qml")
     property var workbench: null
@@ -44,6 +52,7 @@ T.Widget {
 
             created = made.item;
             sandboxShown = made.sandbox;
+            giveValues(source);
         } catch (e) {
             problem = (e.qmlErrors || []).map(function(error) {
                 return "Line " + error.lineNumber + ", column " + error.columnNumber + ": " + error.message;
@@ -55,8 +64,105 @@ T.Widget {
     // The sandbox of what is shown (it goes with it).
     property var sandboxShown: null
 
-    // What is shown goes, with its sandbox.
+    // The settings and kept values given to what was just created (code: its source). Values whose
+    // declaration is gone or changed type are dropped.
+    function giveValues(source) {
+        var decl = Props.parse(source);
+        shownDecl = decl;
+        var given = Props.carry(settings.prop_settings, decl.settings);
+        settings.prop_settings = given;
+        Props.apply(created, decl.settings, given);
+        var kept = Props.carry(settings.prop_keep, decl.keeps);
+        settings.prop_keep = kept;
+        Props.apply(created, decl.keeps, kept);
+        keptJson = JSON.stringify(kept);
+    }
+
+    // Kept values saved when they changed (every 2 s, and before what is shown goes).
+    function saveKept() {
+        if (!created || shownDecl.keeps.length === 0)
+            return ;
+
+        var snap = Props.snapshot(created, shownDecl.keeps);
+        if (snap === null) {
+            if (keptTooLarge === false)
+                console.log("Seedling: kept values are larger than " + Props.MAX_KEEP_BYTES + " bytes, not saved");
+
+            keptTooLarge = true;
+            return ;
+        }
+        keptTooLarge = false;
+        var json = JSON.stringify(snap);
+        if (json !== keptJson) {
+            keptJson = json;
+            settings.prop_keep = snap;
+        }
+    }
+
+    property bool keptTooLarge: false
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: !!widget.created && widget.shownDecl.keeps.length > 0
+        onTriggered: widget.saveKept()
+    }
+
+    // A setting changed (the Settings window, the menu): saved, given to the widget and the preview.
+    function setSetting(name, value) {
+        var decl = shownDecl.settings.filter(function(d) {
+            return d.name === name;
+        })[0];
+        if (!decl)
+            return ;
+
+        var fit = Props.coerce(decl, value);
+        if (!fit.ok)
+            return ;
+
+        var all = JSON.parse(JSON.stringify(settings.prop_settings || {}));
+        all[name] = {
+            "t": decl.type,
+            "v": fit.value
+        };
+        settings.prop_settings = all;
+        if (created)
+            created[name] = fit.value;
+
+        if (workbench && workbench.applySettings)
+            workbench.applySettings();
+
+    }
+
+    // The current value of a setting (the widget's, else the stored one).
+    function settingValue(name) {
+        if (created && created[name] !== undefined)
+            return created[name];
+
+        var stored = settings.prop_settings || {};
+        return stored[name] ? stored[name].v : undefined;
+    }
+
+    // Reset (Settings window): the code's own defaults again.
+    function resetSettings() {
+        settings.prop_settings = {};
+        show(code);
+        if (workbench && workbench.applySettings)
+            workbench.applySettings();
+
+    }
+
+    // Clear Kept Data (Settings window): what the widget remembered goes; it starts from its defaults.
+    function clearKept() {
+        shownDecl = Props.parse("");
+        settings.prop_keep = {};
+        keptJson = "";
+        show(code);
+    }
+
+    // What is shown goes, with its sandbox (its kept values saved first).
     function clearShown() {
+        saveKept();
         if (sandboxShown)
             sandboxShown.destroy();
         else if (created)
@@ -162,7 +268,10 @@ T.Widget {
         show(code);
         Link.Bench.register(widget);
     }
-    Component.onDestruction: Link.Bench.unregister(widget)
+    Component.onDestruction: {
+        saveKept();
+        Link.Bench.unregister(widget);
+    }
 
     Item {
         id: content
@@ -470,7 +579,64 @@ T.Widget {
 
     }
 
+    // The widget's own settings (its @setting declarations), one window at a time.
+    property Component widgetSettingsComponent: Qt.createComponent("WidgetSettings.qml")
+    property var widgetSettingsWindow: null
+
+    function openWidgetSettings() {
+        if (widgetSettingsWindow) {
+            widgetSettingsWindow.requestActivate();
+            return ;
+        }
+        widgetSettingsWindow = widgetSettingsComponent.createObject(widget, {
+            "targetWidget": widget
+        });
+        if (!widgetSettingsWindow) {
+            console.log("Seedling: cannot open the widget's settings:", widgetSettingsComponent.errorString());
+            return ;
+        }
+        widgetSettingsWindow.closing.connect(function() {
+            widgetSettingsWindow = null;
+        });
+    }
+
+    // Switches listed in the menu as well, when there are at most this many.
+    readonly property int menuSwitches: 3
+    readonly property var switchSettings: shownDecl.settings.filter(function(d) {
+        return d.type === "bool";
+    })
+
     menu: Menu {
+        id: widgetMenu
+
+        // The widget's own settings first, when it has some.
+        MenuItem {
+            visible: widget.shownDecl.settings.length > 0
+            height: visible ? implicitHeight : 0
+            text: "Settings..."
+            onTriggered: widget.openWidgetSettings()
+        }
+
+        // Its switches (up to menuSwitches), checked as they are.
+        Instantiator {
+            model: widget.switchSettings.length <= widget.menuSwitches ? widget.switchSettings : []
+            onObjectAdded: widgetMenu.insertItem(index + 1, object)
+            onObjectRemoved: widgetMenu.removeItem(object)
+
+            MenuItem {
+                checkable: true
+                checked: (widget.created, widget.settingValue(modelData.name) === true)
+                text: modelData.label
+                onTriggered: widget.setSetting(modelData.name, checked)
+            }
+
+        }
+
+        MenuSeparator {
+            visible: widget.shownDecl.settings.length > 0
+            height: visible ? implicitHeight : 0
+        }
+
         Action {
             text: "Workbench..."
             onTriggered: widget.openWorkbench()
