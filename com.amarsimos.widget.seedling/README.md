@@ -1,8 +1,8 @@
 # Seedling
 
 A desktop widget for SAO Utils 2 whose content is a small piece of QML: a clock, a countdown, a
-little panel, a decoration. Write it yourself in the workbench, or, with **MHCP-YUI** installed, ask
-Yui in her chat and she writes it for you.
+little panel, a decoration. Describe it and an AI writes it (Seedling's own, set up in Seedling
+Settings), write it yourself in the workbench, or, with **MHCP-YUI** installed, ask Yui in her chat.
 
 ## Using it
 
@@ -37,10 +37,15 @@ explanations, **Reset** restores the defaults.
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
   brings it, on Run, or on ○ ("allow it to go online and save?").
-- **Widget Style** (shown with MHCP-YUI): what Yui's widgets look like, a text like her
-  personality; SAO style by default. Sent with every widget she writes; what you say in the chat
-  comes first.
-- **Seedling Model** (Advanced, with MHCP-YUI): the model that writes the code; empty uses the chat's.
+- **AI** (shared by all Seedling widgets):
+  - **Connection** (with MHCP-YUI): **Yui** uses her server and key; **Own** uses Seedling's own.
+  - **Provider**, **Server Address**, **API Key**, **Model**: Seedling's own AI. OpenAI-compatible
+    servers (OpenAI, DeepSeek, Kimi, Qwen, Ollama, any address), Claude and Gemini. The key stays in
+    Seedling's own local data on this computer.
+  - **Widget Style**: what the widgets look like, a text like Yui's personality; SAO style by
+    default. Sent with every widget; what is asked for comes first.
+  - **Test Connection**: one very short request.
+  - Without MHCP-YUI, describe the widget at the foot of the workbench and press Enter.
 - **Test** (Advanced): tries the workbench's states without the AI and without any request.
 
 ## A widget's own settings and memory
@@ -145,4 +150,5 @@ First version, split out of MHCP-YUI's built-in widget lab.
 - A widget's own settings (@setting, right-click Settings...), memory (@keep) and name (@name).
 - Yui's data (@yui, read only; such a widget never goes online).
 - Eight templates as Examples, also shown to Yui as references.
-- Widget Style and Seedling Model in Seedling Settings.
+- Seedling writes widgets itself (its own AI, or MHCP-YUI's connection); MHCP-YUI only talks about it
+  in her chat.
