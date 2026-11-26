@@ -27,6 +27,8 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    // Code Editor (Seedling Settings, advanced, off by default): the code, Examples and Network shown.
+    readonly property bool showCode: settings.show_code === true
     // The preview's scale: zoom when set (− / + / 100%, Ctrl + wheel), else Fit: 1, or less when the
     // widget is larger than the preview area.
     property real zoom: 0
@@ -749,11 +751,13 @@ NVG.View {
                     Chip {
                         id: examplesChip
 
+                        visible: bench.showCode
                         text: "Examples"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
                     }
 
                     Chip {
+                        visible: bench.showCode
                         text: "Network: " + (bench.settings.allow_network === true ? "On" : "Off")
                         checked: bench.settings.allow_network === true
                         onClicked: {
@@ -799,7 +803,9 @@ NVG.View {
                     Layout.fillHeight: true
                     spacing: 14
 
+                    // The code: only with Code Editor on (Seedling Settings); else the preview alone.
                     ColumnLayout {
+                        visible: bench.showCode
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1

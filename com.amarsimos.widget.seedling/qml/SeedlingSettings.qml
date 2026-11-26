@@ -153,6 +153,36 @@ NVG.Window {
                     text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
                 }
 
+                // General: Code Editor (advanced). Off: the workbench shows the preview only.
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    Layout.rightMargin: 16
+                    spacing: 6
+
+                    Label {
+                        text: "General"
+                        font.family: "SAO UI"
+                        font.pixelSize: 18
+                        color: "#4D4D4D"
+                    }
+
+                    CheckBox {
+                        text: "Code Editor"
+                        checked: settingsWindow.targetWidget.settings.show_code === true
+                        onToggled: settingsWindow.targetWidget.settings.show_code = checked
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: "#888888"
+                        font.pixelSize: 12
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Examples and Network, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                    }
+
+                }
+
                 Repeater {
                     model: [{
                         "title": "Render",
