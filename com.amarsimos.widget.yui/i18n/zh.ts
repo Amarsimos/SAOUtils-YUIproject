@@ -304,8 +304,8 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.</source>
-        <translation>思考型模型回答前思考多少。关：快得多；Default：交给服务器；低 / 中 / 高：思考更多（OpenAI 兼容接口发送 reasoning effort，Claude 和 Gemini 约给 1k / 4k / 16k token 的思考预算）。并非每个模型都能关闭或调整。</translation>
+        <source>How much thinking models think before answering. Off makes them much faster; models that always think (e.g. Claude Opus 5.5, newer Gemini) go as low as they can. Default leaves it to the server; Low, Medium and High ask for more, in each server's own way (reasoning effort, thinking level or budget).</source>
+        <translation>思考型模型回答前要想多久。Off 会快很多；一直会思考的模型（如 Claude Opus 5.5、较新的 Gemini）会降到它能到的最低档。Default 交给服务器决定；Low、Medium、High 让它多想一些，按各家自己的方式设置（推理强度、思考档位或思考预算）。</translation>
     </message>
     <message>
         <location line="+75"/>

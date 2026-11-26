@@ -601,7 +601,7 @@ NVG.Window {
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("How much thinking models think before answering. Off makes them much faster; Default leaves it to the server; Low, Medium and High ask for more (reasoning effort, or a thinking budget of about 1k / 4k / 16k tokens for Claude and Gemini). Not every model can turn it off or change it.")
+                            text: qsTr("How much thinking models think before answering. Off makes them much faster; models that always think (e.g. Claude Opus 5.5, newer Gemini) go as low as they can. Default leaves it to the server; Low, Medium and High ask for more, in each server's own way (reasoning effort, thinking level or budget).")
                         }
 
                         // A number typed in (or stepped with the arrows), like the precise values in SAO Utils' own settings.

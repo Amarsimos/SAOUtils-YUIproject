@@ -1064,7 +1064,9 @@ T.Widget {
             "presencePenalty": presencePenalty,
             "frequencyPenalty": frequencyPenalty,
             "seed": seed,
-            "thinking": thinkingDepth
+            "thinking": thinkingDepth,
+            "model": config.model,
+            "endpoint": config.endpoint
         });
         if (regenerate && messages.length > 0) {
             messages = messages.slice();

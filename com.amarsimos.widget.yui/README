@@ -106,6 +106,8 @@ Honest actions: a reply that says Yui did something on the computer when nothing
 
 ### Fixed
 
+- Thinking Depth uses each server's current way: Low / Medium / High no longer fail on Claude 4.7 and
+  later, Off turns thinking off (or as low as it goes) on newer Claude, Gemini 3, DeepSeek and Qwen.
 - The speech bubble's text uses the Message Font: on a Japanese system it mixed glyphs of different
   fonts and weights.
 - Misspelled or full-width tags (for example <<emphy:happy>>) are no longer shown in the chat.
