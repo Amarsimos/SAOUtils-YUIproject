@@ -104,22 +104,10 @@ Item {
 
         width: parent.width
         height: header.height + body.height + footer.height
-        // As SAO_UI-Window: title band, grey band (lighter than the panel's), white band (the footer).
-        radius: 2
-        color: "#FFFFFF"
+        radius: 3
+        color: "#F8F8F8"
         border.color: "#C8C8C8"
         border.width: 1
-
-        // A soft shadow under the message (behind it, scaled with it), so it stands off the panel.
-        Rectangle {
-            z: -1
-            x: 1
-            y: 2
-            width: parent.width
-            height: parent.height
-            radius: 3
-            color: "#26000000"
-        }
 
         // Title bar.
         Rectangle {
@@ -133,12 +121,12 @@ Item {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: "#E4E4E4"
+                    color: "#FFFFFF"
                 }
 
                 GradientStop {
                     position: 1
-                    color: "#F9F9F9"
+                    color: "#EEEEEE"
                 }
 
             }
@@ -148,7 +136,7 @@ Item {
                 width: parent.width - 16
                 horizontalAlignment: Text.AlignHCenter
                 text: messageWindow.sender
-                color: "#4D4D4D"
+                color: "#777777"
                 font.family: "SAO UI"
                 font.pixelSize: 15
                 elide: Text.ElideRight
@@ -196,7 +184,7 @@ Item {
             y: header.y + header.height
             width: parent.width - 2
             height: (messageWindow.thinking ? thinkingColumn.height : messageText.implicitHeight) + 20
-            color: "#EBEBEB"
+            color: "#E4E4E4"
             clip: true
 
             // A streamed reply grows smoothly as its text arrives (only once the window has popped up,
@@ -209,6 +197,19 @@ Item {
                     easing.type: Easing.OutQuad
                 }
 
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: "#CFCFCF"
+            }
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: "#D6D6D6"
             }
 
             Timer {
