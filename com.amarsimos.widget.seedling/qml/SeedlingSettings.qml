@@ -29,6 +29,11 @@ NVG.Window {
     property int linkRevision: 0
     property int scannedRevision: 0
 
+    // The core list follows what it is made of (refreshModels, not a binding).
+    onOwnConnectionChanged: corePreference.refreshModels()
+    onScannedChanged: corePreference.refreshModels()
+    onYuiModelsChanged: corePreference.refreshModels()
+
     Connections {
         target: Link.Bench
         onSettingChanged: {
@@ -367,10 +372,7 @@ NVG.Window {
                                     return ;
 
                                 Link.Bench.setSetting("provider", Api.PROVIDERS[value].id);
-                                // The first core of the new server.
-                                var models = settingsWindow.scanned[Api.PROVIDERS[value].id] || Api.PROVIDERS[value].models;
-                                Link.Bench.setSetting("model", models.length ? models[0] : "");
-                                corePreference.value = 0;
+                                corePreference.refreshModels();
                             }
                         }
 
@@ -449,7 +451,28 @@ NVG.Window {
                             property bool ready: false
                             // Own: the server's scanned list (Scan Cores), else the built-in one. With Yui:
                             // hers, after "Same as Yui's chat" (her chat's model, the default).
-                            readonly property var models: settingsWindow.ownConnection ? (settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] || Api.PROVIDERS[providerPreference.value].models) : (settingsWindow.yuiModels ? [settingsWindow.sameAsChat].concat(settingsWindow.yuiModels.models) : [settingsWindow.sameAsChat])
+                            // Set by refreshModels, not bound (a binding over all of these looped).
+                            property var models: []
+
+                            function listNow() {
+                                if (settingsWindow.ownConnection) {
+                                    var p = Api.PROVIDERS[providerPreference.value];
+                                    return settingsWindow.scanned[p.id] || p.models;
+                                }
+                                return [settingsWindow.sameAsChat].concat(settingsWindow.yuiModels ? settingsWindow.yuiModels.models : []);
+                            }
+
+                            // The list again (another server, a scan, Yui there or not); the core chosen
+                            // stays when it is in it.
+                            function refreshModels() {
+                                var next = listNow();
+                                if (JSON.stringify(next) === JSON.stringify(models))
+                                    return ;
+
+                                models = next;
+                                Qt.callLater(followModels);
+                            }
+
                             readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
 
                             visible: models.length > 0
@@ -465,6 +488,7 @@ NVG.Window {
                             }
 
                             Component.onCompleted: {
+                                models = listNow();
                                 value = shown();
                                 ready = true;
                             }
@@ -475,7 +499,6 @@ NVG.Window {
                             }
                             // Another list (scanned, restored, another server): the core chosen stays
                             // when it is in it.
-                            onModelsChanged: Qt.callLater(followModels)
 
                             function followModels() {
                                 if (!ready)
