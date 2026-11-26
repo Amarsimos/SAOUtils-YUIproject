@@ -73,6 +73,14 @@ NVG.View {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    // Chinese (or Japanese) text: SAO UI has no such characters and the system picked any font for
+    // them. The Message Font of Yui's Equipment (MHCP-YUI running), else her default; English stays in
+    // SAO UI.
+    readonly property string messageFont: Link.Bench.writer && Link.Bench.writer.fontFamilyOf ? Link.Bench.writer.fontFamilyOf(Link.Bench.writer.styles.bubble_font_family) : "Source Han Sans SC"
+
+    function fontFor(text) {
+        return /[　-ヿ㐀-鿿豈-﫿＀-￯]/.test(String(text || "")) ? messageFont : "SAO UI";
+    }
     // Code Editor (Seedling Settings, advanced, off by default): the code, Examples and Network shown.
     readonly property bool showCode: settings.show_code === true
     // The preview's scale: zoom when set (− / + / 100%, Ctrl + wheel), else Fit: 1, or less when the
@@ -1427,7 +1435,7 @@ NVG.View {
                                         selectionColor: "#80F1AA03"
                                         selectedTextColor: "#3A3A3A"
                                         text: modelData.text
-                                        font.family: "SAO UI"
+                                        font.family: bench.fontFor(text)
                                         font.pixelSize: 14
                                         color: "#4D4D4D"
                                     }
@@ -1494,7 +1502,7 @@ NVG.View {
                         Layout.fillWidth: true
                         enabled: Link.Bench.writer !== null && !bench.writing
                         selectByMouse: true
-                        font.family: "SAO UI"
+                        font.family: bench.fontFor(text || placeholderText)
                         font.pixelSize: 15
                         placeholderText: qsTr("Generate needs MHCP-YUI (or Seedling's own AI, coming later)")
                         onAccepted: bench.generate()
@@ -1544,7 +1552,7 @@ NVG.View {
                 maximumLineCount: 2
                 elide: Text.ElideRight
                 text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
-                font.family: "SAO UI"
+                font.family: bench.fontFor(text)
                 font.pixelSize: 15
                 color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
             }
