@@ -24,6 +24,9 @@ Item {
     // A reply on its way: "YUI正在思考" with bouncing dots in place of the text, and a breathing orange
     // strip under the title bar.
     property bool thinking: false
+    // The words before the hopping dots while thinking: "YUI正在思考", or what she is doing (Seedling's
+    // steps, which come without the rotating hints).
+    property string thinkingLabel: "YUI正在思考"
     // After 5 s of thinking, a line about what Yui is doing fades in under it, a different one every 5 s.
     readonly property var thinkingHints: ["正在检索 ALfheim 数据库……", "正在连接 Cardinal System……", "哔——正在和服务器通信中……", "正在整理语言中…… (｡･ω･｡)", "数据量有点大，再等结衣一下下～", "正在翻阅结衣之心里的记忆……"]
     property string thinkingHint: ""
@@ -215,7 +218,7 @@ Item {
             Timer {
                 interval: 5000
                 repeat: true
-                running: messageWindow.thinking
+                running: messageWindow.thinking && messageWindow.thinkingLabel === "YUI正在思考"
                 onTriggered: {
                     var hints = messageWindow.thinkingHints.filter(function(hint) {
                         return hint !== messageWindow.thinkingHint;
@@ -237,7 +240,7 @@ Item {
                     id: thinkingRow
 
                     Text {
-                        text: "YUI正在思考"
+                        text: messageWindow.thinkingLabel
                         color: "#3A3A3A"
                         font.family: messageWindow.fontFamily
                         font.weight: messageWindow.fontStyle.weight !== undefined ? messageWindow.fontStyle.weight : Font.Normal

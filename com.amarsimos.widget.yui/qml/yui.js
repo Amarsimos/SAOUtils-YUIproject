@@ -2635,7 +2635,7 @@ function seedlingPartialCode(text) {
 // writing / changing (the chat makes its characters hop while it goes on).
 // state: {stage: "writing" | "editing" | "fixing" | "checking" | "waiting", lines, edits, seconds}.
 function seedlingNoteLine(state, title) {
-    var dots = "…";
+    var dots = "";
     var output = state.lines > 0 || state.edits > 0;
     if (state.stage === "waiting")
         return "等" + (title || "你") + "把 Seedling 放到桌面上哦～";
