@@ -281,10 +281,18 @@ NVG.View {
     // Refused only for going online (Network off): asks with SAO Utils' message box whether this
     // widget may go online; then(allowed) after the answer (allowed: Network turned on, rendered again).
     // question: the message box's text (default: the plain question).
+    // Asked while another network question is open: called with that answer.
+    property var networkWaiting: []
+
     function askNetwork(then, question) {
-        if (networkAsking || settings.allow_network === true)
+        if (settings.allow_network === true)
             return then(false);
 
+        // A question already open: this one waits for its answer (not taken as a no).
+        if (networkAsking) {
+            networkWaiting = networkWaiting.concat([then]);
+            return ;
+        }
         networkAsking = true;
         var answered = function(allowed) {
             networkAsking = false;
@@ -292,7 +300,12 @@ NVG.View {
                 settings.allow_network = true;
                 render(true);
             }
+            var waiting = networkWaiting;
+            networkWaiting = [];
             then(allowed);
+            waiting.forEach(function(waiter) {
+                waiter(allowed);
+            });
         };
         try {
             var answer = NVG.SystemCall.messageBox({
@@ -314,8 +327,7 @@ NVG.View {
         }
     }
 
-    // S2 prototype (Seedling Settings' Test): code shown in the preview through the sandbox, with no
-    // safety check (the probes are meant to run). The sandbox goes with the preview.
+    // The sandbox the preview was created in (it goes with the preview).
     property var previewSandbox: null
 
     // The preview goes, with its sandbox.
