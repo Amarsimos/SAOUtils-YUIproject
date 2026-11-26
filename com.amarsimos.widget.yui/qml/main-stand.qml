@@ -6220,7 +6220,9 @@ T.Widget {
                 Layout.topMargin: -6
                 Layout.bottomMargin: -9
                 topMargin: 6
-                bottomMargin: 9
+                // The newest message stops just above the bottom fade (9 px + its 24 px), so it is never
+                // under it while it pops up or grows.
+                bottomMargin: 33
                 model: chatModel
                 spacing: 10
                 clip: true
