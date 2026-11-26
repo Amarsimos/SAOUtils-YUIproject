@@ -95,7 +95,7 @@ function bareTagPattern() {
 
 function tagPattern() {
     // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -853,7 +853,9 @@ function parseReply(text, userProtected, options) {
         // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
         "suggestions": [],
         // <<media:>> (System Console, Media): the media commands to run (see mediaCommand), in order.
-        "media": []
+        "media": [],
+        // <<seedling:>> (Seedling installed): what the widget should be or how to change it, "" when none.
+        "seedling": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -899,6 +901,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "suggest") {
             if (allowed.suggest !== false)
                 result.suggestions = suggestionsFrom(value);
+
+        } else if (kind === "seedling") {
+            if (allowed.seedling === true)
+                result.seedling = value;
 
         } else if (kind === "media") {
             var command = mediaCommand(value);
@@ -2085,6 +2091,9 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.media === true)
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
 
+    if (allowed.seedling === true)
+        lines.push(SEEDLING_INSTRUCTION.replace(/\{t\}/g, title));
+
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
@@ -2540,4 +2549,49 @@ function systemCall(text, title, loads) {
         "reply": "警告！无法识别的系统指令……" + title + "，是不是念错咒语了？试试 System Call, Inspect Entire Command List 吧 (・_・;)",
         "effect": null
     };
+}
+
+
+// ---------------------------------------------------------------- Seedling (companion plugin)
+// With Seedling installed Yui can have a desktop widget made: in the chat she answers as herself and
+// adds <<seedling:what the widget should be / how to change it>>; the program then asks for the code
+// in a request of its own (seedlingCodePrompt), shows it in Seedling's workbench and, when it does not
+// compile or the safety check refuses it, asks again with the error (twice at most).
+var SEEDLING_INSTRUCTION = "- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。";
+
+// The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on.
+function seedlingCodePrompt(allowNetwork) {
+    return ["你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
+        "规则：",
+        "1. 只能 import 这些模块：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12、QtQuick.Window 2.12；不能 import 文件、文件夹或其他模块。",
+        "2. 不能用 NVG / NERvGear、SystemCall、Qt.openUrlExternally、Qt.createQmlObject、Qt.createComponent、Loader 的 source、eval、LocalStorage，不能读写本地文件（file:）。",
+        allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 不能联网：不能用 XMLHttpRequest、WebSocket，不能加载 http / https 地址。",
+        "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
+        "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
+        "6. 修改已有代码时，输出改好后的完整代码。"].join("\n");
+}
+
+// The user message of that request: what is wanted, the code so far (when changing it) and, when
+// asked again, what went wrong.
+function seedlingCodeRequest(request, currentCode, problem) {
+    var parts = [];
+    if (currentCode)
+        parts.push("现在的代码：\n```qml\n" + currentCode + "\n```");
+
+    parts.push((currentCode ? "要修改的地方：" : "要做的挂件：") + request);
+    if (problem)
+        parts.push("上面这段代码没有通过：" + problem + "\n请改正后输出完整代码。");
+
+    return parts.join("\n\n");
+}
+
+// The QML in a reply of that request: the first ```qml (or ```) block, else the whole text when it
+// looks like QML; "" when there is none.
+function seedlingCodeFrom(text) {
+    var value = cleanReply(text);
+    var block = /```(?:qml|QML|javascript|js)?[ \t]*\n([\s\S]*?)```/.exec(value);
+    if (block)
+        return block[1].trim() + "\n";
+
+    return /^\s*import\s+Qt/.test(value) ? value.trim() + "\n" : "";
 }

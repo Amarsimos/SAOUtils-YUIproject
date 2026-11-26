@@ -538,6 +538,8 @@ T.Widget {
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
             "media": full && mediaReady,
+            // Seedling (companion plugin) installed: Yui can have a desktop widget written.
+            "seedling": seedlingInstalled,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -1060,8 +1062,11 @@ T.Widget {
         var regenerate = regenerating;
         regenerating = false;
         var temperatureNow = temperature >= 0 && regenerate ? Math.min(2, temperature + 0.3) : temperature;
+        // config.rawSystem: a request of the program's own (Seedling's code) with just this system
+        // prompt: no personality, feature instructions, reminders or notes.
+        var raw = config.rawSystem !== undefined;
         var tuning = Yui.tuningFields(format, config.provider.id, {
-            "maxTokens": maxTokens,
+            "maxTokens": config.maxTokens || maxTokens,
             "temperature": temperatureNow,
             "topP": topP,
             "topK": topK,
@@ -1089,8 +1094,8 @@ T.Widget {
         var mode = tools.length > 0 ? "tools" : "tags";
         var title = config.userTitle || userTitle();
         // The priority rules first, then the personality, then the feature instructions and memories.
-        systemPrompt = Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
-        if (smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
+        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
+        if (!raw && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var latest = messages[messages.length - 1];
             messages[messages.length - 1] = {
@@ -1099,10 +1104,10 @@ T.Widget {
             };
         }
         // Say Again: asked to answer differently, gemma changed the song too, so the track is said again.
-        if (regenerate && !widget.mediaNote && widget.mediaSentTrack)
+        if (!raw && regenerate && !widget.mediaNote && widget.mediaSentTrack)
             widget.mediaNote = Yui.mediaChangeNote(mediaInfo());
 
-        if (widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
+        if (!raw && widget.mediaNote && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var asked = messages[messages.length - 1];
             messages[messages.length - 1] = {
@@ -1627,6 +1632,22 @@ T.Widget {
                 if (reply.suggestions.length > 0)
                     chatModel.setProperty(index, "suggestions", JSON.stringify(reply.suggestions));
 
+                // <<seedling:>>: the widget is written in a request of its own; the note says how it went.
+                if (reply.seedling) {
+                    note = (note ? note + "
+" : "") + widget.seedlingWorking;
+                    var seedlingIndex = index;
+                    var seedlingRequest = reply.seedling;
+                    Qt.callLater(function() {
+                        seedlingWrite(seedlingRequest, function(message, ok) {
+                            var item = chatModel.get(seedlingIndex);
+                            if (item && item.note !== undefined)
+                                chatModel.setProperty(seedlingIndex, "note", String(item.note).replace(widget.seedlingWorking, (ok ? "🌱 " : "🌱 ⚠ ") + message));
+
+                        });
+                    });
+                }
+
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1640,7 +1661,7 @@ T.Widget {
                     note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
 
                 // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
-                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && Yui.claimsDone(text)) {
+                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && !reply.seedling && Yui.claimsDone(text)) {
                     note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
                     diag("claimed an action, none carried out");
                 }
@@ -3880,10 +3901,16 @@ T.Widget {
     // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
     // Probe.qml, so Yui still loads when Seedling is not installed. null when it is missing.
     property var seedlingProbe: null
+    // Seedling was found (checked shortly after start, see seedlingCheck).
+    property bool seedlingInstalled: false
+    readonly property string seedlingWorking: "🌱 Seedling：结衣在写挂件…"
 
     function seedlingBench() {
         if (seedlingProbe)
             return seedlingProbe.bench;
+
+        if (seedlingInstalled === false && seedlingChecked)
+            return null;
 
         var component = Qt.createComponent(Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml"));
         if (component.status !== Component.Ready) {
@@ -3891,7 +3918,78 @@ T.Widget {
             return null;
         }
         seedlingProbe = component.createObject(widget);
-        return seedlingProbe ? seedlingProbe.bench : null;
+        if (!seedlingProbe)
+            return null;
+
+        // Seedling's Generate (the workbench's request) is written by Yui.
+        seedlingProbe.bench.writer = widget;
+        seedlingInstalled = true;
+        return seedlingProbe.bench;
+    }
+
+    property bool seedlingChecked: false
+
+    Timer {
+        id: seedlingCheck
+
+        interval: 1500
+        running: true
+        onTriggered: {
+            widget.seedlingBench();
+            widget.seedlingChecked = true;
+        }
+    }
+
+    // Writes the widget request asks for (or the change to the one in the workbench) in a request of
+    // its own (Yui.seedlingCodePrompt, the Seedling Model when set), shows it in Seedling's workbench
+    // and, when it does not compile or is refused, asks again with the error (twice at most).
+    // onDone(message, ok) tells how it went.
+    function seedlingWrite(request, onDone) {
+        var bench = seedlingBench();
+        if (!bench)
+            return onDone("Seedling 没有安装", false);
+
+        if (bench.widgets.length === 0)
+            return onDone("桌面上还没有 Seedling 挂件，先从挂件库放一个吧", false);
+
+        var config = Object.assign({}, activeConfig());
+        var model = String(widget.settings.seedling_model || "").trim();
+        if (model)
+            config.model = model;
+
+        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork());
+        config.noTools = true;
+        config.maxTokens = Math.max(4096, maxTokens);
+        var retries = 0;
+        var ask = function(code, problem) {
+            requestCompletion([{
+                "role": "user",
+                "content": Yui.seedlingCodeRequest(request, code, problem)
+            }], function(text, isError) {
+                if (isError)
+                    return onDone("写代码的请求失败了：" + String(text).split("
+")[0], false);
+
+                var qml = Yui.seedlingCodeFrom(text);
+                if (!qml)
+                    return onDone("模型没有给出代码", false);
+
+                var refused = bench.preview(qml, request, function(result) {
+                    diag("seedling: " + result.result + " " + result.status);
+                    if (result.ok)
+                        return onDone("已在 Seedling 工作台中显示（" + result.width + " × " + result.height + "），满意就点 ○ 保存", true);
+
+                    if (retries++ < 2)
+                        return ask(qml, result.status);
+
+                    onDone("改了两次还是不行：" + result.status, false);
+                });
+                if (refused)
+                    onDone(refused, false);
+
+            }, config);
+        };
+        ask(bench.currentCode(), "");
     }
 
     // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
