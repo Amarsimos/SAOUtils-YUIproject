@@ -883,27 +883,23 @@ NVG.View {
                                 color: "#F9F9F9"
                             }
 
-                            ScrollView {
+                            // A Flickable with the text as its TextArea.flickable (Qt's way for a scrolled
+                            // TextArea): no scroll bar of its own (a ScrollView kept its wide default bar
+                            // beside the SAO one), and the SAO bar places itself at the right edge.
+                            Flickable {
                                 id: codeScroll
 
                                 anchors.fill: parent
                                 anchors.margins: 2
                                 clip: true
-                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                // A ScrollView's own scroll bar has to be placed by hand (a Flickable's
-                                // places itself): at its right edge, its whole height.
+                                boundsBehavior: Flickable.StopAtBounds
                                 ScrollBar.vertical: SaoScrollBar {
                                     // Above the content (the code covered its whole width and took the clicks).
                                     z: 10
-                                    parent: codeScroll
-                                    x: codeScroll.width - width
-                                    y: codeScroll.topPadding
-                                    height: codeScroll.availableHeight
                                     onLight: true
                                 }
-                                contentWidth: availableWidth
 
-                                TextArea {
+                                TextArea.flickable: TextArea {
                                     id: editor
 
                                     selectByMouse: true

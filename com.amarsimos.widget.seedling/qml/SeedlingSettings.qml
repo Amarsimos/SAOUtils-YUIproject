@@ -135,12 +135,21 @@ NVG.Window {
     Page {
         anchors.fill: parent
 
-        ScrollView {
+        // A Flickable with the SAO scroll bar (a ScrollView would add its wide default one).
+        Flickable {
             anchors.fill: parent
-            contentWidth: availableWidth
+            contentWidth: width
+            contentHeight: settingsColumn.implicitHeight + 16
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: SaoScrollBar {
+                z: 10
+                onLight: true
+            }
 
             ColumnLayout {
+                id: settingsColumn
+
                 width: parent.width
                 spacing: 14
 
