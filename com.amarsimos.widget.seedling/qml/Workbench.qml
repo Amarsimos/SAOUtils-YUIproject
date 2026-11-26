@@ -1160,7 +1160,6 @@ NVG.View {
 
                                 Chip {
                                     text: "100%"
-                                    icon: "graphics"
                                     implicitHeight: 26
                                     checked: bench.zoom === 1
                                     onClicked: bench.zoom = 1
