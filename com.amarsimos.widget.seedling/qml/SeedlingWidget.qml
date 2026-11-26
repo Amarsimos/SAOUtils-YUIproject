@@ -313,7 +313,7 @@ T.Widget {
 
     menu: Menu {
         Action {
-            text: qsTr("Workbench") + "..."
+            text: "Workbench..."
             onTriggered: widget.openWorkbench()
         }
 

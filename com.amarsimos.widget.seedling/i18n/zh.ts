@@ -36,14 +36,9 @@
 <context>
     <name>SeedlingWidget</name>
     <message>
-        <location filename="../qml/SeedlingWidget.qml" line="301" />
+        <location filename="../qml/SeedlingWidget.qml" line="304" />
         <source>Right-click: Workbench</source>
-        <translation>右键：工作台</translation>
-    </message>
-    <message>
-        <location filename="../qml/SeedlingWidget.qml" line="313" />
-        <source>Workbench</source>
-        <translation>工作台</translation>
+        <translation>右键：Workbench</translation>
     </message>
 </context>
 <context>
@@ -149,7 +144,7 @@ Allow it to go online and save?</source>
         <translation>%1 已保存</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1660" />
+        <location filename="../qml/Workbench.qml" line="1665" />
         <source>Generate needs MHCP-YUI (or Seedling's own AI, coming later)</source>
         <translation>Generate 需要 MHCP-YUI（Seedling 自己的 AI 以后再加）</translation>
     </message>
