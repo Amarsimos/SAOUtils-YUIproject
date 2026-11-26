@@ -1493,11 +1493,14 @@ NVG.View {
 
                                 delegate: Rectangle {
                                     readonly property int number: bench.versions.length - index - 1
-                                    readonly property bool lit: number === bench.versionIndex || versionArea.containsMouse
+                                    // The chosen version in SAO orange; the hovered one only tinted (two
+                                    // rows in the same orange looked like two chosen).
+                                    readonly property bool lit: number === bench.versionIndex
+                                    readonly property bool hovered: versionArea.containsMouse && !lit
 
                                     width: ListView.view.width
                                     height: 36
-                                    color: lit ? "#F1AA03" : "transparent"
+                                    color: lit ? "#F1AA03" : hovered ? "#FCE8C0" : "transparent"
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -1529,7 +1532,9 @@ NVG.View {
                                         id: versionArea
 
                                         anchors.fill: parent
-                                        hoverEnabled: true
+                                        // Off while the list is hidden: the row clicked last kept its
+                                        // hover until the mouse passed over it again.
+                                        hoverEnabled: bench.showVersions
                                         onClicked: {
                                             bench.loadVersion(parent.number);
                                             bench.showVersions = false;
