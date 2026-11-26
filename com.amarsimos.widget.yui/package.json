@@ -58,23 +58,6 @@
             },
             "entry": "qml/YuiData.qml"
         }, {
-            "location": "/icon",
-            "catalog": "icon/color",
-            "title": {
-                "en": "MHCP-YUI Icons",
-                "zh": "MHCP-YUI 图标"
-            },
-            "entry": "Images/icon"
-        }, {
-            "location": "/preset/yui-menu",
-            "catalog": "preset/widget",
-            "title": {
-                "en": "Yui · Menu",
-                "zh": "结衣 · 菜单"
-            },
-            "preview": "Presets/widget-yui-menu.png",
-            "entry": "Presets/widget-yui-menu.json"
-        }, {
             "location": "/preset/yui-pixie",
             "catalog": "preset/widget",
             "title": {
