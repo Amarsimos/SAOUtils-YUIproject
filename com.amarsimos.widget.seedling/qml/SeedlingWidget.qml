@@ -48,8 +48,7 @@ T.Widget {
         return problem;
     }
 
-    // S2 prototype (Seedling Settings' Test): code shown in the widget through the sandbox, not saved
-    // and not checked (the probes are meant to run).
+    // The sandbox of what is shown (it goes with it).
     property var sandboxShown: null
 
     // What is shown goes, with its sandbox.
@@ -69,13 +68,18 @@ T.Widget {
     }
 
     // Saves code as this widget's content (from the workbench), the frame taking its size.
+    // Refused or not compiling: not saved, and the widget shows its own code again.
     function apply(source) {
-        settings.code = source;
         var problem = show(source);
-        if (!problem && created)
+        if (problem) {
+            show(settings.code || "");
+            return problem;
+        }
+        settings.code = source;
+        if (created)
             fitFrame(Math.ceil(created.width), Math.ceil(created.height));
 
-        return problem;
+        return "";
     }
 
     // How SAO Utils treats a widget's implicit size (as in MHCP-YUI's applyFrameSize): for a resizable
