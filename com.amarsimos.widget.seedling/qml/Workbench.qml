@@ -292,6 +292,8 @@ NVG.View {
 
     // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
     color: "transparent"
+    // Always above other windows, as SAO Utils' top-most widgets (the launcher still comes above it).
+    z: NVG.WindowCompositor.TopWidgetZ
     width: 900
     height: 620
     visible: true
