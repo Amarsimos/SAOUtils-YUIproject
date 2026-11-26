@@ -32,11 +32,11 @@ another workbench meanwhile.
 As in MHCP-YUI's settings: **Advanced** (title bar) shows Code Editor and the Test tab, **Help** the
 explanations, **Reset** restores the defaults.
 
-- **Code Editor** (General, Advanced, off by default): the code beside the preview, with **Run** and
-  **Examples**, to read or change it. Typing renders it after a moment.
+- **Code Editor** (General, Advanced, off by default): the code beside the preview, to read or
+  change it. Typing renders it after a moment. (**Examples** are there in both modes.)
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
-  brings it, on Run, or on ○ ("allow it to go online and save?").
+  brings it, or on ○ ("allow it to go online and save?").
 - **AI** (shared by all Seedling widgets):
   - With MHCP-YUI, her server, access key and model list are used (nothing to set twice); only the
     **Core Program** is Seedling's choice ("Same as Yui's chat" by default).

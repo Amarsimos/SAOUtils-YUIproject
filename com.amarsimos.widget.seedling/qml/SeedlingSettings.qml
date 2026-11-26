@@ -246,7 +246,7 @@ NVG.Window {
                     SettingNote {
                         visible: settingsWindow.help && settingsWindow.advanced
                         besidePreferences: true
-                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
 
                     Heading {

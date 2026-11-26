@@ -36,11 +36,6 @@
         <translation>测试不经过 AI 试用工作台：这里的按钮都不会发出请求。每个按钮会打开工作台（或使用已打开的工作台）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="249" />
-        <source>Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.</source>
-        <translation>高级：在工作台的预览旁显示代码，并提供 Run 和 Examples，可以查看或修改结衣写的代码。关闭时工作台只显示挂件。</translation>
-    </message>
-    <message>
         <location filename="../qml/SeedlingSettings.qml" line="57" />
         <source>Same as Yui's chat</source>
         <translation>与结衣聊天相同</translation>
@@ -97,6 +92,11 @@
         <location filename="../qml/SeedlingSettings.qml" line="207" />
         <source>Test</source>
         <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="249" />
+        <source>Advanced: shows the code beside the preview in the workbench, to read or change what Yui wrote. Off, the workbench shows the widget only.</source>
+        <translation>高级：在工作台的预览旁显示代码，可以查看或修改 AI 写的代码。关闭时工作台只显示挂件。</translation>
     </message>
     <message>
         <location filename="../qml/SeedlingSettings.qml" line="329" />
@@ -314,17 +314,17 @@ Allow it to go online and save?</source>
         <translation>修改了 %1 处 · +%2 −%3 行 · %4</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1389" />
+        <location filename="../qml/Workbench.qml" line="1368" />
         <source>%1 saved</source>
         <translation>%1 已保存</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1760" />
+        <location filename="../qml/Workbench.qml" line="1739" />
         <source>Describe the widget, then Enter</source>
         <translation>描述想要的挂件，然后回车</translation>
     </message>
     <message>
-        <location filename="../qml/Workbench.qml" line="1760" />
+        <location filename="../qml/Workbench.qml" line="1739" />
         <source>Set up the AI in Seedling Settings to have widgets written</source>
         <translation>在 Seedling Settings 里设置好 AI，就能让它写挂件</translation>
     </message>

@@ -700,17 +700,6 @@ NVG.View {
         editor.text = versions[index].code;
     }
 
-    // Run (Code Editor): renders the code now; refused only for going online, asks whether it may (the
-    // only question for code typed in; Yui's code is asked about when it comes).
-    function run() {
-        renderTimer.stop();
-        if (render(true) || result !== "unsafe" || !Safety.onlyNetwork(refusedProblems))
-            return ;
-
-        askNetwork(function() {
-        });
-    }
-
     // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
     color: "transparent"
     compositor: hostView ? hostView.compositor : NVG.WindowCompositor
@@ -1029,16 +1018,6 @@ NVG.View {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-
-                    // Run: advanced (with Code Editor on), as Examples.
-                    Chip {
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredHeight: 30
-                        visible: bench.showCode
-                        text: "Run"
-                        icon: "run"
-                        onClicked: bench.run()
-                    }
 
                     Chip {
 
