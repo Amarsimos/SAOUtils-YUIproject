@@ -484,6 +484,9 @@ NVG.View {
     }
 
     function beginWriting(title, keep) {
+        // The code there is kept as a version first: Yui may write it anew (or be stopped halfway),
+        // and Versions brings it back.
+        addVersion(editor.text);
         showVersions = false;
         writing = true;
         writingSince = Date.now();
