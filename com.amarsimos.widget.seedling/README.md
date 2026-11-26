@@ -37,6 +37,10 @@ explanations, **Reset** restores the defaults.
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
   brings it, on Run, or on ○ ("allow it to go online and save?").
+- **Widget Style** (shown with MHCP-YUI): what Yui's widgets look like, a text like her
+  personality; SAO style by default. Sent with every widget she writes; what you say in the chat
+  comes first.
+- **Seedling Model** (Advanced, with MHCP-YUI): the model that writes the code; empty uses the chat's.
 - **Test** (Advanced): tries the workbench's states without the AI and without any request.
 
 ## A widget's own settings and memory
@@ -72,6 +76,29 @@ Rectangle {
   `url`) are listed in Problems as notes; Yui is asked to fix them once.
 
 Yui writes these declarations by herself when a widget has something to set or remember.
+
+### Yui's data (@yui)
+
+With MHCP-YUI, a widget can show what Yui knows, read only:
+
+```qml
+// @yui mood_history
+property var moods: []      // the last 30 days: [{day, score}]
+// @yui companion_days
+property int days: 0
+```
+
+Keys: `companion_days`, `mood`, `mood_text`, `mood_history`, `boss_raid`, `raid_timer`,
+`raid_cleared`, `next_alarm`, `next_alarm_text`, `quest_log`, `heart_core`, `col_ledger`,
+`latest_report`. Timers are updated every second, the rest every 10 seconds; without Yui the code's
+defaults stay. **A widget that reads Yui's data never goes online**, Network or not: what it knows
+of you does not leave. Its Settings window says what it reads.
+
+## Templates
+
+The workbench's Examples (Code Editor): SAO Clock, Countdown, Todo, Habit, Pomodoro, Year Progress,
+Weather (online) and Mood Calendar (Yui's data). When Yui writes a new widget of one of these kinds,
+she is shown the template as a reference.
 
 ## Safety
 
@@ -116,3 +143,6 @@ First version, split out of MHCP-YUI's built-in widget lab.
 - Sandbox, token-based safety check, per-widget Network.
 - Chinese translation.
 - A widget's own settings (@setting, right-click Settings...), memory (@keep) and name (@name).
+- Yui's data (@yui, read only; such a widget never goes online).
+- Eight templates as Examples, also shown to Yui as references.
+- Widget Style and Seedling Model in Seedling Settings.
