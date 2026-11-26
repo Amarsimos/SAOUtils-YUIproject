@@ -8,42 +8,50 @@
 
 var PROVIDERS = [{
     "id": "openai",
+    "models": ["gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"],
     "title": "OpenAI",
     "format": "openai",
     "endpoint": "https://api.openai.com/v1/chat/completions"
 }, {
     "id": "deepseek",
+    "models": ["deepseek-v4-pro", "deepseek-flash"],
     "title": "DeepSeek",
     "format": "openai",
     "endpoint": "https://api.deepseek.com/chat/completions"
 }, {
     "id": "kimi",
+    "models": ["kimi-k3", "kimi-k2.6"],
     "title": "Kimi (Moonshot)",
     "format": "openai",
     "endpoint": "https://api.moonshot.cn/v1/chat/completions"
 }, {
     "id": "qwen",
+    "models": ["qwen3-max", "qwen-plus", "qwen-flash"],
     "title": "Qwen (DashScope)",
     "format": "openai",
     "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 }, {
     "id": "anthropic",
+    "models": ["claude-fable-5-1", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
     "title": "Anthropic Claude",
     "format": "anthropic",
     "endpoint": "https://api.anthropic.com/v1/messages"
 }, {
     "id": "google",
+    "models": ["gemini-4-argon", "gemini-3.1-pro-preview", "gemini-3.8-flash", "gemini-3.5-flash-lite"],
     "title": "Google Gemini",
     "format": "gemini",
     "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/"
 }, {
     "id": "ollama",
+    "models": ["qwen3.5:9b", "qwen3:30b-a3b", "gemma4:e4b"],
     "title": "Ollama (local)",
     "format": "openai",
     "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
     "keyOptional": true
 }, {
     "id": "custom",
+    "models": [],
     "title": "Custom (OpenAI-compatible)",
     "format": "openai",
     "endpoint": ""
@@ -57,6 +65,11 @@ function provider(id) {
     return PROVIDERS[0];
 }
 
+// The model id of a config: Manual Core ID when filled in, else the Core Program chosen.
+function modelOf(config) {
+    return String(config.customModel || "").trim() || String(config.model || "").trim();
+}
+
 // What is missing to make a request ("" when it can be made). config: {provider, endpoint, apiKey, model}.
 function missing(config) {
     var p = provider(config.provider);
@@ -64,10 +77,10 @@ function missing(config) {
         return "Server Address";
 
     if (!p.keyOptional && !String(config.apiKey || "").trim())
-        return "API Key";
+        return "Access Key";
 
-    if (!String(config.model || "").trim())
-        return "Model";
+    if (!modelOf(config))
+        return "Core Program";
 
     return "";
 }
@@ -77,7 +90,7 @@ function build(config, system, user, maxTokens) {
     var p = provider(config.provider);
     var endpoint = String(config.endpoint || p.endpoint).trim();
     var key = String(config.apiKey || "").trim();
-    var model = String(config.model).trim();
+    var model = modelOf(config);
     if (p.format === "gemini") {
         var base = endpoint.charAt(endpoint.length - 1) === "/" ? endpoint : endpoint + "/";
         return {

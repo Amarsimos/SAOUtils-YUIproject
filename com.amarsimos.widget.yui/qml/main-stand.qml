@@ -3830,7 +3830,7 @@ T.Widget {
         // A Seedling Model set here before (Cardinal System) moves to Seedling the first time.
         var oldModel = String(widget.settings.seedling_model || "").trim();
         if (oldModel && bench.setSetting && !bench.writingModel()) {
-            bench.setSetting("model", oldModel);
+            bench.setSetting("custom_model", oldModel);
             widget.settings.seedling_model = "";
         }
         seedlingJob = {

@@ -38,8 +38,9 @@ QtObject {
         return String(setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
     }
 
+    // With Yui's connection: Manual Core ID ("": her chat's model).
     function writingModel() {
-        return String(setting("model", "")).trim();
+        return String(setting("custom_model", "")).trim();
     }
 
     // ---- Seedling's own settings, shared by all its widgets (section 11.3): connection ("yui" /
@@ -55,6 +56,21 @@ QtObject {
         if (database)
             return database;
 
+        openDatabaseOnce();
+        // "model" was Seedling Model (a model id typed in) before Core Program / Manual Core ID:
+        // moved to Manual Core ID once.
+        if (cache.models_split !== true) {
+            var typed = String(cache.model || "").trim();
+            if (typed && !String(cache.custom_model || "").trim())
+                setSetting("custom_model", typed);
+
+            setSetting("model", "");
+            setSetting("models_split", true);
+        }
+        return database;
+    }
+
+    function openDatabaseOnce() {
         try {
             database = LocalStorage.openDatabaseSync("Seedling", "1.0", "Seedling's settings", 100000);
             database.transaction(function(tx) {
@@ -101,8 +117,8 @@ QtObject {
             setSetting("widget_style", style);
 
         var model = String(widget.settings.seedling_model || "").trim();
-        if (model && !String(setting("model", "")).trim())
-            setSetting("model", model);
+        if (model && !String(setting("custom_model", "")).trim())
+            setSetting("custom_model", model);
 
         if (widget.settings.widget_style !== undefined)
             widget.settings.widget_style = undefined;
@@ -193,7 +209,8 @@ QtObject {
             "provider": setting("provider", "openai"),
             "endpoint": setting("endpoint", ""),
             "apiKey": setting("api_key", ""),
-            "model": setting("model", "")
+            "model": setting("model", ""),
+            "customModel": setting("custom_model", "")
         };
     }
 

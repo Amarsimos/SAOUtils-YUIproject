@@ -23,7 +23,8 @@ NVG.Window {
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
     readonly property bool ownConnection: (Link.Bench.settingsRevision, Link.Bench.yui === null || Link.Bench.setting("connection", "yui") === "own")
-    // Test Connection: a very short request through the connection chosen.
+    // Link Start! (Link, Connection Test): a very short request through the connection chosen, as
+    // MHCP-YUI's; the answer in the Connection Log.
     property bool testing: false
     property string testResult: ""
 
@@ -34,11 +35,13 @@ NVG.Window {
             return ;
         }
         testing = true;
-        testResult = qsTr("Testing...");
-        Link.Bench.ask("Reply with the single word OK.", "OK?", function() {
+        testResult = qsTr("Linking...");
+        var own = Link.Bench.connectionKind() === "own";
+        var model = own ? Api.modelOf(Link.Bench.ownConfig()) : (Link.Bench.writingModel() || qsTr("Yui's chat model"));
+        Link.Bench.ask("Reply with one short line.", "Hello", function() {
         }, function(text, isError) {
             testing = false;
-            testResult = isError ? qsTr("Not connected: %1").arg(String(text).slice(0, 200)) : qsTr("Connected: %1").arg(String(text).trim().slice(0, 40));
+            testResult = (isError ? "" : qsTr("Link established") + " (" + model + "):\n") + String(text).trim();
         });
     }
 
@@ -47,11 +50,10 @@ NVG.Window {
         codePreference.value = false;
         networkPreference.value = false;
         stylePreference.value = Templates.DEFAULT_STYLE;
-        seedlingModelPreference.value = "";
         targetWidget.settings.show_code = false;
         targetWidget.settings.allow_network = false;
+        // The Link settings (server, key, core) stay: Reset does not lose an access key.
         Link.Bench.setSetting("widget_style", "");
-        Link.Bench.setSetting("model", "");
         if (targetWidget.workbench)
             targetWidget.workbench.render(true);
 
@@ -119,10 +121,10 @@ NVG.Window {
             WrapTabBar {
                 id: tabs
 
-                currentIndex: Math.max(0, Math.min(1, settingsWindow.targetWidget.settings.settings_tab || 0))
+                currentIndex: Math.max(0, Math.min(2, settingsWindow.targetWidget.settings.settings_tab || 0))
                 onCurrentIndexChanged: settingsWindow.targetWidget.settings.settings_tab = currentIndex
-                model: [qsTr("General"), qsTr("Test")]
-                hiddenTabs: settingsWindow.advanced ? [] : [1]
+                model: [qsTr("General"), "Link", qsTr("Test")]
+                hiddenTabs: settingsWindow.advanced ? [] : [2]
             }
 
             StackLayout {
@@ -212,116 +214,13 @@ NVG.Window {
                         text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
                     }
 
-                    // ---- AI: how widgets are written. Shared by all Seedling widgets (Seedling's own
-                    // settings, Bench.setting): with MHCP-YUI her connection by default (Connection),
-                    // else Seedling's own (Provider, Server Address, API Key, Model).
+                    // How the widgets look, for all Seedling widgets (Seedling's own settings).
                     Heading {
-                        text: "AI"
+                        text: "Style"
                     }
 
                     P.PreferenceGroup {
                         Layout.fillWidth: true
-
-                        P.SelectPreference {
-                            id: connectionPreference
-
-                            property bool ready: false
-
-                            visible: Link.Bench.yui !== null
-                            label: "Connection"
-                            model: ["Yui", "Own"]
-                            Component.onCompleted: {
-                                value = Link.Bench.setting("connection", "yui") === "own" ? 1 : 0;
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("connection", value === 1 ? "own" : "yui");
-
-                            }
-                        }
-
-                        P.SelectPreference {
-                            id: providerPreference
-
-                            property bool ready: false
-
-                            visible: settingsWindow.ownConnection
-                            label: "Provider"
-                            model: Api.PROVIDERS.map(function(p) {
-                                return p.title;
-                            })
-                            Component.onCompleted: {
-                                var id = Link.Bench.setting("provider", "openai");
-                                value = Math.max(0, Api.PROVIDERS.map(function(p) {
-                                    return p.id;
-                                }).indexOf(id));
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("provider", Api.PROVIDERS[value].id);
-
-                            }
-                        }
-
-                        P.TextFieldPreference {
-                            id: endpointPreference
-
-                            property bool ready: false
-
-                            visible: settingsWindow.ownConnection && (settingsWindow.advanced || Api.PROVIDERS[providerPreference.value].id === "custom")
-                            label: "Server Address"
-                            hint: Api.PROVIDERS[providerPreference.value].endpoint || "https://.../v1/chat/completions"
-                            Component.onCompleted: {
-                                value = String(Link.Bench.setting("endpoint", ""));
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("endpoint", value.trim());
-
-                            }
-                        }
-
-                        P.TextFieldPreference {
-                            id: keyPreference
-
-                            property bool ready: false
-
-                            visible: settingsWindow.ownConnection
-                            label: "API Key"
-                            echoMode: TextInput.Password
-                            hint: Api.PROVIDERS[providerPreference.value].keyOptional ? qsTr("not needed") : ""
-                            Component.onCompleted: {
-                                value = String(Link.Bench.setting("api_key", ""));
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("api_key", value.trim());
-
-                            }
-                        }
-
-                        P.TextFieldPreference {
-                            id: seedlingModelPreference
-
-                            property bool ready: false
-
-                            visible: settingsWindow.ownConnection || settingsWindow.advanced
-                            label: settingsWindow.ownConnection ? "Model" : "Seedling Model"
-                            hint: settingsWindow.ownConnection ? qsTr("model id") : qsTr("model id; empty: the same as the chat")
-                            Component.onCompleted: {
-                                value = String(Link.Bench.setting("model", ""));
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("model", value.trim());
-
-                            }
-                        }
 
                         P.TextAreaPreference {
                             id: stylePreference
@@ -343,29 +242,241 @@ NVG.Window {
 
                     }
 
-                    // Test Connection: one very short request through the connection chosen.
-                    CenteredFlow {
-                        Button {
-                            text: "Test Connection"
-                            enabled: !settingsWindow.testing
-                            onClicked: settingsWindow.testConnection()
+                    SettingNote {
+                        visible: settingsWindow.help
+                        besidePreferences: true
+                        text: qsTr("What the widgets the AI writes look like (colors, fonts, mood), sent with every widget, for all Seedling widgets; what is asked for comes first. Reset brings back the SAO style.")
+                    }
+
+                }
+
+                // ---------------------------------------------------------------- Link
+                // As MHCP-YUI's Link tab: the server, the core (model), the connection test. Shared by
+                // all Seedling widgets (Seedling's own settings, Bench.setting).
+                SettingsPage {
+                    Heading {
+                        text: "Server"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.SelectPreference {
+                            id: connectionPreference
+
+                            property bool ready: false
+
+                            visible: Link.Bench.yui !== null
+                            label: "Connection"
+                            model: ["Yui", "Own"]
+                            Component.onCompleted: {
+                                value = Link.Bench.setting("connection", "yui") === "own" ? 1 : 0;
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("connection", value === 1 ? "own" : "yui");
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && Link.Bench.yui !== null
+                            besidePreferences: true
+                            text: qsTr("Yui: widgets are written through Yui's server and access key (Cardinal System). Own: through Seedling's own, below.")
+                        }
+
+                        P.SelectPreference {
+                            id: providerPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection
+                            label: "Seed Server"
+                            model: Api.PROVIDERS.map(function(p) {
+                                return p.title;
+                            })
+                            Component.onCompleted: {
+                                var id = Link.Bench.setting("provider", "openai");
+                                value = Math.max(0, Api.PROVIDERS.map(function(p) {
+                                    return p.id;
+                                }).indexOf(id));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (!ready)
+                                    return ;
+
+                                Link.Bench.setSetting("provider", Api.PROVIDERS[value].id);
+                                // The first core of the new server.
+                                var models = Api.PROVIDERS[value].models;
+                                Link.Bench.setSetting("model", models.length ? models[0] : "");
+                                corePreference.value = 0;
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("The AI service that writes the widgets.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: endpointPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection && (settingsWindow.advanced || Api.PROVIDERS[providerPreference.value].id === "custom")
+                            label: "Server Address"
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: Api.PROVIDERS[providerPreference.value].endpoint || "https://.../v1/chat/completions"
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("endpoint", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("endpoint", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && endpointPreference.visible
+                            besidePreferences: true
+                            text: qsTr("The API endpoint URL. Change it only when using a proxy or a self-hosted service; empty uses the server's own.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: keyPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.ownConnection
+                            label: "Access Key"
+                            display: P.TextFieldPreference.ExpandAll
+                            echoMode: TextInput.Password
+                            hint: Api.PROVIDERS[providerPreference.value].keyOptional ? qsTr("not needed") : ""
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("api_key", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("api_key", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && settingsWindow.ownConnection
+                            besidePreferences: true
+                            text: qsTr("The API key of this server. It stays on this computer, in Seedling's own data.")
                         }
 
                     }
 
-                    SettingNote {
-                        visible: settingsWindow.testResult !== ""
-                        besidePreferences: true
-                        text: settingsWindow.testResult
+                    Heading {
+                        text: "Core"
                     }
 
-                    SettingNote {
-                        visible: settingsWindow.help
-                        besidePreferences: true
-                        text: qsTr("How widgets are written, for all Seedling widgets. Connection: with MHCP-YUI, Yui's server and key are used (Own: Seedling's own). Provider, Server Address, API Key, Model: Seedling's own AI; the key stays on this computer. Widget Style: what the widgets look like (colors, fonts, mood), sent with every widget; what is asked for comes first. Reset brings back the SAO style.")
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        P.SelectPreference {
+                            id: corePreference
+
+                            property bool ready: false
+                            readonly property var models: Api.PROVIDERS[providerPreference.value].models
+
+                            visible: settingsWindow.ownConnection && models.length > 0
+                            label: "Core Program"
+                            model: models
+                            Component.onCompleted: {
+                                value = Math.max(0, models.indexOf(String(Link.Bench.setting("model", ""))));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready && value >= 0 && value < models.length)
+                                    Link.Bench.setSetting("model", models[value]);
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && corePreference.visible
+                            besidePreferences: true
+                            text: qsTr("The AI model that writes the widgets.")
+                        }
+
+                        P.TextFieldPreference {
+                            id: customModelPreference
+
+                            property bool ready: false
+
+                            visible: settingsWindow.advanced || !settingsWindow.ownConnection || corePreference.models.length === 0
+                            label: "Manual Core ID"
+                            display: P.TextFieldPreference.ExpandAll
+                            hint: settingsWindow.ownConnection ? qsTr("model id, e.g. gpt-6-sol") : qsTr("model id; empty: the same as Yui's chat")
+                            Component.onCompleted: {
+                                value = String(Link.Bench.setting("custom_model", ""));
+                                ready = true;
+                            }
+                            onValueChanged: {
+                                if (ready)
+                                    Link.Bench.setSetting("custom_model", value.trim());
+
+                            }
+                        }
+
+                        SettingNote {
+                            visible: settingsWindow.help && customModelPreference.visible
+                            besidePreferences: true
+                            text: settingsWindow.ownConnection ? qsTr("When filled in, this model id is used instead of the Core Program selected above.") : qsTr("The model that writes the code, on Yui's server; empty uses her chat's model. Coding is easier for a stronger model.")
+                        }
+
+                    }
+
+                    Heading {
+                        text: "Connection Test"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        RowLayout {
+                            spacing: 20
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Button {
+                                text: "Link Start!"
+                                enabled: !settingsWindow.testing
+                                onClicked: settingsWindow.testConnection()
+                            }
+
+                            Button {
+                                text: "Clear Log"
+                                onClicked: settingsWindow.testResult = ""
+                            }
+
+                        }
+
+                        P.TextAreaPreference {
+                            label: "Connection Log"
+                            readOnly: true
+                            hint: qsTr("Press Link Start! to test the connection.")
+                            wrapMode: Text.Wrap
+                            value: settingsWindow.testResult
+                            Layout.fillWidth: true
+                        }
+
                     }
 
                 }
+
 
                 // ---------------------------------------------------------------- Test
                 SettingsPage {

@@ -111,10 +111,10 @@ const A = load("api.js");
 
 test("api.js: what is missing before a request", () => {
     assert.strictEqual(A.missing({ provider: "openai", apiKey: "k", model: "m" }), "");
-    assert.strictEqual(A.missing({ provider: "openai", apiKey: "", model: "m" }), "API Key");
+    assert.strictEqual(A.missing({ provider: "openai", apiKey: "", model: "m" }), "Access Key");
     assert.strictEqual(A.missing({ provider: "ollama", apiKey: "", model: "qwen" }), "");
     assert.strictEqual(A.missing({ provider: "custom", apiKey: "k", model: "m" }), "Server Address");
-    assert.strictEqual(A.missing({ provider: "anthropic", apiKey: "k", model: " " }), "Model");
+    assert.strictEqual(A.missing({ provider: "anthropic", apiKey: "k", model: " " }), "Core Program");
 });
 
 test("api.js: the three request shapes", () => {
