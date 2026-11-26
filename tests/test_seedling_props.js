@@ -224,5 +224,24 @@ Item {
     ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep", "// @name"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
 });
 
+test("templates (templates.js): each passes the safety check (Weather only for going online) and all its declarations take effect", () => {
+    const T = {};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    assert.ok(T.TEMPLATES.length >= 7);
+    T.TEMPLATES.forEach((t) => {
+        const problems = S.check(t.code, false);
+        if (t.key === "weather") {
+            assert.ok(S.onlyNetwork(problems), t.key + " refused only for the network: " + JSON.stringify(problems));
+            assert.deepStrictEqual(plain(S.check(t.code, true)), [], t.key + " with Network on");
+        } else {
+            assert.deepStrictEqual(plain(problems), [], t.key);
+        }
+        const r = P.parse(t.code);
+        assert.strictEqual(r.notes.length, 0, t.key + ": " + JSON.stringify(r.notes));
+        assert.ok(r.name, t.key + " has a @name");
+    });
+    assert.strictEqual(T.find("todo").name, "Todo");
+});
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);

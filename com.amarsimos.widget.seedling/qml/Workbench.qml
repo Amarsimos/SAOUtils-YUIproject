@@ -10,6 +10,7 @@ import "safety.js" as Safety
 import "link" 1.0 as Link
 import "sandbox.js" as Sandbox
 import "props.js" as Props
+import "templates.js" as Templates
 
 // The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
 // it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
@@ -255,22 +256,8 @@ NVG.View {
         aniOpen.stop();
         aniClose.start();
     }
-    readonly property var examples: [{
-        "name": qsTr("Clock"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 200; height: 84; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
-    }, {
-        "name": qsTr("Color Block"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 180; height: 110; radius: 12\n    gradient: Gradient {\n        GradientStop { position: 0; color: \"#F1AA03\" }\n        GradientStop { position: 1; color: \"#F8BBD0\" }\n    }\n\n    Text {\n        anchors.centerIn: parent\n        text: \"MHCP001\"\n        color: \"white\"\n        font.pixelSize: 24\n        font.bold: true\n    }\n}\n"
-    }, {
-        "name": qsTr("Animation"),
-        "code": "import QtQuick 2.12\n\nItem {\n    width: 140; height: 140\n\n    Rectangle {\n        anchors.centerIn: parent\n        width: 70; height: 70\n        color: \"#2CE67C\"\n        border.color: \"white\"; border.width: 2\n        RotationAnimation on rotation {\n            from: 0; to: 360; duration: 4000; loops: Animation.Infinite\n        }\n    }\n}\n"
-    }, {
-        "name": qsTr("Broken"),
-        "code": "import QtQuick 2.12\n\nRectangle {\n    width: 120; height: 80\n    color: \"#C82864\"\n\n    Text {\n        text: \"missing brace\"\n\n}\n"
-    }, {
-        "name": qsTr("Unsafe"),
-        "code": "import QtQuick 2.12\nimport NERvGear 1.0 as NVG\n\nRectangle {\n    width: 120; height: 60\n    MouseArea {\n        anchors.fill: parent\n        onClicked: NVG.SystemCall.execute(\"cmd\")\n    }\n}\n"
-    }]
+    // Examples (Code Editor): Seedling's templates (templates.js).
+    readonly property var examples: Templates.TEMPLATES
 
     // Checks and renders the editor text into the preview; true when it is shown.
     // The problems of the last refusal by the safety check ([] when it was not refused).
