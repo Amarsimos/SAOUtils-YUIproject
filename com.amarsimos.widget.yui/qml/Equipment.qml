@@ -164,7 +164,7 @@ NVG.Window {
 
     // The settings of each tab, for its Reset This Tab button.
     readonly property var avatarTabPreferences: [avatarPreference, fieldPreference, standbyImagePreference, happyPreference, sadPreference, surprisedPreference, angryPreference, shyPreference]
-    readonly property var formsTabPreferences: [formPreference, crystalSizePreference, pixieImagePreference, pixieSizePreference]
+    readonly property var formsTabPreferences: [formPreference, crystalSizePreference, crystalSpinPreference, pixieImagePreference, pixieSizePreference]
     readonly property var interfaceTabPreferences: [fontPreference, chatOpacityPreference, bubbleSecondsPreference, bubbleOpacityPreference, messageSoundsPreference, interfaceSoundsPreference]
 
     // True while values are put into the preferences (not changes by the user).
@@ -410,6 +410,26 @@ NVG.Window {
                             stepSize: 10
                             defaultValue: targetWidget.defaultValues.crystal_size
                             displayValue: qsTr("%1 px").arg(value)
+                        }
+
+                        // Seconds for a full turn; 0 keeps the crystal still.
+                        P.SliderPreference {
+                            id: crystalSpinPreference
+
+                            live: true
+                            name: "crystal_spin"
+                            label: qsTr("Crystal Spin")
+                            from: 0
+                            to: 120
+                            stepSize: 5
+                            defaultValue: targetWidget.defaultValues.crystal_spin
+                            displayValue: value > 0 ? qsTr("%1 s per turn").arg(value) : qsTr("Off")
+                        }
+
+                        SettingNote {
+                            visible: targetWidget.settingsHelp
+                            besidePreferences: true
+                            text: qsTr("How slowly the crystal turns: the seconds it takes for a full turn. 0 keeps it still (and saves the little CPU the turning takes).")
                         }
 
                         P.ImagePreference {

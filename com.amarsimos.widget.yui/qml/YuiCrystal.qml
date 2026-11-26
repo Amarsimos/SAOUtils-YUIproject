@@ -24,7 +24,9 @@ Item {
     property real beat: 0
     property real sweep: 0
     property real motes: 0
-    // Turn about the vertical axis (radians); a full turn in 24 s while awake.
+    // Turn about the vertical axis (radians) while awake: a full turn in spinSeconds (Equipment, Crystal
+    // Spin; 0 does not turn).
+    property real spinSeconds: 40
     property real spin: 0
     readonly property real unit: Math.min(width / 140, height / 200)
 
@@ -440,8 +442,8 @@ Item {
     Timer {
         interval: 33
         repeat: true
-        running: crystal.visible && !crystal.sleeping
-        onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / 24000) % (Math.PI * 2)
+        running: crystal.visible && !crystal.sleeping && crystal.spinSeconds > 0
+        onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / (crystal.spinSeconds * 1000)) % (Math.PI * 2)
     }
 
     NumberAnimation on blink {

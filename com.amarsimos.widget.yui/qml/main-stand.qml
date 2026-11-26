@@ -331,6 +331,7 @@ T.Widget {
         "pixie_size": 160,
         "collapsed_form": "pixie",
         "crystal_size": 120,
+        "crystal_spin": 40,
         "bubble_seconds": 8,
         "bubble_opacity": 80,
         "chat_opacity": 80,
@@ -4856,6 +4857,7 @@ T.Widget {
         sleeping: widget.sleeping
         busy: widget.busy
         unread: widget.hasUnread
+        spinSeconds: widget.styles.crystal_spin !== undefined ? widget.styles.crystal_spin : widget.defaultValues.crystal_spin
 
         MouseArea {
             id: crystalMouse

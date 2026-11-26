@@ -577,7 +577,7 @@
         <translation>隐藏消息窗口时结衣变成的形态。水晶会随 CPU、GPU 和内存负荷发出绿、黄、红光；妖精形态需要设置 Navigation Pixie Form 图片，否则显示 Avatar。</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+49"/>
         <source>When set, Yui turns into a small pixie while the message window is hidden. Pixie Size is its height.</source>
         <translation>设置后，隐藏消息窗口时结衣会变成小妖精形态。Pixie Size 是它的高度。</translation>
     </message>
@@ -592,24 +592,44 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-57"/>
-        <location line="+29"/>
+        <location line="-77"/>
+        <location line="+49"/>
         <source>%1 px</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-197"/>
-        <location line="+326"/>
+        <location line="-217"/>
+        <location line="+346"/>
         <source>Interface</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-263"/>
+        <location line="-283"/>
         <source>%1 / 5 set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+114"/>
+        <source>Crystal Spin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 s per turn</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>How slowly the crystal turns: the seconds it takes for a full turn. 0 keeps it still (and saves the little CPU the turning takes).</source>
+        <translation>水晶转得多慢：转一整圈需要的秒数。设为 0 时水晶不转（也省下转动占用的一点 CPU）。</translation>
+    </message>
+    <message>
+        <location line="+64"/>
         <source>Font and size of the text in the message windows.</source>
         <translation>消息窗口中文字的字体和大小。</translation>
     </message>
@@ -670,13 +690,13 @@
         <translation>聊天界面打开和关闭时的音效。</translation>
     </message>
     <message>
-        <location line="-319"/>
-        <location line="+204"/>
+        <location line="-339"/>
+        <location line="+224"/>
         <source>Forms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-69"/>
+        <location line="-89"/>
         <source>Collapsed Form</source>
         <translation type="unfinished"></translation>
     </message>
@@ -696,7 +716,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+32"/>
         <source>Navigation Pixie Form</source>
         <translation type="unfinished"></translation>
     </message>
@@ -706,7 +726,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-144"/>
+        <location line="-164"/>
         <source>Standby Form</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2626,7 +2646,7 @@ Open Widget Gallery → My Widgets to place it (reopen the gallery if it is not 
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1861"/>
+        <location filename="../qml/main-stand.qml" line="+1862"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2768,7 +2788,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1986"/>
+        <location line="+1995"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2778,7 +2798,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2409"/>
+        <location line="-2418"/>
         <location line="+155"/>
         <location line="+10"/>
         <location line="+61"/>
@@ -2787,7 +2807,7 @@ You can change this in System Console.</source>
         <location line="+11"/>
         <location line="+2"/>
         <location line="+5"/>
-        <location line="+1947"/>
+        <location line="+1956"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2797,25 +2817,25 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-5767"/>
-        <location line="+5798"/>
+        <location line="-5777"/>
+        <location line="+5808"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5805"/>
-        <location line="+5805"/>
+        <location line="-5815"/>
+        <location line="+5815"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2319"/>
+        <location line="-2328"/>
         <location line="+819"/>
         <source>Seedling Widget</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1517"/>
+        <location line="+1526"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
