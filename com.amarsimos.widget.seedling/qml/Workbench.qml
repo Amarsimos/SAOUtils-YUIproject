@@ -50,13 +50,18 @@ NVG.View {
         status = qsTr("Copied %1 problem(s).").arg(problemList.length);
     }
 
-    // Yui's chat opens with the problems written in its input box, to send (or add to) yourself.
+    // Sent to Yui's chat at once; the start ("帮我修好这个挂件：", Yui's SEEDLING_FIX_PREFIX) makes her fix
+    // it with the code flow. An older Yui without sendToChat: written in her input box instead.
     function sendProblemsToYui() {
         var yui = Link.Bench.writer;
-        if (!yui || !yui.prefillChat)
+        if (!yui)
             return ;
 
-        yui.prefillChat("帮我修好这个挂件：\n" + problemsText());
+        var text = "帮我修好这个挂件：\n" + problemsText();
+        if (yui.sendToChat)
+            yui.sendToChat(text);
+        else if (yui.prefillChat)
+            yui.prefillChat(text);
     }
 
     // Problems: a click puts the cursor at the line (with Code Editor on).
