@@ -12,6 +12,8 @@ Item {
     property string icon
     property bool checked: false
     property bool iconOnly: false
+    // Red with white text (Stop): stands out from the white bars; hovered it turns darker.
+    property bool danger: false
     readonly property bool lit: (area.containsMouse || checked) && enabled
     readonly property int iconSize: iconOnly ? 26 : 22
     readonly property string iconBase: "nvg://sao.theme.gpbeta.com/icon/item#" + icon
@@ -26,7 +28,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         visible: !chip.iconOnly
-        color: chip.lit ? "#EBA601" : "#FBFBFB"
+        color: chip.danger ? (chip.lit ? "#A51F4F" : "#C82864") : (chip.lit ? "#EBA601" : "#FBFBFB")
 
         Rectangle {
             anchors.top: parent.bottom
@@ -67,7 +69,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         font.family: "SAO UI"
         font.pixelSize: 16
-        color: chip.lit ? "#FFFFFF" : "#7A7A7A"
+        color: chip.lit || chip.danger ? "#FFFFFF" : "#7A7A7A"
     }
 
     MouseArea {

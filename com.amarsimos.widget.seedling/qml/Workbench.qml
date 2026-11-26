@@ -1003,11 +1003,33 @@ NVG.View {
                         Layout.fillWidth: true
                     }
 
+                    // Stop: red and breathing while Yui writes, so it is found at once (also in the
+                    // chat: its Send button is Stop then).
                     Chip {
                         text: "Stop"
                         icon: "logout"
+                        danger: true
                         visible: bench.writing
                         onClicked: Link.Bench.stop()
+
+                        SequentialAnimation on opacity {
+                            running: bench.writing
+                            loops: Animation.Infinite
+
+                            NumberAnimation {
+                                to: 0.55
+                                duration: 700
+                                easing.type: Easing.InOutSine
+                            }
+
+                            NumberAnimation {
+                                to: 1
+                                duration: 700
+                                easing.type: Easing.InOutSine
+                            }
+
+                        }
+
                     }
 
                     Menu {
