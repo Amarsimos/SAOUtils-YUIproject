@@ -458,9 +458,32 @@ test("Core Tuning fields per server", () => {
     assert.strictEqual(ollama.top_k, 40);
     assert.ok(!("options" in ollama));
     assert.strictEqual(Yui.tuningFields("openai", "ollama", all).top_k, 40);
-    assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", all)), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
+    // Claude: the 4.5 family keeps a budget; newer ones adaptive thinking with an effort
+    assert.strictEqual(JSON.stringify(Yui.tuningFields("anthropic", "anthropic", Object.assign({ model: "claude-sonnet-4-5" }, all))), JSON.stringify({ max_tokens: 1824, thinking: { type: "enabled", budget_tokens: 1024 } }));
+    same(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { model: "claude-opus-4-7" })), { max_tokens: 1824, thinking: { type: "adaptive" }, output_config: { effort: "low" } });
+    const claudeOff = model => Yui.tuningFields("anthropic", "anthropic", Object.assign({}, none, { thinking: "off", model }));
+    same(claudeOff("claude-opus-4-6"), { max_tokens: 1024 });
+    same(claudeOff("claude-sonnet-5"), { max_tokens: 1024, thinking: { type: "disabled" } });
+    same(claudeOff("claude-haiku-5-5"), { max_tokens: 1024, thinking: { type: "disabled" } });
+    same(claudeOff("claude-sonnet-5-5"), { max_tokens: 1024, thinking: { type: "between_tools" }, output_config: { effort: "low" } });
+    same(claudeOff("claude-opus-5-5"), { max_tokens: 2048, output_config: { effort: "low" } });
+    assert.strictEqual(Yui.claudeThinkingKind("claude-sonnet-4-20250514"), "legacy");
+    assert.strictEqual(Yui.claudeThinkingKind("claude-fable-5-2"), "always");
+    // Gemini: 2.5 by budget, 3 and later by level
+    same(Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "off", model: "gemini-2.5-flash" })).thinkingConfig, { thinkingBudget: 0 });
+    same(Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "off", model: "gemini-2.5-pro" })).thinkingConfig, { thinkingBudget: 128 });
+    assert.ok(!("thinkingConfig" in Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "off", model: "gemini-2.5-flash-lite" }))));
+    same(Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "off", model: "gemini-3-flash-preview" })).thinkingConfig, { thinkingLevel: "MINIMAL" });
+    same(Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "off", model: "gemini-4-carbon" })).thinkingConfig, { thinkingLevel: "LOW" });
+    same(Yui.tuningFields("gemini", "google", Object.assign({}, none, { thinking: "medium", model: "gemini-3-pro-preview" })).thinkingConfig, { thinkingLevel: "HIGH" });
+    // DeepSeek, Qwen (DashScope), OpenAI GPT-6
+    same(Yui.tuningFields("openai", "deepseek", Object.assign({}, none, { thinking: "off" })), { thinking: { type: "disabled" } });
+    same(Yui.tuningFields("openai", "deepseek", Object.assign({}, none, { thinking: "medium" })), { reasoning_effort: "high" });
+    same(Yui.tuningFields("openai", "custom", Object.assign({}, none, { thinking: "off", endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" })), { enable_thinking: false });
+    same(Yui.tuningFields("openai", "openai", Object.assign({}, none, { thinking: "off", model: "gpt-6.1-sol" })), { reasoning_effort: "low" });
+    same(Yui.tuningFields("openai", "openai", Object.assign({}, none, { thinking: "off", model: "gpt-5.2" })), { reasoning_effort: "none" });
     assert.strictEqual(Yui.tuningFields("anthropic", "anthropic", Object.assign({}, all, { temperature: 1.5, thinking: "default" })).temperature, 1);
-    const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off" }));
+    const gemini = Yui.tuningFields("gemini", "google", Object.assign({}, all, { thinking: "off", model: "gemini-2.5-flash" }));
     assert.strictEqual(gemini.thinkingConfig.thinkingBudget, 0);
     assert.strictEqual(gemini.topK, 40);
 });

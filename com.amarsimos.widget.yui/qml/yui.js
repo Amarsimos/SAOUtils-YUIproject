@@ -2052,31 +2052,121 @@ function priorityRules(title, allowed, mode) {
 // Authority Level Limited (small models): a short reminder added to the user's latest message.
 // It does not spell the tag out: with a repetition penalty, a tag written just before made models
 // misspell it (<<emphy:happy>>).
-// Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for Claude and Gemini.
+// Thinking Depth (Cardinal System): the thinking budget in tokens of each depth, for the models that
+// take a budget (Claude 4.5 and older, Gemini 2.5, Qwen).
 var THINKING_BUDGETS = {
     "low": 1024,
     "medium": 4096,
     "high": 16384
 };
 
+// How each server turns thinking off or sets its depth (checked against the official docs, 2026-11-26;
+// see Prompt Rules.md). model: the model name as sent.
+// Claude: "legacy" (4.5 and older: thinking enabled with a budget), "optional" (4.6 - 4.8: off unless
+// asked), "disable" (Sonnet 5, Opus 5, Haiku 5.5: thinking disabled), "between" (Sonnet 5.5: thinking
+// only between tools at most), "always" (Opus 5.5, Fable, Mythos: always thinks; lowest is effort low).
+function claudeThinkingKind(model) {
+    var m = String(model || "").toLowerCase();
+    if (/claude-3|claude-(opus|sonnet|haiku)-4(-[0-5])?(-\d{8})?$/.test(m))
+        return "legacy";
+
+    if (/-4-[678]/.test(m))
+        return "optional";
+
+    if (/sonnet-5-5/.test(m))
+        return "between";
+
+    if (/opus-5-5|fable|mythos/.test(m))
+        return "always";
+
+    if (/-5\b|-5-|haiku-5/.test(m))
+        return "disable";
+
+    return "optional";
+}
+
+// Gemini: 2.5 takes thinkingBudget (Pro cannot go below 128, Flash-Lite thinks only when asked); 3 and
+// later take thinkingLevel, MINIMAL being the lowest except on 3 Pro, 3.1 Pro, 3.8 Flash and Gemini 4.
+function geminiThinking(model, thinking) {
+    var m = String(model || "").toLowerCase();
+    var budget = THINKING_BUDGETS[thinking] || 0;
+    if (/gemini-2\./.test(m)) {
+        if (thinking === "off")
+            return /flash-lite/.test(m) ? null : {
+            "thinkingBudget": /pro/.test(m) ? 128 : 0
+        };
+
+        return budget > 0 ? {
+            "thinkingBudget": budget
+        } : null;
+    }
+    var noMinimal = /gemini-3-pro|gemini-3\.1-pro|gemini-3\.8-flash|gemini-4/.test(m);
+    var level = {
+        "off": noMinimal ? "LOW" : "MINIMAL",
+        "low": "LOW",
+        "medium": /gemini-3-pro/.test(m) ? "HIGH" : "MEDIUM",
+        "high": "HIGH"
+    }[thinking];
+    return level ? {
+        "thinkingLevel": level
+    } : null;
+}
+
 // Core Tuning's values as the fields of a request (pure). format: "openai", "anthropic" or "gemini";
 // providerId: the server (top_k goes only to local and "custom" servers such as Ollama,
 // since OpenAI's own rejects them). t: {maxTokens (0: none), temperature, topP, presencePenalty,
 // frequencyPenalty (each -1: the server's default), topK, seed (each 0: the default),
-// thinking: "off", "default", "low", "medium" or "high"}. Returns the fields to add to the request
-// body; for "gemini", the generationConfig.
+// thinking: "off", "default", "low", "medium" or "high", model, endpoint}. Returns the fields to add to
+// the request body; for "gemini", the generationConfig. "default" sends nothing about thinking.
 function tuningFields(format, providerId, t) {
     var fields = {};
     var thinking = t.thinking || "default";
     var budget = THINKING_BUDGETS[thinking] || 0;
     if (format === "anthropic") {
         fields.max_tokens = t.maxTokens > 0 ? t.maxTokens : 1024;
-        // Thinking on: the budget comes on top of the reply, and Claude takes no sampling settings then.
-        if (budget > 0) {
+        var kind = claudeThinkingKind(t.model);
+        var thinks = false;
+        if (kind === "legacy" && budget > 0) {
             fields.thinking = {
                 "type": "enabled",
                 "budget_tokens": budget
             };
+            thinks = true;
+        } else if (budget > 0) {
+            // Newer models: adaptive thinking with an effort (budget_tokens is refused from 4.7 on).
+            fields.thinking = {
+                "type": "adaptive"
+            };
+            fields.output_config = {
+                "effort": thinking
+            };
+            thinks = true;
+        } else if (thinking === "off") {
+            if (kind === "disable") {
+                fields.thinking = {
+                    "type": "disabled"
+                };
+            } else if (kind === "between") {
+                fields.thinking = {
+                    "type": "between_tools"
+                };
+                fields.output_config = {
+                    "effort": "low"
+                };
+            } else if (kind === "always") {
+                // Cannot be turned off: as little as it goes.
+                fields.output_config = {
+                    "effort": "low"
+                };
+                thinks = true;
+                budget = THINKING_BUDGETS.low;
+            }
+        } else if (kind === "always") {
+            thinks = true;
+            budget = THINKING_BUDGETS.medium;
+        }
+        // Thinking: room for it on top of the reply, and Claude takes no sampling settings then.
+        if (thinks) {
             fields.max_tokens += budget;
             return fields;
         }
@@ -2114,10 +2204,9 @@ function tuningFields(format, providerId, t) {
         if (t.seed > 0)
             fields.seed = t.seed;
 
-        if (thinking === "off" || budget > 0)
-            fields.thinkingConfig = {
-                "thinkingBudget": budget
-            };
+        var thinkingConfig = thinking === "default" ? null : geminiThinking(t.model, thinking);
+        if (thinkingConfig)
+            fields.thinkingConfig = thinkingConfig;
 
         return fields;
     }
@@ -2126,10 +2215,31 @@ function tuningFields(format, providerId, t) {
     if (t.maxTokens > 0)
         fields[providerId === "openai" ? "max_completion_tokens" : "max_tokens"] = t.maxTokens;
 
-    if (thinking === "off")
-        fields.reasoning_effort = "none";
-    else if (budget > 0)
+    var model = String(t.model || "").toLowerCase();
+    var endpoint = String(t.endpoint || "").toLowerCase();
+    if (providerId === "deepseek") {
+        // DeepSeek thinks by default: off is its own switch; its efforts are low, high and max.
+        if (thinking === "off")
+            fields.thinking = {
+                "type": "disabled"
+            };
+        else if (budget > 0)
+            fields.reasoning_effort = thinking === "low" ? "low" : "high";
+    } else if (/dashscope|aliyuncs/.test(endpoint)) {
+        // Qwen (DashScope): enable_thinking, and a budget.
+        if (thinking === "off") {
+            fields.enable_thinking = false;
+        } else if (budget > 0) {
+            fields.enable_thinking = true;
+            fields.thinking_budget = budget;
+        }
+    } else if (thinking === "off") {
+        // Some of OpenAI's newer models refuse "none" (GPT-6 and later): their lowest is low. Ollama
+        // takes "none" as off, or its lowest level for models that always think.
+        fields.reasoning_effort = providerId === "openai" && /gpt-6/.test(model) ? "low" : "none";
+    } else if (budget > 0) {
         fields.reasoning_effort = thinking;
+    }
     if (t.temperature >= 0)
         fields.temperature = t.temperature;
 
