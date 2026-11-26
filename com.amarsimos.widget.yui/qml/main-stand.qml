@@ -3887,7 +3887,7 @@ T.Widget {
         var now = Date.now();
         var hook = widget.busy ? null : chatHook(now, title);
         var start = hook ? "可以从这个由头说起：" + hook.text + "。" : "闲聊、问候，或者结合时间和之前聊过的事关心一下。";
-        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
+        var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "，这只是背景，不要说起自己的样子或待在哪里。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
         diag("idle chatter" + (hook ? " (" + hook.key + ")" : "") + ": " + (started ? "requested" : "not now (busy or no API key)"));
         return started;
     }
