@@ -266,18 +266,22 @@ NVG.View {
     // Checks and renders the editor text into the preview; true when it is shown.
     // The problems of the last refusal by the safety check ([] when it was not refused).
     property var refusedProblems: []
-    // The code already asked about going online (asked once for the same code).
-    property string networkAsked: ""
+    // Asked about going online and the user said no: not asked again while the code is typed in
+    // (every key changed the code and asked again); asked again for code Yui brings (loadExternal).
+    property bool networkDeclined: false
+    // A question is open (not asked twice at once).
+    property bool networkAsking: false
 
     // Refused only for going online (Network off): asks with SAO Utils' message box whether this
     // widget may go online; then(allowed) after the answer (allowed: Network turned on, rendered again).
     function askNetwork(then) {
-        var code = editor.text;
-        if (networkAsked === code || settings.allow_network === true)
+        if (networkDeclined || networkAsking || settings.allow_network === true)
             return then(false);
 
-        networkAsked = code;
+        networkAsking = true;
         var answered = function(allowed) {
+            networkAsking = false;
+            networkDeclined = !allowed;
             if (allowed) {
                 settings.allow_network = true;
                 render(true);
@@ -501,6 +505,7 @@ NVG.View {
     // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
     function loadExternal(code, title, onResult, changes) {
         showVersions = false;
+        networkDeclined = false;
         // Yui's edit: the code before it is kept as a version, so ◀ goes back to it.
         if (changes)
             addVersion(editor.text);

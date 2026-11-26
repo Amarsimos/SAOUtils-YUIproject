@@ -310,7 +310,7 @@ NVG.Window {
             targetWidget.settings.allow_network = false;
             var asking = bench();
             if (asking)
-                asking.networkAsked = "";
+                asking.networkDeclined = false;
 
             load(networkCode);
         }
