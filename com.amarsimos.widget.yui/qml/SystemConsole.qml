@@ -77,12 +77,8 @@ NVG.Window {
             yui.testLinkStart();
         else if (tag === "media")
             yui.testMedia();
-        else if (tag === "seedling")
-            yui.testSeedling();
         else if (tag === "seedling_place")
             yui.testSeedlingPlace();
-        else if (tag === "seedling_lines")
-            yui.testSeedlingLines();
         else if (tag.indexOf("seedling_write:") === 0)
             yui.testSeedlingWrite(tag.slice(15));
         else if (tag === "care")
@@ -679,7 +675,7 @@ NVG.Window {
                                     "tests": [[qsTr("Launch Notepad"), "<<launch:notepad>>"], [qsTr("Close Notepad"), "<<kill:notepad.exe>>"], [qsTr("Find File"), "<<find:notepad.exe>>"], [qsTr("Open Link"), "<<open:https://www.bilibili.com>>"], [qsTr("Protected Process"), "<<kill:explorer.exe>>"], [qsTr("Test Media"), "media"]]
                                 }, {
                                     "title": "Seedling",
-                                    "tests": [[qsTr("Test Seedling"), "seedling"], [qsTr("Test Place Seedling"), "seedling_place"], [qsTr("Test Seedling Lines"), "seedling_lines"], [qsTr("Seedling: Write"), "seedling_write:write"], [qsTr("Seedling: Edit"), "seedling_write:edit"], [qsTr("Seedling: Fix"), "seedling_write:fix"], [qsTr("Seedling: Network"), "seedling_write:network"]]
+                                    "tests": [[qsTr("Test Place Seedling"), "seedling_place"], [qsTr("Seedling: Write"), "seedling_write:write"], [qsTr("Seedling: Edit"), "seedling_write:edit"], [qsTr("Seedling: Fix"), "seedling_write:fix"], [qsTr("Seedling: Network"), "seedling_write:network"]]
                                 }, {
                                     "title": qsTr("Care"),
                                     "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"]]

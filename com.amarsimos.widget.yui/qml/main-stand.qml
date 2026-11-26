@@ -4036,62 +4036,6 @@ T.Widget {
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
     }
 
-    // Test Seedling Lines (System Console): one message of Yui's going through every step of writing a
-    // widget (2.5 s each, the characters hopping), ending as done; then each of her other last words as
-    // a message of its own. No request is made.
-    function testSeedlingLines() {
-        var title = userTitle();
-        var steps = [{
-            "stage": "writing", "lines": 0, "edits": 0
-        }, {
-            "stage": "writing", "lines": 12, "edits": 0
-        }, {
-            "stage": "editing", "lines": 0, "edits": 2
-        }, {
-            "stage": "fixing", "lines": 0, "edits": 0
-        }, {
-            "stage": "fixing", "lines": 8, "edits": 0
-        }, {
-            "stage": "checking", "lines": 0, "edits": 0
-        }, {
-            "stage": "waiting", "lines": 0, "edits": 0
-        }];
-        var finals = ["edited", "failed", "offline", "stopped", "declined", "missing", "busy"];
-        if (!showChat)
-            openView();
-
-        var said = seedlingSay();
-        var step = 0;
-        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 2500; repeat: true }", widget);
-        timer.triggered.connect(function() {
-            if (step < steps.length) {
-                var state = steps[step++];
-                state.seconds = step;
-                said.update(Yui.seedlingNoteLine(state, title));
-                return ;
-            }
-            if (step === steps.length) {
-                step++;
-                said.end(Yui.seedlingChatLine("done", title));
-                return ;
-            }
-            var kind = finals[step - steps.length - 2];
-            step++;
-            if (!kind) {
-                timer.stop();
-                timer.destroy();
-                diag("test seedling lines: done");
-                return ;
-            }
-            seedlingSay().end(Yui.seedlingChatLine(kind, title));
-        });
-        said.update(Yui.seedlingNoteLine({
-            "stage": "writing", "lines": 0, "edits": 0, "seconds": 0
-        }, title));
-        timer.start();
-        diag("test seedling lines: " + steps.length + " steps, then " + (finals.length + 1) + " last words");
-    }
-
     // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
     // desktop (asked even when one is), with what follows written in the log.
     function testSeedlingPlace() {
@@ -4166,15 +4110,6 @@ T.Widget {
             return "Seedling is not installed";
 
         return bench.preview(code, title, onResult);
-    }
-
-    // Test Seedling (System Console): a small widget sent to Seedling, the result written in the log.
-    function testSeedling() {
-        var code = "import QtQuick 2.12\n\nRectangle {\n    width: 180; height: 70; radius: 8\n    color: \"#E61F2630\"\n    Text {\n        anchors.centerIn: parent\n        color: \"white\"; font.pixelSize: 28\n        text: \"From Yui\"\n    }\n}\n";
-        var refused = seedlingPreview(code, "Test from Yui", function(result) {
-            diag("seedling result: " + JSON.stringify(result));
-        });
-        diag("test seedling: " + (refused || "sent"));
     }
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.

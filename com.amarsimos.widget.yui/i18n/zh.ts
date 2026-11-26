@@ -1544,7 +1544,7 @@
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+508"/>
+        <location filename="../qml/SystemConsole.qml" line="+504"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1880,17 +1880,7 @@
     </message>
     <message>
         <location line="+10"/>
-        <source>Test Seedling</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
         <source>Test Place Seedling</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Test Seedling Lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2593,19 +2583,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3057"/>
+        <location line="+2997"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3040"/>
-        <location line="+2096"/>
-        <location line="+1045"/>
+        <location line="-2980"/>
+        <location line="+2101"/>
+        <location line="+989"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4291"/>
+        <location line="-4240"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2721,7 +2711,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+123"/>
+        <location line="+128"/>
         <source>The edits did not fit · Thinking about the whole code...</source>
         <translation>修改没能对上 · 正在重新思考整段代码...</translation>
     </message>
@@ -2746,7 +2736,7 @@ You can change this in System Console.</source>
         <translation>正在编写 · %1 行</translation>
     </message>
     <message>
-        <location line="+2297"/>
+        <location line="+2241"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2761,8 +2751,8 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2873"/>
-        <location line="+633"/>
+        <location line="-2822"/>
+        <location line="+573"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2770,7 +2760,7 @@ You can change this in System Console.</source>
         <location line="+11"/>
         <location line="+2"/>
         <location line="+5"/>
-        <location line="+1934"/>
+        <location line="+1943"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2780,14 +2770,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6185"/>
-        <location line="+6218"/>
+        <location line="-6134"/>
+        <location line="+6167"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6225"/>
-        <location line="+6225"/>
+        <location line="-6174"/>
+        <location line="+6174"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
