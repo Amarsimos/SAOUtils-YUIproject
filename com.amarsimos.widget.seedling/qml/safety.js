@@ -54,7 +54,7 @@ function check(code, allowNetwork) {
         var re = new RegExp(rules[i][0].source, "g" + (rules[i][0].ignoreCase ? "i" : ""));
         var found = re.exec(text);
         if (found)
-            problems.push({ "line": lineOf(text, found.index), "message": found[0].trim().slice(0, 30) + ": " + rules[i][1] });
+            problems.push({ "line": lineOf(text, found.index), "message": found[0].trim().slice(0, 30) + ": " + rules[i][1], "network": i >= FORBIDDEN.length });
     }
     problems.sort(function(a, b) {
         return a.line - b.line;
@@ -67,4 +67,11 @@ function describe(problems) {
     return problems.map(function(p) {
         return "Line " + p.line + ": " + p.message;
     }).join("\n");
+}
+
+// Refused only for going online (Network off): the workbench then asks whether to allow it.
+function onlyNetwork(problems) {
+    return problems.length > 0 && problems.every(function(p) {
+        return p.network === true;
+    });
 }

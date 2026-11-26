@@ -18,6 +18,7 @@ NVG.Window {
     readonly property string sampleCode: "import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
     readonly property string brokenCode: "import QtQuick 2.12\n\nRectangle {\n    width: 160; height: 80\n    color: \"#C82864\"\n\n    Text {\n        anchors.centerIn: parent\n        text: \"missing brace\"\n        colr: \"white\"\n    }\n}\n"
     readonly property string unsafeCode: "import QtQuick 2.12\nimport NERvGear 1.0 as NVG\n\nRectangle {\n    width: 120; height: 60\n    MouseArea {\n        anchors.fill: parent\n        onClicked: NVG.SystemCall.execute(\"cmd\")\n    }\n}\n"
+    readonly property string networkCode: "import QtQuick 2.12\n\nRectangle {\n    width: 240; height: 80; radius: 8\n    color: \"#E61F2630\"\n\n    Text {\n        id: answer\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 18\n        text: \"asking the Internet...\"\n    }\n\n    Component.onCompleted: {\n        var request = new XMLHttpRequest();\n        request.onreadystatechange = function() {\n            if (request.readyState === XMLHttpRequest.DONE)\n                answer.text = request.status === 200 ? \"online: OK\" : \"offline (\" + request.status + \")\";\n        };\n        request.open(\"GET\", \"https://www.bing.com/\");\n        request.send();\n    }\n}\n"
     readonly property string largeCode: "import QtQuick 2.12\n\nRectangle {\n    width: 900; height: 600\n    gradient: Gradient {\n        GradientStop { position: 0; color: \"#F1AA03\" }\n        GradientStop { position: 1; color: \"#4BB4EC\" }\n    }\n\n    Text {\n        anchors.centerIn: parent\n        text: \"900 x 600\"\n        color: \"white\"\n        font.pixelSize: 64\n    }\n}\n"
 
     // The workbench, opened (or brought forward) for a test.
@@ -187,7 +188,37 @@ NVG.Window {
                         wrapMode: Text.Wrap
                         color: "#888888"
                         font.pixelSize: 12
-                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Try, Examples and Network, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Try and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                    }
+
+                    CheckBox {
+                        id: networkBox
+
+                        text: "Network"
+                        checked: settingsWindow.targetWidget.settings.allow_network === true
+                        onToggled: {
+                            settingsWindow.targetWidget.settings.allow_network = checked;
+                            var workbench = settingsWindow.targetWidget.workbench;
+                            if (workbench)
+                                workbench.render(true);
+
+                        }
+
+                        // Turned on by the workbench's question too.
+                        Connections {
+                            target: settingsWindow.targetWidget.workbench || null
+                            ignoreUnknownSignals: true
+                            onStatusChanged: networkBox.checked = settingsWindow.targetWidget.settings.allow_network === true
+                        }
+
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: "#888888"
+                        font.pixelSize: 12
+                        text: qsTr("Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.")
                     }
 
                 }
@@ -195,8 +226,8 @@ NVG.Window {
                 Repeater {
                     model: [{
                         "title": "Render",
-                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, nothing (NO SIGNAL), and one larger than the preview (Fit, − / + / 100%)."),
-                        "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Empty", "empty"], ["Large Widget", "large"]]
+                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first, so the question comes), nothing (NO SIGNAL), and one larger than the preview (Fit, − / + / 100%)."),
+                        "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Empty", "empty"], ["Large Widget", "large"]]
                     }, {
                         "title": "Yui's Work",
                         "note": qsTr("Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound."),
@@ -274,6 +305,15 @@ NVG.Window {
             load("");
         else if (tag === "large")
             load(largeCode);
+        else if (tag === "network") {
+            // Network off and not asked yet, so the question comes.
+            targetWidget.settings.allow_network = false;
+            var asking = bench();
+            if (asking)
+                asking.networkAsked = "";
+
+            load(networkCode);
+        }
         else if (tag === "write")
             simulateWriting(false);
         else if (tag === "edit")

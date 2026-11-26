@@ -256,7 +256,48 @@ NVG.View {
     }]
 
     // Checks and renders the editor text into the preview; true when it is shown.
-    function render() {
+    // The problems of the last refusal by the safety check ([] when it was not refused).
+    property var refusedProblems: []
+    // The code already asked about going online (asked once for the same code).
+    property string networkAsked: ""
+
+    // Refused only for going online (Network off): asks with SAO Utils' message box whether this
+    // widget may go online; then(allowed) after the answer (allowed: Network turned on, rendered again).
+    function askNetwork(then) {
+        var code = editor.text;
+        if (networkAsked === code || settings.allow_network === true)
+            return then(false);
+
+        networkAsked = code;
+        var answered = function(allowed) {
+            if (allowed) {
+                settings.allow_network = true;
+                render(true);
+            }
+            then(allowed);
+        };
+        try {
+            var answer = NVG.SystemCall.messageBox({
+                "title": qsTr("Network"),
+                "text": qsTr("This widget needs to go online.\nLet it go online?"),
+                "modal": true
+            });
+            if (answer && typeof answer.then === "function")
+                answer.then(function(result) {
+                answered(result !== false && result !== 0);
+            }, function() {
+                answered(false);
+            });
+            else
+                answered(false);
+        } catch (e) {
+            console.log("Seedling: cannot ask about the network:", e);
+            answered(false);
+        }
+    }
+
+    // quiet: no question about the network (the caller asks, or has just been answered).
+    function render(quiet) {
         if (preview) {
             preview.destroy();
             preview = null;
@@ -271,6 +312,11 @@ NVG.View {
             return false;
         }
         var problems = Safety.check(code, settings.allow_network === true);
+        refusedProblems = problems;
+        if (problems.length > 0 && !quiet && Safety.onlyNetwork(problems))
+            Qt.callLater(askNetwork, function() {
+            });
+
         if (problems.length > 0) {
             errorLines = problems.map(function(p) {
                 return p.line - 1;
@@ -456,22 +502,32 @@ NVG.View {
         loadingExternal = false;
         changedLines = changes ? changes.lines : [];
         renderTimer.stop();
-        var ok = render();
-        if (ok && changes) {
-            addVersion(code);
-            status = qsTr("Changed %1 place(s) · +%2 −%3 lines · %4").arg(changes.count).arg(changes.added).arg(changes.removed).arg(status);
-        }
+        var ok = render(true);
         requestActivate();
-        if (typeof onResult === "function")
-            onResult({
-                "ok": ok,
-                "result": result,
-                "status": status,
-                "title": title,
-                "width": preview ? Math.round(preview.width) : 0,
-                "height": preview ? Math.round(preview.height) : 0
-            });
+        var tell = function() {
+            if (ok && changes) {
+                addVersion(code);
+                status = qsTr("Changed %1 place(s) · +%2 −%3 lines · %4").arg(changes.count).arg(changes.added).arg(changes.removed).arg(status);
+            }
+            if (typeof onResult === "function")
+                onResult({
+                    "ok": ok,
+                    "result": result,
+                    "status": status,
+                    "title": title,
+                    "width": preview ? Math.round(preview.width) : 0,
+                    "height": preview ? Math.round(preview.height) : 0
+                });
 
+        };
+        // Refused only for going online: asked first; a yes renders it as it is.
+        if (!ok && result === "unsafe" && Safety.onlyNetwork(refusedProblems))
+            askNetwork(function(allowed) {
+            ok = allowed && result === "ok";
+            tell();
+        });
+        else
+            tell();
     }
 
     function loadVersion(index) {
@@ -839,17 +895,6 @@ NVG.View {
                         text: "Examples"
                         icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
-                    }
-
-                    Chip {
-                        visible: bench.showCode
-                        text: "Network: " + (bench.settings.allow_network === true ? "On" : "Off")
-                        icon: "option"
-                        checked: bench.settings.allow_network === true
-                        onClicked: {
-                            bench.settings.allow_network = !(bench.settings.allow_network === true);
-                            bench.render();
-                        }
                     }
 
                     Item {
