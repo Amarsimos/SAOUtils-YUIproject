@@ -1848,7 +1848,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+3"/>
+        <source>Seedling: Props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Test Bubble</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2583,19 +2588,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2997"/>
+        <location line="+3011"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2980"/>
-        <location line="+2101"/>
-        <location line="+989"/>
+        <location line="-2994"/>
+        <location line="+2112"/>
+        <location line="+992"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4240"/>
+        <location line="-4254"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2726,7 +2731,7 @@ You can change this in System Console.</source>
         <translation>正在检查并渲染...</translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+72"/>
         <source>Changing · %1 place(s)</source>
         <translation>正在修改 · %1 处</translation>
     </message>
@@ -2736,7 +2741,7 @@ You can change this in System Console.</source>
         <translation>正在编写 · %1 行</translation>
     </message>
     <message>
-        <location line="+2241"/>
+        <location line="+2244"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2751,8 +2756,8 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2822"/>
-        <location line="+573"/>
+        <location line="-2836"/>
+        <location line="+587"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2770,14 +2775,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6134"/>
-        <location line="+6167"/>
+        <location line="-6148"/>
+        <location line="+6181"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6174"/>
-        <location line="+6174"/>
+        <location line="-6188"/>
+        <location line="+6188"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>

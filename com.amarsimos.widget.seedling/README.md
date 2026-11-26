@@ -29,12 +29,49 @@ another workbench meanwhile.
 
 ### Seedling Settings
 
-- **Code Editor** (General, off by default): the code beside the preview, with **Run** and
+As in MHCP-YUI's settings: **Advanced** (title bar) shows Code Editor and the Test tab, **Help** the
+explanations, **Reset** restores the defaults.
+
+- **Code Editor** (General, Advanced, off by default): the code beside the preview, with **Run** and
   **Examples**, to read or change it. Typing renders it after a moment.
 - **Network** (General, off by default, per widget): lets the widget go online (weather, exchange
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
   brings it, on Run, or on ○ ("allow it to go online and save?").
-- **Test**: tries the workbench's states without the AI and without any request.
+- **Test** (Advanced): tries the workbench's states without the AI and without any request.
+
+## A widget's own settings and memory
+
+A widget's code can declare, in comments on its outermost properties, what the user may set and what
+it remembers. Seedling does the rest from outside the sandbox, so nothing new is given to the code:
+
+```qml
+// @name Todo
+Rectangle {
+    // @setting Font Size | 12 - 48
+    property int fontSize: 16
+    // @setting Theme | Light / Dark
+    property string theme: "Light"
+    // @setting Show Done
+    property bool showDone: true
+    // @keep
+    property var todos: []
+}
+```
+
+- **@setting** (string, int, real, bool, color; `| min - max` for a range, `| A / B` for choices):
+  right-click the widget, **Settings...** opens a window with a preference for each (text box,
+  number box or slider, switch, color picker, list), in the style of MHCP-YUI's settings; changes
+  apply at once, **Reset** restores the code's defaults. Up to three switches are also in the
+  right-click menu. The workbench's preview uses the same values.
+- **@keep** (string, int, real, bool, var as JSON): remembered across restarts. Seedling compares
+  them every 2 seconds and saves what changed (64 KB per widget at most). The preview does not keep
+  them. **Clear Kept Data** in the Settings window forgets them.
+- **@name**: the widget's name in SAO Utils' menu and on its Settings window.
+- When the code changes, values whose name and type stay are kept.
+- Declarations that do not take effect (not on the outermost item, an unsupported type, `source` /
+  `url`) are listed in Problems as notes; Yui is asked to fix them once.
+
+Yui writes these declarations by herself when a widget has something to set or remember.
 
 ## Safety
 
@@ -78,3 +115,4 @@ First version, split out of MHCP-YUI's built-in widget lab.
   whole code as the last way out), with her progress in the chat.
 - Sandbox, token-based safety check, per-widget Network.
 - Chinese translation.
+- A widget's own settings (@setting, right-click Settings...), memory (@keep) and name (@name).

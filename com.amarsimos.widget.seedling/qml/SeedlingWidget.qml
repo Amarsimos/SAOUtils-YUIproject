@@ -2,17 +2,26 @@ import NERvGear 1.0 as NVG
 import NERvGear.Templates 1.0 as T
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Shapes 1.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
 import "sandbox.js" as Sandbox
+import "props.js" as Props
 
 // A Seedling widget: shows the QML kept in its settings (code), after the safety check. Its menu opens
 // the workbench, where the code is written, previewed, tried on the desktop and saved back here.
 T.Widget {
     id: widget
 
-    // The name in SAO Utils' own right-click menu and settings (blank without it).
-    title: "Seedling"
+    // The name in SAO Utils' own right-click menu and settings (blank without it): the code's @name.
+    title: declared.name || "Seedling"
+
+    // The saved code's @name / @setting / @keep (props.js).
+    readonly property var declared: Props.parse(code)
+    // The declarations of what is shown now (the code being saved may not be settings.code yet).
+    property var shownDecl: Props.parse("")
+    // The kept values as last saved (JSON), to see whether they changed.
+    property string keptJson: ""
 
     property Component workbenchComponent: Qt.createComponent("Workbench.qml")
     property var workbench: null
@@ -43,6 +52,7 @@ T.Widget {
 
             created = made.item;
             sandboxShown = made.sandbox;
+            giveValues(source);
         } catch (e) {
             problem = (e.qmlErrors || []).map(function(error) {
                 return "Line " + error.lineNumber + ", column " + error.columnNumber + ": " + error.message;
@@ -54,8 +64,105 @@ T.Widget {
     // The sandbox of what is shown (it goes with it).
     property var sandboxShown: null
 
-    // What is shown goes, with its sandbox.
+    // The settings and kept values given to what was just created (code: its source). Values whose
+    // declaration is gone or changed type are dropped.
+    function giveValues(source) {
+        var decl = Props.parse(source);
+        shownDecl = decl;
+        var given = Props.carry(settings.prop_settings, decl.settings);
+        settings.prop_settings = given;
+        Props.apply(created, decl.settings, given);
+        var kept = Props.carry(settings.prop_keep, decl.keeps);
+        settings.prop_keep = kept;
+        Props.apply(created, decl.keeps, kept);
+        keptJson = JSON.stringify(kept);
+    }
+
+    // Kept values saved when they changed (every 2 s, and before what is shown goes).
+    function saveKept() {
+        if (!created || shownDecl.keeps.length === 0)
+            return ;
+
+        var snap = Props.snapshot(created, shownDecl.keeps);
+        if (snap === null) {
+            if (keptTooLarge === false)
+                console.log("Seedling: kept values are larger than " + Props.MAX_KEEP_BYTES + " bytes, not saved");
+
+            keptTooLarge = true;
+            return ;
+        }
+        keptTooLarge = false;
+        var json = JSON.stringify(snap);
+        if (json !== keptJson) {
+            keptJson = json;
+            settings.prop_keep = snap;
+        }
+    }
+
+    property bool keptTooLarge: false
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: !!widget.created && widget.shownDecl.keeps.length > 0
+        onTriggered: widget.saveKept()
+    }
+
+    // A setting changed (the Settings window, the menu): saved, given to the widget and the preview.
+    function setSetting(name, value) {
+        var decl = shownDecl.settings.filter(function(d) {
+            return d.name === name;
+        })[0];
+        if (!decl)
+            return ;
+
+        var fit = Props.coerce(decl, value);
+        if (!fit.ok)
+            return ;
+
+        var all = JSON.parse(JSON.stringify(settings.prop_settings || {}));
+        all[name] = {
+            "t": decl.type,
+            "v": fit.value
+        };
+        settings.prop_settings = all;
+        if (created)
+            created[name] = fit.value;
+
+        if (workbench && workbench.applySettings)
+            workbench.applySettings();
+
+    }
+
+    // The current value of a setting (the widget's, else the stored one).
+    function settingValue(name) {
+        if (created && created[name] !== undefined)
+            return created[name];
+
+        var stored = settings.prop_settings || {};
+        return stored[name] ? stored[name].v : undefined;
+    }
+
+    // Reset (Settings window): the code's own defaults again.
+    function resetSettings() {
+        settings.prop_settings = {};
+        show(code);
+        if (workbench && workbench.applySettings)
+            workbench.applySettings();
+
+    }
+
+    // Clear Kept Data (Settings window): what the widget remembered goes; it starts from its defaults.
+    function clearKept() {
+        shownDecl = Props.parse("");
+        settings.prop_keep = {};
+        keptJson = "";
+        show(code);
+    }
+
+    // What is shown goes, with its sandbox (its kept values saved first).
     function clearShown() {
+        saveKept();
         if (sandboxShown)
             sandboxShown.destroy();
         else if (created)
@@ -155,13 +262,16 @@ T.Widget {
 
     resizable: !applyingFrameSize
     // The empty card's size; once there is code, the frame takes the code's size (fitFrame).
-    implicitWidth: code ? 20 : 200
-    implicitHeight: code ? 20 : 120
+    implicitWidth: code ? 20 : 250
+    implicitHeight: code ? 20 : 72
     Component.onCompleted: {
         show(code);
         Link.Bench.register(widget);
     }
-    Component.onDestruction: Link.Bench.unregister(widget)
+    Component.onDestruction: {
+        saveKept();
+        Link.Bench.unregister(widget);
+    }
 
     Item {
         id: content
@@ -273,45 +383,260 @@ T.Widget {
 
     }
 
-    // Nothing to show yet, or the code does not run: a small card that opens the workbench.
-    Rectangle {
+    // Nothing to show yet, or the code does not run: a card like the anime's menu items, a round icon
+    // (a seedling, in an SAO orange ring; red when the code does not run) and a slanted name plate.
+    Item {
+        id: card
+
+        readonly property bool failed: !!widget.problem
+        readonly property color accent: failed ? "#C82864" : "#F1AA03"
+
         anchors.fill: parent
         visible: !widget.created
-        radius: 6
-        color: "#E6F4F4F4"
-        border.color: "#D4D4D4"
 
-        Column {
-            anchors.centerIn: parent
-            width: parent.width - 16
-            spacing: 4
+        // The name plate, slanted at its right end, behind the icon.
+        Shape {
+            id: plate
 
-            Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                text: "SEEDLING"
-                font.family: "SAO UI"
-                font.pixelSize: 18
-                color: "#6A6A6A"
+            anchors.verticalCenter: parent.verticalCenter
+            x: icon.width / 2
+            width: parent.width - x - 4
+            height: 46
+            layer.enabled: true
+            layer.samples: 4
+
+            ShapePath {
+                strokeColor: "transparent"
+                fillGradient: LinearGradient {
+                    x1: 0
+                    y1: 0
+                    x2: 0
+                    y2: plate.height
+
+                    GradientStop {
+                        position: 0
+                        color: "#FAFAFA"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#E9E9E9"
+                    }
+
+                }
+
+                startX: 0
+                startY: 0
+
+                PathLine {
+                    x: plate.width
+                    y: 0
+                }
+
+                PathLine {
+                    x: plate.width - 12
+                    y: plate.height
+                }
+
+                PathLine {
+                    x: 0
+                    y: plate.height
+                }
+
             }
 
+        }
+
+        Column {
+            anchors.verticalCenter: plate.verticalCenter
+            x: icon.width + 10
+            width: plate.x + plate.width - x - 16
+            spacing: 1
+
             Text {
                 width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                maximumLineCount: 3
-                elide: Text.ElideRight
-                text: widget.problem ? widget.problem : qsTr("Right-click: Workbench")
+                text: card.failed ? "ERROR" : "SEEDLING"
                 font.family: "SAO UI"
-                font.pixelSize: 13
-                color: widget.problem ? "#D9473B" : "#9A9A9A"
+                font.pixelSize: 18
+                font.letterSpacing: 2
+                color: card.failed ? card.accent : "#555555"
+                elide: Text.ElideRight
+            }
+
+            // One line: the first problem (all of them are in the workbench's Problems).
+            Text {
+                width: parent.width
+                text: card.failed ? widget.problem.split("\n")[0] : qsTr("Right-click: Workbench")
+                font.family: /[　-鿿＀-￯]/.test(text) ? Qt.application.font.family : "SAO UI"
+                font.pixelSize: 11
+                color: card.failed ? card.accent : "#8A8A8A"
+                elide: Text.ElideRight
+                maximumLineCount: 1
+            }
+
+        }
+
+        // The round icon: white with an orange (red) inner ring, a seedling inside.
+        Rectangle {
+            id: icon
+
+            anchors.verticalCenter: parent.verticalCenter
+            x: 4
+            width: 58
+            height: 58
+            radius: width / 2
+            color: "#FFFFFF"
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: 3
+                radius: width / 2
+                color: "#F7F7F7"
+                border.color: card.accent
+                border.width: 2
+            }
+
+            Shape {
+                anchors.centerIn: parent
+                width: 30
+                height: 30
+                layer.enabled: true
+                layer.samples: 4
+
+                // The stem.
+                ShapePath {
+                    strokeColor: card.accent
+                    strokeWidth: 2.4
+                    capStyle: ShapePath.RoundCap
+                    fillColor: "transparent"
+                    startX: 15
+                    startY: 27
+
+                    PathLine {
+                        x: 15
+                        y: 14
+                    }
+
+                }
+
+                // The left leaf.
+                ShapePath {
+                    strokeColor: "transparent"
+                    fillColor: card.accent
+                    startX: 15
+                    startY: 15
+
+                    PathCubic {
+                        x: 6
+                        y: 7
+                        control1X: 15
+                        control1Y: 10
+                        control2X: 11
+                        control2Y: 7
+                    }
+
+                    PathCubic {
+                        x: 15
+                        y: 15
+                        control1X: 6
+                        control1Y: 12
+                        control2X: 10
+                        control2Y: 15
+                    }
+
+                }
+
+                // The right leaf, lighter.
+                ShapePath {
+                    strokeColor: "transparent"
+                    fillColor: card.failed ? "#E06890" : "#F7C24A"
+                    startX: 15
+                    startY: 12
+
+                    PathCubic {
+                        x: 23
+                        y: 5
+                        control1X: 15
+                        control1Y: 8
+                        control2X: 18
+                        control2Y: 5
+                    }
+
+                    PathCubic {
+                        x: 15
+                        y: 12
+                        control1X: 23
+                        control1Y: 9
+                        control2X: 20
+                        control2Y: 12
+                    }
+
+                }
+
             }
 
         }
 
     }
 
+    // The widget's own settings (its @setting declarations), one window at a time.
+    property Component widgetSettingsComponent: Qt.createComponent("WidgetSettings.qml")
+    property var widgetSettingsWindow: null
+
+    function openWidgetSettings() {
+        if (widgetSettingsWindow) {
+            widgetSettingsWindow.requestActivate();
+            return ;
+        }
+        widgetSettingsWindow = widgetSettingsComponent.createObject(widget, {
+            "targetWidget": widget
+        });
+        if (!widgetSettingsWindow) {
+            console.log("Seedling: cannot open the widget's settings:", widgetSettingsComponent.errorString());
+            return ;
+        }
+        widgetSettingsWindow.closing.connect(function() {
+            widgetSettingsWindow = null;
+        });
+    }
+
+    // Switches listed in the menu as well, when there are at most this many.
+    readonly property int menuSwitches: 3
+    readonly property var switchSettings: shownDecl.settings.filter(function(d) {
+        return d.type === "bool";
+    })
+
     menu: Menu {
+        id: widgetMenu
+
+        // The widget's own settings first, when it has some.
+        MenuItem {
+            visible: widget.shownDecl.settings.length > 0
+            height: visible ? implicitHeight : 0
+            text: "Settings..."
+            onTriggered: widget.openWidgetSettings()
+        }
+
+        // Its switches (up to menuSwitches), checked as they are.
+        Instantiator {
+            model: widget.switchSettings.length <= widget.menuSwitches ? widget.switchSettings : []
+            onObjectAdded: widgetMenu.insertItem(index + 1, object)
+            onObjectRemoved: widgetMenu.removeItem(object)
+
+            MenuItem {
+                checkable: true
+                checked: (widget.created, widget.settingValue(modelData.name) === true)
+                text: modelData.label
+                onTriggered: widget.setSetting(modelData.name, checked)
+            }
+
+        }
+
+        MenuSeparator {
+            visible: widget.shownDecl.settings.length > 0
+            height: visible ? implicitHeight : 0
+        }
+
         Action {
             text: "Workbench..."
             onTriggered: widget.openWorkbench()

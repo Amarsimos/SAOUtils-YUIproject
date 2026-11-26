@@ -16,6 +16,12 @@ node tests/test_seedling_safety.js
 
 测试 Seedling 的安全检查（`com.amarsimos.widget.seedling/qml/safety.js`）：每条规则都有"必须拦下"和"必须放行"的样本，包括 S1 的探针和代码审查找到的绕过写法；还检查结衣写代码的提示词和检查规则一致（允许的模块、Qt 函数、提示词里的例子都能通过）。改了 `safety.js` 或结衣的 Seedling 提示词以后都应该跑一遍。
 
+```
+node tests/test_seedling_props.js
+```
+
+测试 Seedling 挂件自己的设置和记忆（`com.amarsimos.widget.seedling/qml/props.js`）：`@name` / `@setting` / `@keep` 的解析（只认根元素最外层、宽松的写法、不生效时说明原因、数量上限）、值的类型转换（范围、选项、颜色、JSON）、改代码后保留哪些值、64 KB 上限，以及结衣提示词第 14 条和解析器一致。
+
 ## 部署前检查
 
 ```
@@ -28,7 +34,7 @@ node tests/check_deploy.js
 - Qt 5.13（SAO Utils 用的版本）没有的东西：更新版本的 import、`WheelHandler`、`??`、`?.`；
 - 同步的 XMLHttpRequest（`open(..., false)` 会卡死 SAO Utils）。读取本地文件可以同步，在那一行末尾写 `// sync-ok`；
 - 和上次提交相比删掉了、但还在被调用（`name(` 或 `.name`）的函数和属性，包括整个被删掉的文件；
-- 上面两套单元测试。
+- 上面三套单元测试。
 
 ## 模型测试（需要本地 Ollama）
 

@@ -2518,7 +2518,8 @@ function seedlingCodePrompt(allowNetwork, editing) {
         "10. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
         editing ? "11. 修改时按下面的「修改方式」只输出改动。" : "11. 输出完整的代码。",
         "12. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
-        "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
+        "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。",
+        "14. 挂件自己的设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。再写一行 // @name 挂件名。这类属性不要叫 source 或 url。用户会在挂件的右键 Settings... 里调这些设置，记住的东西由 Seedling 自动保存。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
 // How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's

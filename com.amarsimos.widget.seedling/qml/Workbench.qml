@@ -9,6 +9,7 @@ import QtQuick.Window 2.12
 import "safety.js" as Safety
 import "link" 1.0 as Link
 import "sandbox.js" as Sandbox
+import "props.js" as Props
 
 // The Seedling workbench, drawn as SAO_UI-Window (the original's message window; colors measured from
 // it): a title band (#E4E4E4 to #F9F9F9), a grey band (#D8D8D8, shaded at its top and bottom) with
@@ -344,16 +345,38 @@ NVG.View {
     readonly property string askOnlineText: qsTr("This widget needs to go online.\nLet it go online?")
     readonly property string askSaveOnlineText: qsTr("This widget goes online, and Network is off.\nAllow it to go online and save?")
 
+    // The last render's @setting / @keep declarations that do not take effect (props.js notes).
+    property var declNotes: []
+
+    // The widget's settings changed (its Settings window): given to the preview too.
+    function applySettings() {
+        if (!preview)
+            return ;
+
+        var decl = Props.parse(editor.text);
+        Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
+    }
+
+    // What to do with an empty workbench: write code (Code Editor on), else ask Yui (or turn the Code
+    // Editor on when she is not there): without the Code Editor there is nothing to write in.
+    function emptyHint() {
+        if (showCode)
+            return qsTr("Write QML on the left, or pick one of the Examples.");
+
+        return Link.Bench.writer ? qsTr("Tell Yui in her chat what widget you want; she writes it here.") : qsTr("To write the code yourself, turn on Advanced, then Code Editor in Seedling Settings.");
+    }
+
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
         clearPreview();
+        declNotes = [];
         var code = editor.text;
         if (code.trim() === "") {
             errorLines = [];
             problemList = [];
             showProblems = false;
             result = "ok";
-            status = qsTr("Write QML on the left, or pick one of the Examples.");
+            status = emptyHint();
             return false;
         }
         var problems = Safety.check(code, settings.allow_network === true);
@@ -382,10 +405,21 @@ NVG.View {
             preview = made.item;
             previewSandbox = made.sandbox;
             errorLines = [];
-            problemList = [];
             showProblems = false;
             result = "ok";
-            status = qsTr("Rendered, %1 × %2 · safety check passed").arg(Math.round(preview.width)).arg(Math.round(preview.height));
+            // @setting / @keep (props.js): the widget's settings given to the preview (kept values are
+            // not: the preview starts from the defaults); declarations that do not take effect are
+            // listed in Problems as notes (they do not stop it).
+            var decl = Props.parse(code);
+            Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
+            declNotes = decl.notes;
+            problemList = decl.notes.map(function(n) {
+                return {
+                    "line": n.line,
+                    "text": qsTr("Line %1: %2").arg(n.line).arg(n.message)
+                };
+            });
+            status = qsTr("Rendered, %1 × %2 · safety check passed").arg(Math.round(preview.width)).arg(Math.round(preview.height)) + (decl.notes.length ? qsTr(" · %1 declaration(s) not used").arg(decl.notes.length) : "");
             return true;
         } catch (e) {
             errorLines = (e.qmlErrors || []).map(function(error) {
@@ -606,7 +640,11 @@ NVG.View {
                     "width": preview ? Math.round(preview.width) : 0,
                     "height": preview ? Math.round(preview.height) : 0,
                     // Asked whether it may go online, and the user said no.
-                    "networkDeclined": declined
+                    "networkDeclined": declined,
+                    // @setting / @keep declarations that do not take effect ("Line n: why").
+                    "notes": ok ? declNotes.map(function(n) {
+                        return "Line " + n.line + ": " + n.message;
+                    }) : []
                 });
 
         };
