@@ -33,7 +33,8 @@ T.Widget {
     function readFile(url) {
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", url, false);
+            // "?t=": not the copy read before (it read back an old "0" right after writing "1").
+            request.open("GET", url + "?t=" + Date.now(), false);
             request.send(null);
             return String(request.responseText || "").trim();
         } catch (e) {
