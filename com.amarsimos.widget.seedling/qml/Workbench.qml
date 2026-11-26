@@ -310,15 +310,18 @@ NVG.View {
     // safety check (the probes are meant to run). The sandbox goes with the preview.
     property var previewSandbox: null
 
-    function previewSandboxed(code) {
-        if (preview) {
-            preview.destroy();
-            preview = null;
-        }
-        if (previewSandbox) {
+    // The preview goes, with its sandbox.
+    function clearPreview() {
+        if (previewSandbox)
             previewSandbox.destroy();
-            previewSandbox = null;
-        }
+        else if (preview)
+            preview.destroy();
+        preview = null;
+        previewSandbox = null;
+    }
+
+    function previewSandboxed(code) {
+        clearPreview();
         showVersions = false;
         showProblems = false;
         try {
@@ -340,14 +343,7 @@ NVG.View {
 
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
-        if (preview) {
-            preview.destroy();
-            preview = null;
-        }
-        if (previewSandbox) {
-            previewSandbox.destroy();
-            previewSandbox = null;
-        }
+        clearPreview();
         var code = editor.text;
         if (code.trim() === "") {
             errorLines = [];
@@ -375,7 +371,13 @@ NVG.View {
             return false;
         }
         try {
-            preview = Qt.createQmlObject(code, previewStage, "Seedling");
+            // In the sandbox (sandbox.js): the code cannot see this file's names (S1, P1).
+            var made = Sandbox.create(code, previewStage, Qt.resolvedUrl("Sandbox.qml"), "Seedling");
+            if (made.error)
+                throw new Error(made.error);
+
+            preview = made.item;
+            previewSandbox = made.sandbox;
             errorLines = [];
             problemList = [];
             showProblems = false;
@@ -467,10 +469,7 @@ NVG.View {
         renderTimer.stop();
         result = "ok";
         if (!keep) {
-            if (preview) {
-                preview.destroy();
-                preview = null;
-            }
+            clearPreview();
             loadingExternal = true;
             editor.text = "";
             loadingExternal = false;
@@ -701,8 +700,7 @@ NVG.View {
 
         ScriptAction {
             script: {
-                if (bench.preview)
-                    bench.preview.destroy();
+                bench.clearPreview();
 
                 bench.visible = false;
                 bench.dismissed();

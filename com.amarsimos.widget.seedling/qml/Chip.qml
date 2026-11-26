@@ -53,9 +53,9 @@ Item {
         hovered: chip.lit
         pressed: area.pressed
         defaultIcon {
-            normal: chip.iconBase + ".png"
-            hovered: chip.iconBase + "-hovered.png"
-            pressed: chip.iconBase + "-hovered.png"
+            normal: chip.icon ? chip.iconBase + ".png" : ""
+            hovered: chip.icon ? chip.iconBase + "-hovered.png" : ""
+            pressed: chip.icon ? chip.iconBase + "-hovered.png" : ""
         }
     }
 

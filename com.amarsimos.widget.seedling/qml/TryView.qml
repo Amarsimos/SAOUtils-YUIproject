@@ -1,5 +1,6 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
+import "sandbox.js" as Sandbox
 
 // "Try on Desktop": the code in a desktop view of its own, until it is closed or SAO Utils exits. A thin
 // bar appears at its top while hovered: drag it to move the view, ✕ closes it.
@@ -16,7 +17,9 @@ NVG.View {
     visible: true
     Component.onCompleted: {
         try {
-            created = Qt.createQmlObject(code, body, "SeedlingTry");
+            // In the sandbox (sandbox.js), as the preview and the widget.
+            var made = Sandbox.create(code, body, Qt.resolvedUrl("Sandbox.qml"), "SeedlingTry");
+            created = made.item || null;
         } catch (e) {
             console.log("Seedling try failed:", e);
         }

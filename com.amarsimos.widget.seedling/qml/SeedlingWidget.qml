@@ -22,10 +22,7 @@ T.Widget {
 
     // Renders code into this widget; returns "" or what went wrong.
     function show(source) {
-        if (created) {
-            created.destroy();
-            created = null;
-        }
+        clearShown();
         problem = "";
         if (!source)
             return "";
@@ -36,7 +33,13 @@ T.Widget {
             return problem;
         }
         try {
-            created = Qt.createQmlObject(source, content, "Seedling");
+            // In the sandbox (sandbox.js): the code cannot see this file's names (S1, P1).
+            var made = Sandbox.create(source, content, Qt.resolvedUrl("Sandbox.qml"), "Seedling");
+            if (made.error)
+                throw new Error(made.error);
+
+            created = made.item;
+            sandboxShown = made.sandbox;
         } catch (e) {
             problem = (e.qmlErrors || []).map(function(error) {
                 return "Line " + error.lineNumber + ", column " + error.columnNumber + ": " + error.message;
@@ -49,15 +52,18 @@ T.Widget {
     // and not checked (the probes are meant to run).
     property var sandboxShown: null
 
-    function showSandboxed(source) {
-        if (created) {
-            created.destroy();
-            created = null;
-        }
-        if (sandboxShown) {
+    // What is shown goes, with its sandbox.
+    function clearShown() {
+        if (sandboxShown)
             sandboxShown.destroy();
-            sandboxShown = null;
-        }
+        else if (created)
+            created.destroy();
+        created = null;
+        sandboxShown = null;
+    }
+
+    function showSandboxed(source) {
+        clearShown();
         problem = "";
         try {
             var made = Sandbox.create(source, content, Qt.resolvedUrl("Sandbox.qml"), "SeedlingSandbox");
