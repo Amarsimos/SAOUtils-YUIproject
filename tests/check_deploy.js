@@ -96,20 +96,34 @@ function namesIn(text) {
     return names;
 }
 let allCode = "";
-for (const file of files)
-    allCode += codeOnly(fs.readFileSync(file, "utf8")) + "\n";
+const definedNow = new Set();
 for (const file of files) {
-    const rel = path.relative(root, file).replace(/\\/g, "/");
+    const text = fs.readFileSync(file, "utf8");
+    allCode += codeOnly(text) + "\n";
+    namesIn(text).forEach((n) => definedNow.add(n));
+}
+// Files deleted since the last commit count too (their names may still be called elsewhere).
+let deleted = [];
+try {
+    deleted = execFileSync("git", ["diff", "--name-only", "--diff-filter=D", "HEAD", "--"].concat(packages), { cwd: root, encoding: "utf8" }).split("\n").filter((f) => /\.(qml|js)$/.test(f));
+} catch (e) {
+    deleted = [];
+}
+const compared = files.map((file) => path.relative(root, file).replace(/\\/g, "/")).concat(deleted);
+// Used: called (name(...), not its own definition) or reached as a member (x.name).
+const usedIn = (name, code) => new RegExp("(^|[^\\w.])(?<!function\\s+)" + name + "\\s*\\(|\\." + name + "\\b").test(code);
+for (const rel of compared) {
     let before;
     try {
         before = execFileSync("git", ["show", "HEAD:" + rel], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     } catch (e) {
         continue; // new file
     }
-    const now = namesIn(fs.readFileSync(file, "utf8"));
-    const gone = [...namesIn(before)].filter((n) => !now.has(n));
+    const now = fs.existsSync(path.join(root, rel)) ? namesIn(fs.readFileSync(path.join(root, rel), "utf8")) : new Set();
+    // Gone from this file and not defined anywhere else now (moved names are fine).
+    const gone = [...namesIn(before)].filter((n) => !now.has(n) && !definedNow.has(n));
     for (const name of gone) {
-        const used = new RegExp("\\b" + name + "\\b").test(allCode);
+        const used = usedIn(name, allCode);
         if (used)
             errors.push(rel + ": " + name + " was removed since the last commit but is still used");
         else
