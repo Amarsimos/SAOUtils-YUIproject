@@ -35,6 +35,13 @@ NVG.View {
     property real reveal: 0
     property real contentOpacity: 0
 
+    // Yui is writing (Bench.beginWriting ... endWriting): the code streams into the read-only editor,
+    // phase says the step, an orange strip breathes under the title band and Stop ends it.
+    property bool writing: false
+    property string phase: ""
+    property double writingSince: 0
+    property int writingSeconds: 0
+
     // The close animation has finished and the view is gone.
     signal dismissed()
 
@@ -142,6 +149,49 @@ NVG.View {
             result = "error";
             status = refused;
         }
+    }
+
+    function beginWriting(title) {
+        showVersions = false;
+        writing = true;
+        writingSince = Date.now();
+        writingSeconds = 0;
+        renderTimer.stop();
+        if (preview) {
+            preview.destroy();
+            preview = null;
+        }
+        editor.text = "";
+        result = "ok";
+        setPhase(qsTr("Yui is writing it..."));
+        requestActivate();
+    }
+
+    // The code written so far (not rendered: half a widget does not compile).
+    function streamCode(code) {
+        if (!writing)
+            return ;
+
+        editor.text = code;
+        editor.cursorPosition = editor.length;
+    }
+
+    function setPhase(text) {
+        phase = text;
+        status = text;
+    }
+
+    // ok: the widget is shown; message: what to say otherwise (kept on the status line).
+    function endWriting(ok, message) {
+        if (!writing)
+            return ;
+
+        writing = false;
+        if (!ok) {
+            result = "error";
+            status = message;
+        }
+        NVG.SystemCall.playSound(ok ? NVG.SFX.ProgramReady : NVG.SFX.NotifyWarning);
     }
 
     // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
@@ -324,6 +374,36 @@ NVG.View {
                 color: bench.ink
             }
 
+            // While Yui writes: a thin SAO orange strip at the title band's foot, breathing (as the chat's).
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 3
+                color: "#F1AA03"
+                visible: bench.writing
+
+                SequentialAnimation on opacity {
+                    running: bench.writing
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        from: 0.25
+                        to: 1
+                        duration: 700
+                        easing.type: Easing.InOutSine
+                    }
+
+                    NumberAnimation {
+                        from: 1
+                        to: 0.25
+                        duration: 700
+                        easing.type: Easing.InOutSine
+                    }
+
+                }
+
+            }
+
             // Drag to move: by the cursor's distance from the grabbed point, in the window's own
             // coordinates (right with display scaling and several screens).
             MouseArea {
@@ -429,6 +509,13 @@ NVG.View {
                     }
 
                     Chip {
+                        text: "Stop"
+                        visible: bench.writing
+                        onClicked: Link.Bench.stop()
+                    }
+
+                    Chip {
+                        visible: !bench.writing
                         text: "Generate"
                         enabled: requestField.enabled && requestField.text.trim() !== ""
                         onClicked: bench.generate()
@@ -515,9 +602,12 @@ NVG.View {
                                 font.pixelSize: 12
                                 color: "#3A3A3A"
                                 text: bench.settings.draft !== undefined ? bench.settings.draft : (bench.settings.code || "")
+                                readOnly: bench.writing
                                 onTextChanged: {
                                     bench.settings.draft = text;
-                                    renderTimer.restart();
+                                    if (!bench.writing)
+                                        renderTimer.restart();
+
                                 }
 
                                 background: Rectangle {
@@ -637,7 +727,7 @@ NVG.View {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: bench.status
+                    text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
                     font.pixelSize: 14
                     color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
                     style: bench.result === "ok" ? Text.Raised : Text.Normal
@@ -699,6 +789,13 @@ NVG.View {
             color: "#C8C8C8"
         }
 
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: bench.writing
+        onTriggered: bench.writingSeconds = Math.round((Date.now() - bench.writingSince) / 1000)
     }
 
     Timer {

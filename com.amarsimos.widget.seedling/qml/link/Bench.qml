@@ -26,6 +26,48 @@ QtObject {
         return widgets.length > 0 && widgets[widgets.length - 1].settings.allow_network === true;
     }
 
+    // The workbench Yui writes into (beginWriting), or null.
+    property var writingBench: null
+
+    // Opens the workbench of the last widget in its writing state; returns it, or null.
+    function beginWriting(title) {
+        if (widgets.length === 0)
+            return null;
+
+        var bench = widgets[widgets.length - 1].openWorkbench();
+        if (bench)
+            bench.beginWriting(String(title || ""));
+
+        writingBench = bench;
+        return bench;
+    }
+
+    function streamCode(code) {
+        if (writingBench)
+            writingBench.streamCode(code);
+
+    }
+
+    function setPhase(text) {
+        if (writingBench)
+            writingBench.setPhase(text);
+
+    }
+
+    function endWriting(ok, message) {
+        if (writingBench)
+            writingBench.endWriting(ok, message);
+
+        writingBench = null;
+    }
+
+    // Stop (the workbench): the writer ends its request; what was written stays.
+    function stop() {
+        if (writer && writer.seedlingStop)
+            writer.seedlingStop();
+
+    }
+
     // The workbench's Generate: has the writer write request; "" or why not.
     function generate(request, onDone) {
         if (!writer)
