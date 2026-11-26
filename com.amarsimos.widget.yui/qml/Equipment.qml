@@ -120,6 +120,11 @@ NVG.Window {
                 "defaultValue": targetWidget.defaultValues.crystal_size
             },
             {
+                "key": "crystal_spin",
+                "preference": crystalSpinPreference,
+                "defaultValue": targetWidget.defaultValues.crystal_spin
+            },
+            {
                 "key": "pixie_image_path",
                 "preference": pixieImagePreference,
                 "defaultValue": targetWidget.defaultValues.pixie_image_path
