@@ -49,8 +49,12 @@ QtObject {
     // never written to a widget's settings or to the log.
     property var database: null
     property var cache: ({})
-    // Changes with every setSetting, for bindings.
+    // Changes with every setSetting, for bindings; settingChanged(key) says which.
     property int settingsRevision: 0
+    signal settingChanged(string key)
+
+    // Opened (and the old keys moved) at once, so reading a setting in a binding never writes one.
+    Component.onCompleted: openDatabase()
 
     function openDatabase() {
         if (database)
@@ -98,6 +102,7 @@ QtObject {
         all[key] = value;
         cache = all;
         settingsRevision++;
+        settingChanged(key);
         if (!database)
             return ;
 

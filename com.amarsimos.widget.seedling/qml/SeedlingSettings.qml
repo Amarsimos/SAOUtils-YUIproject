@@ -23,14 +23,28 @@ NVG.Window {
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
     // Seedling's own Link settings are used (and shown): no MHCP-YUI, or she is not set up yet.
-    readonly property bool ownConnection: (Link.Bench.settingsRevision, yuiRevision, Link.Bench.yui, Link.Bench.connectionKind() === "own")
+    readonly property bool ownConnection: (linkRevision, yuiRevision, Link.Bench.yui, Link.Bench.connectionKind() === "own")
+    // Which settings changed (Bench.settingChanged), so each binding follows only its own: the
+    // connection, the scanned lists (a single revision for all made binding loops).
+    property int linkRevision: 0
+    property int scannedRevision: 0
+
+    Connections {
+        target: Link.Bench
+        onSettingChanged: {
+            if (key === "scanned_models")
+                settingsWindow.scannedRevision++;
+            else if (["provider", "endpoint", "api_key", "custom_model"].indexOf(key) !== -1)
+                settingsWindow.linkRevision++;
+        }
+    }
     // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
     // read again after Scan Cores / Restore Registry.
     property int yuiRevision: 0
     readonly property var yuiModels: (yuiRevision, Link.Bench.yui && Link.Bench.yui.seedlingModels ? Link.Bench.yui.seedlingModels() : null)
     // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
     // Restore Registry.
-    readonly property var scanned: (Link.Bench.settingsRevision, Link.Bench.setting("scanned_models", {}))
+    readonly property var scanned: (scannedRevision, Link.Bench.setting("scanned_models", {}))
     property bool scanning: false
     property string scanStatus: ""
 
@@ -461,7 +475,9 @@ NVG.Window {
                             }
                             // Another list (scanned, restored, another server): the core chosen stays
                             // when it is in it.
-                            onModelsChanged: {
+                            onModelsChanged: Qt.callLater(followModels)
+
+                            function followModels() {
                                 if (!ready)
                                     return ;
 
