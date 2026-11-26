@@ -3957,18 +3957,22 @@ T.Widget {
         if (seedlingJob)
             return onDone("结衣还在写上一个挂件，等一下哦", false);
 
+        // Code there already: changed with SEARCH / REPLACE edits; else written whole.
+        var current = bench.currentCode();
+        var editing = current.trim() !== "";
         var config = Object.assign({}, activeConfig());
         var model = String(widget.settings.seedling_model || "").trim();
         if (model)
             config.model = model;
 
-        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork());
+        config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork(), editing);
         config.noTools = true;
         // Room for a whole widget (thinking models count their thinking too).
         config.maxTokens = Math.max(16384, maxTokens);
         var state = {
-            "stage": "writing",
+            "stage": editing ? "editing" : "writing",
             "lines": 0,
+            "edits": 0,
             "seconds": 0,
             "attempt": 0,
             "problem": ""
@@ -3979,6 +3983,8 @@ T.Widget {
             "handle": null,
             "stopped": false
         };
+        // The last way out was taken: the whole code asked for once after the edits did not fit.
+        var wholeTaken = false;
         var progress = function() {
             state.seconds = Math.round((Date.now() - started) / 1000);
             if (onProgress)
@@ -3993,62 +3999,94 @@ T.Widget {
             diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
             onDone(message, ok);
         };
-        ticker.triggered.connect(progress);
-        ticker.start();
-        seedlingJob = job;
-        bench.beginWriting(request);
-        progress();
-        var ask = function(code, problem) {
+        var ask;
+        // Asks again with what went wrong (twice at most); when editing, after that once more for the
+        // whole code.
+        var retry = function(problem, code, whole) {
+            if (state.attempt >= 2) {
+                if (editing && !whole && !wholeTaken) {
+                    wholeTaken = true;
+                    state.stage = "writing";
+                    state.lines = 0;
+                    bench.setPhase(qsTr("The edits did not fit: Yui is writing the whole code..."));
+                    progress();
+                    return ask(code, problem, true);
+                }
+                return finish("改了几次还是不行：" + String(problem).split("\n")[0], false);
+            }
+            state.attempt++;
+            state.stage = "fixing";
+            state.problem = String(problem).split("\n")[0];
+            state.lines = 0;
+            state.edits = 0;
+            bench.setPhase(qsTr("Yui is fixing it (%1 / 2): %2").arg(state.attempt).arg(state.problem));
+            progress();
+            ask(code, problem, whole);
+        };
+        var show = function(code, changes, whole) {
+            state.stage = "checking";
+            bench.setPhase(qsTr("Checking and rendering..."));
+            progress();
+            var refused = bench.preview(code, request, function(result) {
+                diag("seedling: " + result.result + " " + result.status);
+                if (result.ok)
+                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true);
+
+                retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
+            }, changes);
+            if (refused)
+                finish(refused, false);
+
+        };
+        ask = function(code, problem, whole) {
+            var edits = editing && !whole;
             job.handle = requestCompletion([{
                 "role": "user",
-                "content": Yui.seedlingCodeRequest(request, code, problem)
+                "content": Yui.seedlingCodeRequest(request, code, problem, editing && whole)
             }], function(text, isError) {
                 if (job.stopped)
-                    return finish("已停止，写到一半的代码留在工作台里", false);
+                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false);
 
                 if (isError)
                     return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
 
-                // Cut off (too long for the limit): asked again for a shorter one, as a failed check.
-                if (Yui.seedlingCodeCut(text)) {
-                    if (state.attempt >= 2)
-                        return finish("代码太长，写到一半被截断了；换个简单点的说法再试试吧", false);
+                var blocks = edits ? Yui.seedlingEdits(text) : [];
+                if (blocks.length > 0) {
+                    var applied = Yui.seedlingApplyEdits(code, blocks);
+                    diag("seedling: " + blocks.length + " edit(s), " + (applied.ok ? "applied" : applied.failed.length + " did not fit"));
+                    if (!applied.ok)
+                        return retry(Yui.seedlingEditProblem(applied.failed), code, false);
 
-                    state.attempt++;
-                    state.stage = "fixing";
-                    state.problem = "代码太长被截断了";
-                    state.lines = 0;
-                    bench.setPhase(qsTr("Too long, cut off: Yui is writing a shorter one (%1 / 2)").arg(state.attempt));
-                    progress();
-                    return ask(code, "上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。");
+                    return show(applied.code, {
+                        "lines": applied.changed,
+                        "added": applied.added,
+                        "removed": applied.removed,
+                        "count": blocks.length
+                    }, false);
                 }
+                // Cut off (too long for the limit): asked again for a shorter one.
+                if (Yui.seedlingCodeCut(text))
+                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。", code, true);
+
                 var qml = Yui.seedlingCodeFrom(text);
-                if (!qml)
+                if (!qml) {
+                    if (edits)
+                        return retry("没有找到 SEARCH/REPLACE 块。请按格式输出要改的地方。", code, false);
+
                     return finish("模型没有给出代码", false);
-
-                state.stage = "checking";
-                bench.setPhase(qsTr("Checking and rendering..."));
-                progress();
-                var refused = bench.preview(qml, request, function(result) {
-                    diag("seedling: " + result.result + " " + result.status);
-                    if (result.ok)
-                        return finish("完成 · " + result.width + " × " + result.height + "，满意就点 ○ 保存", true);
-
-                    if (state.attempt >= 2)
-                        return finish("改了两次还是不行：" + result.status, false);
-
-                    state.attempt++;
-                    state.stage = "fixing";
-                    state.problem = result.status;
-                    state.lines = 0;
-                    bench.setPhase(qsTr("Yui is fixing it (%1 / 2): %2").arg(state.attempt).arg(result.status));
-                    progress();
-                    ask(qml, result.status);
-                });
-                if (refused)
-                    finish(refused, false);
-
+                }
+                show(qml, null, true);
             }, config, function(soFar) {
+                var count = edits ? Yui.seedlingEditCount(soFar) : 0;
+                if (count > 0) {
+                    if (count !== state.edits) {
+                        state.edits = count;
+                        bench.setPhase(qsTr("Yui is changing it · %1 place(s)").arg(count));
+                        progress();
+                    }
+                    return ;
+                }
+                // Written whole (also when she chose to while editing): streamed into the editor.
                 var partial = Yui.seedlingPartialCode(soFar);
                 if (!partial)
                     return ;
@@ -4057,11 +4095,17 @@ T.Widget {
                 var lines = partial.split("\n").length;
                 if (lines !== state.lines) {
                     state.lines = lines;
+                    state.stage = state.stage === "editing" ? "writing" : state.stage;
                     progress();
                 }
             });
         };
-        ask(bench.currentCode(), "");
+        ticker.triggered.connect(progress);
+        ticker.start();
+        seedlingJob = job;
+        bench.beginWriting(request, editing);
+        progress();
+        ask(current, "", false);
     }
 
     // No Seedling widget on the desktop (no ground for the seed to grow in): Yui says so in her own

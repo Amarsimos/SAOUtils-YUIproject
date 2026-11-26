@@ -2559,9 +2559,11 @@ function systemCall(text, title, loads) {
 // compile or the safety check refuses it, asks again with the error (twice at most).
 var SEEDLING_INSTRUCTION = "- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。";
 
-// The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on.
-function seedlingCodePrompt(allowNetwork) {
-    return ["你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
+// The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on;
+// editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
+// do) instead of being written out again.
+function seedlingCodePrompt(allowNetwork, editing) {
+    return [editing ? "你是一个只写 QML 的程序，负责修改一个 SAO Utils 桌面小挂件的代码。" : "你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
         "规则：",
         "1. 只能 import 这些模块：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12、QtQuick.Window 2.12；不能 import 文件、文件夹或其他模块。",
         "2. 不能用 NVG / NERvGear、SystemCall、Qt.openUrlExternally、Qt.createQmlObject、Qt.createComponent、Loader 的 source、eval、LocalStorage，不能读写本地文件（file:）。",
@@ -2569,19 +2571,38 @@ function seedlingCodePrompt(allowNetwork) {
         "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
         "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
         "6. 修改已有代码时，输出改好后的完整代码。",
-        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。"].join("\n");
+        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
+// How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's
+// old_string / new_string, the SEARCH text must be found exactly once).
+var SEEDLING_EDIT_RULES = ["",
+    "修改方式：用 SEARCH/REPLACE 块只输出改动，不要输出完整代码。格式：",
+    "<<<<<<< SEARCH",
+    "（从现有代码里一字不差复制的几行，包括缩进）",
+    "=======",
+    "（换成的内容；要删除就留空）",
+    ">>>>>>> REPLACE",
+    "规则：",
+    "- SEARCH 必须和现有代码完全一致（包括空格和缩进），只包含要改的行，加上前后一两行上下文，保证它在代码里只出现一次。",
+    "- 要改多处就写多个块，按代码从上到下的顺序。",
+    "- 只输出这些块，不要解释，不要输出完整代码。",
+    "- 只有改动超过一半时，才改为输出一个完整的 ```qml 代码块。"];
+
 // The user message of that request: what is wanted, the code so far (when changing it) and, when
-// asked again, what went wrong.
-function seedlingCodeRequest(request, currentCode, problem) {
+// asked again, what went wrong. whole: the complete code is asked for (the last way out when the
+// edits do not fit).
+function seedlingCodeRequest(request, currentCode, problem, whole) {
     var parts = [];
     if (currentCode)
         parts.push("现在的代码：\n```qml\n" + currentCode + "\n```");
 
     parts.push((currentCode ? "要修改的地方：" : "要做的挂件：") + request);
     if (problem)
-        parts.push("上面这段代码没有通过：" + problem + "\n请改正后输出完整代码。");
+        parts.push(problem);
+
+    if (whole)
+        parts.push("这一次请不要用 SEARCH/REPLACE，直接输出改好后的完整代码（一个 ```qml 代码块）。");
 
     return parts.join("\n\n");
 }
@@ -2622,6 +2643,9 @@ function seedlingNoteLine(state) {
     if (state.stage === "checking")
         return head + "检查、渲染中… · " + state.seconds + " 秒";
 
+    if (state.stage === "editing")
+        return head + (state.edits > 0 ? "结衣正在改 · " + state.edits + " 处" : "结衣在看要改哪里…") + " · " + state.seconds + " 秒";
+
     if (state.stage === "waiting")
         return "🌱 ⏳ 在挂件库里找到「Seedling」，拖到桌面上，结衣就接着写";
 
@@ -2632,4 +2656,172 @@ function seedlingNoteLine(state) {
 function seedlingCodeCut(text) {
     var value = cleanReply(text);
     return /```(?:qml|QML|javascript|js)?[ \t]*\n/.test(value) && !/```(?:qml|QML|javascript|js)?[ \t]*\n[\s\S]*?```/.test(value);
+}
+
+// ---- SEARCH / REPLACE edits (Seedling)
+// The blocks in a reply: [{search, replace}], in order ([] when there are none).
+function seedlingEdits(text) {
+    var value = cleanReply(text).replace(/\r\n/g, "\n");
+    var re = /<{5,9} ?SEARCH[^\n]*\n([\s\S]*?)\n?={5,9}[ \t]*\n([\s\S]*?)\n?>{5,9} ?REPLACE/g;
+    var blocks = [];
+    var m;
+    while ((m = re.exec(value)) !== null)
+        blocks.push({
+        "search": m[1],
+        "replace": m[2]
+    });
+    return blocks;
+}
+
+// How many SEARCH blocks a reply still streaming in has begun.
+function seedlingEditCount(text) {
+    var found = String(text || "").match(/<{5,9} ?SEARCH/g);
+    return found ? found.length : 0;
+}
+
+function seedlingTrimLines(lines) {
+    return lines.map(function(line) {
+        return line.trim();
+    });
+}
+
+// Where the search lines are in the code lines (trimmed, so indentation and trailing spaces do not
+// count): the start indexes of every match.
+function seedlingLooseMatches(codeLines, searchLines) {
+    var want = seedlingTrimLines(searchLines);
+    var have = seedlingTrimLines(codeLines);
+    var starts = [];
+    for (var i = 0; i + want.length <= have.length; i++) {
+        var same = true;
+        for (var j = 0; j < want.length && same; j++)
+            same = have[i + j] === want[j];
+        if (same)
+            starts.push(i);
+    }
+    return starts;
+}
+
+// The lines of the code most like the search (for telling the model what it missed).
+function seedlingNearest(codeLines, searchLines) {
+    var want = seedlingTrimLines(searchLines);
+    var have = seedlingTrimLines(codeLines);
+    var best = -1;
+    var bestScore = 0;
+    for (var i = 0; i + want.length <= have.length; i++) {
+        var score = 0;
+        for (var j = 0; j < want.length; j++)
+            if (want[j] && have[i + j] === want[j])
+                score++;
+        if (score > bestScore) {
+            bestScore = score;
+            best = i;
+        }
+    }
+    return best < 0 ? "" : codeLines.slice(best, best + want.length).join("\n");
+}
+
+// Applies the blocks to code, all or nothing (as Aider: exactly first, then ignoring indentation and
+// trailing spaces, the replacement indented as the code found; found more than once does not count).
+// Returns {ok, code, failed: [{index (1-based), reason "missing" | "many", nearest}], changed:
+// [0-based line numbers changed or added in the new code], added, removed}.
+function seedlingApplyEdits(code, blocks) {
+    var original = String(code || "").replace(/\r\n/g, "\n");
+    var text = original;
+    var failed = [];
+    for (var b = 0; b < blocks.length; b++) {
+        var search = blocks[b].search;
+        var replace = blocks[b].replace;
+        if (!search.trim()) {
+            failed.push({ "index": b + 1, "reason": "missing", "nearest": "" });
+            continue;
+        }
+        var first = text.indexOf(search);
+        if (first !== -1 && text.indexOf(search, first + 1) === -1) {
+            // An empty replacement takes its line break with it (no blank line left behind).
+            var length = search.length + (replace === "" && text.charAt(first + search.length) === "\n" ? 1 : 0);
+            text = text.slice(0, first) + replace + text.slice(first + length);
+            continue;
+        }
+        if (first !== -1) {
+            failed.push({ "index": b + 1, "reason": "many", "nearest": "" });
+            continue;
+        }
+        var lines = text.split("\n");
+        var searchLines = search.split("\n");
+        while (searchLines.length > 1 && !searchLines[searchLines.length - 1].trim())
+            searchLines.pop();
+        var starts = seedlingLooseMatches(lines, searchLines);
+        if (starts.length !== 1) {
+            failed.push({ "index": b + 1, "reason": starts.length > 1 ? "many" : "missing", "nearest": starts.length > 1 ? "" : seedlingNearest(lines, searchLines) });
+            continue;
+        }
+        // Re-indented by the difference between the code's indentation and the search's.
+        var start = starts[0];
+        var codeIndent = /^\s*/.exec(lines[start])[0];
+        var searchIndent = /^\s*/.exec(searchLines[0])[0];
+        var replaceLines = replace === "" ? [] : replace.split("\n").map(function(line) {
+            if (!line.trim())
+                return line;
+
+            if (line.indexOf(searchIndent) === 0)
+                return codeIndent + line.slice(searchIndent.length);
+
+            return codeIndent + line.replace(/^\s*/, "");
+        });
+        lines.splice.apply(lines, [start, searchLines.length].concat(replaceLines));
+        text = lines.join("\n");
+    }
+    if (failed.length > 0)
+        return { "ok": false, "code": original, "failed": failed, "changed": [], "added": 0, "removed": 0 };
+
+    var diff = seedlingLineDiff(original.split("\n"), text.split("\n"));
+    return { "ok": true, "code": text, "failed": [], "changed": diff.changed, "added": diff.added, "removed": diff.removed };
+}
+
+// Lines of after not in the longest common subsequence with before: changed or added (0-based), and
+// how many lines were added and removed.
+function seedlingLineDiff(before, after) {
+    var n = before.length;
+    var m = after.length;
+    var table = [];
+    for (var i = 0; i <= n; i++) {
+        table.push(new Array(m + 1));
+        for (var j = 0; j <= m; j++)
+            table[i][j] = 0;
+    }
+    for (i = n - 1; i >= 0; i--)
+        for (j = m - 1; j >= 0; j--)
+            table[i][j] = before[i] === after[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
+    var kept = [];
+    i = 0;
+    j = 0;
+    while (i < n && j < m) {
+        if (before[i] === after[j]) {
+            kept.push(j);
+            i++;
+            j++;
+        } else if (table[i + 1][j] >= table[i][j + 1]) {
+            i++;
+        } else {
+            j++;
+        }
+    }
+    var changed = [];
+    for (j = 0; j < m; j++)
+        if (kept.indexOf(j) === -1)
+            changed.push(j);
+    return { "changed": changed, "added": m - kept.length, "removed": n - kept.length };
+}
+
+// What to tell the model when its blocks did not fit (none of them was applied).
+function seedlingEditProblem(failed) {
+    var lines = ["上一次的 SEARCH/REPLACE 块没有套用（只要有一个块对不上，全部都不会生效）："];
+    failed.forEach(function(item) {
+        if (item.reason === "many")
+            lines.push("- 第 " + item.index + " 个块的 SEARCH 在代码里出现了不止一处，请多带几行上下文，让它只匹配一处。");
+        else
+            lines.push("- 第 " + item.index + " 个块的 SEARCH 在代码里没有找到。" + (item.nearest ? "代码里最接近的是：\n```\n" + item.nearest + "\n```" : ""));
+    });
+    lines.push("请重新输出全部的 SEARCH/REPLACE 块，SEARCH 要从现有代码里一字不差地复制。");
+    return lines.join("\n");
 }

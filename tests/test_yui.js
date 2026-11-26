@@ -805,4 +805,42 @@ test("Follow-ups", () => {
     same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
 });
 
+test("Seedling edits (SEARCH / REPLACE)", () => {
+    const code = "import QtQuick 2.12\n\nRectangle {\n    width: 200; height: 84\n    color: \"#E61F2630\"\n    Text {\n        color: \"white\"\n        text: \"hi\"\n    }\n}\n";
+    const block = (search, replace) => "<<<<<<< SEARCH\n" + search + "\n=======\n" + replace + "\n>>>>>>> REPLACE";
+    // parsing: several blocks, in order, also inside a code fence; an empty REPLACE deletes
+    const reply = "```\n" + block("    color: \"#E61F2630\"", "    color: \"transparent\"") + "\n" + block("        text: \"hi\"", "") + "\n```";
+    const blocks = Yui.seedlingEdits(reply);
+    assert.strictEqual(blocks.length, 2);
+    assert.strictEqual(blocks[1].replace, "");
+    assert.strictEqual(Yui.seedlingEditCount("<<<<<<< SEARCH\nx\n=======\ny\n>>>>>>> REPLACE\n<<<<<<< SEARCH\nz"), 2);
+    // exact
+    let r = Yui.seedlingApplyEdits(code, blocks);
+    assert.ok(r.ok);
+    assert.ok(r.code.indexOf("color: \"transparent\"") !== -1 && r.code.indexOf("text: \"hi\"") === -1);
+    assert.strictEqual(r.removed, 2);
+    same(r.changed, [4]);
+    // loose: wrong indentation still fits, and the replacement takes the code's indentation
+    r = Yui.seedlingApplyEdits(code, [{ "search": "color: \"white\"\ntext: \"hi\"", "replace": "color: \"orange\"\ntext: \"yo\"" }]);
+    assert.ok(r.ok);
+    assert.ok(r.code.indexOf("        color: \"orange\"\n        text: \"yo\"") !== -1);
+    // found more than once: refused
+    r = Yui.seedlingApplyEdits(code, [{ "search": "    color: ", "replace": "    colour: " }]);
+    assert.ok(!r.ok);
+    assert.strictEqual(r.failed[0].reason, "many");
+    // all or nothing: the first block fits, the second does not, the code stays as it was
+    r = Yui.seedlingApplyEdits(code, [{ "search": "    width: 200; height: 84", "replace": "    width: 300; height: 84" }, { "search": "    radius: 10", "replace": "    radius: 4" }]);
+    assert.ok(!r.ok);
+    assert.strictEqual(r.code, code);
+    assert.strictEqual(r.failed[0].index, 2);
+    assert.strictEqual(r.failed[0].reason, "missing");
+    assert.ok(Yui.seedlingEditProblem(r.failed).indexOf("第 2 个块") !== -1);
+    // nearest lines are offered when it is missing
+    r = Yui.seedlingApplyEdits(code, [{ "search": "    width: 200; height: 90\n    color: \"#E61F2630\"", "replace": "x" }]);
+    assert.ok(r.failed[0].nearest.indexOf("width: 200; height: 84") !== -1);
+    // the edit rules are only in the prompt when editing
+    assert.ok(Yui.seedlingCodePrompt(false, true).indexOf("SEARCH/REPLACE") !== -1);
+    assert.ok(Yui.seedlingCodePrompt(false, false).indexOf("SEARCH/REPLACE") === -1);
+});
+
 console.log(passed + " tests passed");
