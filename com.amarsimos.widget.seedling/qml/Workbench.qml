@@ -64,7 +64,7 @@ NVG.View {
         if (line <= 0 || !showCode)
             return ;
 
-        editor.cursorPosition = lineStart(line - 1);
+        editor.cursorPosition = Math.min(lineStart(line - 1), editor.length);
         editor.forceActiveFocus();
     }
     property var preview: null
@@ -1058,7 +1058,11 @@ NVG.View {
                                     // lines were before and drifted further down the code.
                                     function lineRect(n) {
                                         var stamp = layoutStamp;
-                                        return width > 0 ? positionToRectangle(starts[Math.min(n, starts.length - 1)]) : Qt.rect(0, 0, 0, 0);
+                                        // Within the text the editor holds now: while new code comes in, the
+                                        // lines are counted from it a moment before the editor has it, and a
+                                        // position past its end flooded the log (QTextCursor::setPosition).
+                                        var at = Math.min(starts[Math.min(n, starts.length - 1)], length);
+                                        return width > 0 ? positionToRectangle(at) : Qt.rect(0, 0, 0, 0);
                                     }
 
                                     // Changes with the text, the width and the laid-out height.
