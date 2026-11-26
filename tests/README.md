@@ -1,6 +1,6 @@
 # 测试
 
-这些脚本不属于挂件本身：`cp.bat` 只复制 `com.amarsimos.widget.yui/`，所以它们不会被复制到 SAO Utils，也不会打进 `.nvg`。需要 Node.js 18 以上版本。
+这些脚本不属于挂件本身：`cp.bat` 只复制两个插件目录（`com.amarsimos.widget.yui/`、`com.amarsimos.widget.seedling/`），所以它们不会被复制到 SAO Utils，也不会打进 `.nvg`。需要 Node.js 18 以上版本。
 
 ## 单元测试
 
@@ -9,6 +9,26 @@ node tests/test_yui.js
 ```
 
 测试 `qml/yui.js` 里与界面无关的逻辑：标签解析、工具调用转换、记忆、搜索地址、Markdown 显示、提示词规则等。改了 `yui.js` 以后都应该跑一遍。
+
+```
+node tests/test_seedling_safety.js
+```
+
+测试 Seedling 的安全检查（`com.amarsimos.widget.seedling/qml/safety.js`）：每条规则都有"必须拦下"和"必须放行"的样本，包括 S1 的探针和代码审查找到的绕过写法；还检查结衣写代码的提示词和检查规则一致（允许的模块、Qt 函数、提示词里的例子都能通过）。改了 `safety.js` 或结衣的 Seedling 提示词以后都应该跑一遍。
+
+## 部署前检查
+
+```
+node tests/check_deploy.js
+```
+
+`cp.bat` 每次复制前先运行它，不通过就不复制。它检查以前把挂件弄坏过、但单元测试发现不了的问题：
+
+- 函数名 `xxxChanged` 和属性 `xxx` 的信号重名；在窗口（View / Window）里重定义 FINAL 属性（如 `minimumWidth`）；
+- Qt 5.13（SAO Utils 用的版本）没有的东西：更新版本的 import、`WheelHandler`、`??`、`?.`；
+- 同步的 XMLHttpRequest（`open(..., false)` 会卡死 SAO Utils）。读取本地文件可以同步，在那一行末尾写 `// sync-ok`；
+- 和上次提交相比删掉了、但还在被调用（`name(` 或 `.name`）的函数和属性，包括整个被删掉的文件；
+- 上面两套单元测试。
 
 ## 模型测试（需要本地 Ollama）
 
