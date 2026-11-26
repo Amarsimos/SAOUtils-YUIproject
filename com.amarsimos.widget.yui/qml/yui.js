@@ -2570,7 +2570,7 @@ function seedlingCodePrompt(allowNetwork, editing) {
         allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 不能联网：不能用 XMLHttpRequest、WebSocket，不能加载 http / https 地址。",
         "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
         "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
-        "6. 修改已有代码时，输出改好后的完整代码。",
+        editing ? "6. 修改时按下面的「修改方式」只输出改动。" : "6. 输出完整的代码。",
         "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
