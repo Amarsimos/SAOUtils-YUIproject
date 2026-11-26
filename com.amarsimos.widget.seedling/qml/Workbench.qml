@@ -805,11 +805,13 @@ NVG.View {
 
                     Chip {
                         text: "Try"
+                        icon: "run"
                         onClicked: bench.tryOnDesktop()
                     }
 
                     Chip {
                         text: "Versions"
+                        icon: "folder"
                         checked: bench.showVersions
                         onClicked: {
                             bench.showVersions = !bench.showVersions;
@@ -820,6 +822,7 @@ NVG.View {
                     Chip {
                         visible: bench.problemList.length > 0
                         text: "Problems (" + bench.problemList.length + ")"
+                        icon: "help"
                         checked: bench.showProblems
                         onClicked: {
                             bench.showProblems = !bench.showProblems;
@@ -832,12 +835,14 @@ NVG.View {
 
                         visible: bench.showCode
                         text: "Examples"
+                        icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
                     }
 
                     Chip {
                         visible: bench.showCode
                         text: "Network: " + (bench.settings.allow_network === true ? "On" : "Off")
+                        icon: "option"
                         checked: bench.settings.allow_network === true
                         onClicked: {
                             bench.settings.allow_network = !(bench.settings.allow_network === true);
@@ -851,6 +856,7 @@ NVG.View {
 
                     Chip {
                         text: "Stop"
+                        icon: "logout"
                         visible: bench.writing
                         onClicked: Link.Bench.stop()
                     }
@@ -1115,14 +1121,16 @@ NVG.View {
 
                                 Chip {
                                     text: "Copy All"
-                                    implicitHeight: 24
+                                    icon: "file"
+                                    implicitHeight: 26
                                     onClicked: bench.copyProblems()
                                 }
 
                                 Chip {
                                     visible: Link.Bench.writer !== null && Link.Bench.writer.prefillChat !== undefined
                                     text: "Send to Yui"
-                                    implicitHeight: 24
+                                    icon: "guide"
+                                    implicitHeight: 26
                                     onClicked: bench.sendProblemsToYui()
                                 }
 
@@ -1135,29 +1143,35 @@ NVG.View {
 
                                 Chip {
                                     text: "−"
-                                    implicitWidth: 28
-                                    implicitHeight: 24
+
+                                    icon: "remove"
+
+                                    iconOnly: true
                                     onClicked: bench.zoomBy(-0.25)
                                 }
 
                                 Chip {
                                     text: "Fit"
-                                    implicitHeight: 24
+                                    icon: "move"
+                                    implicitHeight: 26
                                     checked: bench.zoom === 0
                                     onClicked: bench.zoom = 0
                                 }
 
                                 Chip {
                                     text: "100%"
-                                    implicitHeight: 24
+                                    icon: "graphics"
+                                    implicitHeight: 26
                                     checked: bench.zoom === 1
                                     onClicked: bench.zoom = 1
                                 }
 
                                 Chip {
                                     text: "+"
-                                    implicitWidth: 28
-                                    implicitHeight: 24
+
+                                    icon: "add"
+
+                                    iconOnly: true
                                     onClicked: bench.zoomBy(0.25)
                                 }
 
@@ -1444,6 +1458,7 @@ NVG.View {
 
                     Chip {
                         text: "Generate"
+                        icon: "modify"
                         enabled: requestField.enabled && requestField.text.trim() !== ""
                         onClicked: bench.generate()
                     }
