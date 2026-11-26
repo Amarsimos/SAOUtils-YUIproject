@@ -363,7 +363,10 @@ NVG.View {
         if (showCode)
             return qsTr("Write QML on the left, or pick one of the Examples.");
 
-        return Link.Bench.writer ? qsTr("Tell Yui in her chat what widget you want; she writes it here.") : qsTr("To write the code yourself, turn on Advanced, then Code Editor in Seedling Settings.");
+        if (Link.Bench.writer)
+            return qsTr("Tell Yui in her chat what widget you want; she writes it here.");
+
+        return canGenerate ? qsTr("Describe the widget you want below.") : qsTr("Set up the AI in Seedling Settings to have widgets written (or turn on Code Editor to write one yourself).");
     }
 
     // quiet: no question about the network (the caller asks, or has just been answered).
@@ -514,7 +517,11 @@ NVG.View {
         return editor.text;
     }
 
-    // Generate: Yui (MHCP-YUI) writes what the request field asks for, or changes the code to it.
+    // Whether a widget can be written now (MHCP-YUI's connection, or Seedling's own set up).
+    readonly property bool canGenerate: (Link.Bench.settingsRevision, Link.Bench.writer, Link.Bench.cannotWrite() === "")
+
+    // Generate: the model (Seedling's own AI, or MHCP-YUI's) writes what the request field asks for,
+    // or changes the code to it.
     function generate() {
         var request = requestField.text.trim();
         if (!request)
@@ -1694,18 +1701,18 @@ NVG.View {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    // Hidden until Seedling has an AI of its own (S5): without MHCP-YUI it could not be used.
-                    visible: false
+                    // Without MHCP-YUI: Seedling's own AI (Seedling Settings, AI) writes it.
+                    visible: Link.Bench.writer === null
 
                     TextField {
                         id: requestField
 
                         Layout.fillWidth: true
-                        enabled: Link.Bench.writer !== null && !bench.writing
+                        enabled: bench.canGenerate && !bench.writing
                         selectByMouse: true
                         font.family: bench.fontFor(text || placeholderText)
                         font.pixelSize: 15
-                        placeholderText: qsTr("Generate needs MHCP-YUI (or Seedling's own AI, coming later)")
+                        placeholderText: bench.canGenerate ? qsTr("Describe the widget, then Enter") : qsTr("Set up the AI in Seedling Settings to have widgets written")
                         onAccepted: bench.generate()
 
                         background: Rectangle {

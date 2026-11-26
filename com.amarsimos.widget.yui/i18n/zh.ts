@@ -2578,19 +2578,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3033"/>
+        <location line="+2886"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3016"/>
-        <location line="+2131"/>
-        <location line="+995"/>
+        <location line="-2869"/>
+        <location line="+1987"/>
+        <location line="+992"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4276"/>
+        <location line="-4129"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2706,32 +2706,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+135"/>
-        <source>The edits did not fit · Thinking about the whole code...</source>
-        <translation>修改没能对上 · 正在重新思考整段代码...</translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>Thinking about the fix (%1 / 2): %2</source>
-        <translation>正在思考修复方法（%1 / 2）：%2</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Checking and rendering...</source>
-        <translation>正在检查并渲染...</translation>
-    </message>
-    <message>
-        <location line="+72"/>
-        <source>Changing · %1 place(s)</source>
-        <translation>正在修改 · %1 处</translation>
-    </message>
-    <message>
-        <location line="+15"/>
-        <source>Writing · %1 lines</source>
-        <translation>正在编写 · %1 行</translation>
-    </message>
-    <message>
-        <location line="+2247"/>
+        <location line="+2339"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2746,8 +2721,8 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2846"/>
-        <location line="+597"/>
+        <location line="-2699"/>
+        <location line="+450"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2765,14 +2740,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6170"/>
-        <location line="+6203"/>
+        <location line="-6023"/>
+        <location line="+6056"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6210"/>
-        <location line="+6210"/>
+        <location line="-6063"/>
+        <location line="+6063"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
