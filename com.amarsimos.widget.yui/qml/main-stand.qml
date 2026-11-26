@@ -1638,10 +1638,10 @@ T.Widget {
                     var seedlingIndex = index;
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
-                        seedlingWrite(seedlingRequest, function(message, ok) {
-                            setSeedlingNote(seedlingIndex, (ok ? "🌱 ✓ " : "🌱 ⚠ ") + message);
+                        seedlingWrite(seedlingRequest, function(message, ok, kind) {
+                            setSeedlingNote(seedlingIndex, Yui.seedlingChatLine(kind, userTitle()));
                         }, function(state) {
-                            setSeedlingNote(seedlingIndex, Yui.seedlingNoteLine(state));
+                            setSeedlingNote(seedlingIndex, Yui.seedlingNoteLine(state, userTitle()));
                         });
                     });
                 }
@@ -3901,7 +3901,7 @@ T.Widget {
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
-    readonly property string seedlingWorking: "🌱 ◐ 结衣在想怎么写…"
+    readonly property string seedlingWorking: "🌱 ◐ 结衣在想该怎么做…"
 
     function seedlingBench() {
         if (seedlingProbe)
@@ -3949,13 +3949,13 @@ T.Widget {
     function seedlingWrite(request, onDone, onProgress) {
         var bench = seedlingBench();
         if (!bench)
-            return onDone("Seedling 没有安装", false);
+            return onDone("Seedling 没有安装", false, "missing");
 
         if (bench.widgets.length === 0)
             return seedlingAskPlace(request, onDone, onProgress);
 
         if (seedlingJob)
-            return onDone("结衣还在写上一个挂件，等一下哦", false);
+            return onDone("结衣还在写上一个挂件，等一下哦", false, "busy");
 
         // Code there already: changed with SEARCH / REPLACE edits; else written whole.
         var current = bench.currentCode();
@@ -3991,13 +3991,14 @@ T.Widget {
                 onProgress(state);
 
         };
-        var finish = function(message, ok) {
+        // message: for the workbench and the log; kind: what the chat says (Yui.seedlingChatLine).
+        var finish = function(message, ok, kind) {
             ticker.stop();
             ticker.destroy();
             seedlingJob = null;
             bench.endWriting(ok, message);
             diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
-            onDone(message, ok);
+            onDone(message, ok, kind || (ok ? "done" : "failed"));
         };
         var ask;
         // Asks again with what went wrong (twice at most); when editing, after that once more for the
@@ -4008,7 +4009,8 @@ T.Widget {
                     wholeTaken = true;
                     state.stage = "writing";
                     state.lines = 0;
-                    bench.setPhase(qsTr("The edits did not fit: Yui is writing the whole code..."));
+                    state.edits = 0;
+                    bench.setPhase(qsTr("The edits did not fit · Thinking about the whole code..."));
                     progress();
                     return ask(code, problem, true);
                 }
@@ -4019,7 +4021,7 @@ T.Widget {
             state.problem = String(problem).split("\n")[0];
             state.lines = 0;
             state.edits = 0;
-            bench.setPhase(qsTr("Yui is fixing it (%1 / 2): %2").arg(state.attempt).arg(state.problem));
+            bench.setPhase(qsTr("Thinking about the fix (%1 / 2): %2").arg(state.attempt).arg(state.problem));
             progress();
             ask(code, problem, whole);
         };
@@ -4030,7 +4032,7 @@ T.Widget {
             var refused = bench.preview(code, request, function(result) {
                 diag("seedling: " + result.result + " " + result.status);
                 if (result.ok)
-                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true);
+                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done");
 
                 retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
             }, changes);
@@ -4045,7 +4047,7 @@ T.Widget {
                 "content": Yui.seedlingCodeRequest(request, code, problem, editing && whole)
             }], function(text, isError) {
                 if (job.stopped)
-                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false);
+                    return finish("已停止" + (edits ? "，代码没有改动" : "，写到一半的代码留在工作台里"), false, "stopped");
 
                 if (isError)
                     return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
@@ -4081,7 +4083,7 @@ T.Widget {
                 if (count > 0) {
                     if (count !== state.edits) {
                         state.edits = count;
-                        bench.setPhase(qsTr("Yui is changing it · %1 place(s)").arg(count));
+                        bench.setPhase(qsTr("Changing · %1 place(s)").arg(count));
                         progress();
                     }
                     return ;
@@ -4096,6 +4098,7 @@ T.Widget {
                 if (lines !== state.lines) {
                     state.lines = lines;
                     state.stage = state.stage === "editing" ? "writing" : state.stage;
+                    bench.setPhase(qsTr("Writing · %1 lines").arg(lines));
                     progress();
                 }
             });
@@ -4140,7 +4143,7 @@ T.Widget {
             seedlingWaiting = null;
             diag("seedling: no widget on the desktop, the widget manager was not opened");
             if (waiting)
-                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false);
+                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
 
         });
     }
@@ -4172,7 +4175,7 @@ T.Widget {
         seedlingAskPlace("test", function(message, ok) {
             diag("test place seedling: " + (ok ? "done, " : "not done, ") + message);
         }, function(state) {
-            diag("test place seedling: " + Yui.seedlingNoteLine(state));
+            diag("test place seedling: " + Yui.seedlingNoteLine(state, userTitle()));
         }, true);
     }
 

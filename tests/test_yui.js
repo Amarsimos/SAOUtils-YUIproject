@@ -841,6 +841,12 @@ test("Seedling edits (SEARCH / REPLACE)", () => {
     // the edit rules are only in the prompt when editing
     assert.ok(Yui.seedlingCodePrompt(false, true).indexOf("SEARCH/REPLACE") !== -1);
     assert.ok(Yui.seedlingCodePrompt(false, false).indexOf("SEARCH/REPLACE") === -1);
+    // the chat line: thinking until something is written, no numbers
+    assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);
+    const writing = Yui.seedlingNoteLine({ "stage": "writing", "lines": 24, "edits": 0, "seconds": 9 }, "爸爸");
+    assert.ok(writing.indexOf("在写") !== -1 && !/\d/.test(writing));
+    assert.ok(Yui.seedlingNoteLine({ "stage": "editing", "lines": 0, "edits": 2, "seconds": 5 }, "爸爸").indexOf("在改") !== -1);
+    assert.ok(Yui.seedlingChatLine("edited", "妈妈").indexOf("妈妈") !== -1);
 });
 
 console.log(passed + " tests passed");
