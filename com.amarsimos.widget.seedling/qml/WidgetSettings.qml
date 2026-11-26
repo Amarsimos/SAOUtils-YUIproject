@@ -18,7 +18,8 @@ NVG.Window {
     function confirm(text, then) {
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Warning"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": text,
                 "modal": true
             });

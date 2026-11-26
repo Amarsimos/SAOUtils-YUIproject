@@ -143,7 +143,8 @@ NVG.Window {
     function confirmReset() {
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Warning"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": qsTr("Restore all settings of %1 to their defaults?").arg(title),
                 "modal": true
             });

@@ -297,7 +297,8 @@ NVG.View {
         };
         try {
             var answer = NVG.SystemCall.messageBox({
-                "title": qsTr("Network"),
+                // "Alert": SAO Utils' alert box and sound (as MHCP-YUI's confirmations).
+                "title": "Alert",
                 "text": question || askOnlineText,
                 "modal": true
             });
