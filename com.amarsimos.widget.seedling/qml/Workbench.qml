@@ -357,6 +357,15 @@ NVG.View {
         Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
     }
 
+    // What to do with an empty workbench: write code (Code Editor on), else ask Yui (or turn the Code
+    // Editor on when she is not there): without the Code Editor there is nothing to write in.
+    function emptyHint() {
+        if (showCode)
+            return qsTr("Write QML on the left, or pick one of the Examples.");
+
+        return Link.Bench.writer ? qsTr("Tell Yui in her chat what widget you want; she writes it here.") : qsTr("To write the code yourself, turn on Advanced, then Code Editor in Seedling Settings.");
+    }
+
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
         clearPreview();
@@ -367,7 +376,7 @@ NVG.View {
             problemList = [];
             showProblems = false;
             result = "ok";
-            status = qsTr("Write QML on the left, or pick one of the Examples.");
+            status = emptyHint();
             return false;
         }
         var problems = Safety.check(code, settings.allow_network === true);

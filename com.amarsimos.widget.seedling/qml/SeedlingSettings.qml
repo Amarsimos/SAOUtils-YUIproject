@@ -121,7 +121,13 @@ NVG.Window {
                             name: "show_code"
                             label: "Code Editor"
                             Component.onCompleted: value = settingsWindow.targetWidget.settings.show_code === true
-                            onValueChanged: settingsWindow.targetWidget.settings.show_code = value === true
+                            onValueChanged: {
+                                settingsWindow.targetWidget.settings.show_code = value === true;
+                                // The workbench's empty hint follows (write here, or ask Yui).
+                                if (settingsWindow.targetWidget.workbench)
+                                    settingsWindow.targetWidget.workbench.render(true);
+
+                            }
                         }
 
                     }
