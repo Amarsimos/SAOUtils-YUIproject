@@ -3,6 +3,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
+import QtGraphicalEffects 1.0
 // For Qt.application.screens, used to keep the workbench on a screen.
 import QtQuick.Window 2.12
 import "safety.js" as Safety
@@ -33,6 +34,8 @@ NVG.View {
     readonly property int leastHeight: 520
     readonly property int titleHeight: 64
     readonly property int buttonsHeight: 96
+    // Room around the panel for its shadow (the view is this much larger on every side).
+    readonly property int shadowMargin: 10
     // Open / close animation, as Yui's chat (the SAO Utils mail box message panel): the panel widens
     // from 10 % (scaleX) and fades in (panelOpacity), the message sound, the grey band unfolds between
     // the title and button bands (reveal), then its content fades in (contentOpacity).
@@ -511,13 +514,33 @@ NVG.View {
 
     }
 
+    // The shadow of SAO Utils' panels (as Yui's chat panel): a smooth 8 px glow, black from about 12 %
+    // next to the panel to nothing; it opens and closes with the panel.
+    RectangularGlow {
+        anchors.fill: panel
+        glowRadius: 8
+        spread: 0
+        cornerRadius: 8
+        color: "#1E000000"
+        opacity: panel.opacity
+
+        transform: Scale {
+            origin.x: panel.width / 2
+            origin.y: panel.height / 2
+            xScale: bench.scaleX
+        }
+
+    }
+
     // The panel: its title and button bands keep their size and move apart as the grey band unfolds.
     Item {
         id: panel
 
+        readonly property real fullHeight: parent.height - bench.shadowMargin * 2
+
         anchors.centerIn: parent
-        width: parent.width
-        height: bench.titleHeight + bench.buttonsHeight + (parent.height - bench.titleHeight - bench.buttonsHeight) * bench.reveal
+        width: parent.width - bench.shadowMargin * 2
+        height: bench.titleHeight + bench.buttonsHeight + (fullHeight - bench.titleHeight - bench.buttonsHeight) * bench.reveal
         opacity: bench.panelOpacity
         clip: true
 
@@ -1070,6 +1093,8 @@ NVG.View {
     Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.rightMargin: bench.shadowMargin
+        anchors.bottomMargin: bench.shadowMargin
         width: 18
         height: 18
         z: 100
