@@ -543,41 +543,10 @@ NVG.View {
                 anchors.bottomMargin: 14
                 spacing: 12
 
-                // Tools: the request (AI, a later stage), Try, Versions, Examples, Network.
+                // Tools: Try, Versions, Examples, Network (and Stop while Yui writes).
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-
-                    TextField {
-                        id: requestField
-
-                        Layout.fillWidth: true
-                        enabled: Link.Bench.writer !== null
-                        selectByMouse: true
-                        font.family: "SAO UI"
-                        font.pixelSize: 15
-                        placeholderText: enabled ? qsTr("Describe the widget (or what to change) and Yui writes it") : qsTr("Generate needs MHCP-YUI")
-                        onAccepted: bench.generate()
-
-                        background: Rectangle {
-                            color: "#F9F9F9"
-                            opacity: 0.7
-                        }
-
-                    }
-
-                    Chip {
-                        text: "Stop"
-                        visible: bench.writing
-                        onClicked: Link.Bench.stop()
-                    }
-
-                    Chip {
-                        visible: !bench.writing
-                        text: "Generate"
-                        enabled: requestField.enabled && requestField.text.trim() !== ""
-                        onClicked: bench.generate()
-                    }
 
                     Chip {
                         text: "Try"
@@ -604,6 +573,16 @@ NVG.View {
                             bench.settings.allow_network = !(bench.settings.allow_network === true);
                             bench.render();
                         }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    Chip {
+                        text: "Stop"
+                        visible: bench.writing
+                        onClicked: Link.Bench.stop()
                     }
 
                     Menu {
@@ -805,24 +784,45 @@ NVG.View {
 
                 }
 
-                // What happened, centered on the band (as the original's message text).
-                Text {
+                // The request, at the foot of the band: only without MHCP-YUI. With her, Yui is asked in the
+                // chat instead (she writes it, and the workbench shows it here).
+                RowLayout {
                     Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
-                    text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
-                    font.family: "SAO UI"
-                    font.pixelSize: 16
-                    color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
-                    style: bench.result === "ok" ? Text.Raised : Text.Normal
-                    styleColor: "#AAFFFFFF"
+                    spacing: 8
+                    visible: Link.Bench.writer === null
+
+                    TextField {
+                        id: requestField
+
+                        Layout.fillWidth: true
+                        enabled: Link.Bench.writer !== null && !bench.writing
+                        selectByMouse: true
+                        font.family: "SAO UI"
+                        font.pixelSize: 15
+                        placeholderText: qsTr("Generate needs MHCP-YUI (or Seedling's own AI, coming later)")
+                        onAccepted: bench.generate()
+
+                        background: Rectangle {
+                            color: "#F9F9F9"
+                            opacity: 0.7
+                        }
+
+                    }
+
+                    Chip {
+                        text: "Generate"
+                        enabled: requestField.enabled && requestField.text.trim() !== ""
+                        onClicked: bench.generate()
+                    }
+
                 }
 
             }
 
         }
 
-        // White band (translucent as the rest): Save (ok) and Close (cancel), each centered in its half.
+        // White band (translucent as the rest): Save (ok) and Close (cancel), each centered in its half,
+        // and what happened between them.
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: bench.buttonsHeight
@@ -834,6 +834,21 @@ NVG.View {
                 icon: "misc/ok"
                 size: 56
                 onClicked: bench.save()
+            }
+
+            // What happened, centered between the buttons (as an SAO dialog's message between its ○ and ✕).
+            Text {
+                anchors.centerIn: parent
+                width: parent.width / 2 - 72
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.Wrap
+                maximumLineCount: 3
+                elide: Text.ElideRight
+                text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
+                font.family: "SAO UI"
+                font.pixelSize: 15
+                color: bench.result === "error" ? "#C82864" : bench.result === "unsafe" ? "#9A6C00" : bench.ink
             }
 
             SaoIcon {
