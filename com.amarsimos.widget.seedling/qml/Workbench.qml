@@ -56,7 +56,7 @@ NVG.View {
         if (!yui || !yui.prefillChat)
             return ;
 
-        yui.prefillChat("帮我看看这个挂件哪里有问题：\n" + problemsText());
+        yui.prefillChat("帮我修好这个挂件：\n" + problemsText());
     }
 
     // Problems: a click puts the cursor at the line (with Code Editor on).

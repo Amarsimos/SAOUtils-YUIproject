@@ -849,6 +849,7 @@ test("Seedling edits (SEARCH / REPLACE)", () => {
     assert.ok(Yui.seedlingChatLine("edited", "妈妈").indexOf("妈妈") !== -1);
     // going online is said, and what the writer could not do (its note) is passed on
     assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("需要联网") !== -1);
+    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("<<seedling:修好这些问题") !== -1);
     assert.ok(Yui.seedlingCodePrompt(false, false).indexOf("SEEDLING-NOTE") !== -1);
     assert.strictEqual(Yui.seedlingNoteOf("// SEEDLING-NOTE: 拿不到实时汇率\nimport QtQuick 2.12"), "拿不到实时汇率");
     assert.ok(Yui.seedlingGoesOnline("var r = new XMLHttpRequest();"));
