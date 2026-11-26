@@ -32,8 +32,7 @@ QtObject {
     function paused() {
         try {
             var request = new XMLHttpRequest();
-            // "?t=": not the copy read before.
-            request.open("GET", pausedFile + "?t=" + Date.now(), false);
+            request.open("GET", pausedFile, false);
             request.send(null);
             return String(request.responseText || "").trim() === "1";
         } catch (e) {

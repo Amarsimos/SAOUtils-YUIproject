@@ -398,7 +398,7 @@ NVG.Window {
         } else if (tag === "guard") {
             // As if SAO Utils had frozen while this widget was starting: marked, then started again.
             targetWidget.writeFile(targetWidget.guardFile, "1");
-            targetWidget.startUp();
+            targetWidget.startUp("1");
         } else if (tag === "save") {
             var saving = bench();
             if (saving)

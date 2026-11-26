@@ -33,10 +33,14 @@ T.Widget {
     function readFile(url) {
         try {
             var request = new XMLHttpRequest();
-            // "?t=": not the copy read before (it read back an old "0" right after writing "1").
-            request.open("GET", url + "?t=" + Date.now(), false);
+            // As it is (with "?t=" the file was not found: SAO Utils took it as part of the name).
+            request.open("GET", url, false);
             request.send(null);
-            return String(request.responseText || "").trim();
+            var text = String(request.responseText || "").trim();
+            if (!text)
+                console.log("[seedling] read " + url + ": status " + request.status + ", empty");
+
+            return text;
         } catch (e) {
             return "";
         }
@@ -53,14 +57,15 @@ T.Widget {
     }
 
     // At start (and from Seedling Settings' test): paused, held back after a freeze, or shown.
-    function startUp() {
+    // markGiven: the running mark as the caller knows it (Freeze Guard), instead of reading it back.
+    function startUp(markGiven) {
         clearShown();
         heldBack = false;
         if (Link.Bench.paused()) {
             problem = qsTr("Paused: all Seedling widgets are paused (Seedling Settings).");
             return ;
         }
-        var mark = readFile(guardFile);
+        var mark = markGiven !== undefined ? markGiven : readFile(guardFile);
         console.log("[seedling] start-up: " + widget.name + ", running mark \"" + mark + "\", paused no");
         if (code && mark === "1") {
             heldBack = true;
