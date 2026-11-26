@@ -6615,12 +6615,15 @@ T.Widget {
                     Layout.preferredWidth: widget.sendButtonWidth
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignBottom
-                    // Turns into a stop button while a reply is being generated.
-                    text: widget.busy ? qsTr("Cancel") : qsTr("Send")
-                    enabled: widget.busy || textInput.text.trim().length > 0
+                    // Turns into a stop button while a reply is being generated, and while Yui writes a
+                    // Seedling widget (as the workbench's Stop, which is small and may be closed).
+                    text: widget.busy ? qsTr("Cancel") : widget.seedlingJob ? qsTr("Stop") : qsTr("Send")
+                    enabled: widget.busy || widget.seedlingJob !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
                             widget.stopReply();
+                        else if (widget.seedlingJob)
+                            widget.seedlingStop();
                         else
                             textInput.submit();
                         textInput.forceActiveFocus();
