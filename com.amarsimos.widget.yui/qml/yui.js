@@ -2568,7 +2568,8 @@ function seedlingCodePrompt(allowNetwork) {
         allowNetwork ? "3. 可以联网（XMLHttpRequest、网络图片）。" : "3. 不能联网：不能用 XMLHttpRequest、WebSocket，不能加载 http / https 地址。",
         "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
         "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
-        "6. 修改已有代码时，输出改好后的完整代码。"].join("\n");
+        "6. 修改已有代码时，输出改好后的完整代码。",
+        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。"].join("\n");
 }
 
 // The user message of that request: what is wanted, the code so far (when changing it) and, when
@@ -2622,7 +2623,13 @@ function seedlingNoteLine(state) {
         return head + "检查、渲染中… · " + state.seconds + " 秒";
 
     if (state.stage === "waiting")
-        return "🌱 ⏳ 等你在桌面放好 Seedling，结衣就开始写";
+        return "🌱 ⏳ 在挂件库里找到「Seedling」，拖到桌面上，结衣就接着写";
 
     return head + (state.lines > 0 ? "结衣正在写挂件 · " + state.lines + " 行" : "结衣在想怎么写…") + " · " + state.seconds + " 秒";
+}
+
+// The reply of the code request was cut off: a ```qml block opened and never closed.
+function seedlingCodeCut(text) {
+    var value = cleanReply(text);
+    return /```(?:qml|QML|javascript|js)?[ \t]*\n/.test(value) && !/```(?:qml|QML|javascript|js)?[ \t]*\n[\s\S]*?```/.test(value);
 }

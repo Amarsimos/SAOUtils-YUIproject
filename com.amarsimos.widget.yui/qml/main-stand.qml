@@ -3964,7 +3964,8 @@ T.Widget {
 
         config.rawSystem = Yui.seedlingCodePrompt(bench.allowNetwork());
         config.noTools = true;
-        config.maxTokens = Math.max(4096, maxTokens);
+        // Room for a whole widget (thinking models count their thinking too).
+        config.maxTokens = Math.max(16384, maxTokens);
         var state = {
             "stage": "writing",
             "lines": 0,
@@ -4008,6 +4009,19 @@ T.Widget {
                 if (isError)
                     return finish("写代码的请求失败了：" + String(text).split("\n")[0], false);
 
+                // Cut off (too long for the limit): asked again for a shorter one, as a failed check.
+                if (Yui.seedlingCodeCut(text)) {
+                    if (state.attempt >= 2)
+                        return finish("代码太长，写到一半被截断了；换个简单点的说法再试试吧", false);
+
+                    state.attempt++;
+                    state.stage = "fixing";
+                    state.problem = "代码太长被截断了";
+                    state.lines = 0;
+                    bench.setPhase(qsTr("Too long, cut off: Yui is writing a shorter one (%1 / 2)").arg(state.attempt));
+                    progress();
+                    return ask(code, "上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。");
+                }
                 var qml = Yui.seedlingCodeFrom(text);
                 if (!qml)
                     return finish("模型没有给出代码", false);
@@ -4071,7 +4085,7 @@ T.Widget {
             "problem": ""
         });
 
-        askConfirm(qsTr("Navigation"), title + "，结衣找不到能让种子发芽的地方……\n桌面上还没有「Seedling」，程序没办法具现化呢。\n要打开挂件库吗？把 Seedling 放到桌面上，结衣就接着写哦～", function() {
+        askConfirm(qsTr("Navigation"), title + "，桌面上还没有「Seedling」，结衣没有地方让种子发芽呢……\n要打开挂件库吗？\n打开后请" + title + "找到「Seedling」，亲手把它拖到桌面上，结衣就接着写哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
         }, false, function() {
