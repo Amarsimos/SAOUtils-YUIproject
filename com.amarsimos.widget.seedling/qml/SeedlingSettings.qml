@@ -3,6 +3,7 @@ import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "probes.js" as Probes
 
 // Seedling Settings (the Seedling widget's menu). Test: tries the workbench's looks and states
 // without the AI and without a request: renders, the safety check, the preview's zoom, Yui writing
@@ -233,6 +234,18 @@ NVG.Window {
                         "note": qsTr("Made up, as when Yui writes: Thinking for 3 s, then the code streamed in line by line; Change keeps the code and marks two changed lines in orange; Failure ends with the failure sound."),
                         "tests": [["Writing", "write"], ["Change", "edit"], ["Failure", "fail"]]
                     }, {
+                        "title": "S1 Probes · Workbench",
+                        "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads C:\\Windows\\win.ini and shows only its length. These run in the workbench's preview."),
+                        "tests": Probes.PROBES.map(function(p) {
+                            return [p.name, "probe:" + p.key];
+                        })
+                    }, {
+                        "title": "S1 Probes · Widget",
+                        "note": qsTr("The same probes saved to this widget, to see what they reach from a widget on the desktop (it replaces the widget's code: go back with Versions in the workbench)."),
+                        "tests": Probes.PROBES.map(function(p) {
+                            return [p.name, "probewidget:" + p.key];
+                        })
+                    }, {
                         "title": "Desktop",
                         "note": qsTr("Try puts the code on the desktop for a while; Save to Widget saves it to this widget, whose frame takes its size."),
                         "tests": [["Try", "try"], ["Save to Widget", "save"]]
@@ -294,7 +307,30 @@ NVG.Window {
 
     }
 
+    function probeCode(key) {
+        var found = Probes.PROBES.filter(function(p) {
+            return p.key === key;
+        });
+        return found.length ? found[0].code : "";
+    }
+
     function run(tag) {
+        if (tag.indexOf("probe:") === 0) {
+            load(probeCode(tag.slice(6)));
+            return ;
+        }
+        if (tag.indexOf("probewidget:") === 0) {
+            var code = probeCode(tag.slice(12));
+            var workbench = bench();
+            if (workbench)
+                workbench.loadExternal(code, "Probe", null, null);
+
+            var problem = targetWidget.apply(code);
+            if (problem)
+                console.log("[seedling probe] not saved to the widget: " + problem);
+
+            return ;
+        }
         if (tag === "widget")
             load(sampleCode);
         else if (tag === "broken")
