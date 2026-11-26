@@ -44,7 +44,7 @@ QtObject {
             return null;
 
         writingWidget = target();
-        var bench = writingWidget.openWorkbench();
+        var bench = openFor(writingWidget);
         if (bench)
             bench.beginWriting(String(title || ""), keep === true);
 
@@ -102,6 +102,15 @@ QtObject {
         lastUsed = widget;
     }
 
+    // Opens a widget's workbench for Yui: it does not count as the user's own opening (that is what
+    // decides who she writes for next).
+    function openFor(widget) {
+        var kept = lastUsed;
+        var bench = widget.openWorkbench();
+        lastUsed = kept;
+        return bench;
+    }
+
     function target() {
         if (lastUsed && widgets.indexOf(lastUsed) !== -1)
             return lastUsed;
@@ -126,8 +135,16 @@ QtObject {
         if (widgets.length === 0)
             return "no Seedling widget on the desktop";
 
+        // While Yui writes, the widget she started for: opening another workbench meanwhile does not
+        // send the result there. Removed meanwhile: not sent anywhere else.
         var widget = target();
-        var bench = widget.openWorkbench();
+        if (writingWidget) {
+            if (widgets.indexOf(writingWidget) === -1)
+                return "the Seedling widget being written for was removed";
+
+            widget = writingWidget;
+        }
+        var bench = openFor(widget);
         if (!bench)
             return "the workbench could not be opened";
 
