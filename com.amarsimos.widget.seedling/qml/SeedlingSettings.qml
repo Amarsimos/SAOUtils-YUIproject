@@ -28,8 +28,8 @@ NVG.Window {
         seedlingModelPreference.value = "";
         targetWidget.settings.show_code = false;
         targetWidget.settings.allow_network = false;
-        targetWidget.settings.widget_style = "";
-        targetWidget.settings.seedling_model = "";
+        Link.Bench.setSetting("widget_style", "");
+        Link.Bench.setSetting("model", "");
         if (targetWidget.workbench)
             targetWidget.workbench.render(true);
 
@@ -208,13 +208,13 @@ NVG.Window {
 
                             label: "Widget Style"
                             Component.onCompleted: {
-                                value = String(settingsWindow.targetWidget.settings.widget_style || "").trim() || Templates.DEFAULT_STYLE;
+                                value = String(Link.Bench.setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
                                 ready = true;
                             }
                             // The default is kept as "" (a later default then applies).
                             onValueChanged: {
                                 if (ready)
-                                    settingsWindow.targetWidget.settings.widget_style = value.trim() === Templates.DEFAULT_STYLE ? "" : value.trim();
+                                    Link.Bench.setSetting("widget_style", value.trim() === Templates.DEFAULT_STYLE ? "" : value.trim());
 
                             }
                         }
@@ -228,12 +228,12 @@ NVG.Window {
                             label: "Seedling Model"
                             hint: qsTr("model id; empty: the same as the chat")
                             Component.onCompleted: {
-                                value = String(settingsWindow.targetWidget.settings.seedling_model || "");
+                                value = String(Link.Bench.setting("model", ""));
                                 ready = true;
                             }
                             onValueChanged: {
                                 if (ready)
-                                    settingsWindow.targetWidget.settings.seedling_model = value.trim();
+                                    Link.Bench.setSetting("model", value.trim());
 
                             }
                         }

@@ -3838,9 +3838,10 @@ T.Widget {
         // Seedling Model and Widget Style are Seedling's (its Settings, so they stay when it works on its
         // own). A model set here before (Cardinal System) moves to the widget the first time.
         var oldModel = String(widget.settings.seedling_model || "").trim();
-        var target = bench.target();
-        if (oldModel && target && target.settings.seedling_model === undefined)
-            target.settings.seedling_model = oldModel;
+        if (oldModel && bench.setSetting && !bench.writingModel()) {
+            bench.setSetting("model", oldModel);
+            widget.settings.seedling_model = "";
+        }
 
         var model = bench.writingModel ? bench.writingModel() : oldModel;
         if (model)

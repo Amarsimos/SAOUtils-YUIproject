@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQml 2.12
+import QtQuick.LocalStorage 2.12
 import "../templates.js" as Templates
 
 // Seedling's door for other extensions (MHCP-YUI): the Seedling widgets on the desktop register here,
@@ -26,12 +27,81 @@ QtObject {
     // it stays when Seedling works on its own): Widget Style (or the default) and Seedling Model ("":
     // the chat's model).
     function writingStyle() {
-        var style = widgets.length > 0 ? String(target().settings.widget_style || "").trim() : "";
-        return style || Templates.DEFAULT_STYLE;
+        return String(setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
     }
 
     function writingModel() {
-        return widgets.length > 0 ? String(target().settings.seedling_model || "").trim() : "";
+        return String(setting("model", "")).trim();
+    }
+
+    // ---- Seedling's own settings, shared by all its widgets (section 11.3): connection ("yui" /
+    // "own"), provider, endpoint, api_key, model, widget_style. In Seedling's own local database (only
+    // Seedling itself uses it: the safety check refuses LocalStorage in widget code). The API key is
+    // never written to a widget's settings or to the log.
+    property var database: null
+    property var cache: ({})
+    // Changes with every setSetting, for bindings.
+    property int settingsRevision: 0
+
+    function openDatabase() {
+        if (database)
+            return database;
+
+        try {
+            database = LocalStorage.openDatabaseSync("Seedling", "1.0", "Seedling's settings", 100000);
+            database.transaction(function(tx) {
+                tx.executeSql("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)");
+                var rows = tx.executeSql("SELECT key, value FROM settings").rows;
+                var all = {};
+                for (var i = 0; i < rows.length; i++)
+                    all[rows.item(i).key] = JSON.parse(rows.item(i).value);
+                cache = all;
+            });
+        } catch (e) {
+            console.log("Seedling: its settings cannot be opened:", e);
+        }
+        return database;
+    }
+
+    function setting(key, fallback) {
+        openDatabase();
+        return cache.hasOwnProperty(key) ? cache[key] : fallback;
+    }
+
+    function setSetting(key, value) {
+        openDatabase();
+        var all = JSON.parse(JSON.stringify(cache));
+        all[key] = value;
+        cache = all;
+        settingsRevision++;
+        if (!database)
+            return ;
+
+        try {
+            database.transaction(function(tx) {
+                tx.executeSql("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", [key, JSON.stringify(value)]);
+            });
+        } catch (e) {
+            console.log("Seedling: a setting cannot be saved:", key);
+        }
+    }
+
+    // Widget Style and Seedling Model were kept on each widget before: moved here the first time.
+    function moveOldSettings(widget) {
+        var style = String(widget.settings.widget_style || "").trim();
+        if (style && !String(setting("widget_style", "")).trim())
+            setSetting("widget_style", style);
+
+        var model = String(widget.settings.seedling_model || "").trim();
+        if (model && !String(setting("model", "")).trim())
+            setSetting("model", model);
+
+        if (widget.settings.widget_style !== undefined)
+            widget.settings.widget_style = undefined;
+
+        if (widget.settings.seedling_model !== undefined)
+            widget.settings.seedling_model = undefined;
+
     }
 
     // A template of the same kind as request, for Yui to look at ("" when none fits).
@@ -109,6 +179,7 @@ QtObject {
     }
 
     function register(widget) {
+        moveOldSettings(widget);
         if (widgets.indexOf(widget) === -1)
             widgets = widgets.concat([widget]);
 
