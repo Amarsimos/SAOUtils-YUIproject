@@ -3921,7 +3921,7 @@ T.Widget {
 
         // Seedling's Generate (the workbench's request) is written by Yui.
         seedlingProbe.bench.writer = widget;
-        seedlingProbe.bench.widgetsChanged.connect(seedlingWidgetsChanged);
+        seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
         seedlingInstalled = true;
         return seedlingProbe.bench;
     }
@@ -4085,7 +4085,7 @@ T.Widget {
     }
 
     // A Seedling widget was placed (Bench.widgets changed) while a request waits: carry on.
-    function seedlingWidgetsChanged() {
+    function seedlingPlaced() {
         var bench = seedlingProbe ? seedlingProbe.bench : null;
         if (!seedlingWaiting || !bench || bench.widgets.length === 0)
             return ;
