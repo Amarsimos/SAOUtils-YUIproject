@@ -38,8 +38,11 @@ explanations, **Reset** restores the defaults.
   rates, pictures). When a widget is refused only for going online, you are asked once: when Yui
   brings it, on Run, or on ○ ("allow it to go online and save?").
 - **AI** (shared by all Seedling widgets):
-  - **Connection** (with MHCP-YUI): **Yui** uses her server and key; **Own** uses Seedling's own.
-  - **Provider**, **Server Address**, **API Key**, **Model**: Seedling's own AI. OpenAI-compatible
+  - With MHCP-YUI, her server, access key and model list are used (nothing to set twice); only the
+    **Core Program** is Seedling's choice ("Same as Yui's chat" by default).
+  - Without her, the **Link** tab is Seedling's own, as in her Cardinal System: **Seed Server**,
+    **Server Address**, **Access Key**, **Core Program** / **Manual Core ID**, **Scan Cores**,
+    **Link Start!**. OpenAI-compatible
     servers (OpenAI, DeepSeek, Kimi, Qwen, Ollama, any address), Claude and Gemini. The key stays in
     Seedling's own local data on this computer.
   - **Widget Style**: what the widgets look like, a text like Yui's personality; SAO style by

@@ -22,14 +22,31 @@ NVG.Window {
     readonly property bool advanced: targetWidget.settings.show_advanced === true
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
-    readonly property bool ownConnection: (Link.Bench.settingsRevision, Link.Bench.yui === null || Link.Bench.setting("connection", "yui") === "own")
+    readonly property bool ownConnection: Link.Bench.yui === null
+    // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
+    // read again after Scan Cores / Restore Registry.
+    property int yuiRevision: 0
+    readonly property var yuiModels: (yuiRevision, Link.Bench.yui && Link.Bench.yui.seedlingModels ? Link.Bench.yui.seedlingModels() : null)
     // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
     // Restore Registry.
     readonly property var scanned: (Link.Bench.settingsRevision, Link.Bench.setting("scanned_models", {}))
     property bool scanning: false
     property string scanStatus: ""
 
+    // "Same as Yui's chat": the first core with MHCP-YUI (stored as "").
+    readonly property string sameAsChat: qsTr("Same as Yui's chat") + (yuiModels && yuiModels.chatModel ? " (" + yuiModels.chatModel + ")" : "")
+
     function scanCores() {
+        if (!ownConnection) {
+            scanning = true;
+            scanStatus = qsTr("Scanning...");
+            Link.Bench.yui.seedlingScanModels(function(models, error) {
+                scanning = false;
+                yuiRevision++;
+                scanStatus = models ? qsTr("Found %1 core(s).").arg(models.length) : qsTr("Scan failed: %1").arg(error);
+            });
+            return ;
+        }
         var config = Link.Bench.ownConfig();
         var id = config.provider;
         scanning = true;
@@ -55,6 +72,12 @@ NVG.Window {
     }
 
     function restoreRegistry() {
+        if (!ownConnection) {
+            Link.Bench.yui.seedlingRestoreModels();
+            yuiRevision++;
+            scanStatus = "";
+            return ;
+        }
         var all = JSON.parse(JSON.stringify(scanned));
         delete all[Link.Bench.ownConfig().provider];
         Link.Bench.setSetting("scanned_models", all);
@@ -300,29 +323,11 @@ NVG.Window {
                         Layout.fillWidth: true
                         spacing: 10
 
-                        P.SelectPreference {
-                            id: connectionPreference
-
-                            property bool ready: false
-
-                            visible: Link.Bench.yui !== null
-                            label: "Connection"
-                            model: ["Yui", "Own"]
-                            Component.onCompleted: {
-                                value = Link.Bench.setting("connection", "yui") === "own" ? 1 : 0;
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("connection", value === 1 ? "own" : "yui");
-
-                            }
-                        }
-
+                        // With MHCP-YUI her server and key are used (nothing to set twice).
                         SettingNote {
-                            visible: settingsWindow.help && Link.Bench.yui !== null
+                            visible: !settingsWindow.ownConnection
                             besidePreferences: true
-                            text: qsTr("Yui: widgets are written through Yui's server and access key (Cardinal System). Own: through Seedling's own, below.")
+                            text: qsTr("Yui's server: %1. Widgets are written through it, with the access key set in her Cardinal System.").arg(settingsWindow.yuiModels ? settingsWindow.yuiModels.server : "")
                         }
 
                         P.SelectPreference {
@@ -427,19 +432,30 @@ NVG.Window {
                             id: corePreference
 
                             property bool ready: false
-                            // The server's scanned list (Scan Cores), else the built-in one.
-                            readonly property var models: settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] || Api.PROVIDERS[providerPreference.value].models
+                            // Own: the server's scanned list (Scan Cores), else the built-in one. With Yui:
+                            // hers, after "Same as Yui's chat" (her chat's model, the default).
+                            readonly property var models: settingsWindow.ownConnection ? (settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] || Api.PROVIDERS[providerPreference.value].models) : (settingsWindow.yuiModels ? [settingsWindow.sameAsChat].concat(settingsWindow.yuiModels.models) : [settingsWindow.sameAsChat])
+                            readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
 
-                            visible: settingsWindow.ownConnection && models.length > 0
+                            visible: models.length > 0
                             label: "Core Program"
                             model: models
+                            function stored(index) {
+                                return !settingsWindow.ownConnection && index === 0 ? "" : models[index];
+                            }
+
+                            function shown() {
+                                var current = String(Link.Bench.setting(key, ""));
+                                return !settingsWindow.ownConnection && current === "" ? 0 : Math.max(0, models.indexOf(current));
+                            }
+
                             Component.onCompleted: {
-                                value = Math.max(0, models.indexOf(String(Link.Bench.setting("model", ""))));
+                                value = shown();
                                 ready = true;
                             }
                             onValueChanged: {
                                 if (ready && value >= 0 && value < models.length)
-                                    Link.Bench.setSetting("model", models[value]);
+                                    Link.Bench.setSetting(key, stored(value));
 
                             }
                             // Another list (scanned, restored, another server): the core chosen stays
@@ -448,10 +464,11 @@ NVG.Window {
                                 if (!ready)
                                     return ;
 
-                                var at = models.indexOf(String(Link.Bench.setting("model", "")));
+                                var current = String(Link.Bench.setting(key, ""));
+                                var at = !settingsWindow.ownConnection && current === "" ? 0 : models.indexOf(current);
                                 value = Math.max(0, at);
                                 if (at === -1 && models.length > 0)
-                                    Link.Bench.setSetting("model", models[0]);
+                                    Link.Bench.setSetting(key, stored(0));
 
                             }
                         }
@@ -463,7 +480,7 @@ NVG.Window {
                         }
 
                         RowLayout {
-                            visible: settingsWindow.advanced && settingsWindow.ownConnection
+                            visible: settingsWindow.advanced
                             spacing: 12
                             Layout.alignment: Qt.AlignHCenter
 
@@ -475,7 +492,7 @@ NVG.Window {
 
                             Button {
                                 text: "Restore Registry"
-                                visible: !!settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id]
+                                visible: settingsWindow.ownConnection ? !!settingsWindow.scanned[Api.PROVIDERS[providerPreference.value].id] : !!(settingsWindow.yuiModels && settingsWindow.yuiModels.scanned)
                                 onClicked: settingsWindow.restoreRegistry()
                             }
 
@@ -484,13 +501,13 @@ NVG.Window {
                         // What Scan Cores found (or why it failed), under the buttons.
                         Label {
                             Layout.alignment: Qt.AlignHCenter
-                            visible: settingsWindow.advanced && settingsWindow.ownConnection && text !== ""
+                            visible: settingsWindow.advanced && text !== ""
                             text: settingsWindow.scanStatus
                             elide: Text.ElideRight
                         }
 
                         SettingNote {
-                            visible: settingsWindow.advanced && settingsWindow.help && settingsWindow.ownConnection
+                            visible: settingsWindow.advanced && settingsWindow.help
                             besidePreferences: true
                             text: qsTr("Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.")
                         }
@@ -500,10 +517,10 @@ NVG.Window {
 
                             property bool ready: false
 
-                            visible: settingsWindow.advanced || !settingsWindow.ownConnection || corePreference.models.length === 0
+                            visible: settingsWindow.advanced || corePreference.models.length === 0
                             label: "Manual Core ID"
                             display: P.TextFieldPreference.ExpandAll
-                            hint: settingsWindow.ownConnection ? qsTr("model id, e.g. gpt-6-sol") : qsTr("model id; empty: the same as Yui's chat")
+                            hint: qsTr("model id, e.g. gpt-6-sol")
                             Component.onCompleted: {
                                 value = String(Link.Bench.setting("custom_model", ""));
                                 ready = true;
@@ -518,7 +535,7 @@ NVG.Window {
                         SettingNote {
                             visible: settingsWindow.help && customModelPreference.visible
                             besidePreferences: true
-                            text: settingsWindow.ownConnection ? qsTr("When filled in, this model id is used instead of the Core Program selected above.") : qsTr("The model that writes the code, on Yui's server; empty uses her chat's model. Coding is easier for a stronger model.")
+                            text: qsTr("When filled in, this model id is used instead of the Core Program selected above.")
                         }
 
                     }

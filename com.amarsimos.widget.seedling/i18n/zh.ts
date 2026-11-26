@@ -31,142 +31,140 @@
 <context>
     <name>SeedlingSettings</name>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="570" />
+        <location filename="../qml/SeedlingSettings.qml" line="587" />
         <source>Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).</source>
         <translation>测试不经过 AI 试用工作台：这里的按钮都不会发出请求。每个按钮会打开工作台（或使用已打开的工作台）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="206" />
+        <location filename="../qml/SeedlingSettings.qml" line="229" />
         <source>Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.</source>
         <translation>高级：在工作台的预览旁显示代码，并提供 Run 和 Examples，可以查看或修改结衣写的代码。关闭时工作台只显示挂件。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="36" />
+        <location filename="../qml/SeedlingSettings.qml" line="37" />
+        <source>Same as Yui's chat</source>
+        <translation>与结衣聊天相同</translation>
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="42" />
+        <location filename="../qml/SeedlingSettings.qml" line="53" />
         <source>Scanning...</source>
         <translation>查询中……</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="43" />
+        <location filename="../qml/SeedlingSettings.qml" line="46" />
+        <location filename="../qml/SeedlingSettings.qml" line="60" />
         <source>Scan failed: %1</source>
         <translation>查询失败：%1</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="49" />
+        <location filename="../qml/SeedlingSettings.qml" line="46" />
+        <location filename="../qml/SeedlingSettings.qml" line="66" />
         <source>Found %1 core(s).</source>
         <translation>找到 %1 个模型。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="76" />
+        <location filename="../qml/SeedlingSettings.qml" line="99" />
         <source>Linking...</source>
         <translation>连接中……</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="78" />
+        <location filename="../qml/SeedlingSettings.qml" line="101" />
         <source>Yui's chat model</source>
         <translation>结衣聊天的模型</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="82" />
+        <location filename="../qml/SeedlingSettings.qml" line="105" />
         <source>Link established</source>
         <translation>连接成功</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="103" />
+        <location filename="../qml/SeedlingSettings.qml" line="126" />
         <source>Warning</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="104" />
+        <location filename="../qml/SeedlingSettings.qml" line="127" />
         <source>Restore all settings of %1 to their defaults?</source>
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="164" />
+        <location filename="../qml/SeedlingSettings.qml" line="187" />
         <source>General</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="164" />
+        <location filename="../qml/SeedlingSettings.qml" line="187" />
         <source>Test</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="286" />
+        <location filename="../qml/SeedlingSettings.qml" line="309" />
         <source>What the widgets the AI writes look like (colors, fonts, mood), sent with every widget, for all Seedling widgets; what is asked for comes first. Reset brings back the SAO style.</source>
         <translation>AI 写出的挂件长什么样（颜色、字体、氛围），每次写挂件都会带上，所有 Seedling 挂件共用；要求里另外说的优先。Reset 恢复 SAO 风格。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="325" />
-        <source>Yui: widgets are written through Yui's server and access key (Cardinal System). Own: through Seedling's own, below.</source>
-        <translation>Yui：用结衣的服务器和 Access Key（Cardinal System）写挂件。Own：用下面 Seedling 自己的。</translation>
+        <location filename="../qml/SeedlingSettings.qml" line="330" />
+        <source>Yui's server: %1. Widgets are written through it, with the access key set in her Cardinal System.</source>
+        <translation>结衣的服务器：%1。挂件通过它来写，Access Key 用结衣 Cardinal System 里设置的。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="360" />
+        <location filename="../qml/SeedlingSettings.qml" line="365" />
         <source>The AI service that writes the widgets.</source>
         <translation>写挂件用的 AI 服务。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="386" />
+        <location filename="../qml/SeedlingSettings.qml" line="391" />
         <source>The API endpoint URL. Change it only when using a proxy or a self-hosted service; empty uses the server's own.</source>
         <translation>API 接口地址。只有使用代理或自建服务时才需要修改；留空则用服务商默认的地址。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="398" />
+        <location filename="../qml/SeedlingSettings.qml" line="403" />
         <source>not needed</source>
         <translation>不需要</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="413" />
+        <location filename="../qml/SeedlingSettings.qml" line="418" />
         <source>The API key of this server. It stays on this computer, in Seedling's own data.</source>
         <translation>这个服务器的 API Key。只保存在这台电脑上，存在 Seedling 自己的数据里。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="462" />
+        <location filename="../qml/SeedlingSettings.qml" line="479" />
         <source>The AI model that writes the widgets.</source>
         <translation>写挂件用的 AI 模型。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="495" />
+        <location filename="../qml/SeedlingSettings.qml" line="512" />
         <source>Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.</source>
         <translation>Scan Cores 会向服务器查询当前的模型列表；Restore Registry 恢复内置列表。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="506" />
+        <location filename="../qml/SeedlingSettings.qml" line="523" />
         <source>model id, e.g. gpt-6-sol</source>
         <translation>模型 ID，例如 gpt-6-sol</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="506" />
-        <source>model id; empty: the same as Yui's chat</source>
-        <translation>模型 ID；留空则与结衣聊天相同</translation>
-    </message>
-    <message>
-        <location filename="../qml/SeedlingSettings.qml" line="521" />
+        <location filename="../qml/SeedlingSettings.qml" line="538" />
         <source>When filled in, this model id is used instead of the Core Program selected above.</source>
         <translation>填写后将使用这里的模型 ID，而不是上面选择的 Core Program。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="521" />
-        <source>The model that writes the code, on Yui's server; empty uses her chat's model. Coding is easier for a stronger model.</source>
-        <translation>写代码用的模型，用结衣的服务器；留空则用她聊天的模型。写代码对能力强的模型更容易。</translation>
-    </message>
-    <message>
-        <location filename="../qml/SeedlingSettings.qml" line="554" />
+        <location filename="../qml/SeedlingSettings.qml" line="571" />
         <source>Press Link Start! to test the connection.</source>
         <translation>按下「Link Start!」测试连接。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="593" />
+        <location filename="../qml/SeedlingSettings.qml" line="610" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="597" />
+        <location filename="../qml/SeedlingSettings.qml" line="614" />
         <source>A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them.</source>
         <translation>一个带自己的设置和记忆的待办挂件（@name、@setting、@keep）：用 ○ 保存后，右键挂件可以看到 Settings... 和 Show Done 开关。添加几条待办（回车），重启 SAO Utils 后还在。预览里不会记住。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="252" />
+        <location filename="../qml/SeedlingSettings.qml" line="275" />
         <source>Lets this widget go online (weather, exchange rates, pictures from the Internet). Off by default: the safety check refuses code that goes online, and Yui writes widgets that do not. When a widget is refused only for going online, the workbench asks whether to allow it.</source>
         <translation>允许这个挂件联网（天气、汇率、网上的图片等）。默认关闭：安全检查会拒绝联网的代码，结衣也只写不联网的挂件。挂件只因联网被拒绝时，工作台会询问是否允许。</translation>
     </message>

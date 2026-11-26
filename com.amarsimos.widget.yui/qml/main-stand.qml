@@ -3848,7 +3848,44 @@ T.Widget {
         });
     }
 
-    // Seedling borrows Yui's connection (Connection: Yui): one request with its own system text, the
+    // What Seedling takes from Yui while she is there: her server's name, its models (the list Scan
+    // Cores found in Cardinal System, else the built-in one) and her chat's model.
+    function seedlingModels() {
+        var provider = providers[providerIndexOf(widget.settings.provider)];
+        var saved = (widget.settings.provider_settings || {})[provider.id] || {};
+        var scanned = saved.fetched_models && saved.fetched_models.length > 0;
+        return {
+            "server": provider.title,
+            "models": scanned ? saved.fetched_models : provider.models,
+            "scanned": scanned,
+            "chatModel": activeConfig().model
+        };
+    }
+
+    // Scan Cores / Restore Registry for Seedling, on Yui's server; the list is hers (Cardinal System
+    // shows it too). onDone(models or null, error).
+    function seedlingScanModels(onDone) {
+        var provider = providers[providerIndexOf(widget.settings.provider)];
+        fetchModels(activeConfig(), function(models, error) {
+            if (models)
+                seedlingKeepModels(provider.id, models);
+
+            onDone(models, error);
+        });
+    }
+
+    function seedlingRestoreModels() {
+        seedlingKeepModels(providers[providerIndexOf(widget.settings.provider)].id, null);
+    }
+
+    function seedlingKeepModels(id, models) {
+        var all = JSON.parse(JSON.stringify(widget.settings.provider_settings || {}));
+        all[id] = all[id] || {};
+        all[id].fetched_models = models;
+        widget.settings.provider_settings = all;
+    }
+
+    // Seedling borrows Yui's connection (while she is there): one request with its own system text, the
     // Seedling Model when set, room for a whole widget and 4 minutes before giving up (thinking models
     // say nothing while they think). System Console's Seedling tests are answered here (no API).
     function seedlingConnection(system, user, model, onDelta, onFinished) {

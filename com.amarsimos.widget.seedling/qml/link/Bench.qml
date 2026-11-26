@@ -38,9 +38,9 @@ QtObject {
         return String(setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
     }
 
-    // With Yui's connection: Manual Core ID ("": her chat's model).
+    // With Yui's connection: Manual Core ID, else the core chosen in Link ("": her chat's model).
     function writingModel() {
-        return String(setting("custom_model", "")).trim();
+        return String(setting("custom_model", "")).trim() || String(setting("yui_model", "")).trim();
     }
 
     // ---- Seedling's own settings, shared by all its widgets (section 11.3): connection ("yui" /
@@ -189,10 +189,10 @@ QtObject {
     // ---- Writing a widget (section 11 of "Seedling Development Plan.md"): Seedling's own flow, with
     // MHCP-YUI's connection or its own (Connection). MHCP-YUI only says it in her chat.
 
-    // The connection used: "yui" (MHCP-YUI's, when she is there and Connection is Yui) or "own".
+    // The connection used: "yui" whenever MHCP-YUI is there (her server, key and models: nothing to
+    // set twice), else "own" (Seedling's own Link settings).
     function connectionKind() {
-        var hasYui = !!(yui && yui.seedlingConnection);
-        return hasYui && setting("connection", "yui") !== "own" ? "yui" : "own";
+        return yui && yui.seedlingConnection ? "yui" : "own";
     }
 
     // Whether a widget can be written now ("" when it can, else why not).
