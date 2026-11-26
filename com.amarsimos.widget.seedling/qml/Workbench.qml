@@ -504,6 +504,7 @@ NVG.View {
         renderTimer.stop();
         var ok = render(true);
         requestActivate();
+        var declined = false;
         var tell = function() {
             if (ok && changes) {
                 addVersion(code);
@@ -516,7 +517,9 @@ NVG.View {
                     "status": status,
                     "title": title,
                     "width": preview ? Math.round(preview.width) : 0,
-                    "height": preview ? Math.round(preview.height) : 0
+                    "height": preview ? Math.round(preview.height) : 0,
+                    // Asked whether it may go online, and the user said no.
+                    "networkDeclined": declined
                 });
 
         };
@@ -524,6 +527,7 @@ NVG.View {
         if (!ok && result === "unsafe" && Safety.onlyNetwork(refusedProblems))
             askNetwork(function(allowed) {
             ok = allowed && result === "ok";
+            declined = !allowed;
             tell();
         });
         else

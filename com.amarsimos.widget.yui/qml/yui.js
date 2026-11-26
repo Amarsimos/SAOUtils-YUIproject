@@ -2557,7 +2557,7 @@ function systemCall(text, title, loads) {
 // adds <<seedling:what the widget should be / how to change it>>; the program then asks for the code
 // in a request of its own (seedlingCodePrompt), shows it in Seedling's workbench and, when it does not
 // compile or the safety check refuses it, asks again with the error (twice at most).
-var SEEDLING_INSTRUCTION = "- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。";
+var SEEDLING_INSTRUCTION = "- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。";
 
 // The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on;
 // editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
@@ -2571,7 +2571,8 @@ function seedlingCodePrompt(allowNetwork, editing) {
         "4. 根元素写明 width 和 height（挂件的大小）；背景可以是透明的。",
         "5. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
         editing ? "6. 修改时按下面的「修改方式」只输出改动。" : "6. 输出完整的代码。",
-        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
+        "7. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
+        "8. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。"].concat(editing ? SEEDLING_EDIT_RULES : []).join("\n");
 }
 
 // How code is changed: SEARCH / REPLACE blocks (the format of Aider and Cline; like Claude Code's
@@ -2663,7 +2664,8 @@ function seedlingChatLine(kind, title) {
         "stopped": "好的，结衣停下来啦",
         "declined": "那这次就先不做啦，想做的时候再叫结衣哦～",
         "missing": "结衣找不到 Seedling 呢……(・_・;)",
-        "busy": "结衣还在做上一个，等一下下哦～"
+        "busy": "结衣还在做上一个，等一下下哦～",
+        "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"
     }[kind] || "呜……这次没能做好 (T_T)";
 }
 
@@ -2839,4 +2841,29 @@ function seedlingEditProblem(failed) {
     });
     lines.push("请重新输出全部的 SEARCH/REPLACE 块，SEARCH 要从现有代码里一字不差地复制。");
     return lines.join("\n");
+}
+
+// What the code writer said it could not do (its "// SEEDLING-NOTE:" line), "" when nothing.
+function seedlingNoteOf(code) {
+    var m = /\/\/\s*SEEDLING-NOTE:\s*(.+)/.exec(String(code || ""));
+    return m ? m[1].trim() : "";
+}
+
+// Whether the code goes online (asks the Internet for something).
+function seedlingGoesOnline(code) {
+    var text = String(code || "").replace(/\/\/.*$/gm, "");
+    return /\bXMLHttpRequest\b|\bWebSocket\b|["']https?:\/\//i.test(text);
+}
+
+// What Yui adds to her last words: that it goes online, and what it could not do (the writer's note).
+function seedlingExtra(code, title) {
+    var parts = [];
+    if (seedlingGoesOnline(code))
+        parts.push("它会联网获取数据哦。");
+
+    var note = seedlingNoteOf(code);
+    if (note)
+        parts.push("不过有一点要告诉" + (title || "你") + "：" + note);
+
+    return parts.join("");
 }

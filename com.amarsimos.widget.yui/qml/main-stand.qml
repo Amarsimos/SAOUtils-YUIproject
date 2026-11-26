@@ -1642,8 +1642,8 @@ T.Widget {
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
                         var said = seedlingSay();
-                        seedlingWrite(seedlingRequest, function(message, ok, kind) {
-                            said.end(Yui.seedlingChatLine(kind, userTitle()));
+                        seedlingWrite(seedlingRequest, function(message, ok, kind, extra) {
+                            said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
                         }, function(state) {
                             said.update(Yui.seedlingNoteLine(state, userTitle()));
                         });
@@ -3998,13 +3998,14 @@ T.Widget {
 
         };
         // message: for the workbench and the log; kind: what the chat says (Yui.seedlingChatLine).
-        var finish = function(message, ok, kind) {
+        // extra: what Yui adds to her last words (Yui.seedlingExtra).
+        var finish = function(message, ok, kind, extra) {
             ticker.stop();
             ticker.destroy();
             seedlingJob = null;
             bench.endWriting(ok, message);
             diag("seedling: " + (ok ? "done" : "not done") + ", " + message);
-            onDone(message, ok, kind || (ok ? "done" : "failed"));
+            onDone(message, ok, kind || (ok ? "done" : "failed"), extra || "");
         };
         var ask;
         // Asks again with what went wrong (twice at most); when editing, after that once more for the
@@ -4038,7 +4039,12 @@ T.Widget {
             var refused = bench.preview(code, request, function(result) {
                 diag("seedling: " + result.result + " " + result.status);
                 if (result.ok)
-                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done");
+                    return finish((changes ? "改了 " + changes.count + " 处（+" + changes.added + " −" + changes.removed + " 行）" : "完成 · " + result.width + " × " + result.height) + "，满意就点 ○ 保存", true, changes ? "edited" : "done", Yui.seedlingExtra(code, userTitle()));
+
+                // Not allowed online (the user said no): said so, not rewritten without it behind
+                // their back.
+                if (result.networkDeclined)
+                    return finish("没有允许联网", false, "offline");
 
                 retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
             }, changes);

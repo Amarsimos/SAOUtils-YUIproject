@@ -847,6 +847,15 @@ test("Seedling edits (SEARCH / REPLACE)", () => {
     assert.ok(writing.indexOf("在写") !== -1 && !/\d/.test(writing));
     assert.ok(Yui.seedlingNoteLine({ "stage": "editing", "lines": 0, "edits": 2, "seconds": 5 }, "爸爸").indexOf("在改") !== -1);
     assert.ok(Yui.seedlingChatLine("edited", "妈妈").indexOf("妈妈") !== -1);
+    // going online is said, and what the writer could not do (its note) is passed on
+    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("需要联网") !== -1);
+    assert.ok(Yui.seedlingCodePrompt(false, false).indexOf("SEEDLING-NOTE") !== -1);
+    assert.strictEqual(Yui.seedlingNoteOf("// SEEDLING-NOTE: 拿不到实时汇率\nimport QtQuick 2.12"), "拿不到实时汇率");
+    assert.ok(Yui.seedlingGoesOnline("var r = new XMLHttpRequest();"));
+    assert.ok(!Yui.seedlingGoesOnline("// https://example.com in a comment\nItem {}"));
+    assert.strictEqual(Yui.seedlingExtra("import QtQuick 2.12\nItem {}", "爸爸"), "");
+    assert.ok(Yui.seedlingExtra("// SEEDLING-NOTE: 拿不到\nvar r = new XMLHttpRequest();", "爸爸").indexOf("联网") !== -1);
+    assert.ok(Yui.seedlingChatLine("offline", "爸爸").indexOf("没有允许联网") !== -1);
 });
 
 console.log(passed + " tests passed");
