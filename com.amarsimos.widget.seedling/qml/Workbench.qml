@@ -266,22 +266,19 @@ NVG.View {
     // Checks and renders the editor text into the preview; true when it is shown.
     // The problems of the last refusal by the safety check ([] when it was not refused).
     property var refusedProblems: []
-    // Asked about going online and the user said no: not asked again while the code is typed in
-    // (every key changed the code and asked again); asked again for code Yui brings (loadExternal).
-    property bool networkDeclined: false
-    // A question is open (not asked twice at once).
+    // A question about going online is open (not asked twice at once). Asked only on Save (○) and for
+    // code Yui brings; typing renders live and never asks (it asked again with every key).
     property bool networkAsking: false
 
     // Refused only for going online (Network off): asks with SAO Utils' message box whether this
     // widget may go online; then(allowed) after the answer (allowed: Network turned on, rendered again).
     function askNetwork(then) {
-        if (networkDeclined || networkAsking || settings.allow_network === true)
+        if (networkAsking || settings.allow_network === true)
             return then(false);
 
         networkAsking = true;
         var answered = function(allowed) {
             networkAsking = false;
-            networkDeclined = !allowed;
             if (allowed) {
                 settings.allow_network = true;
                 render(true);
@@ -325,9 +322,6 @@ NVG.View {
         }
         var problems = Safety.check(code, settings.allow_network === true);
         refusedProblems = problems;
-        if (problems.length > 0 && !quiet && Safety.onlyNetwork(problems))
-            Qt.callLater(askNetwork, function() {
-            });
 
         if (problems.length > 0) {
             errorLines = problems.map(function(p) {
@@ -375,8 +369,16 @@ NVG.View {
 
     // Saves the code to the widget, and as a new version when it changed.
     function save() {
-        if (!render())
+        if (!render(true)) {
+            // Refused only for going online: asked now (Save is the user's own step); a yes saves it.
+            if (result === "unsafe" && Safety.onlyNetwork(refusedProblems))
+                askNetwork(function(allowed) {
+                if (allowed && result === "ok")
+                    save();
+
+            });
             return ;
+        }
 
         var code = editor.text;
         var list = versions.slice();
@@ -505,7 +507,6 @@ NVG.View {
     // Code from another extension (Bench.preview): shown and rendered at once, the result sent back.
     function loadExternal(code, title, onResult, changes) {
         showVersions = false;
-        networkDeclined = false;
         // Yui's edit: the code before it is kept as a version, so ◀ goes back to it.
         if (changes)
             addVersion(editor.text);

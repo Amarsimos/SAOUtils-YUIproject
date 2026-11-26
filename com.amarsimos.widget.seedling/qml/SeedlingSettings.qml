@@ -226,7 +226,7 @@ NVG.Window {
                 Repeater {
                     model: [{
                         "title": "Render",
-                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first, so the question comes), nothing (NO SIGNAL), and one larger than the preview (Fit, − / + / 100%)."),
+                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / + / 100%)."),
                         "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Empty", "empty"], ["Large Widget", "large"]]
                     }, {
                         "title": "Yui's Work",
@@ -306,12 +306,8 @@ NVG.Window {
         else if (tag === "large")
             load(largeCode);
         else if (tag === "network") {
-            // Network off and not asked yet, so the question comes.
+            // Network off, so the question comes (as for code Yui brings).
             targetWidget.settings.allow_network = false;
-            var asking = bench();
-            if (asking)
-                asking.networkDeclined = false;
-
             load(networkCode);
         }
         else if (tag === "write")
