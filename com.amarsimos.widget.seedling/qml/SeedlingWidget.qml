@@ -65,7 +65,7 @@ T.Widget {
             console.log("Seedling: cannot open the workbench:", workbenchComponent.errorString());
             return null;
         }
-        workbench.closing.connect(function() {
+        workbench.closed.connect(function() {
             workbench = null;
         });
         return workbench;

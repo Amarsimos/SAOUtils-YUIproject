@@ -9,7 +9,7 @@ import "safety.js" as Safety
 // the tools, the code beside its live preview and what happened, and a white band with the SAO ok /
 // cancel buttons (Save to the widget, Close), each centered in its half. The draft is kept while
 // closed; Save keeps a version (up to 20).
-NVG.Window {
+NVG.View {
     id: bench
 
     property var targetWidget
@@ -22,6 +22,29 @@ NVG.Window {
     property var versions: settings.versions || []
     property int versionIndex: versions.length - 1
     readonly property color ink: "#4D4D4D"
+    readonly property int minimumWidth: 720
+    readonly property int minimumHeight: 520
+    readonly property int titleHeight: 64
+    readonly property int buttonsHeight: 96
+    // Open / close animation, as Yui's chat (the SAO Utils mail box message panel): the panel widens
+    // from 10 % (scaleX) and fades in (panelOpacity), the message sound, the grey band unfolds between
+    // the title and button bands (reveal), then its content fades in (contentOpacity).
+    property real scaleX: 0.1
+    property real panelOpacity: 0
+    property real reveal: 0
+    property real contentOpacity: 0
+
+    // The close animation has finished and the view is gone.
+    signal closed()
+
+    // Closes as the chat does: the dismiss sound, narrows back to 10 % while fading out, then goes.
+    function close() {
+        if (aniClose.running)
+            return ;
+
+        aniOpen.stop();
+        aniClose.start();
+    }
     readonly property var examples: [{
         "name": qsTr("Clock"),
         "code": "import QtQuick 2.12\n\nRectangle {\n    width: 200; height: 84; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"
@@ -136,32 +159,137 @@ NVG.Window {
 
     }
 
-    title: "Seedling"
-    // No system frame: the title band moves the window, the bottom-right corner resizes it.
-    flags: Qt.Window | Qt.FramelessWindowHint
-    visible: true
-    minimumWidth: 720
-    minimumHeight: 520
+    // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
+    color: "transparent"
     width: 900
     height: 620
-    color: "#FFFFFF"
-    transientParent: targetWidget.NVG.View.window
-    onClosing: {
-        if (preview)
-            preview.destroy();
-
-        destroy();
+    visible: true
+    Component.onCompleted: {
+        render();
+        requestActivate();
+        aniOpen.start();
     }
-    Component.onCompleted: render()
+
+    Shortcut {
+        sequence: "Esc"
+        onActivated: bench.close()
+    }
+
+    ParallelAnimation {
+        id: aniOpen
+
+        NumberAnimation {
+            target: bench
+            property: "scaleX"
+            from: 0.1
+            to: 1
+            duration: 200
+            easing.type: Easing.OutQuad
+        }
+
+        SequentialAnimation {
+            NumberAnimation {
+                target: bench
+                property: "panelOpacity"
+                from: 0
+                to: 1
+                duration: 250
+            }
+
+            ScriptAction {
+                script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
+            }
+
+            NumberAnimation {
+                target: bench
+                property: "reveal"
+                from: 0
+                to: 1
+                duration: 250
+                easing.type: Easing.OutQuad
+            }
+
+            NumberAnimation {
+                target: bench
+                property: "contentOpacity"
+                from: 0
+                to: 1
+                duration: 250
+            }
+
+        }
+
+    }
+
+    SequentialAnimation {
+        id: aniClose
+
+        ScriptAction {
+            script: NVG.SystemCall.playSound(NVG.SFX.DismissMessage)
+        }
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: bench
+                property: "scaleX"
+                to: 0.1
+                duration: 250
+                easing.type: Easing.InQuad
+            }
+
+            NumberAnimation {
+                target: bench
+                property: "panelOpacity"
+                to: 0
+                duration: 250
+            }
+
+        }
+
+        ScriptAction {
+            script: {
+                if (bench.preview)
+                    bench.preview.destroy();
+
+                bench.visible = false;
+                bench.closed();
+                bench.destroy();
+            }
+        }
+
+    }
+
+    // The panel: its title and button bands keep their size and move apart as the grey band unfolds.
+    Item {
+        id: panel
+
+        anchors.centerIn: parent
+        width: parent.width
+        height: bench.titleHeight + bench.buttonsHeight + (parent.height - bench.titleHeight - bench.buttonsHeight) * bench.reveal
+        opacity: bench.panelOpacity
+        clip: true
+
+        transform: Scale {
+            origin.x: panel.width / 2
+            origin.y: panel.height / 2
+            xScale: bench.scaleX
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#FFFFFF"
+            border.color: "#C8C8C8"
+        }
 
     ColumnLayout {
         anchors.fill: parent
+        anchors.margins: 1
         spacing: 0
 
         // Title band.
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 64
+            Layout.preferredHeight: bench.titleHeight
 
             Text {
                 anchors.centerIn: parent
@@ -249,6 +377,8 @@ NVG.Window {
                 anchors.fill: parent
                 anchors.margins: 20
                 anchors.topMargin: 18
+                opacity: bench.contentOpacity
+                visible: bench.reveal > 0.5
                 anchors.bottomMargin: 14
                 spacing: 12
 
@@ -491,7 +621,7 @@ NVG.Window {
         // White band: Save (ok) and Close (cancel), each centered in its half.
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 96
+            Layout.preferredHeight: bench.buttonsHeight
 
             SaoIcon {
                 anchors.verticalCenter: parent.verticalCenter
@@ -513,11 +643,6 @@ NVG.Window {
 
     }
 
-    // A thin edge, as the window has no frame of its own.
-    Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-        border.color: "#C8C8C8"
     }
 
     // Resize from the bottom-right corner.
