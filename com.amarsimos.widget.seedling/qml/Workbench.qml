@@ -297,7 +297,7 @@ NVG.View {
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": qsTr("Network"),
-                "text": question || qsTr("This widget needs to go online.\nLet it go online?"),
+                "text": question || askOnlineText,
                 "modal": true
             });
             if (answer && typeof answer.then === "function")
@@ -327,6 +327,10 @@ NVG.View {
         preview = null;
         previewSandbox = null;
     }
+
+    // The network questions (properties: lupdate misses qsTr inside those calls).
+    readonly property string askOnlineText: qsTr("This widget needs to go online.\nLet it go online?")
+    readonly property string askSaveOnlineText: qsTr("This widget goes online, and Network is off.\nAllow it to go online and save?")
 
     // quiet: no question about the network (the caller asks, or has just been answered).
     function render(quiet) {
@@ -406,7 +410,7 @@ NVG.View {
                         save();
                     else
                         saveFailed(qsTr("Not saved: this widget goes online, and going online was not allowed."));
-                }, qsTr("This widget goes online, and Network is off.\nAllow it to go online and save?"));
+                }, askSaveOnlineText);
                 return ;
             }
             saveFailed("");

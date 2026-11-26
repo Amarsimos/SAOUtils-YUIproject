@@ -227,7 +227,7 @@ NVG.Window {
                 Repeater {
                     model: [{
                         "title": "Render",
-                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / + / 100%)."),
+                        "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), nothing (NO SIGNAL), and one larger than the preview (Fit, − / +)."),
                         "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Empty", "empty"], ["Large Widget", "large"]]
                     }, {
                         "title": "Yui's Work",
@@ -235,7 +235,7 @@ NVG.Window {
                         "tests": [["Writing", "write"], ["Change", "edit"], ["Failure", "fail"]]
                     }, {
                         "title": "S1 Probes · Workbench",
-                        "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads C:\\Windows\\win.ini and shows only its length. These run in the workbench's preview."),
+                        "note": qsTr("Seedling Development Plan, S1: harmless probes of what a generated widget can reach. Each shows what it found in the preview (and in SAO Utils' log as [seedling probe]); nothing is called, sent or changed. P7 reads Windows' win.ini and shows only its length. These run in the workbench's preview."),
                         "tests": Probes.PROBES.map(function(p) {
                             return [p.name, "probe:" + p.key];
                         })
