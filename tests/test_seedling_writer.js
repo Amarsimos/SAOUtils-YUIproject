@@ -107,5 +107,48 @@ test("what the writer could not do, and whether it goes online", () => {
     assert.ok(!W.goesOnline("// https://example.com in a comment\nItem {}"));
 });
 
+const A = load("api.js");
+
+test("api.js: what is missing before a request", () => {
+    assert.strictEqual(A.missing({ provider: "openai", apiKey: "k", model: "m" }), "");
+    assert.strictEqual(A.missing({ provider: "openai", apiKey: "", model: "m" }), "API Key");
+    assert.strictEqual(A.missing({ provider: "ollama", apiKey: "", model: "qwen" }), "");
+    assert.strictEqual(A.missing({ provider: "custom", apiKey: "k", model: "m" }), "Server Address");
+    assert.strictEqual(A.missing({ provider: "anthropic", apiKey: "k", model: " " }), "Model");
+});
+
+test("api.js: the three request shapes", () => {
+    const o = A.build({ provider: "deepseek", apiKey: "k", model: "m" }, "SYS", "USER", 100);
+    assert.strictEqual(o.url, "https://api.deepseek.com/chat/completions");
+    same(o.headers, [["Authorization", "Bearer k"]]);
+    same(o.body.messages, [{ role: "system", content: "SYS" }, { role: "user", content: "USER" }]);
+    assert.strictEqual(o.body.stream, true);
+    const c = A.build({ provider: "anthropic", apiKey: "k", model: "claude" }, "SYS", "USER", 100);
+    assert.strictEqual(c.body.system, "SYS");
+    assert.strictEqual(c.body.max_tokens, 100);
+    assert.ok(c.headers.some((h) => h[0] === "anthropic-version"));
+    const g = A.build({ provider: "google", apiKey: "k", model: "gemini-x" }, "SYS", "USER", 100);
+    assert.strictEqual(g.url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-x:streamGenerateContent?alt=sse");
+    assert.strictEqual(g.body.systemInstruction.parts[0].text, "SYS");
+    // no key (Ollama): no Authorization header
+    same(A.build({ provider: "ollama", apiKey: "", model: "q" }, "S", "U", 1).headers, []);
+    // own address
+    assert.strictEqual(A.build({ provider: "custom", endpoint: "http://x/v1/chat/completions", apiKey: "k", model: "m" }, "S", "U", 1).url, "http://x/v1/chat/completions");
+});
+
+test("api.js: reading the stream, line by line, in pieces", () => {
+    const body = 'data: {"choices":[{"delta":{"content":"im"}}]}\n\ndata: {"choices":[{"delta":{"content":"port"}}]}\ndata: [DONE]\n';
+    let r = A.readStream("openai", body.slice(0, 60), 0, false);
+    assert.strictEqual(r.text, "im");
+    r = A.readStream("openai", body, r.next, true);
+    assert.strictEqual(r.text, "port");
+    const claude = 'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"text":"Hi"}}\n';
+    assert.strictEqual(A.readStream("anthropic", claude, 0, true).text, "Hi");
+    const gemini = 'data: {"candidates":[{"content":{"parts":[{"text":"Yo"}]}}]}\n';
+    assert.strictEqual(A.readStream("gemini", gemini, 0, true).text, "Yo");
+    assert.throws(() => A.readStream("openai", 'data: {"error":{"message":"bad key"}}\n', 0, true), /bad key/);
+    assert.strictEqual(A.textOf("openai", { choices: [{ message: { content: "whole" } }] }), "whole");
+});
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);
