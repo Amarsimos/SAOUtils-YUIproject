@@ -55,7 +55,7 @@ NVG.View {
     // Sent to Yui's chat at once; the start ("帮我修好这个挂件：", Yui's SEEDLING_FIX_PREFIX) makes her fix
     // it with the code flow. An older Yui without sendToChat: written in her input box instead.
     function sendProblemsToYui() {
-        var yui = Link.Bench.writer;
+        var yui = Link.Bench.yui;
         if (!yui)
             return ;
 
@@ -344,7 +344,7 @@ NVG.View {
         running: !!bench.preview && bench.previewYuis.length > 0
         onTriggered: {
             bench.previewTicks = (bench.previewTicks + 1) % 10;
-            Props.feed(bench.preview, bench.previewYuis, Link.Bench.writer, bench.previewTicks !== 0);
+            Props.feed(bench.preview, bench.previewYuis, Link.Bench.yui, bench.previewTicks !== 0);
         }
     }
 
@@ -363,7 +363,7 @@ NVG.View {
         if (showCode)
             return qsTr("Write QML on the left, or pick one of the Examples.");
 
-        if (Link.Bench.writer)
+        if (Link.Bench.yui)
             return qsTr("Tell Yui in her chat what widget you want; she writes it here.");
 
         return canGenerate ? qsTr("Describe the widget you want below.") : qsTr("Set up the AI in Seedling Settings to have widgets written (or turn on Code Editor to write one yourself).");
@@ -419,7 +419,7 @@ NVG.View {
             Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
             // Yui's values too (read only, so the preview shows them as the widget will).
             previewYuis = decl.yuis;
-            Props.feed(preview, decl.yuis, Link.Bench.writer, false);
+            Props.feed(preview, decl.yuis, Link.Bench.yui, false);
             declNotes = decl.notes;
             problemList = decl.notes.map(function(n) {
                 return {
@@ -518,7 +518,7 @@ NVG.View {
     }
 
     // Whether a widget can be written now (MHCP-YUI's connection, or Seedling's own set up).
-    readonly property bool canGenerate: (Link.Bench.settingsRevision, Link.Bench.writer, Link.Bench.cannotWrite() === "")
+    readonly property bool canGenerate: (Link.Bench.settingsRevision, Link.Bench.yui, Link.Bench.cannotWrite() === "")
 
     // Generate: the model (Seedling's own AI, or MHCP-YUI's) writes what the request field asks for,
     // or changes the code to it.
@@ -1387,7 +1387,7 @@ NVG.View {
                                 }
 
                                 Chip {
-                                    visible: Link.Bench.writer !== null && Link.Bench.writer.prefillChat !== undefined
+                                    visible: Link.Bench.yui !== null && Link.Bench.yui.prefillChat !== undefined
                                     text: "Send to Yui"
                                     icon: "guide"
                                     implicitHeight: 26
@@ -1702,7 +1702,7 @@ NVG.View {
                     Layout.fillWidth: true
                     spacing: 8
                     // Without MHCP-YUI: Seedling's own AI (Seedling Settings, AI) writes it.
-                    visible: Link.Bench.writer === null
+                    visible: Link.Bench.yui === null
 
                     TextField {
                         id: requestField

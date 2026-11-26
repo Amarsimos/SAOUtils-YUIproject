@@ -78,7 +78,7 @@ T.Widget {
         settings.prop_keep = kept;
         Props.apply(created, decl.keeps, kept);
         keptJson = JSON.stringify(kept);
-        Props.feed(created, decl.yuis, Link.Bench.writer, false);
+        Props.feed(created, decl.yuis, Link.Bench.yui, false);
     }
 
     // Yui's values (@yui): the timers every second, the rest every 10 s.
@@ -90,7 +90,7 @@ T.Widget {
         running: !!widget.created && widget.shownDecl.yuis.length > 0
         onTriggered: {
             widget.yuiTicks = (widget.yuiTicks + 1) % 10;
-            Props.feed(widget.created, widget.shownDecl.yuis, Link.Bench.writer, widget.yuiTicks !== 0);
+            Props.feed(widget.created, widget.shownDecl.yuis, Link.Bench.yui, widget.yuiTicks !== 0);
         }
     }
 

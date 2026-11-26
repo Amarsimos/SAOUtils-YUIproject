@@ -22,7 +22,7 @@ NVG.Window {
     readonly property bool advanced: targetWidget.settings.show_advanced === true
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
-    readonly property bool ownConnection: (Link.Bench.settingsRevision, Link.Bench.writer === null || Link.Bench.setting("connection", "yui") === "own")
+    readonly property bool ownConnection: (Link.Bench.settingsRevision, Link.Bench.yui === null || Link.Bench.setting("connection", "yui") === "own")
     // Test Connection: a very short request through the connection chosen.
     property bool testing: false
     property string testResult: ""
@@ -227,7 +227,7 @@ NVG.Window {
 
                             property bool ready: false
 
-                            visible: Link.Bench.writer !== null
+                            visible: Link.Bench.yui !== null
                             label: "Connection"
                             model: ["Yui", "Own"]
                             Component.onCompleted: {
@@ -373,6 +373,23 @@ NVG.Window {
                         visible: settingsWindow.help
                         besidePreferences: true
                         text: qsTr("Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).")
+                    }
+
+                    // Temporary: Seedling as if MHCP-YUI were not installed (its own AI, the workbench's
+                    // request field, no @yui data). Not saved: back after a restart.
+                    Heading {
+                        text: "Standalone"
+                    }
+
+                    P.PreferenceGroup {
+                        Layout.fillWidth: true
+
+                        P.SwitchPreference {
+                            label: "Pretend No Yui"
+                            Component.onCompleted: value = Link.Bench.hideYui
+                            onValueChanged: Link.Bench.hideYui = value === true
+                        }
+
                     }
 
                     Repeater {

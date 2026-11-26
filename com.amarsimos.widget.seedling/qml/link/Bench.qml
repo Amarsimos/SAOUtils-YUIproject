@@ -17,6 +17,10 @@ QtObject {
     // MHCP-YUI when it is running (it sets itself here): her connection (seedlingConnection) can be
     // borrowed, and her data read (@yui, linkValue).
     property var writer: null
+    // MHCP-YUI as Seedling sees her: null while Pretend No Yui is on (Seedling Settings' Test, for
+    // trying Seedling on its own; not saved).
+    property bool hideYui: false
+    readonly property var yui: hideYui ? null : writer
 
     // The code being worked on: the target widget's open workbench's, else its saved code ("" when none).
     function currentCode() {
@@ -171,7 +175,7 @@ QtObject {
 
     // The connection used: "yui" (MHCP-YUI's, when she is there and Connection is Yui) or "own".
     function connectionKind() {
-        var hasYui = !!(writer && writer.seedlingConnection);
+        var hasYui = !!(yui && yui.seedlingConnection);
         return hasYui && setting("connection", "yui") !== "own" ? "yui" : "own";
     }
 
@@ -197,7 +201,7 @@ QtObject {
     // {abort()}. timeout: no data for that long ends it.
     function ask(system, user, onDelta, onFinished) {
         if (connectionKind() === "yui")
-            return writer.seedlingConnection(system, user, writingModel(), onDelta, onFinished);
+            return yui.seedlingConnection(system, user, writingModel(), onDelta, onFinished);
 
         var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 240000 }", bench);
         var finished = false;
@@ -253,7 +257,7 @@ QtObject {
             onDone("unset", why, "");
             return why;
         }
-        var withYui = !!writer;
+        var withYui = !!yui;
         var current = currentCode();
         var editing = current.trim() !== "";
         var system = Writer.codePrompt(allowNetwork(), editing, withYui) + Writer.styleNote(writingStyle()) + Writer.templateNote(editing ? "" : templateFor(request));
