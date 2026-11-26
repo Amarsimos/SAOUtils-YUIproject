@@ -22,7 +22,8 @@ NVG.Window {
     readonly property bool advanced: targetWidget.settings.show_advanced === true
 
     // Seedling's own AI is used (no MHCP-YUI, or Connection: Own).
-    readonly property bool ownConnection: Link.Bench.yui === null
+    // Seedling's own Link settings are used (and shown): no MHCP-YUI, or she is not set up yet.
+    readonly property bool ownConnection: (Link.Bench.settingsRevision, yuiRevision, Link.Bench.yui, Link.Bench.connectionKind() === "own")
     // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
     // read again after Scan Cores / Restore Registry.
     property int yuiRevision: 0

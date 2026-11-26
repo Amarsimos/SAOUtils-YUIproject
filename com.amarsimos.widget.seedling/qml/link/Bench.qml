@@ -189,10 +189,26 @@ QtObject {
     // ---- Writing a widget (section 11 of "Seedling Development Plan.md"): Seedling's own flow, with
     // MHCP-YUI's connection or its own (Connection). MHCP-YUI only says it in her chat.
 
-    // The connection used: "yui" whenever MHCP-YUI is there (her server, key and models: nothing to
-    // set twice), else "own" (Seedling's own Link settings).
+    // Whether MHCP-YUI is there with her connection set up (server, key, model in Cardinal System).
+    function yuiReady() {
+        if (!yui || !yui.seedlingConnection || !yui.activeConfig)
+            return false;
+
+        var config = yui.activeConfig();
+        return !!(config.apiKey && config.endpoint && config.model);
+    }
+
+    // The connection used: MHCP-YUI's whenever she is there and set up (her server, key and models:
+    // nothing to set twice); Seedling's own when she is not there, or not set up yet while its own is
+    // (she was installed after Seedling was set up); hers when neither is set up (then she says so).
     function connectionKind() {
-        return yui && yui.seedlingConnection ? "yui" : "own";
+        if (yuiReady())
+            return "yui";
+
+        if (!yui || !yui.seedlingConnection)
+            return "own";
+
+        return Api.missing(ownConfig()) === "" ? "own" : "yui";
     }
 
     // Whether a widget can be written now ("" when it can, else why not).
