@@ -2511,7 +2511,7 @@ function seedlingCodePrompt(allowNetwork, editing) {
         "3. 不能用：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。",
         "4. 方括号 [ ] 里只能写数字（list[0]）、直接写出的字段名（data[\"temp\"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量：按值查表用 switch 或对象的点号（colors.sunny）。",
         "5. parent 只能用来取尺寸和锚线（parent.width、parent.height、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。",
-        "6. 循环只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器在循环外不要再赋别的值。",
+        "6. 循环只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不要改计数器，也不要往 list 里 push 让它变长；计数器在循环外不要再赋别的值，也不要拿它的名字当函数参数。地址属性（source、url）赋值时也要以写全的 \"https://主机/...\" 开头；用 .open( 、.source 的写法，不要写成 [\"open\"]。",
         "7. 根元素写明 width 和 height，都不超过 2000；Timer 的 interval 不小于 16（毫秒）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。",
         allowNetwork ? "8. 可以联网：用 XMLHttpRequest；地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；Image 的 source 也一样。只能用 http / https。" : "8. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；只能用 http / https。不要为了装饰去加载网络图片。",
         "9. 不能读写本地文件：不能出现 file:、qrc:、C:/ 这类地址，source 只能是写全的 https 地址、空字符串，或代码里自己元素的 id（给效果用）。",

@@ -103,7 +103,29 @@ const refuse = {
     "unclosed string": script("var s = \"abc;"),
     "local path": widget("    Image { source: \"C:/Windows/x.png\" }"),
     "data: address": script("var u = \"data:text/plain,hi\";"),
-    "source is an outside name": widget("    Image { source: bench }")
+    "source is an outside name": widget("    Image { source: bench }"),
+    // the code review's ways round (2026-11-27)
+    "[ ] after a function's }": script("var F = function() {}[\"con\" + \"structor\"]; F(\"Qt.openUrlExternally('file:///C:/')\")();"),
+    "[ ] after a number": script("var F = 0[\"con\" + \"structor\"][\"con\" + \"structor\"];"),
+    "regex after if ( )": script("if (1) /\"/; Qt.quit(); /\"/"),
+    "regex after }": script("{} /\"/; Qt.quit(); /\"/"),
+    "slash then quote": script("var a = 1 / \"x\";"),
+    "counter as a parameter": script("for (var k = 0; k < 1; k++) {} var get = function(o, k) { return o[k]; }; var F = get(function() {}, \"con\" + \"structor\");"),
+    "counter as an arrow parameter": script("for (var k = 0; k < 1; k++) {} var get = (o, k) => o[k];"),
+    "counter in catch": script("for (var k = 0; k < 1; k++) {} try {} catch (k) { var f = (function() {})[k]; }"),
+    "loop without a step": script("for (var i = 0; i < 10; ) {}"),
+    "loop stepping away": script("for (var i = 0; i < 10; i--) {}"),
+    "loop stepping by nothing": script("for (var i = 0; i < 10; i += 0) {}"),
+    "counter changed inside": script("for (var i = 0; i < 10; i++) { i = 0; }"),
+    "counter stepped back inside": script("for (var i = 0; i < 10; i++) i--;"),
+    "list grown in its own loop": script("var a = [1]; for (var i = 0; i < a.length; i++) a.push(1);"),
+    "loop from far below": script("for (var i = -1000000000; i < 10; i++) {}"),
+    "loop from a variable": script("var s = -1e9; for (var i = s; i < 10; i++) {}"),
+    "source = glued": widget("    Image { id: img; Component.onCompleted: { var a = \"file\"; var b = \":\"; img.source = a + b + \"///C:/x.png\"; } }"),
+    "source += ": widget("    Image { id: img; Component.onCompleted: img.source += \"x\" }"),
+    "[\"open\"]": script("var r = new XMLHttpRequest(); r[\"open\"](\"GET\", \"x\");"),
+    "[\"source\"]": widget("    Image { id: img; Component.onCompleted: img[\"source\"] = \"x\" }"),
+    "open kept aside": script("var r = new XMLHttpRequest(); var o = r.open; o.call(r, \"GET\", \"x\");")
 };
 Object.keys(refuse).forEach((name) => expect(name, refuse[name], false, "refuse"));
 Object.keys(refuse).forEach((name) => expect(name + " (Network on)", refuse[name], true, "refuse"));
@@ -141,7 +163,17 @@ const allow = {
     "division": script("var a = 10; var b = a / 2; var c = (a + 1) / 3;"),
     "empty source": widget("    Image { source: \"\" }"),
     "time format": widget("    Text { text: Qt.formatTime(new Date(), \"hh:mm\") }"),
-    "effect source is an own item": widget("    Rectangle { id: shape; width: 10; height: 10 }")
+    "effect source is an own item": widget("    Rectangle { id: shape; width: 10; height: 10 }"),
+    // still fine after the stricter rules
+    "counting down from a length": script("var a = [1, 2]; for (var i = a.length - 1; i >= 0; i--) console.log(a[i]);"),
+    "stepping by 2": script("for (var i = 0; i < 100; i += 2) {}"),
+    "filling another list": script("var a = [1, 2]; var b = []; for (var i = 0; i < a.length; i++) b.push(a[i] * 2);"),
+    "nested loops": script("var n = 0; for (var i = 0; i < 10; i++) for (var j = 0; j < 10; j++) n += i * j;"),
+    "end on the left": script("for (var i = 0; 10 > i; i++) {}"),
+    "list after a block": widget("    property var items: [1, 2, 3]\n    Component.onCompleted: { if (items.length) {} var x = items[0]; }"),
+    "division after a call": script("var w = Math.max(1, 2) / 2; var h = (3 + 1) / 2;"),
+    "source = written out (Network on)": widget("    Image { id: img; Component.onCompleted: img.source = \"\" }"),
+    "function returning a list": script("var f = function() { return [1, 2]; }; var x = f()[0];")
 };
 Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 

@@ -16,7 +16,9 @@
 //   host ("https://host/" + ...); file:, qrc:, nvg:... never. XMLHttpRequest only with Network on, and
 //   its open() takes such an address;
 // - limits: width / height up to 2000, Timer intervals from 16 ms, for loops with an end (a number up
-//   to 1000 or a .length), particles bounded.
+//   to 1000 or a .length) whose counter starts at a number or a .length, steps toward the end and is
+//   not changed inside (nor the measured list grown), particles bounded;
+// - x["open"] / x["source"] and .open kept aside are refused, so the address checks see every use.
 // check(code, allowNetwork) returns [{line, message, network}] ([] when it may be created);
 // network: refused only because Network is off.
 
@@ -74,6 +76,9 @@ var PARENT_MEMBERS = ["width", "height", "x", "y", "z", "left", "right", "top", 
 // QML properties that take an address.
 var URL_PROPERTIES = ["source", "url", "baseUrl", "fontSource"];
 
+// Names to be written with a dot, never as a string in [ ] (the address checks look for them so).
+var DOTTED_ONLY = ["open"].concat(URL_PROPERTIES);
+
 // Schemes refused even when not followed by "/".
 var OTHER_SCHEMES = ["file", "qrc", "nvg", "data", "javascript", "about", "blob", "image", "ftp", "ws", "wss", "mailto", "jar", "assets", "content"];
 
@@ -88,6 +93,7 @@ var MAX_PARTICLES = 1000;
 function tokenize(code, problems) {
     var text = String(code || "");
     var tokens = [];
+    var parens = [];
     var line = 1;
     var i = 0;
     var n = text.length;
@@ -218,10 +224,13 @@ function tokenize(code, problems) {
             });
             continue;
         }
-        // A "/" where a value is expected starts a regular expression.
+        // A "/" where a value is expected starts a regular expression: also after "}" (a block's end)
+        // and after the ")" of if / for / while (a statement starts there). A "/" followed by a quote
+        // is never a division worth having: refused as well (else a regex could hide code between
+        // what looks like two strings).
         if (c === "/") {
             var prev = tokens.length ? tokens[tokens.length - 1] : null;
-            var valueExpected = !prev || (prev.type === "punct" && [")", "]", "}"].indexOf(prev.value) === -1) || (prev.type === "name" && ["return", "typeof", "case", "in", "of", "new", "delete", "void"].indexOf(prev.value) !== -1);
+            var valueExpected = !prev || (prev.type === "punct" && [")", "]"].indexOf(prev.value) === -1) || (prev.type === "punct" && prev.value === ")" && prev.statement === true) || (prev.type === "name" && ["return", "typeof", "case", "in", "of", "new", "delete", "void", "else", "do"].indexOf(prev.value) !== -1) || /^\/\s*["'\/]/.test(text.substr(i, 8));
             if (valueExpected) {
                 problems.push({
                     "line": line,
@@ -244,11 +253,19 @@ function tokenize(code, problems) {
             if (text.substr(i, punct[k].length) === punct[k])
                 op = punct[k];
         op = op || c;
-        tokens.push({
+        var token = {
             "type": "punct",
             "value": op,
             "line": line
-        });
+        };
+        // "(" remembers whether if / for / while is before it; its ")" then ends that statement's head.
+        if (op === "(") {
+            var head = tokens.length ? tokens[tokens.length - 1] : null;
+            parens.push(!!head && head.type === "name" && ["if", "for", "while", "with"].indexOf(head.value) !== -1);
+        } else if (op === ")") {
+            token.statement = parens.length ? parens.pop() : false;
+        }
+        tokens.push(token);
         i += op.length;
     }
     return tokens;
@@ -290,7 +307,8 @@ function check(code, allowNetwork) {
     var T = function(j) {
         return tokens[j];
     };
-    // Loop counters: for (var|let NAME = <number> ...
+    // Loop counters: for (var|let NAME = ... (checkFor keeps the start to a number or a .length, so
+    // the counter holds a number)
     var counters = {
         "index": -1
     };
@@ -300,7 +318,7 @@ function check(code, allowNetwork) {
         if (isName(T(d), "id") && isPunct(T(d + 1), ":") && isName(T(d + 2)))
             ids[T(d + 2).value] = true;
     for (var j = 0; j + 4 < tokens.length; j++)
-        if (isName(T(j), "for") && isPunct(T(j + 1), "(") && (isName(T(j + 2), "var") || isName(T(j + 2), "let")) && isName(T(j + 3)) && isPunct(T(j + 4), "=") && T(j + 5) && T(j + 5).type === "number")
+        if (isName(T(j), "for") && isPunct(T(j + 1), "(") && (isName(T(j + 2), "var") || isName(T(j + 2), "let")) && isName(T(j + 3)) && isPunct(T(j + 4), "="))
             counters[T(j + 3).value] = j + 3;
 
     // A counter (or index) given another value anywhere else is not a counter: "k = 'constructor'"
@@ -308,6 +326,33 @@ function check(code, allowNetwork) {
     for (j = 0; j < tokens.length; j++)
         if (isName(T(j)) && counters.hasOwnProperty(T(j).value) && counters[T(j).value] !== j && (isPunct(T(j + 1), "=") || isPunct(T(j + 1), "+=") || isPunct(T(j + 1), "-=") || isName(T(j - 1), "var") || isName(T(j - 1), "let") || isName(T(j - 1), "const")) && !isPunct(T(j - 1), "."))
             counters[T(j).value] = false;
+
+    // Nor is a name that is also a parameter (function (o, k), k => ..., catch (k)): it holds whatever
+    // the caller gives.
+    for (j = 0; j < tokens.length; j++) {
+        var params = [];
+        if ((isName(T(j), "function") || isName(T(j), "catch")) && (isPunct(T(j + 1), "(") || (isName(T(j + 1)) && isPunct(T(j + 2), "(")))) {
+            var p0 = isPunct(T(j + 1), "(") ? j + 2 : j + 3;
+            for (var p1 = p0; T(p1) && !isPunct(T(p1), ")"); p1++)
+                if (isName(T(p1)))
+                    params.push(T(p1).value);
+
+        }
+        if (isPunct(T(j), "=>")) {
+            if (isName(T(j - 1)))
+                params.push(T(j - 1).value);
+            else if (isPunct(T(j - 1), ")"))
+                for (var p2 = j - 2; T(p2) && !isPunct(T(p2), "("); p2--)
+                    if (isName(T(p2)))
+                        params.push(T(p2).value);
+
+        }
+        params.forEach(function(name) {
+            if (counters.hasOwnProperty(name))
+                counters[name] = false;
+
+        });
+    }
 
     for (j = 0; j < tokens.length; j++) {
         var t = T(j);
@@ -391,6 +436,18 @@ function check(code, allowNetwork) {
 
                 continue;
             }
+            // ---- the same properties given a value in JavaScript (img.source = ..., source = ...)
+            if (URL_PROPERTIES.indexOf(t.value) !== -1 && (isPunct(after, "=") || isPunct(after, "+="))) {
+                if (isPunct(after, "+=") || !startsWithAddress(T(j + 2), true))
+                    add(t.line, t.value + " = : an address must start written out (\"https://host/...\"), not computed");
+
+                continue;
+            }
+            // ---- .open only called at once (var o = r.open; o(..., address) would skip the check)
+            if (t.value === "open" && isPunct(before, ".") && !isPunct(after, "(")) {
+                add(t.line, ".open: may only be called directly (r.open(\"GET\", \"https://host/...\"))");
+                continue;
+            }
             // ---- XMLHttpRequest's open(method, address): the address starts written out
             if (t.value === "open" && isPunct(before, ".") && isPunct(after, "(") && !isPunct(T(j + 2), ")")) {
                 var comma = j + 2;
@@ -444,11 +501,16 @@ function check(code, allowNetwork) {
 
             if (FORBIDDEN_NAMES.hasOwnProperty(t.value) && isPunct(before, "["))
                 add(t.line, "[\"" + t.value + "\"]: " + FORBIDDEN_NAMES[t.value]);
+            // x["open"], x["source"]: the address checks look for .open( and source: / .source =
+            if (DOTTED_ONLY.indexOf(t.value) !== -1 && isPunct(before, "["))
+                add(t.line, "[\"" + t.value + "\"]: write ." + t.value + " instead");
 
             continue;
         }
-        // ---- [ ] after a value: what is inside must be a number, a plain string or a counter
-        if (isPunct(t, "[") && before && (before.type === "name" && ["return", "typeof", "case", "in", "of", "new", "delete", "void", "var", "let", "const"].indexOf(before.value) === -1 || isPunct(before, ")") || isPunct(before, "]") || before.type === "string")) {
+        // ---- [ ] after a value: what is inside must be a number, a plain string or a counter. After
+        // anything that can end a value (a name, a string, a number, ")", "]", "}") it is a member, not
+        // a list: function() {}[...] and 0[...] too.
+        if (isPunct(t, "[") && before && (before.type === "name" && ["return", "typeof", "case", "in", "of", "new", "delete", "void", "var", "let", "const", "else", "do"].indexOf(before.value) === -1 || isPunct(before, ")") || isPunct(before, "]") || isPunct(before, "}") || before.type === "string" || before.type === "number")) {
             var depth = 0;
             var ok = true;
             for (var q = j + 1; q < tokens.length; q++) {
@@ -535,9 +597,98 @@ function checkFor(tokens, j, add) {
     }) || (numbers.length > 0 && numbers.every(function(u) {
         return u.value <= MAX_LOOP;
     }));
-    if (cond.length === 0 || !bounded)
+    if (cond.length === 0 || !bounded) {
         add(tokens[j].line, "for: a loop needs an end (a number up to " + MAX_LOOP + " or a .length)");
+        return ;
+    }
+    // The counter must walk toward the end: i < / <= end with i++, ++i or i += <number>; i > / >= end
+    // with i--, --i or i -= <number>; not given another value inside the loop; and a .length end's
+    // list not grown inside it.
+    var init = parts[0] || [];
+    var update = parts[2] || [];
+    var start = (init[0] && init[0].type === "name" && ["var", "let"].indexOf(init[0].value) !== -1) ? 1 : 0;
+    var counter = init[start] && init[start].type === "name" && init[start + 1] && init[start + 1].value === "=" ? init[start].value : "";
+    var bad = function(why) {
+        add(tokens[j].line, "for: " + why);
+    };
+    if (!counter)
+        return bad("the loop needs a counter set at its start (for (var i = 0; ...))");
 
+    // The comparison with the counter: "i < end" (or "end > i", turned round).
+    var dir = "";
+    for (var c = 0; c < cond.length && !dir; c++) {
+        var cmp = cond[c];
+        if (cmp.type !== "punct" || ["<", "<=", ">", ">="].indexOf(cmp.value) === -1)
+            continue;
+
+        var left = cond[c - 1];
+        var right = cond[c + 1];
+        var up = cmp.value.charAt(0) === "<";
+        if (left && left.type === "name" && left.value === counter)
+            dir = up ? "up" : "down";
+        else if (right && right.type === "name" && right.value === counter)
+            dir = up ? "down" : "up";
+    }
+    if (!dir)
+        return bad("the end must compare the counter " + counter + " (" + counter + " < end)");
+
+    var step = update.map(function(u) {
+        return u.type === "number" ? "N" : u.value;
+    }).join(" ");
+    var forward = dir === "up" ? [counter + " ++", "++ " + counter, counter + " += N"] : [counter + " --", "-- " + counter, counter + " -= N"];
+    var stepNumber = update.length === 3 && update[2].type === "number" ? update[2].value : 1;
+    if (forward.indexOf(step) === -1 || stepNumber <= 0)
+        return bad("the counter must step toward the end (" + (dir === "up" ? counter + "++" : counter + "--") + ")");
+
+    // Where the counter starts: a number, or something with .length / .count (count down from it).
+    var from = init.slice(start + 2);
+    var fromOk = from.length > 0 && from.every(function(u, k) {
+        return u.type === "number" || (u.type === "punct" && ["+", "-", "."].indexOf(u.value) !== -1) || (u.type === "name" && (from[k + 1] && from[k + 1].value === "." || u.value === "length" || u.value === "count"));
+    });
+    if (!fromOk)
+        return bad("the counter must start at a number or a .length");
+
+    if (from.length === 1 && from[0].type === "number" && numbers.length === 1 && Math.abs(numbers[0].value - from[0].value) > MAX_LOOP)
+        return bad("more than " + MAX_LOOP + " rounds");
+
+    if (from.length === 2 && from[0].value === "-" && from[1].type === "number" && from[1].value > MAX_LOOP)
+        return bad("more than " + MAX_LOOP + " rounds");
+
+    // The body: { ... } or one statement.
+    var b0 = q + 1;
+    var b1 = b0;
+    if (tokens[b0] && tokens[b0].type === "punct" && tokens[b0].value === "{") {
+        var level = 0;
+        for (b1 = b0; b1 < tokens.length; b1++) {
+            if (tokens[b1].type === "punct" && tokens[b1].value === "{")
+                level++;
+
+            if (tokens[b1].type === "punct" && tokens[b1].value === "}" && --level === 0)
+                break;
+
+        }
+    } else {
+        while (b1 < tokens.length && !(tokens[b1].type === "punct" && tokens[b1].value === ";"))
+            b1++;
+    }
+    // The lists the end measures: "list" of list.length.
+    var measured = [];
+    cond.forEach(function(u, k) {
+        if (u.type === "name" && (u.value === "length" || u.value === "count") && k > 1 && cond[k - 1].value === "." && cond[k - 2].type === "name")
+            measured.push(cond[k - 2].value);
+
+    });
+    for (var s = b0; s < b1; s++) {
+        var u2 = tokens[s];
+        var prev = tokens[s - 1];
+        var next = tokens[s + 1];
+        if (u2.type === "name" && u2.value === counter && !(prev && prev.value === ".") && ((next && ["=", "+=", "-=", "*=", "/=", "%=", "++", "--"].indexOf(next.value) !== -1) || (prev && ["++", "--"].indexOf(prev.value) !== -1)))
+            return bad("the counter " + counter + " may not be changed inside the loop");
+
+        if (u2.type === "name" && measured.indexOf(u2.value) !== -1 && next && next.value === "." && tokens[s + 2] && ["push", "unshift", "splice", "append", "insert"].indexOf(tokens[s + 2].value) !== -1)
+            return bad(u2.value + " may not grow inside a loop that runs to its length");
+
+    }
 }
 
 // Refused only for going online (Network off): the workbench then asks whether to allow it.
