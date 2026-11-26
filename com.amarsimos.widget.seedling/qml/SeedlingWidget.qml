@@ -80,6 +80,27 @@ T.Widget {
         }
     }
 
+    // Seedling Settings (its Test page), one at a time.
+    property Component settingsComponent: Qt.createComponent("SeedlingSettings.qml")
+    property var settingsWindow: null
+
+    function openSettings() {
+        if (settingsWindow) {
+            settingsWindow.requestActivate();
+            return ;
+        }
+        settingsWindow = settingsComponent.createObject(widget, {
+            "targetWidget": widget
+        });
+        if (!settingsWindow) {
+            console.log("Seedling: cannot open the settings:", settingsComponent.errorString());
+            return ;
+        }
+        settingsWindow.closing.connect(function() {
+            settingsWindow = null;
+        });
+    }
+
     // Opens the workbench (or brings it forward) and returns it.
     function openWorkbench() {
         if (workbench) {
@@ -162,6 +183,11 @@ T.Widget {
         Action {
             text: qsTr("Workbench") + "..."
             onTriggered: widget.openWorkbench()
+        }
+
+        Action {
+            text: "Seedling Settings..."
+            onTriggered: widget.openSettings()
         }
 
     }
