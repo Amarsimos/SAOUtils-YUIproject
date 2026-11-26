@@ -26,36 +26,6 @@ QtObject {
         return widgets.length > 0 && widgets[widgets.length - 1].settings.allow_network === true;
     }
 
-    // Pause All Seedling Widgets (Seedling Settings): kept in paused.txt in the package, written at once.
-    readonly property url pausedFile: Qt.resolvedUrl("../../paused.txt")
-
-    function paused() {
-        try {
-            var request = new XMLHttpRequest();
-            request.open("GET", pausedFile, false);
-            request.send(null);
-            return String(request.responseText || "").trim() === "1";
-        } catch (e) {
-            return false;
-        }
-    }
-
-    function setPaused(on) {
-        try {
-            var request = new XMLHttpRequest();
-            request.open("PUT", pausedFile, false);
-            request.send(on ? "1" : "0");
-        } catch (e) {
-            console.log("Seedling: cannot write", pausedFile, e);
-        }
-        widgets.forEach(function(widget) {
-            if (on)
-                widget.pause();
-            else
-                widget.startUp();
-        });
-    }
-
     // The workbench Yui writes into (beginWriting), or null.
     property var writingBench: null
 
