@@ -4197,7 +4197,7 @@ T.Widget {
         }, {
             "stage": "waiting", "lines": 0, "edits": 0
         }];
-        var finals = ["edited", "failed", "stopped", "declined", "missing", "busy"];
+        var finals = ["edited", "failed", "offline", "stopped", "declined", "missing", "busy"];
         if (!showChat)
             openView();
 
