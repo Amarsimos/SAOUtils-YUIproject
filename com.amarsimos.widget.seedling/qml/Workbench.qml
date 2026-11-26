@@ -144,7 +144,7 @@ NVG.View {
             return ;
 
         result = "ok";
-        status = qsTr("Yui is writing it...");
+        status = qsTr("Thinking...");
         var refused = Link.Bench.generate(request, function(message, ok) {
             if (!ok) {
                 result = "error";
@@ -174,7 +174,8 @@ NVG.View {
             loadingExternal = false;
             changedLines = [];
         }
-        setPhase(keep ? qsTr("Yui is reading the code...") : qsTr("Yui is writing it..."));
+        // Thinking until something comes out (Writing / Changing, set by Yui as it streams in).
+        setPhase(qsTr("Thinking..."));
         requestActivate();
     }
 
