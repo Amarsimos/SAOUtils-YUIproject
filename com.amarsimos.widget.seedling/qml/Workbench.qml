@@ -20,6 +20,28 @@ NVG.View {
     property var targetWidget
     readonly property var settings: targetWidget.settings
     property bool showVersions: false
+    // What the last render found wrong, in full: [{line (1-based, 0 when none), text}]. The status line
+    // says the first and how many more; Problems lists them all in the right pane.
+    property var problemList: []
+    property bool showProblems: false
+    readonly property bool previewShown: !showVersions && !showProblems
+
+    // The status line for problems: the first one, and how many more.
+    function problemSummary(prefix) {
+        if (problemList.length === 0)
+            return prefix;
+
+        return prefix + problemList[0].text + (problemList.length > 1 ? "  (+" + (problemList.length - 1) + ")" : "");
+    }
+
+    // Problems: a click puts the cursor at the line (with Code Editor on).
+    function goToLine(line) {
+        if (line <= 0 || !showCode)
+            return ;
+
+        editor.cursorPosition = lineStart(line - 1);
+        editor.forceActiveFocus();
+    }
     property var preview: null
     // "ok", "error" or "unsafe", and what it says.
     property string result: "ok"
@@ -218,6 +240,8 @@ NVG.View {
         var code = editor.text;
         if (code.trim() === "") {
             errorLines = [];
+            problemList = [];
+            showProblems = false;
             result = "ok";
             status = qsTr("Write QML on the left, or pick one of the Examples.");
             return false;
@@ -228,14 +252,20 @@ NVG.View {
                 return p.line - 1;
             });
             result = "unsafe";
-            status = qsTr("Not rendered, the safety check failed: %1").arg(problems.map(function(p) {
-                return qsTr("line %1, %2").arg(p.line).arg(p.message);
-            }).join("; "));
+            problemList = problems.map(function(p) {
+                return {
+                    "line": p.line,
+                    "text": qsTr("Line %1: %2").arg(p.line).arg(p.message)
+                };
+            });
+            status = problemSummary(qsTr("Refused by the safety check · "));
             return false;
         }
         try {
             preview = Qt.createQmlObject(code, previewStage, "Seedling");
             errorLines = [];
+            problemList = [];
+            showProblems = false;
             result = "ok";
             status = qsTr("Rendered, %1 × %2 · safety check passed").arg(Math.round(preview.width)).arg(Math.round(preview.height));
             return true;
@@ -244,9 +274,19 @@ NVG.View {
                 return error.lineNumber - 1;
             });
             result = "error";
-            status = (e.qmlErrors || []).map(function(error) {
-                return qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message);
-            }).join("; ") || String(e);
+            problemList = (e.qmlErrors || []).map(function(error) {
+                return {
+                    "line": error.lineNumber,
+                    "text": qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message)
+                };
+            });
+            if (problemList.length === 0)
+                problemList = [{
+                "line": 0,
+                "text": String(e)
+            }];
+
+            status = problemSummary("");
             return false;
         }
     }
@@ -747,7 +787,20 @@ NVG.View {
                     Chip {
                         text: "Versions"
                         checked: bench.showVersions
-                        onClicked: bench.showVersions = !bench.showVersions
+                        onClicked: {
+                            bench.showVersions = !bench.showVersions;
+                            bench.showProblems = false;
+                        }
+                    }
+
+                    Chip {
+                        visible: bench.problemList.length > 0
+                        text: "Problems (" + bench.problemList.length + ")"
+                        checked: bench.showProblems
+                        onClicked: {
+                            bench.showProblems = !bench.showProblems;
+                            bench.showVersions = false;
+                        }
                     }
 
                     Chip {
@@ -989,7 +1042,7 @@ NVG.View {
                             Layout.fillWidth: true
 
                             Text {
-                                text: bench.showVersions ? "Versions" : "Preview"
+                                text: bench.showVersions ? "Versions" : bench.showProblems ? "Problems" : "Preview"
                                 font.family: "SAO UI"
                                 font.pixelSize: 15
                                 color: "#5F5F5F"
@@ -1000,7 +1053,7 @@ NVG.View {
                             }
 
                             Text {
-                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) + " · " + Math.round(bench.previewScale * 100) + "%" : "")
+                                text: bench.showVersions ? qsTr("%1 saved").arg(bench.versions.length) : bench.showProblems ? String(bench.problemList.length) : (bench.preview ? Math.round(bench.preview.width) + " × " + Math.round(bench.preview.height) + " · " + Math.round(bench.previewScale * 100) + "%" : "")
                                 font.family: "SAO UI"
                                 font.pixelSize: 13
                                 color: "#7A7A7A"
@@ -1008,7 +1061,7 @@ NVG.View {
 
                             // Zoom: smaller, Fit (the default), 100 %, larger.
                             Row {
-                                visible: !bench.showVersions && bench.preview !== null
+                                visible: bench.previewShown && bench.preview !== null
                                 spacing: 4
 
                                 Chip {
@@ -1054,7 +1107,7 @@ NVG.View {
 
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                visible: !bench.showVersions
+                                visible: bench.previewShown
 
                                 // The widget at its own size, centered and scaled (previewScale); larger
                                 // than the preview it can be dragged or scrolled around. Ctrl + wheel zooms.
@@ -1163,15 +1216,72 @@ NVG.View {
 
                             }
 
+                            // Problems: every one in full; a click goes to its line.
+                            ListView {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                visible: bench.showProblems
+                                clip: true
+                                model: bench.problemList
+                                ScrollBar.vertical: SaoScrollBar {
+                                    onLight: true
+                                }
+
+                                delegate: Rectangle {
+                                    width: ListView.view.width
+                                    height: problemText.implicitHeight + 16
+                                    color: problemArea.containsMouse ? "#22C82864" : "transparent"
+
+                                    Rectangle {
+                                        x: 8
+                                        y: 8
+                                        width: 4
+                                        height: parent.height - 16
+                                        color: "#C82864"
+                                    }
+
+                                    Text {
+                                        id: problemText
+
+                                        x: 20
+                                        y: 8
+                                        width: parent.width - 28
+                                        wrapMode: Text.Wrap
+                                        text: modelData.text
+                                        font.family: "SAO UI"
+                                        font.pixelSize: 14
+                                        color: "#4D4D4D"
+                                    }
+
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        width: parent.width
+                                        height: 1
+                                        color: "#E6E6E6"
+                                    }
+
+                                    MouseArea {
+                                        id: problemArea
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: modelData.line > 0 && bench.showCode ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: bench.goToLine(modelData.line)
+                                    }
+
+                                }
+
+                            }
+
                             // The target frame's corners, and what is there when nothing is shown.
                             CornerMarks {
                                 anchors.fill: parent
-                                visible: !bench.showVersions
+                                visible: bench.previewShown
                             }
 
                             Text {
                                 anchors.centerIn: parent
-                                visible: !bench.showVersions && !bench.preview && !bench.writing
+                                visible: bench.previewShown && !bench.preview && !bench.writing
                                 text: bench.result === "ok" ? "NO SIGNAL" : "RENDER FAILED"
                                 font.family: "SAO UI"
                                 font.pixelSize: 24
@@ -1248,7 +1358,7 @@ NVG.View {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.Wrap
-                maximumLineCount: 3
+                maximumLineCount: 2
                 elide: Text.ElideRight
                 text: bench.writing ? bench.phase + "  ·  " + bench.writingSeconds + " s" : bench.status
                 font.family: "SAO UI"
