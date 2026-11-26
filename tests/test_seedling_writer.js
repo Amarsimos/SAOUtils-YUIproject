@@ -115,6 +115,9 @@ test("api.js: what is missing before a request", () => {
     assert.strictEqual(A.missing({ provider: "ollama", apiKey: "", model: "qwen" }), "");
     assert.strictEqual(A.missing({ provider: "custom", apiKey: "k", model: "m" }), "Server Address");
     assert.strictEqual(A.missing({ provider: "anthropic", apiKey: "k", model: " " }), "Core Program");
+    // a shown text saved as a model (it broke Gemini's address): not a model
+    assert.strictEqual(A.missing({ provider: "google", apiKey: "k", model: "Same as Yui's chat (gemini-x)" }), "Core Program");
+    assert.ok(A.build({ provider: "google", apiKey: "k", model: "a/b" }, "S", "U", 1).url.indexOf("a%2Fb:streamGenerateContent") !== -1);
 });
 
 test("api.js: the three request shapes", () => {

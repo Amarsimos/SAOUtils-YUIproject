@@ -469,17 +469,28 @@ NVG.Window {
                                 if (JSON.stringify(next) === JSON.stringify(models))
                                     return ;
 
+                                // The list swap moves the selection by itself: not a choice to save.
+                                refreshing = true;
                                 models = next;
+                                refreshing = false;
                                 Qt.callLater(followModels);
                             }
+
+                            property bool refreshing: false
 
                             readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
 
                             visible: models.length > 0
                             label: "Core Program"
                             model: models
+                            // What a choice is saved as: "" for "Same as Yui's chat", else a model id from
+                            // the list (never the shown text of another mode's first item).
                             function stored(index) {
-                                return !settingsWindow.ownConnection && index === 0 ? "" : models[index];
+                                if (!settingsWindow.ownConnection && index === 0)
+                                    return "";
+
+                                var id = String(models[index] || "");
+                                return id === settingsWindow.sameAsChat ? "" : id;
                             }
 
                             function shown() {
@@ -491,9 +502,11 @@ NVG.Window {
                                 models = listNow();
                                 value = shown();
                                 ready = true;
+                                // A saved core not in the list (e.g. saved wrongly before) is put right.
+                                Qt.callLater(followModels);
                             }
                             onValueChanged: {
-                                if (ready && value >= 0 && value < models.length)
+                                if (ready && !refreshing && value >= 0 && value < models.length)
                                     Link.Bench.setSetting(key, stored(value));
 
                             }

@@ -79,7 +79,7 @@ function missing(config) {
     if (!p.keyOptional && !String(config.apiKey || "").trim())
         return "Access Key";
 
-    if (!modelOf(config))
+    if (!modelOf(config) || /\s/.test(modelOf(config)))
         return "Core Program";
 
     return "";
@@ -94,7 +94,7 @@ function build(config, system, user, maxTokens) {
     if (p.format === "gemini") {
         var base = endpoint.charAt(endpoint.length - 1) === "/" ? endpoint : endpoint + "/";
         return {
-            "url": base + model + ":streamGenerateContent?alt=sse",
+            "url": base + encodeURIComponent(model) + ":streamGenerateContent?alt=sse",
             "headers": [["x-goog-api-key", key]],
             "body": {
                 "systemInstruction": {
