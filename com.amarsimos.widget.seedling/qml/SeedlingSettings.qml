@@ -189,7 +189,7 @@ NVG.Window {
                         wrapMode: Text.Wrap
                         color: "#888888"
                         font.pixelSize: 12
-                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Try and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
+                        text: qsTr("Advanced: shows the code beside the preview in the workbench, with Run and Examples, to read or change what Yui wrote. Off, the workbench shows the widget only.")
                     }
 
                     CheckBox {
@@ -259,8 +259,8 @@ NVG.Window {
                         })
                     }, {
                         "title": "Desktop",
-                        "note": qsTr("Try puts the code on the desktop for a while; Save to Widget saves it to this widget, whose frame takes its size."),
-                        "tests": [["Try", "try"], ["Save to Widget", "save"]]
+                        "note": qsTr("Save to Widget saves the code to this widget, whose frame takes its size."),
+                        "tests": [["Save to Widget", "save"]]
                     }]
 
                     ColumnLayout {
@@ -375,12 +375,7 @@ NVG.Window {
             simulateWriting(true);
         else if (tag === "fail")
             simulateFailure();
-        else if (tag === "try") {
-            var workbench = bench();
-            if (workbench)
-                workbench.tryOnDesktop();
-
-        } else if (tag === "save") {
+        else if (tag === "save") {
             var saving = bench();
             if (saving)
                 saving.save();

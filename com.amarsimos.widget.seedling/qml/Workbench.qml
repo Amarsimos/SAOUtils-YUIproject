@@ -407,15 +407,13 @@ NVG.View {
     }
 
     // Saves the code to the widget, and as a new version when it changed.
+    // Save (○): only saves; it asks nothing (S5). Refused only for going online: not saved, and the
+    // status says to allow it with Run (Code Editor) first.
     function save() {
         if (!render(true)) {
-            // Refused only for going online: asked now (Save is the user's own step); a yes saves it.
             if (result === "unsafe" && Safety.onlyNetwork(refusedProblems))
-                askNetwork(function(allowed) {
-                if (allowed && result === "ok")
-                    save();
+                status = qsTr("Not saved: this widget goes online and Network is off. Press Run to allow it first.");
 
-            });
             return ;
         }
 
@@ -592,19 +590,15 @@ NVG.View {
         editor.text = versions[index].code;
     }
 
-    function tryOnDesktop() {
-        if (!render())
+    // Run (Code Editor): renders the code now; refused only for going online, asks whether it may (the
+    // only question for code typed in; Yui's code is asked about when it comes).
+    function run() {
+        renderTimer.stop();
+        if (render(true) || result !== "unsafe" || !Safety.onlyNetwork(refusedProblems))
             return ;
 
-        var component = Qt.createComponent("TryView.qml");
-        // Owned by the widget: with no parent it was collected at once (gone as soon as it showed), and
-        // it stays when the workbench closes.
-        var view = component.createObject(targetWidget, {
-            "code": editor.text
+        askNetwork(function() {
         });
-        if (!view)
-            console.log("Seedling: cannot try it:", component.errorString());
-
     }
 
     // A view of its own (no system frame): the title band moves it, the bottom-right corner resizes it.
@@ -912,12 +906,12 @@ NVG.View {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    // Try: advanced (with Code Editor on), as Examples and Network.
+                    // Run: advanced (with Code Editor on), as Examples.
                     Chip {
                         visible: bench.showCode
-                        text: "Try"
+                        text: "Run"
                         icon: "run"
-                        onClicked: bench.tryOnDesktop()
+                        onClicked: bench.run()
                     }
 
                     Chip {
@@ -1263,13 +1257,6 @@ NVG.View {
                                 }
 
                                 Chip {
-                                    text: "100%"
-                                    implicitHeight: 26
-                                    checked: bench.zoom === 1
-                                    onClicked: bench.zoom = 1
-                                }
-
-                                Chip {
                                     text: "+"
 
                                     icon: "add"
@@ -1539,7 +1526,8 @@ NVG.View {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    visible: Link.Bench.writer === null
+                    // Hidden until Seedling has an AI of its own (S5): without MHCP-YUI it could not be used.
+                    visible: false
 
                     TextField {
                         id: requestField
