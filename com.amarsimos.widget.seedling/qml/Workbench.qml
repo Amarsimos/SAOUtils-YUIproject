@@ -795,11 +795,25 @@ NVG.View {
             Layout.preferredHeight: bench.titleHeight
 
             Text {
+                id: titleText
+
                 anchors.centerIn: parent
                 text: "Seedling"
                 font.family: "SAO UI"
                 font.pixelSize: 30
                 color: bench.ink
+            }
+
+            // Which widget this is, when there is more than one ("No. 2").
+            Text {
+                anchors.left: titleText.right
+                anchors.leftMargin: 10
+                anchors.baseline: titleText.baseline
+                text: Link.Bench.labelOf(bench.targetWidget)
+                visible: text !== ""
+                font.family: "SAO UI"
+                font.pixelSize: 16
+                color: "#8A8A8A"
             }
 
             // While Yui writes: a thin SAO orange strip at the title band's foot, breathing (as the chat's).

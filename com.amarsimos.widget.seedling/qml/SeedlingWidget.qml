@@ -143,6 +143,8 @@ T.Widget {
 
     // Opens the workbench (or brings it forward) and returns it.
     function openWorkbench() {
+        // Yui writes for the widget whose workbench was opened last.
+        Link.Bench.used(widget);
         if (workbench) {
             workbench.requestActivate();
             return workbench;

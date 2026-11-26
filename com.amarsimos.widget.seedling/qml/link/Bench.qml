@@ -12,18 +12,18 @@ QtObject {
     // seedlingWrite(request, onDone(message, ok)).
     property var writer: null
 
-    // The code being worked on: the open workbench's, else the last widget's ("" when none).
+    // The code being worked on: the target widget's open workbench's, else its saved code ("" when none).
     function currentCode() {
         if (widgets.length === 0)
             return "";
 
-        var widget = widgets[widgets.length - 1];
+        var widget = target();
         return widget.workbench ? widget.workbench.currentCode() : (widget.code || "");
     }
 
-    // Whether the last widget may go online (its workbench's Network).
+    // Whether the target widget may go online (its Network).
     function allowNetwork() {
-        return widgets.length > 0 && widgets[widgets.length - 1].settings.allow_network === true;
+        return widgets.length > 0 && target().settings.allow_network === true;
     }
 
     // The widget Yui writes for (beginWriting), or null. Its workbench is looked up each time, not
@@ -37,13 +37,13 @@ QtObject {
         return widget && widgets.indexOf(widget) !== -1 ? widget.workbench : null;
     }
 
-    // Opens the workbench of the last widget in its writing state; returns it, or null. keep: the code
+    // Opens the target widget's workbench in its writing state; returns it, or null. keep: the code
     // stays (Yui changes it with edits) instead of being written anew.
     function beginWriting(title, keep) {
         if (widgets.length === 0)
             return null;
 
-        writingWidget = widgets[widgets.length - 1];
+        writingWidget = target();
         var bench = writingWidget.openWorkbench();
         if (bench)
             bench.beginWriting(String(title || ""), keep === true);
@@ -95,6 +95,25 @@ QtObject {
 
     }
 
+    // The widget whose workbench was opened last (Yui writes for it), else the last placed.
+    property var lastUsed: null
+
+    function used(widget) {
+        lastUsed = widget;
+    }
+
+    function target() {
+        if (lastUsed && widgets.indexOf(lastUsed) !== -1)
+            return lastUsed;
+
+        return widgets.length > 0 ? widgets[widgets.length - 1] : null;
+    }
+
+    // "No. 2" for the workbench's title when there is more than one Seedling widget ("" otherwise).
+    function labelOf(widget) {
+        return widgets.length > 1 && widgets.indexOf(widget) !== -1 ? "No. " + (widgets.indexOf(widget) + 1) : "";
+    }
+
     function unregister(widget) {
         widgets = widgets.filter(function(other) {
             return other !== widget;
@@ -107,7 +126,7 @@ QtObject {
         if (widgets.length === 0)
             return "no Seedling widget on the desktop";
 
-        var widget = widgets[widgets.length - 1];
+        var widget = target();
         var bench = widget.openWorkbench();
         if (!bench)
             return "the workbench could not be opened";
