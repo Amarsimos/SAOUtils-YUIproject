@@ -4113,12 +4113,14 @@ T.Widget {
     // that places a widget); the request waits, and once a Seedling widget is placed she goes on.
     property var seedlingWaiting: null
 
-    function seedlingAskPlace(request, onDone, onProgress) {
+    // test: from System Console's Test Place Seedling; once a widget is placed nothing is written.
+    function seedlingAskPlace(request, onDone, onProgress, test) {
         var title = userTitle();
         seedlingWaiting = {
             "request": request,
             "onDone": onDone,
-            "onProgress": onProgress
+            "onProgress": onProgress,
+            "test": test === true
         };
         if (onProgress)
             onProgress({
@@ -4150,8 +4152,27 @@ T.Widget {
 
         var waiting = seedlingWaiting;
         seedlingWaiting = null;
+        if (waiting.test) {
+            diag("test place seedling: a widget was placed (test, nothing is written)");
+            waiting.onDone("placed", true);
+            return ;
+        }
         diag("seedling: a widget was placed, writing goes on");
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
+    }
+
+    // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
+    // desktop (asked even when one is), with what follows written in the log.
+    function testSeedlingPlace() {
+        if (!seedlingBench()) {
+            diag("test place seedling: Seedling is not installed");
+            return ;
+        }
+        seedlingAskPlace("test", function(message, ok) {
+            diag("test place seedling: " + (ok ? "done, " : "not done, ") + message);
+        }, function(state) {
+            diag("test place seedling: " + Yui.seedlingNoteLine(state));
+        }, true);
     }
 
     // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
