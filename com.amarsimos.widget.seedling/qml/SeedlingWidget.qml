@@ -194,6 +194,8 @@ T.Widget {
             color: "#1FF1AA03"
         }
 
+        // Two white rings outside, then the orange fading inward: on an orange widget the white shows,
+        // on a light one the orange does.
         Repeater {
             model: 10
 
@@ -203,7 +205,46 @@ T.Widget {
                 radius: Math.max(0, 6 - index / 2)
                 color: "transparent"
                 border.width: 1
-                border.color: Qt.rgba(0.945, 0.667, 0.012, 0.85 * Math.pow(1 - index / 10, 2))
+                border.color: index < 2 ? Qt.rgba(1, 1, 1, index === 0 ? 0.95 : 0.7) : Qt.rgba(0.945, 0.667, 0.012, 0.85 * Math.pow(1 - (index - 2) / 8, 2))
+            }
+
+        }
+
+        // A slanted band of white light sweeping across once: seen by its movement whatever the
+        // widget's colors (as the light across Yui's crystal).
+        Item {
+            anchors.fill: parent
+            clip: true
+
+            Rectangle {
+                id: sweepBand
+
+                x: -width
+                y: -parent.height * 0.25
+                width: Math.max(24, parent.width * 0.18)
+                height: parent.height * 1.5
+                rotation: 20
+
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+
+                    GradientStop {
+                        position: 0
+                        color: "#00FFFFFF"
+                    }
+
+                    GradientStop {
+                        position: 0.5
+                        color: "#B3FFFFFF"
+                    }
+
+                    GradientStop {
+                        position: 1
+                        color: "#00FFFFFF"
+                    }
+
+                }
+
             }
 
         }
@@ -219,8 +260,14 @@ T.Widget {
                 duration: 150
             }
 
-            PauseAnimation {
-                duration: 250
+            // The light sweeps across while the glow holds.
+            NumberAnimation {
+                target: sweepBand
+                property: "x"
+                from: -sweepBand.width * 1.5
+                to: widget.width + sweepBand.width * 0.5
+                duration: 550
+                easing.type: Easing.InOutQuad
             }
 
             NumberAnimation {
