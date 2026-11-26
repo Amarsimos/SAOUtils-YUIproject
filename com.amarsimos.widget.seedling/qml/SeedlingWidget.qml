@@ -20,6 +20,70 @@ T.Widget {
     // Kept as the widget's own settings: code, draft, versions, allow_network.
     readonly property string code: settings.code || ""
 
+    // ---- S4: start-up protection ("Seedling Development Plan.md")
+    // A widget that froze SAO Utils (an endless loop...) would freeze it again at every start. So, as
+    // files written at once (synchronous PUT; settings are saved later, too late after a freeze):
+    // - running-<name>.txt: "1" just before the code runs, "0" once it has run 5 s or on a normal close.
+    //   "1" at start: it froze last time; it is held back (Run Anyway in its menu, or fix it in the
+    //   workbench).
+    // - paused.txt: "1" pauses every Seedling widget (Seedling Settings, Pause All Seedling Widgets).
+    property bool heldBack: false
+    readonly property url guardFile: Qt.resolvedUrl("../running-" + widget.name + ".txt")
+
+    function readFile(url) {
+        try {
+            var request = new XMLHttpRequest();
+            request.open("GET", url, false);
+            request.send(null);
+            return String(request.responseText || "").trim();
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function writeFile(url, text) {
+        try {
+            var request = new XMLHttpRequest();
+            request.open("PUT", url, false);
+            request.send(text);
+        } catch (e) {
+            console.log("Seedling: cannot write", url, e);
+        }
+    }
+
+    // At start (and from Seedling Settings' test): paused, held back after a freeze, or shown.
+    function startUp() {
+        clearShown();
+        heldBack = false;
+        if (Link.Bench.paused()) {
+            problem = qsTr("Paused: all Seedling widgets are paused (Seedling Settings).");
+            return ;
+        }
+        if (code && readFile(guardFile) === "1") {
+            heldBack = true;
+            problem = qsTr("Not run: SAO Utils froze or was closed while this widget was starting last time. Right-click: Run Anyway, or fix it in the Workbench.");
+            return ;
+        }
+        show(code);
+    }
+
+    function runAnyway() {
+        heldBack = false;
+        show(code);
+    }
+
+    function pause() {
+        clearShown();
+        problem = qsTr("Paused: all Seedling widgets are paused (Seedling Settings).");
+    }
+
+    Timer {
+        id: guardTimer
+
+        interval: 5000
+        onTriggered: widget.writeFile(widget.guardFile, "0")
+    }
+
     // Renders code into this widget; returns "" or what went wrong.
     function show(source) {
         clearShown();
@@ -32,6 +96,9 @@ T.Widget {
             problem = Safety.describe(problems);
             return problem;
         }
+        // Marked as running before it runs (start-up protection); cleared after 5 s.
+        writeFile(guardFile, "1");
+        guardTimer.restart();
         try {
             // In the sandbox (sandbox.js): the code cannot see this file's names (S1, P1).
             var made = Sandbox.create(source, content, Qt.resolvedUrl("Sandbox.qml"), "Seedling");
@@ -41,6 +108,8 @@ T.Widget {
             created = made.item;
             sandboxShown = made.sandbox;
         } catch (e) {
+            guardTimer.stop();
+            writeFile(guardFile, "0");
             problem = (e.qmlErrors || []).map(function(error) {
                 return "Line " + error.lineNumber + ", column " + error.columnNumber + ": " + error.message;
             }).join("\n") || String(e);
@@ -159,10 +228,16 @@ T.Widget {
     implicitWidth: code ? 20 : 200
     implicitHeight: code ? 20 : 120
     Component.onCompleted: {
-        show(code);
+        startUp();
         Link.Bench.register(widget);
     }
-    Component.onDestruction: Link.Bench.unregister(widget)
+    Component.onDestruction: {
+        // A normal close (or removal) is not a freeze; one held back stays held back.
+        if (!heldBack && code)
+            writeFile(guardFile, "0");
+
+        Link.Bench.unregister(widget);
+    }
 
     Item {
         id: content
@@ -217,6 +292,13 @@ T.Widget {
         Action {
             text: qsTr("Workbench") + "..."
             onTriggered: widget.openWorkbench()
+        }
+
+        // Only for a widget held back after a freeze.
+        Action {
+            text: qsTr("Run Anyway")
+            enabled: widget.heldBack
+            onTriggered: widget.runAnyway()
         }
 
         Action {

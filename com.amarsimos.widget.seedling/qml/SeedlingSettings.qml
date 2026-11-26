@@ -4,6 +4,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "probes.js" as Probes
+import "link" 1.0 as Link
 
 // Seedling Settings (the Seedling widget's menu). Test: tries the workbench's looks and states
 // without the AI and without a request: renders, the safety check, the preview's zoom, Yui writing
@@ -193,6 +194,20 @@ NVG.Window {
                     }
 
                     CheckBox {
+                        text: "Pause All Seedling Widgets"
+                        checked: Link.Bench.paused()
+                        onToggled: Link.Bench.setPaused(checked)
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: "#888888"
+                        font.pixelSize: 12
+                        text: qsTr("Stops every Seedling widget at once and keeps them stopped after a restart: they show a card instead of their code. For when a widget slows SAO Utils down or freezes it. (A widget that froze SAO Utils while starting is held back by itself the next time.)")
+                    }
+
+                    CheckBox {
                         id: networkBox
 
                         text: "Network"
@@ -259,8 +274,8 @@ NVG.Window {
                         })
                     }, {
                         "title": "Desktop",
-                        "note": qsTr("Try puts the code on the desktop for a while; Save to Widget saves it to this widget, whose frame takes its size."),
-                        "tests": [["Try", "try"], ["Save to Widget", "save"]]
+                        "note": qsTr("Try puts the code on the desktop for a while; Save to Widget saves it to this widget, whose frame takes its size; Freeze Guard acts as if SAO Utils had frozen while this widget was starting: it is held back (Run Anyway in its menu)."),
+                        "tests": [["Try", "try"], ["Save to Widget", "save"], ["Freeze Guard", "guard"]]
                     }]
 
                     ColumnLayout {
@@ -380,6 +395,10 @@ NVG.Window {
             if (workbench)
                 workbench.tryOnDesktop();
 
+        } else if (tag === "guard") {
+            // As if SAO Utils had frozen while this widget was starting: marked, then started again.
+            targetWidget.writeFile(targetWidget.guardFile, "1");
+            targetWidget.startUp();
         } else if (tag === "save") {
             var saving = bench();
             if (saving)
