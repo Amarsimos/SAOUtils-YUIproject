@@ -2630,41 +2630,41 @@ function seedlingPartialCode(text) {
     return end === -1 ? rest : rest.slice(0, end);
 }
 
-// The live line under Yui's message while a widget is written, in her own words (the numbers and the
-// errors are only in the workbench): thinking while nothing has come out yet, then writing / changing.
+// What Yui says while a widget is written, as a message of her own that changes as it goes (the
+// numbers and the errors are only in the workbench): thinking while nothing has come out yet, then
+// writing / changing; the dots grow with the seconds.
 // state: {stage: "writing" | "editing" | "fixing" | "checking" | "waiting", lines, edits, seconds}.
-var SEEDLING_SPINNER = ["◐", "◓", "◑", "◒"];
 function seedlingNoteLine(state, title) {
-    var head = "🌱 " + SEEDLING_SPINNER[state.seconds % SEEDLING_SPINNER.length] + " ";
+    var dots = ["…", "……", "………"][state.seconds % 3];
     var output = state.lines > 0 || state.edits > 0;
     if (state.stage === "waiting")
-        return "🌱 ⏳ 等" + (title || "你") + "把 Seedling 放到桌面上…";
+        return "等" + (title || "你") + "把 Seedling 放到桌面上哦～";
 
     if (state.stage === "checking")
-        return head + "结衣在确认它能不能好好动起来…";
+        return "写好啦，结衣在看它能不能好好动起来" + dots;
 
     if (state.stage === "fixing")
-        return head + (output ? "结衣在修正…" : "有个地方不太对，结衣在想办法…");
+        return output ? "结衣在修正" + dots : "唔，有个地方不太对，结衣在想办法" + dots;
 
     if (!output)
-        return head + "结衣在想该怎么做…";
+        return "结衣在想该怎么做" + dots;
 
-    return head + (state.stage === "editing" ? "结衣在改…" : "结衣在写程序…");
+    return state.stage === "editing" ? "结衣在改" + dots : "结衣在写程序" + dots;
 }
 
-// The last line, in her words. kind: "done", "edited", "failed", "stopped", "declined", "missing" or
-// "busy".
+// The last words of that message. kind: "done", "edited", "failed", "stopped", "declined", "missing"
+// or "busy".
 function seedlingChatLine(kind, title) {
     var t = title || "你";
     return {
-        "done": "🌱 ✓ 做好啦！在 Seedling 里看看吧～满意的话点 ○ 收下哦",
-        "edited": "🌱 ✓ 改好啦～" + t + "看看是不是这样？",
-        "failed": "🌱 ⚠ 呜……这次没能做好，原因写在 Seedling 里了",
-        "stopped": "🌱 结衣停下来啦",
-        "declined": "🌱 那这次就先不做啦",
-        "missing": "🌱 ⚠ 结衣找不到 Seedling……",
-        "busy": "🌱 结衣还在做上一个，等一下下哦"
-    }[kind] || "🌱 ⚠ 这次没能做好……";
+        "done": "做好啦！" + t + "在 Seedling 里看看吧～满意的话点 ○ 收下哦 (｡･ω･｡)",
+        "edited": "改好啦～" + t + "看看是不是这样？(✿^‿^)",
+        "failed": "呜……这次没能做好 (T_T) 哪里不对写在 Seedling 里了",
+        "stopped": "好的，结衣停下来啦",
+        "declined": "那这次就先不做啦，想做的时候再叫结衣哦～",
+        "missing": "结衣找不到 Seedling 呢……(・_・;)",
+        "busy": "结衣还在做上一个，等一下下哦～"
+    }[kind] || "呜……这次没能做好 (T_T)";
 }
 
 // The reply of the code request was cut off: a ```qml block opened and never closed.

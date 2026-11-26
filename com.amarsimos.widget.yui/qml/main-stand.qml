@@ -1636,16 +1636,16 @@ T.Widget {
                 if (reply.suggestions.length > 0)
                     chatModel.setProperty(index, "suggestions", JSON.stringify(reply.suggestions));
 
-                // <<seedling:>>: the widget is written in a request of its own; the note says how it went.
+                // <<seedling:>>: the widget is written in a request of its own; Yui tells how it goes in a
+                // message of her own after this reply, which changes as it goes (seedlingSay).
                 if (reply.seedling) {
-                    note = (note ? note + "\n" : "") + widget.seedlingWorking;
-                    var seedlingIndex = index;
                     var seedlingRequest = reply.seedling;
                     Qt.callLater(function() {
+                        var said = seedlingSay();
                         seedlingWrite(seedlingRequest, function(message, ok, kind) {
-                            setSeedlingNote(seedlingIndex, Yui.seedlingChatLine(kind, userTitle()));
+                            said.end(Yui.seedlingChatLine(kind, userTitle()));
                         }, function(state) {
-                            setSeedlingNote(seedlingIndex, Yui.seedlingNoteLine(state, userTitle()));
+                            said.update(Yui.seedlingNoteLine(state, userTitle()));
                         });
                     });
                 }
@@ -3905,7 +3905,6 @@ T.Widget {
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
-    readonly property string seedlingWorking: "🌱 ◐ 结衣在想该怎么做…"
 
     function seedlingBench() {
         if (seedlingProbe)
@@ -4215,17 +4214,49 @@ T.Widget {
 
     }
 
-    // Sets the 🌱 line of the message at index (the other note lines kept).
-    function setSeedlingNote(index, line) {
-        var item = chatModel.get(index);
-        if (!item || item.note === undefined)
-            return ;
-
-        var lines = String(item.note || "").split("\n").filter(function(other) {
-            return other && other.indexOf("🌱") !== 0;
+    // A message of Yui's that tells how a Seedling widget is going: posted at once, changed with
+    // update(text), and end(text) gives its last words (also in the bubble while the chat is closed,
+    // as her other messages). It stays in the conversation, so she knows what she made.
+    function seedlingSay() {
+        var index = chatModel.count;
+        var session = widget.chatSession;
+        chatModel.append({
+            "author": "ai",
+            "message": Yui.seedlingNoteLine({
+                "stage": "writing",
+                "lines": 0,
+                "edits": 0,
+                "seconds": 0
+            }, userTitle()),
+            "pending": false,
+            "isError": false,
+            "local": true,
+            "note": "",
+            "action": "",
+            "actionState": "",
+            "suggestions": ""
         });
-        lines.push(line);
-        chatModel.setProperty(index, "note", lines.join("\n"));
+        chatView.stickToBottom = true;
+        // The chat may have been reset meanwhile: then the message is not there any more.
+        var mine = function() {
+            var item = widget.chatSession === session && index < chatModel.count ? chatModel.get(index) : null;
+            return item && item.author === "ai" && item.local;
+        };
+        return {
+            "update": function(text) {
+                if (mine())
+                    chatModel.setProperty(index, "message", text);
+
+            },
+            "end": function(text) {
+                if (!mine())
+                    return ;
+
+                chatModel.setProperty(index, "message", text);
+                scheduleSave();
+                announce("Seedling", text);
+            }
+        };
     }
 
     // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
