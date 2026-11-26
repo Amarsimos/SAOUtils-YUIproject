@@ -58,6 +58,8 @@ NVG.View {
     property bool writing: false
     // Lines Yui changed in her last edit (0-based), marked in the editor until the code is typed in.
     property var changedLines: []
+    // Lines the last render found wrong (0-based): compile errors or what the safety check refused.
+    property var errorLines: []
     property bool loadingExternal: false
     property string phase: ""
     property double writingSince: 0
@@ -213,12 +215,16 @@ NVG.View {
         }
         var code = editor.text;
         if (code.trim() === "") {
+            errorLines = [];
             result = "ok";
             status = qsTr("Write QML on the left, or pick one of the Examples.");
             return false;
         }
         var problems = Safety.check(code, settings.allow_network === true);
         if (problems.length > 0) {
+            errorLines = problems.map(function(p) {
+                return p.line - 1;
+            });
             result = "unsafe";
             status = qsTr("Not rendered, the safety check failed: %1").arg(problems.map(function(p) {
                 return qsTr("line %1, %2").arg(p.line).arg(p.message);
@@ -227,10 +233,14 @@ NVG.View {
         }
         try {
             preview = Qt.createQmlObject(code, previewStage, "Seedling");
+            errorLines = [];
             result = "ok";
             status = qsTr("Rendered, %1 × %2 · safety check passed").arg(Math.round(preview.width)).arg(Math.round(preview.height));
             return true;
         } catch (e) {
+            errorLines = (e.qmlErrors || []).map(function(error) {
+                return error.lineNumber - 1;
+            });
             result = "error";
             status = (e.qmlErrors || []).map(function(error) {
                 return qsTr("Line %1, column %2: %3").arg(error.lineNumber).arg(error.columnNumber).arg(error.message);
@@ -802,58 +812,162 @@ NVG.View {
                             color: "#5F5F5F"
                         }
 
-                        ScrollView {
+                        // The code, set into the band.
+                        Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            clip: true
-                            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                            contentWidth: availableWidth
 
-                            TextArea {
-                                id: editor
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "#F9F9F9"
+                            }
 
-                                selectByMouse: true
-                                wrapMode: TextArea.Wrap
-                                font.family: "Consolas"
-                                font.pixelSize: 12
-                                color: "#3A3A3A"
-                                text: bench.settings.draft !== undefined ? bench.settings.draft : (bench.settings.code || "")
-                                readOnly: bench.writing
-                                leftPadding: 10
-                                onTextChanged: {
-                                    bench.settings.draft = text;
-                                    // Typed in: the marks of Yui's edit no longer fit.
-                                    if (!bench.loadingExternal && bench.changedLines.length > 0)
-                                        bench.changedLines = [];
-
-                                    if (!bench.writing)
-                                        renderTimer.restart();
-
+                            ScrollView {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                clip: true
+                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                ScrollBar.vertical: SaoScrollBar {
+                                    onLight: true
                                 }
+                                contentWidth: availableWidth
 
-                                background: Rectangle {
-                                    color: "#F9F9F9"
-                                }
+                                TextArea {
+                                    id: editor
 
-                                // An orange bar at the left of each line Yui changed (as an editor's change marks).
-                                Repeater {
-                                    model: bench.changedLines
+                                    selectByMouse: true
+                                    wrapMode: TextArea.Wrap
+                                    font.family: "Consolas"
+                                    font.pixelSize: 12
+                                    color: "#3A3A3A"
+                                    text: bench.settings.draft !== undefined ? bench.settings.draft : (bench.settings.code || "")
+                                    // Where each line starts, for the line numbers and the marks.
+                                    readonly property var starts: {
+                                        var list = [0];
+                                        for (var i = 0; i < text.length; i++)
+                                            if (text.charAt(i) === "\n")
+                                                list.push(i + 1);
 
-                                    Rectangle {
-                                        readonly property rect line: editor.positionToRectangle(bench.lineStart(modelData))
+                                        return list;
+                                    }
 
-                                        x: 2
-                                        y: line.y
-                                        width: 4
-                                        height: Math.max(4, line.height)
+                                    // The top of line n (0-based), after wrapping (width counted so it follows).
+                                    function lineTop(n) {
+                                        return width > 0 ? positionToRectangle(starts[Math.min(n, starts.length - 1)]).y : 0;
+                                    }
+
+                                    readOnly: bench.writing
+                                    leftPadding: 50
+                                    selectionColor: "#80F1AA03"
+                                    selectedTextColor: "#3A3A3A"
+                                    onTextChanged: {
+                                        bench.settings.draft = text;
+                                        // Typed in: the marks of Yui's edit no longer fit.
+                                        if (!bench.loadingExternal && bench.changedLines.length > 0)
+                                            bench.changedLines = [];
+
+                                        if (!bench.writing)
+                                            renderTimer.restart();
+
+                                    }
+
+                                    background: null
+
+                                    // An SAO orange cursor, blinking.
+                                    cursorDelegate: Rectangle {
+                                        width: 2
                                         color: "#F1AA03"
+                                        visible: editor.activeFocus && !editor.readOnly
+
+                                        SequentialAnimation on opacity {
+                                            running: editor.activeFocus
+                                            loops: Animation.Infinite
+
+                                            NumberAnimation {
+                                                to: 0
+                                                duration: 500
+                                            }
+
+                                            NumberAnimation {
+                                                to: 1
+                                                duration: 500
+                                            }
+
+                                        }
+
+                                    }
+
+                                    // The line number column, set apart by a thin line.
+                                    Rectangle {
+                                        x: 0
+                                        y: 0
+                                        width: 40
+                                        height: Math.max(editor.height, editor.contentHeight + editor.topPadding + editor.bottomPadding)
+                                        color: "#EFEFEF"
+
+                                        Rectangle {
+                                            anchors.right: parent.right
+                                            width: 1
+                                            height: parent.height
+                                            color: "#D4D4D4"
+                                        }
+
+                                    }
+
+                                    Repeater {
+                                        model: editor.starts.length
+
+                                        Text {
+                                            x: 0
+                                            y: editor.topPadding + editor.lineTop(index) - editor.topPadding
+                                            width: 34
+                                            horizontalAlignment: Text.AlignRight
+                                            text: index + 1
+                                            font.family: "SAO UI"
+                                            font.pixelSize: 13
+                                            color: bench.errorLines.indexOf(index) !== -1 ? "#C82864" : "#A0A0A0"
+                                        }
+
+                                    }
+
+                                    // Marks between the numbers and the code: orange for the lines Yui changed,
+                                    // red for the lines found wrong.
+                                    Repeater {
+                                        model: bench.changedLines
+
+                                        Rectangle {
+                                            x: 42
+                                            y: editor.lineTop(modelData)
+                                            width: 4
+                                            height: Math.max(4, editor.positionToRectangle(bench.lineStart(modelData)).height)
+                                            color: "#F1AA03"
+                                        }
+
+                                    }
+
+                                    Repeater {
+                                        model: bench.errorLines
+
+                                        Rectangle {
+                                            x: 42
+                                            y: editor.lineTop(modelData)
+                                            width: 4
+                                            height: Math.max(4, editor.positionToRectangle(bench.lineStart(modelData)).height)
+                                            color: "#C82864"
+                                        }
+
                                     }
 
                                 }
 
                             }
 
+                            InsetFrame {
+                                anchors.fill: parent
+                            }
+
                         }
+
 
                     }
 
@@ -944,6 +1058,9 @@ NVG.View {
                                     contentWidth: Math.max(width, previewStage.width * bench.previewScale)
                                     contentHeight: Math.max(height, previewStage.height * bench.previewScale)
                                     boundsBehavior: Flickable.StopAtBounds
+                                    ScrollBar.vertical: SaoScrollBar {
+                                        onLight: true
+                                    }
 
                                     Item {
                                         width: previewFlick.contentWidth
@@ -981,9 +1098,13 @@ NVG.View {
 
                             ListView {
                                 anchors.fill: parent
+                                anchors.margins: 2
                                 visible: bench.showVersions
                                 clip: true
                                 model: bench.versions.length
+                                ScrollBar.vertical: SaoScrollBar {
+                                    onLight: true
+                                }
 
                                 delegate: Rectangle {
                                     readonly property int number: bench.versions.length - index - 1
@@ -1032,6 +1153,26 @@ NVG.View {
 
                                 }
 
+                            }
+
+                            // The target frame's corners, and what is there when nothing is shown.
+                            CornerMarks {
+                                anchors.fill: parent
+                                visible: !bench.showVersions
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: !bench.showVersions && !bench.preview && !bench.writing
+                                text: bench.result === "ok" ? "NO SIGNAL" : "RENDER FAILED"
+                                font.family: "SAO UI"
+                                font.pixelSize: 24
+                                font.letterSpacing: 4
+                                color: bench.result === "ok" ? "#B8B8B8" : "#D98BA6"
+                            }
+
+                            InsetFrame {
+                                anchors.fill: parent
                             }
 
                         }
