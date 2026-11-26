@@ -4132,9 +4132,7 @@ T.Widget {
         });
 
         // SAO Utils' message box shows about three short lines (more is cut off with "...").
-        askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……
-要打开挂件库吗？
-请把「Seedling」拖到桌面上哦～", function() {
+        askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
         }, false, function() {
