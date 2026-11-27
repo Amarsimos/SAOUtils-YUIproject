@@ -1603,13 +1603,18 @@ T.Widget {
                     diag("tags not understood (hidden): " + reply.unknown.join(" "));
 
                 text = reply.text || silentReplyText(reply);
-                // A widget asked for while Seedling cannot grow one (not installed, or busy): her
-                // "on it!" is replaced by why not, rather than followed by it.
-                var seedlingBlock = reply.seedling ? seedlingBlocked() : "";
-                if (seedlingBlock) {
-                    diag("seedling: asked for a widget, " + seedlingBlock);
-                    text = Yui.seedlingChatLine(seedlingBlock, userTitle());
-                    reply.seedling = "";
+                // A widget asked for: her reply is the tag alone (hidden while it streams), so nothing
+                // was said before Seedling's state is known; what she says comes from it: why not (not
+                // installed, busy), else that she starts. Words she added anyway stay when it starts.
+                if (reply.seedling) {
+                    var seedlingBlock = seedlingBlocked();
+                    diag("seedling: asked for a widget, " + (seedlingBlock || "starting"));
+                    if (seedlingBlock) {
+                        text = Yui.seedlingChatLine(seedlingBlock, userTitle());
+                        reply.seedling = "";
+                    } else if (!reply.text) {
+                        text = Yui.seedlingChatLine("start", userTitle());
+                    }
                 }
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
@@ -3985,7 +3990,7 @@ T.Widget {
         });
 
         // SAO Utils' message box shows about three short lines (more is cut off with "...").
-        askConfirm(qsTr("Navigation"), title + "，Seedling 还没有能种下的地方呢……\n要打开挂件库吗？\n把「Seedling」拖到桌面上，结衣就开始培育哦～", function() {
+        askConfirm(qsTr("Navigation"), title + "，Seedling 还没地方种下呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
             // The manager closing is not seen: waiting ends after a while with nothing placed (at once

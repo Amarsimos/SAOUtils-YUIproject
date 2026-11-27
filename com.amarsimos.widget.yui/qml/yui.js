@@ -2488,7 +2488,7 @@ var SEEDLING_DATA = {
     "latest_report": { "type": "string", "text": "最新周报", "fast": false }
 };
 
-var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
+var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，这一次只回复 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>> 这一个标签，标签前后不要写任何话：能不能马上开始、进度和结果，都由程序以你的口吻告诉{t}。代码由程序另外去写，不要在回复里写代码；只是聊到挂件、没有要做或要改的时候不要加。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要猜原因，同样只回复 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
 
 // What Yui says while a widget is written, as a message of her own that changes as it goes (the
 // numbers and the errors are only in the workbench): thinking while nothing has come out yet, then
@@ -2525,6 +2525,7 @@ function seedlingChatLine(kind, title) {
         // The setting (Yui 1.2.0 announcement): Seedling is a small part of The Seed's authority,
         // asleep deep in her core program; installing the package awakens it.
         "missing": "唔……结衣核心深处的「Seedling（萌芽）」权限还在沉睡，没办法种下呢 (｡･ω･｡)\n" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，叫结衣一声就能开始培育啦～",
+        "start": "好～结衣这就开始培育！(｀・ω・´)",
         "busy": "上一个挂件还在培育中呢，等它长好了再叫结衣哦～",
         "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 的 Link 里看看吧～",
         "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"

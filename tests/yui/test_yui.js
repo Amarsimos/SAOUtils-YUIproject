@@ -801,7 +801,7 @@ test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/
     assert.ok(Yui.seedlingChatLine("edited", "妈妈").indexOf("妈妈") !== -1);
     assert.ok(Yui.seedlingChatLine("unset", "爸爸").indexOf("Seedling Settings") !== -1);
     // going online is said, and what the writer could not do (its note) is passed on
-    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("需要联网") !== -1);
+    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("只回复") !== -1 && Yui.SEEDLING_INSTRUCTION.indexOf("不要写任何话") !== -1);
     assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("<<seedling:修好这些问题") !== -1);
     assert.strictEqual(Yui.SEEDLING_FIX_PREFIX, "帮我修好这个挂件：");
     assert.strictEqual(Yui.seedlingNoteOf("// SEEDLING-NOTE: 拿不到实时汇率\nimport QtQuick 2.12"), "拿不到实时汇率");
