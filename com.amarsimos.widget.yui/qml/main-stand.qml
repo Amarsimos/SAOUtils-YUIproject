@@ -2054,7 +2054,11 @@ T.Widget {
         var line = Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + message;
         console.log("[diag]", message);
         diagLog = diagLog.concat([line]).slice(-200);
+        diagTotal++;
     }
+
+    // Lines written by diag since the start (diagLog keeps only the last 200).
+    property int diagTotal: 0
 
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
@@ -3968,6 +3972,13 @@ T.Widget {
 
     // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log.
     function testSeedlingLink() {
+        // Its lines are also written to Storages\yui\seedling-link.txt (to read without copying the log).
+        var logStart = diagTotal;
+        Qt.callLater(function() {
+            writeHeartFile("seedling-link.txt", diagLog.slice(-Math.min(200, diagTotal - logStart)).join("\n"), function(path) {
+                diag("seedling link: written to " + (path || "nowhere"));
+            });
+        });
         // Trying SAO Utils' resources (NVG.Resources): what it knows of amarsimos packages, and whether
         // Seedling's Probe loads by its resource address (instead of the folder next to Yui).
         try {
