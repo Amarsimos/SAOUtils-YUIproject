@@ -134,9 +134,9 @@ Item {
 
     // Heartbeat: bright twice, then a rest. Returns [opacity, scale] for a phase 0 - 1.
     function beatAt(phase) {
-        // Stronger since the round status glow went (the halo is ice and rose): the heart alone shows
-        // the status color, so it dims further and swells more.
-        var keys = [[0, 0.3, 0.75], [0.1, 1, 1.2], [0.2, 0.55, 0.9], [0.3, 1, 1.12], [0.5, 0.4, 0.82], [1, 0.3, 0.75]];
+        // A deeper breath since the round status glow went (the halo is ice and rose): the heart alone
+        // shows the status color, so it dims further between beats; at its brightest and largest as before.
+        var keys = [[0, 0.3, 0.85], [0.1, 1, 1.1], [0.2, 0.55, 0.95], [0.3, 1, 1.05], [0.5, 0.4, 0.9], [1, 0.3, 0.85]];
         for (var i = 1; i < keys.length; i++) {
             if (phase <= keys[i][0]) {
                 var a = keys[i - 1], b = keys[i];
@@ -145,7 +145,7 @@ Item {
                 return [a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
             }
         }
-        return [0.3, 0.75];
+        return [0.3, 0.85];
     }
 
     // ---- The halo's heart (box units; from yui-halo-editor.html): the right half's cubic curves, the
