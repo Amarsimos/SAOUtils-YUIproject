@@ -149,17 +149,22 @@
         <translation>按下「Link Start!」测试连接。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="665" />
+        <location filename="../qml/SeedlingSettings.qml" line="671" />
+        <source>What Seedling gets of MHCP-YUI. Link Status: whether she is there, the Link version, which AI writes. Yui's Data: what @yui reads now. Send to Yui: she fixes this widget in her chat with a made-up reply (no request).</source>
+        <translation>Seedling 从结衣那里拿到的东西。Link Status：结衣在不在、Link 版本、现在用哪个 AI 写代码。Yui's Data：@yui 现在读到的值。Send to Yui：结衣在聊天里用编好的回复修这个挂件（不发请求）。</translation>
+    </message>
+    <message>
+        <location filename="../qml/SeedlingSettings.qml" line="706" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="669" />
+        <location filename="../qml/SeedlingSettings.qml" line="710" />
         <source>The whole writing flow with made-up replies (no request): progress, edits, a fix after an error, the network question, Yui's data. Edit changes a color of the code there (Write first).</source>
         <translation>用编好的回复走一遍完整的写代码流程（不发请求）：进度、修改、出错后修好、联网询问、结衣的数据。Edit 会改现有代码里的一个颜色（先点 Write）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="673" />
+        <location filename="../qml/SeedlingSettings.qml" line="714" />
         <source>A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them.</source>
         <translation>一个带自己的设置和记忆的待办挂件（@name、@setting、@keep）：用 ○ 保存后，右键挂件可以看到 Settings... 和 Show Done 开关。添加几条待办（回车），重启 SAO Utils 后还在。预览里不会记住。</translation>
     </message>

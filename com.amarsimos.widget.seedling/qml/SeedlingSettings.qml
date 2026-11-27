@@ -659,6 +659,47 @@ NVG.Window {
 
                     }
 
+                    // Link: what Seedling gets of MHCP-YUI (section 12 of "Seedling Development Plan.md"),
+                    // shown below; Send to Yui runs her whole fixing flow with a made-up reply.
+                    Heading {
+                        text: "Link"
+                    }
+
+                    SettingNote {
+                        visible: settingsWindow.help
+                        besidePreferences: true
+                        text: qsTr("What Seedling gets of MHCP-YUI. Link Status: whether she is there, the Link version, which AI writes. Yui's Data: what @yui reads now. Send to Yui: she fixes this widget in her chat with a made-up reply (no request).")
+                    }
+
+                    CenteredFlow {
+                        Button {
+                            text: "Link Status"
+                            onClicked: settingsWindow.linkStatus()
+                        }
+
+                        Button {
+                            text: "Yui's Data"
+                            onClicked: settingsWindow.yuiData()
+                        }
+
+                        Button {
+                            text: "Send to Yui"
+                            enabled: Link.Bench.yui !== null
+                            onClicked: settingsWindow.sendToYuiFake()
+                        }
+
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: settingsWindow.testResult !== ""
+                        text: settingsWindow.testResult
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        font.family: "Consolas"
+                        font.pixelSize: 12
+                    }
+
                     Repeater {
                         model: [{
                             "title": "Render",
@@ -743,6 +784,57 @@ NVG.Window {
 
         }
 
+    }
+
+    // Test, Link: the last result, shown under its buttons.
+    property string testResult: ""
+
+    function linkStatus() {
+        var yui = Link.Bench.yui;
+        var lines = ["Link version: " + Link.Bench.linkVersion];
+        if (!yui) {
+            lines.push(Link.Bench.hideYui ? "MHCP-YUI: hidden (Pretend No Yui)" : "MHCP-YUI: not running (or another Link version)");
+        } else {
+            var c = yui.connection();
+            lines.push("MHCP-YUI: attached, her Link version " + yui.linkVersion);
+            lines.push("Her AI: " + (c.ready ? c.title + " · " + c.model : "not set up"));
+            lines.push("Her data: " + Object.keys(yui.dataKeys()).length + " names");
+        }
+        var own = Link.Bench.ownSetup();
+        lines.push("Own AI: " + (own ? own.title + " · " + own.model : "not set up"));
+        lines.push("Writing uses: " + (Link.Bench.connectionKind() === "yui" ? "MHCP-YUI's AI" : "Seedling's own AI") + (Link.Bench.cannotWrite() ? " (" + Link.Bench.cannotWrite() + ")" : ""));
+        testResult = lines.join("\n");
+        console.log("Seedling test: " + lines.join(" | "));
+    }
+
+    function yuiData() {
+        var yui = Link.Bench.yui;
+        if (!yui) {
+            testResult = "No MHCP-YUI: @yui values stay the code's defaults.";
+            return ;
+        }
+        var keys = yui.dataKeys();
+        testResult = Object.keys(keys).map(function(key) {
+            var found = yui.value(key);
+            var shown = found ? JSON.stringify(found.current) : "null (off or none)";
+            return key + " (" + keys[key].type + "): " + (shown.length > 60 ? shown.slice(0, 57) + "..." : shown);
+        }).join("\n");
+    }
+
+    // Send to Yui with a made-up reply: her chat opens and she fixes this widget (no request).
+    function sendToYuiFake() {
+        if (!Link.Bench.yui)
+            return ;
+
+        // Busy: she would send it as a chat message, which makes a real request.
+        if (Link.Bench.job) {
+            testResult = "A widget is being written; try again when it is done.";
+            return ;
+        }
+        Link.Bench.used(targetWidget);
+        Link.Bench.fakeReplies = Fakes.replies("write", "");
+        Link.Bench.yui.fixWidget("Line 3, column 5: (test) a made-up problem");
+        testResult = "Sent: watch MHCP-YUI's chat (the fix runs with a made-up reply).";
     }
 
     // Test, Writing: Bench.write with replies from fakes.js (no request), in this widget's workbench.

@@ -1054,10 +1054,6 @@ T.Widget {
     // config: optional, defaults to activeConfig(); may carry "systemPrompt" and "userTitle" to override the saved ones.
     // Returns { abort() }: ends the request early, keeping the text received so far.
     function requestCompletion(messages, onFinished, config, onDelta) {
-        if (testStreaming) {
-            testStreaming = false;
-            return fakeStream(onFinished, onDelta);
-        }
         config = config || activeConfig();
         var format = config.provider.format;
         // Regenerating: a note the user does not see asks for another answer, a little warmer when a
@@ -1577,7 +1573,6 @@ T.Widget {
     // Show a "..." placeholder and replace it in place once the reply arrives.
     function startReply(messages, notifyTitle) {
         var session = widget.chatSession;
-        var test = widget.testStreaming;
         var index = chatModel.count;
         chatModel.append({
             "author": "ai",
@@ -1687,7 +1682,7 @@ T.Widget {
             chatModel.set(index, {
                 "message": text,
                 "pending": false,
-                "local": test,
+                "local": false,
                 "isError": isError,
                 "note": note,
                 "action": action,
@@ -1700,7 +1695,7 @@ T.Widget {
             widget.busy = false;
             widget.currentRequest = null;
             scheduleSave();
-            if (!isError && !test) {
+            if (!isError) {
                 logMessage("ai", text);
                 announce(notifyTitle, text);
             }
@@ -2064,12 +2059,6 @@ T.Widget {
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
-    // System Console: the Link Start effect again.
-    function testLinkStart() {
-        diag("test link start");
-        linkStartAnimation.restart();
-    }
-
     function testAction(tag) {
         diag("test " + tag);
         var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected, replyOptions());
@@ -3717,67 +3706,6 @@ T.Widget {
         }
     }
 
-    // System Console "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
-    // click shows the next sample (short, long, a status report), so the layout can be checked.
-    property int testBubbleCount: 0
-    // The next reply is a made-up streamed one (Test Streaming): no API request, no tokens.
-    property bool testStreaming: false
-
-    // Diagnostics: Yui "thinks" for 8 s (long enough for a thinking hint), then a sample reply streams in a few characters at a time.
-    function testStreamReply() {
-        if (busy) {
-            diag("test streaming: Yui is busy with a reply");
-            return ;
-        }
-        if (!yuiView || !yuiView.visible)
-            diag("test streaming: open the chat (click Yui) to watch it");
-
-        testStreaming = true;
-        startReply([], "Yui");
-    }
-
-    // A fake streamed completion with requestCompletion's callbacks and an abort().
-    // text: the reply to stream (Seedling's tests); else the chat's test reply.
-    function fakeStream(onFinished, onDelta, text) {
-        var full = text !== undefined ? text : "（测试回复，没有调用 API）
-嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
-        var shown = 0;
-        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
-        timer.interval = text !== undefined ? 3000 : 8000;
-        timer.triggered.connect(function() {
-            timer.interval = text !== undefined ? 40 : 60;
-            shown = Math.min(full.length, shown + (text !== undefined ? 14 : 2));
-            if (shown < full.length) {
-                if (onDelta)
-                    onDelta(full.slice(0, shown));
-
-                return ;
-            }
-            timer.stop();
-            timer.destroy();
-            onFinished(full, false, false);
-        });
-        timer.start();
-        return {
-            "abort": function() {
-                timer.stop();
-                timer.destroy();
-                onFinished(full.slice(0, shown) || "(・ω・)", false, false);
-            }
-        };
-    }
-
-    function testBubble() {
-        if (showChat) {
-            diag("test bubble: the chat is open; close it first (the bubble is shown next to her collapsed form)");
-            return ;
-        }
-        var title = userTitle();
-        var samples = [["", title + "～结衣在这里哦！(｡･ω･｡)"], ["", "嗯……" + title + "已经对着屏幕好久了呢。结衣刚才在想，等这件事忙完，要不要一起去看看窗外的风景？外面的天空说不定很漂亮哦！不过在那之前，先喝一口水吧～这句话故意写得很长，用来测试气泡最多显示六行时的省略效果。"], [qsTr("Navigation Report"), "警告！系统负荷过高：GPU 98%……" + title + "，要不要看看是什么程序在占用呢？(・_・;)"], [qsTr("Mental Health Counseling"), "已经连续使用电脑 2 小时了哦，" + title + "，休息一下眼睛吧 (´・ω・`)"]];
-        var sample = samples[testBubbleCount++ % samples.length];
-        showBubble("Yui", sample[1]);
-    }
-
     // ---------------------------------------------------------------- Seedling (companion plugin)
     // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
     // Probe.qml, so Yui still loads when Seedling is not installed. null when it is missing.
@@ -3812,6 +3740,7 @@ T.Widget {
             var tried = Qt.createComponent(places[i]);
             if (tried.status === Component.Ready) {
                 component = tried;
+                seedlingFoundAt = places[i];
                 diag("seedling: found at " + places[i]);
                 break;
             }
@@ -4032,6 +3961,21 @@ T.Widget {
         }
         diag("seedling: a widget was placed, writing goes on");
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
+    }
+
+    // Where Seedling's Probe was found ("" when it was not).
+    property string seedlingFoundAt: ""
+
+    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log.
+    function testSeedlingLink() {
+        var bench = seedlingBench();
+        if (!bench) {
+            diag("seedling link: not installed (or another Link version); Yui works without it");
+            return ;
+        }
+        diag("seedling link: found at " + seedlingFoundAt + ", Link version " + bench.linkVersion + " (Yui " + seedlingLinkVersion + "), attached: " + bench.attached() + ", widgets on the desktop: " + bench.widgets.length);
+        var own = bench.ownSetup();
+        diag("seedling link: Seedling's own connection " + (own ? own.title + " · " + own.model : "not set up") + "; Yui's " + (seedlingPort.connection().ready ? seedlingPort.connection().title + " · " + seedlingPort.connection().model : "not set up"));
     }
 
     // Test Place Seedling (System Console): the question shown when no Seedling widget is on the

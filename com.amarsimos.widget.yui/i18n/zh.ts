@@ -1529,7 +1529,7 @@
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+502"/>
+        <location filename="../qml/SystemConsole.qml" line="+496"/>
         <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
         <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
     </message>
@@ -1833,28 +1833,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
-        <source>Test Bubble</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Test Streaming</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-562"/>
-        <location line="+599"/>
+        <location line="-553"/>
+        <location line="+596"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-37"/>
-        <source>Test Link Start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-9"/>
+        <location line="-43"/>
         <source>Test Media</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1866,6 +1851,11 @@
     <message>
         <location line="+10"/>
         <source>Test Place Seedling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Test Seedling Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1899,12 +1889,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2"/>
-        <source>Display</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+45"/>
+        <location line="+44"/>
         <source>Log Requests</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2538,7 +2523,7 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1892"/>
+        <location filename="../qml/main-stand.qml" line="+1887"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2548,19 +2533,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+2941"/>
+        <location line="+2890"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2924"/>
-        <location line="+2099"/>
-        <location line="+938"/>
+        <location line="-2873"/>
+        <location line="+2033"/>
+        <location line="+953"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4177"/>
+        <location line="-4121"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2571,13 +2556,13 @@
     </message>
     <message>
         <location line="+71"/>
-        <location line="+2372"/>
+        <location line="+2361"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1367"/>
+        <location line="-1361"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2602,7 +2587,7 @@
         <translation>要把 %1 的全部设置恢复为默认值吗？</translation>
     </message>
     <message>
-        <location line="+137"/>
+        <location line="+131"/>
         <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2671,17 +2656,16 @@ You can change this in System Console.</source>
     </message>
     <message>
         <location line="+29"/>
-        <location line="+152"/>
         <source>Navigation Report</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+146"/>
+        <location line="+238"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2238"/>
+        <location line="+2253"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2696,8 +2680,7 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2744"/>
-        <location line="+492"/>
+        <location line="-2252"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2715,14 +2698,14 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6081"/>
-        <location line="+6114"/>
+        <location line="-6025"/>
+        <location line="+6058"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6121"/>
-        <location line="+6121"/>
+        <location line="-6065"/>
+        <location line="+6065"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
