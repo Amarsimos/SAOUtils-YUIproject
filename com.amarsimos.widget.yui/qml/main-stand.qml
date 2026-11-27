@@ -3969,14 +3969,31 @@ T.Widget {
         askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
+            // The manager closing is not seen: waiting ends after a while with nothing placed (at once
+            // when it could not be opened).
+            seedlingGiveUp.interval = opened ? 90000 : 1;
+            seedlingGiveUp.restart();
         }, false, function() {
-            var waiting = seedlingWaiting;
-            seedlingWaiting = null;
-            diag("seedling: no widget on the desktop, the widget manager was not opened");
-            if (waiting)
-                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
-
+            seedlingStopWaiting("the widget manager was not opened");
         });
+    }
+
+    // Ends the wait for a Seedling widget: nothing written this time (she says so).
+    function seedlingStopWaiting(why) {
+        seedlingGiveUp.stop();
+        var waiting = seedlingWaiting;
+        seedlingWaiting = null;
+        if (!waiting)
+            return ;
+
+        diag("seedling: no widget on the desktop, " + why);
+        waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
+    }
+
+    Timer {
+        id: seedlingGiveUp
+
+        onTriggered: seedlingStopWaiting("none placed in time")
     }
 
     // A Seedling widget was placed (Bench.widgets changed) while a request waits: carry on.
@@ -3985,6 +4002,7 @@ T.Widget {
         if (!seedlingWaiting || !bench || bench.widgets.length === 0)
             return ;
 
+        seedlingGiveUp.stop();
         var waiting = seedlingWaiting;
         seedlingWaiting = null;
         if (waiting.test) {
