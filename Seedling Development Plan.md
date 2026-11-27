@@ -463,3 +463,57 @@ Q1 Examples 模板 + 测试 → Q2 Widget Style / Seedling Model 放进 Seedling
 ### 11.6 顺序
 
 R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalStorage + 搬迁）→ R3 `api.js` + Test Connection → R4 `Writer.qml`（流程搬过来，连接可换）→ R5 结衣改成调用 Bench 的 write（聊天里的进度和话不变；System Console 测试照常）→ R6 工作台输入框 + Seedling Settings AI 部分 → R7 文档、翻译。分支 feature/seedling-standalone（从 feature/seedling-q 开出，Q 阶段的实机测试可以一起做）。
+
+---
+
+## 十二、解耦：Link 接口（2026-11-27 已确认，分支 feature/decouple）
+
+目标：结衣和 Seedling 只通过下面这份清单互相调用，哪边内部改名都不影响另一边；以后可以分开发布、分开仓库。功能和提示词不变。
+
+### 12.1 原则
+
+- **只走清单**：结衣交给 Seedling 的是一个小对象 **YuiPort**（结衣的 `link/SeedlingPort.qml`），不是整个结衣；Seedling 交给结衣的是 **Bench** 里标明「Link 接口」的那一组函数。清单外的函数对方不能调。
+- **版本号** `LINK_VERSION = 1`：两边各写一个。结衣找到的 Bench 版本不同时当作没装 Seedling（日志写明原因）；Seedling 拿到的 Port 版本不同时当作没有结衣。接口只增加时不改版本；改名、删除、改参数时加 1。
+- **不交出密钥**：Port 不给 Seedling 结衣的 Access Key，只替它发请求。
+- **没有隐式协议**：不靠聊天文字里的固定句子识别动作，一律是函数调用。
+- **数据名只在结衣一处**：@yui 能读的数据由 Port 的 `dataKeys()` 给出；Seedling 的规则 15 和 `props.js` 按它生成和检查（只认 int / real / string / var 四种类型）。
+
+### 12.2 YuiPort（结衣 → Seedling）
+
+| 成员 | 说明 |
+| :-- | :-- |
+| `linkVersion` | 1 |
+| `connection()` | `{ready, provider, title, model}`：结衣的连接是否配好、服务商 id 和名字、聊天用的模型。不含密钥和地址 |
+| `ask(system, user, model, onDelta, onFinished)` | 用结衣的连接发一次请求（model 为空用聊天的模型）；返回 `{abort()}`。不带人格、历史、附注 |
+| `models()` | 结衣服务器的模型列表（Scan Cores 的结果或内置），`[id]` |
+| `scanModels(onDone)` / `restoreModels()` | 在结衣的服务器上 Scan Cores / Restore Registry，列表存在结衣那边；`onDone(models, error)` |
+| `dataKeys()` | `{名字: {type, text}}`：@yui 可读的数据，text 是给模型看的中文说明 |
+| `value(name)` | 数据的当前值；关掉的功能返回 null |
+| `fixWidget(problems)` | Send to Yui：打开聊天，让结衣去修 |
+| `sendToChat(text)` / `prefillChat(text)` | 把文字发进聊天 / 填进输入框 |
+| `theme()` | `{font, panelAlpha}`：工作台跟随结衣聊天窗口的字体和不透明度 |
+
+### 12.3 Bench 的 Link 接口（Seedling → 结衣）
+
+| 成员 | 说明 |
+| :-- | :-- |
+| `linkVersion` | 1 |
+| `attach(port)` / `detach(port)` | 结衣启动 / 关闭时交出 / 收回 Port |
+| `widgets` / `widgetsChanged` | 桌面上的 Seedling 挂件（结衣只看有没有） |
+| `write(request, onProgress, onDone)` | 写或改挂件（进度和结果由结衣在聊天里说） |
+| `stop()` | 停下正在写的 |
+| `ownSetup()` | Seedling 自己配好的连接（含密钥，供后装的结衣直接用，API 只配一次）；没配好为 null |
+
+### 12.4 步骤（一步一个提交，每步检查 + 部署）
+
+| 步 | 内容 |
+| :-- | :-- |
+| D1 | 本节 |
+| D2 | 结衣：`link/SeedlingPort.qml`，Bench 改用 `attach(port)`；Seedling 只通过 Port 调结衣 |
+| D3 | Bench 的 Link 接口归成一组 + `linkVersion`，两边检查版本；结衣只调这一组 |
+| D4 | Send to Yui 改成 `fixWidget`；@yui 数据名由 `dataKeys()` 给出，规则 15 和 props.js 跟着它 |
+| D5 | Seedling 专用代码搬出结衣：System Console 的 Seedling 测试、假回复队列、`rawSystem` 分支、旧 `seedling_model` 迁移 |
+| D6 | 找 Seedling 的路径只写一处；试 `nvg://` 加载（需要实机看日志） |
+| D7 | `tests/yui/`、`tests/seedling/`；`check_deploy` 分插件检查，并检查两边接口清单一致；Prompt Rules 第九节搬到 Seedling 文档 |
+
+实机测试（D5 之后）：只装结衣、只装 Seedling、两个都装，各试一次。
