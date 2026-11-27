@@ -785,22 +785,11 @@ test("Follow-ups", () => {
     same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
 });
 
-test("Seedling not installed: asked for a widget, Yui points to the plugin", () => {
-    const allowed = { seedling: false };
-    const text = Yui.featureInstructions("爸爸", [], allowed, "tags");
-    assert.ok(text.indexOf("The Seed") !== -1 && text.indexOf("程序包") !== -1);
-    assert.ok(text.indexOf("<<seedling:") === -1);
-    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: true }, "tags").indexOf("还没被唤醒") === -1);
-});
-
-test("Seedling's state is told after the instruction", () => {
-    const busy = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "busy" }, "tags");
-    assert.ok(busy.indexOf("正在培育上一个挂件") !== -1);
-    const none = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "noWidget" }, "tags");
-    assert.ok(none.indexOf("还没有 Seedling 挂件") !== -1 && none.indexOf("正在培育") === -1);
-    const ready = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "ready" }, "tags");
-    assert.ok(ready.indexOf("还没有 Seedling 挂件") === -1 && ready.indexOf("正在培育上一个") === -1);
-    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: false, seedlingState: "busy" }, "tags").indexOf("正在培育上一个") === -1);
+test("Seedling is checked when a widget is asked for: not installed, she says how to awaken it", () => {
+    const missing = Yui.seedlingChatLine("missing", "爸爸");
+    assert.ok(missing.indexOf("Seedling") !== -1 && missing.indexOf("程序包") !== -1 && missing.indexOf("爸爸") !== -1);
+    assert.ok(Yui.seedlingChatLine("busy", "爸爸").indexOf("培育") !== -1);
+    assert.ok(Yui.seedlingChatLine("unset", "爸爸").indexOf("Connection") === -1);
 });
 
 test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {

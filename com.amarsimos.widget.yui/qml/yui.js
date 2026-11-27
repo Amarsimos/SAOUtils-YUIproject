@@ -1979,9 +1979,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
 
     if (allowed.seedling === true)
-        lines.push(withTitle(SEEDLING_INSTRUCTION, title) + (SEEDLING_STATE[allowed.seedlingState] ? withTitle(SEEDLING_STATE[allowed.seedlingState], title) : ""));
-    else if (allowed.seedling === false)
-        lines.push(withTitle(SEEDLING_MISSING, title));
+        lines.push(withTitle(SEEDLING_INSTRUCTION, title));
 
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
@@ -2490,18 +2488,6 @@ var SEEDLING_DATA = {
     "latest_report": { "type": "string", "text": "最新周报", "fast": false }
 };
 
-// Seedling not installed: asked for a widget, Yui points to the plugin instead of saying she cannot.
-// The setting (Yui 1.2.0 announcement): Seedling is a small part of The Seed's authority, asleep in
-// the depths of her core program; installed, it is awakened.
-var SEEDLING_MISSING = "- 桌面小挂件：你的核心程序深处沉睡着 The Seed 的一小部分权限，你给它起名叫「Seedling（萌芽）」，唤醒以后就能把{t}想要的小挂件一点一点培育出来、放到桌面上。现在它还没被唤醒。{t}请你做桌面小挂件（时钟、倒计时、小面板之类）时，用你自己的口吻告诉{t}：要先装上 Seedling 这个程序包来唤醒这份权限，装好后在挂件库里把 Seedling 拖到桌面上，再叫你一声就能开始培育。不要说你做不到、不要让{t}自己动手写，也不要在聊天里写代码。";
-
-// How Seedling is right now (main-stand checks it for each message), added after the instruction so
-// her answer fits: no Seedling widget on the desktop yet, or one being grown already. "ready": nothing.
-var SEEDLING_STATE = {
-    "noWidget": "现在桌面上还没有 Seedling 挂件：{t}要做挂件时照常加标签，并在回复里顺便提一句，要先把 Seedling 从挂件库拖到桌面上，才有地方种下。",
-    "busy": "现在 Seedling 正在培育上一个挂件：{t}又要做或改挂件时，告诉{t}等这个培育好再来，这次不要加 <<seedling:>> 标签。"
-};
-
 var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
 
 // What Yui says while a widget is written, as a message of her own that changes as it goes (the
@@ -2536,9 +2522,11 @@ function seedlingChatLine(kind, title) {
         "failed": "呜……这次没能做好 (T_T) 哪里不对写在 Seedling 里了",
         "stopped": "好的，结衣停下来啦",
         "declined": "那这次就先不做啦，想做的时候再叫结衣哦～",
-        "missing": "结衣找不到 Seedling 呢……(・_・;)",
-        "busy": "结衣还在做上一个，等一下下哦～",
-        "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 里看看 Connection 吧～",
+        // The setting (Yui 1.2.0 announcement): Seedling is a small part of The Seed's authority,
+        // asleep deep in her core program; installing the package awakens it.
+        "missing": "唔……结衣核心深处的「Seedling（萌芽）」权限还在沉睡，没办法种下呢 (｡･ω･｡)\n" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，叫结衣一声就能开始培育啦～",
+        "busy": "上一个挂件还在培育中呢，等它长好了再叫结衣哦～",
+        "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 的 Link 里看看吧～",
         "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"
     }[kind] || "呜……这次没能做好 (T_T)";
 }

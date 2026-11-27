@@ -39,7 +39,8 @@
 | :-- | :-- | :-- | :-- |
 | C1 | 结衣启动后，System Console → **Test Seedling Link** | `resolve ...: null (not installed)`，然后是 `not found ...; Yui works without it` | |
 | C2 | Log | 有 `seedling: not installed (no nvg://...)`，没有报错 | |
-| C3 | 聊天里说"做个时钟挂件" | 结衣不写挂件，按设定（The Seed 的权限还没唤醒）引导你装上 Seedling 程序包、把它放到桌面上 | |
+| C3 | 聊天里说"做个时钟挂件" | 结衣先答应，接着她的下一条说「Seedling（萌芽）」权限还在沉睡，引导你装上 Seedling 程序包、放到桌面上 | |
+| C6 | 装着 Seedling、她正在写一个挂件时，再让她做另一个 | 她说上一个还在培育中，等长好了再叫她 | |
 | C4 | 结衣开着时停用 Seedling，再点 **Test Seedling Link** | `resolve ...: null`，然后 `not found`；Log 有 `seedling: no longer installed` | |
 | C5 | 再启用 Seedling，点两次 **Test Seedling Link** | 第一次可能还是 not found（正在加载），第二次 `found at ...` | |
 

@@ -534,12 +534,9 @@ T.Widget {
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
             "media": full && mediaReady,
-            // Seedling (companion plugin) installed: Yui can have a desktop widget written.
-            // Asked of SAO Utils each time (enabled or disabled while she runs); seedlingBench() also
-            // loads it when it came back, done long before her reply asks for a widget.
-            "seedling": seedlingBench() !== null || !!NVG.Resources.resolve(seedlingAddress),
-            // How it is now, so her reply fits (Yui.SEEDLING_STATE): one being grown, none on the desktop.
-            "seedlingState": seedlingJob ? "busy" : (seedlingProbe && seedlingProbe.bench.widgets.length === 0) ? "noWidget" : "ready",
+            // Seedling: always offered; whether it is there (installed, a widget on the desktop, not
+            // busy) is checked only when her reply asks for a widget (seedlingStart), and she says so.
+            "seedling": true,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -4088,8 +4085,13 @@ T.Widget {
 
     // A Seedling widget written for request: Yui's thinking message saying the steps, ending with her
     // last words (the reply's <<seedling:>>, and System Console's tests).
+    // Seedling's state is checked here, when a widget is asked for: still growing the last one ("busy"),
+    // not installed ("missing", in seedlingWrite), no widget on the desktop (seedlingAskPlace).
     function seedlingStart(request) {
         var said = seedlingSay();
+        if (seedlingJob || seedlingWaiting)
+            return said.end(Yui.seedlingChatLine("busy", userTitle()));
+
         seedlingWrite(request, function(message, ok, kind, extra) {
             said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
         }, function(state) {
