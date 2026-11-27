@@ -68,9 +68,10 @@ QtObject {
         return String(setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
     }
 
-    // With Yui's connection: Manual Core ID, else the core chosen in Link ("": her chat's model).
+    // With Yui's connection: its own Manual Core ID, else the core chosen in Link ("": her chat's
+    // model). Kept apart from Seedling's own (model / custom_model): the two are different servers.
     function writingModel() {
-        return String(setting("custom_model", "")).trim() || String(setting("yui_model", "")).trim();
+        return String(setting("yui_custom_model", "")).trim() || String(setting("yui_model", "")).trim();
     }
 
     // ---- Seedling's own settings, shared by all its widgets (section 11.3): connection ("yui" /

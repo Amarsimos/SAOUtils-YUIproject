@@ -3,27 +3,27 @@
 <context>
     <name>Bench</name>
     <message>
-        <location filename="../qml/link/Bench.qml" line="428" />
+        <location filename="../qml/link/Bench.qml" line="429" />
         <source>The edits did not fit · Thinking about the whole code...</source>
         <translation>修改没能对上 · 正在重新思考整段代码...</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="439" />
+        <location filename="../qml/link/Bench.qml" line="440" />
         <source>Thinking about the fix (%1 / 2): %2</source>
         <translation>正在思考修复方法（%1 / 2）：%2</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="445" />
+        <location filename="../qml/link/Bench.qml" line="446" />
         <source>Checking and rendering...</source>
         <translation>正在检查并渲染...</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="479" />
+        <location filename="../qml/link/Bench.qml" line="480" />
         <source>Changing · %1 place(s)</source>
         <translation>正在修改 · %1 处</translation>
     </message>
     <message>
-        <location filename="../qml/link/Bench.qml" line="494" />
+        <location filename="../qml/link/Bench.qml" line="495" />
         <source>Writing · %1 lines</source>
         <translation>正在编写 · %1 行</translation>
     </message>
@@ -31,7 +31,7 @@
 <context>
     <name>SeedlingSettings</name>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="642" />
+        <location filename="../qml/SeedlingSettings.qml" line="651" />
         <source>Test tries the workbench without the AI: nothing here makes a request. Each button opens the workbench (or uses the open one).</source>
         <translation>测试不经过 AI 试用工作台：这里的按钮都不会发出请求。每个按钮会打开工作台（或使用已打开的工作台）。</translation>
     </message>
@@ -124,47 +124,47 @@
         <translation>这个服务器的 API Key。只保存在这台电脑上，存在 Seedling 自己的数据里。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="534" />
-        <source>The AI model that writes the widgets.</source>
-        <translation>写挂件用的 AI 模型。</translation>
+        <location filename="../qml/SeedlingSettings.qml" line="537" />
+        <source>The AI model that writes the widgets. MHCP-YUI's AI and Seedling's own AI each keep their own choice; this is the one used now.</source>
+        <translation>写挂件用的 AI 模型。结衣的 AI 和 Seedling 自己的 AI 各记各的选择；这里显示的是现在正在用的那个。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="567" />
+        <location filename="../qml/SeedlingSettings.qml" line="570" />
         <source>Scan Cores asks the server for its current model list; Restore Registry goes back to the built-in list.</source>
         <translation>Scan Cores 会向服务器查询当前的模型列表；Restore Registry 恢复内置列表。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="578" />
+        <location filename="../qml/SeedlingSettings.qml" line="589" />
         <source>model id, e.g. gpt-6-sol</source>
         <translation>模型 ID，例如 gpt-6-sol</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="593" />
+        <location filename="../qml/SeedlingSettings.qml" line="602" />
         <source>When filled in, this model id is used instead of the Core Program selected above.</source>
         <translation>填写后将使用这里的模型 ID，而不是上面选择的 Core Program。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="626" />
+        <location filename="../qml/SeedlingSettings.qml" line="635" />
         <source>Press Link Start! to test the connection.</source>
         <translation>按下「Link Start!」测试连接。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="671" />
+        <location filename="../qml/SeedlingSettings.qml" line="680" />
         <source>What Seedling gets of MHCP-YUI. Link Status: whether she is there, the Link version, which AI writes. Yui's Data: what @yui reads now. Send to Yui: she fixes this widget in her chat with a made-up reply (no request).</source>
         <translation>Seedling 从结衣那里拿到的东西。Link Status：结衣在不在、Link 版本、现在用哪个 AI 写代码。Yui's Data：@yui 现在读到的值。Send to Yui：结衣在聊天里用编好的回复修这个挂件（不发请求）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="706" />
+        <location filename="../qml/SeedlingSettings.qml" line="715" />
         <source>Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +).</source>
         <translation>把代码放进编辑器并渲染：正常挂件、编译错误（红色标记，RENDER FAILED）、被安全检查拒绝、需要联网（会先关闭 Network；和结衣带来的代码一样会询问，手动输入的则在 Save 时询问），以及比预览区大的挂件（Fit、− / +）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="710" />
+        <location filename="../qml/SeedlingSettings.qml" line="719" />
         <source>The whole writing flow with made-up replies (no request): progress, edits, a fix after an error, the network question, Yui's data. Edit changes a color of the code there (Write first).</source>
         <translation>用编好的回复走一遍完整的写代码流程（不发请求）：进度、修改、出错后修好、联网询问、结衣的数据。Edit 会改现有代码里的一个颜色（先点 Write）。</translation>
     </message>
     <message>
-        <location filename="../qml/SeedlingSettings.qml" line="714" />
+        <location filename="../qml/SeedlingSettings.qml" line="723" />
         <source>A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them.</source>
         <translation>一个带自己的设置和记忆的待办挂件（@name、@setting、@keep）：用 ○ 保存后，右键挂件可以看到 Settings... 和 Show Done 开关。添加几条待办（回车），重启 SAO Utils 后还在。预览里不会记住。</translation>
     </message>

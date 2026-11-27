@@ -439,8 +439,9 @@ NVG.Window {
 
                     }
 
+                    // Which connection the core below belongs to: each keeps its own choice.
                     Heading {
-                        text: "Core"
+                        text: settingsWindow.ownConnection ? "Core · Seedling's own AI" : "Core · MHCP-YUI's AI"
                     }
 
                     P.PreferenceGroup {
@@ -481,6 +482,8 @@ NVG.Window {
                             property bool refreshing: false
 
                             readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
+                            // The other connection's choice is shown at once (the list may be the same).
+                            onKeyChanged: Qt.callLater(followModels)
 
                             visible: models.length > 0
                             label: "Core Program"
@@ -531,7 +534,7 @@ NVG.Window {
                         SettingNote {
                             visible: settingsWindow.help && corePreference.visible
                             besidePreferences: true
-                            text: qsTr("The AI model that writes the widgets.")
+                            text: qsTr("The AI model that writes the widgets. MHCP-YUI's AI and Seedling's own AI each keep their own choice; this is the one used now.")
                         }
 
                         RowLayout {
@@ -571,18 +574,24 @@ NVG.Window {
                             id: customModelPreference
 
                             property bool ready: false
+                            // Each connection keeps its own: Seedling's server, or MHCP-YUI's.
+                            readonly property string key: settingsWindow.ownConnection ? "custom_model" : "yui_custom_model"
+
+                            function load() {
+                                ready = false;
+                                value = String(Link.Bench.setting(key, ""));
+                                ready = true;
+                            }
 
                             visible: settingsWindow.advanced || corePreference.models.length === 0
                             label: "Manual Core ID"
                             display: P.TextFieldPreference.ExpandAll
                             hint: qsTr("model id, e.g. gpt-6-sol")
-                            Component.onCompleted: {
-                                value = String(Link.Bench.setting("custom_model", ""));
-                                ready = true;
-                            }
+                            Component.onCompleted: load()
+                            onKeyChanged: load()
                             onValueChanged: {
                                 if (ready)
-                                    Link.Bench.setSetting("custom_model", value.trim());
+                                    Link.Bench.setSetting(key, value.trim());
 
                             }
                         }
