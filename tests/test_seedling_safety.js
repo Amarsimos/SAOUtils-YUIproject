@@ -182,10 +182,10 @@ Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 const Y = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
 const prompt = Y.codePrompt(false, false, true);
-const importRule = prompt.split("\n").find((line) => line.indexOf("1. 只能 import") === 0);
-const promptModules = importRule.split("。")[0].replace("1. 只能 import：", "").split("、").map((m) => m.trim().split(" ")[0]);
+const importRule = prompt.split("\n").find((line) => line.indexOf("1. 模块：只能 import") === 0);
+const promptModules = importRule.split("。")[0].replace("1. 模块：只能 import ", "").split("、").map((m) => m.trim().split(" ")[0]);
 assert.deepStrictEqual(promptModules.slice().sort(), Array.from(S.ALLOWED_MODULES).sort(), "the prompt's modules: " + promptModules.join(", "));
-const qtRule = prompt.split("\n").find((line) => line.indexOf("2. Qt.*") === 0);
+const qtRule = prompt.split("\n").find((line) => line.indexOf("2. Qt 函数") === 0);
 (qtRule.match(/(?:Qt\.|\/ )([a-z][A-Za-z]+)/g) || []).map((m) => m.replace(/^Qt\.|^\/ /, "")).forEach((name) => {
     assert.ok(S.QT_ALLOWED.indexOf(name) !== -1, "the prompt names Qt." + name + ", which the check refuses");
 });

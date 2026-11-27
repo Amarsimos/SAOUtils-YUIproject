@@ -73,6 +73,25 @@ test("the prompt: edit rules only when editing; rule 15 (Yui's data) only with M
     same(named.sort(), Object.keys(P.YUI_KEYS).sort());
 });
 
+test("the prompt: rules 1-14 in order, one length, no edit format when the whole code is asked for", () => {
+    const rules = W.codePrompt(false, false, false).split("\n").filter((l) => /^\d+\. /.test(l)).map((l) => parseInt(l, 10));
+    same(rules, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    const text = W.codePrompt(true, true, true);
+    assert.ok(text.indexOf(W.MAX_LINES + " 行以内") !== -1 && text.indexOf("120 行") === -1);
+    assert.ok(W.CUT_LINES < W.MAX_LINES);
+    assert.ok(W.codePrompt(false, true, false, true).indexOf("SEARCH/REPLACE") === -1);
+    assert.ok(W.codePrompt(false, true, false, true).indexOf("输出完整的代码") !== -1);
+    // rule 9 gives way to @yui only when MHCP-YUI is there
+    assert.ok(text.indexOf("这一条优先") !== -1);
+    assert.ok(W.codePrompt(true, false, false).indexOf("这一条优先") === -1);
+});
+
+test("a new widget asked again: its last try, still what is wanted (not a change)", () => {
+    const again = W.codeRequest("一个时钟", "Item {}", "Line 1: x", false, true);
+    assert.ok(again.indexOf("上一次写出的代码") !== -1 && again.indexOf("要做的挂件：一个时钟") !== -1);
+    assert.ok(again.indexOf("要修改的地方") === -1);
+});
+
 test("style and template notes only when there are some", () => {
     assert.strictEqual(W.styleNote(""), "");
     assert.strictEqual(W.templateNote("  "), "");

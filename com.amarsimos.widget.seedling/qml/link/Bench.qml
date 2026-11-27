@@ -317,7 +317,8 @@ QtObject {
         var withYui = !!yui;
         var current = currentCode();
         var editing = current.trim() !== "";
-        var system = Writer.codePrompt(allowNetwork(), editing, withYui) + Writer.styleNote(writingStyle()) + Writer.templateNote(editing ? "" : templateFor(request));
+        var extra = Writer.styleNote(writingStyle()) + Writer.templateNote(editing ? "" : templateFor(request));
+        var network = allowNetwork();
         var state = {
             "stage": editing ? "editing" : "writing",
             "lines": 0,
@@ -394,7 +395,8 @@ QtObject {
                 if (result.networkDeclined)
                     return finish("offline", "没有允许联网", code);
 
-                retry("上面这段代码没有通过：" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
+                retry("上面这段代码没有通过（下面是检查程序的英文原文）：
+" + result.status + (editing && !whole ? "\n请用 SEARCH/REPLACE 块改正。" : "\n请改正后输出完整代码。"), code, whole);
             }, changes);
             if (refused)
                 finish("failed", refused, code);
@@ -402,7 +404,9 @@ QtObject {
         };
         askFor = function(code, problem, whole) {
             var edits = editing && !whole;
-            current_job.handle = ask(system, Writer.codeRequest(request, code, problem, editing && whole), function(soFar) {
+            // The whole code asked for: the edit format is left out of the rules.
+            var system = Writer.codePrompt(network, editing, withYui, editing && whole) + extra;
+            current_job.handle = ask(system, Writer.codeRequest(request, code, problem, editing && whole, !editing), function(soFar) {
                 var count = edits ? Writer.editCount(soFar) : 0;
                 if (count > 0) {
                     if (count !== state.edits) {
@@ -448,7 +452,7 @@ QtObject {
                 }
                 // Cut off (too long for the limit): asked again for a shorter one.
                 if (Writer.codeCut(text))
-                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 120 行以内，输出完整代码。", code, true);
+                    return retry("上一次的代码太长，没写完就被截断了。请大幅精简，控制在 " + Writer.CUT_LINES + " 行以内，输出完整代码。", code, true);
 
                 var qml = Writer.codeFrom(text);
                 if (!qml) {
