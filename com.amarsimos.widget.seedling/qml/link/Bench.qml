@@ -233,7 +233,11 @@ QtObject {
     // The connection used: MHCP-YUI's whenever she is there and set up (her server, key and models:
     // nothing to set twice); Seedling's own when she is not there, or not set up yet while its own is
     // (she was installed after Seedling was set up); hers when neither is set up (then she says so).
+    // Connection: Own (setting "connection") uses Seedling's own even with her there.
     function connectionKind() {
+        if (yui && setting("connection", "yui") === "own")
+            return "own";
+
         if (yuiReady())
             return "yui";
 
