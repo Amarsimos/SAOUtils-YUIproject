@@ -286,7 +286,7 @@ user   ┬ 现在的代码      只在修改时
 
 | # | 问题 | 改法 | 位置 |
 | :-- | :-- | :-- | :-- |
-| 1 | 周报、画像说「不要加标签」，但 ① 规则和小模型提醒要求加 | 按请求类型去掉表情规则和小模型提醒（规范 5） | yui.js priorityRules / smallModelReminder，main-stand 周报、画像 |
+| 1 ✅ | 周报、画像说「不要加标签」，但 ① 规则和小模型提醒要求加 | 按请求类型去掉表情规则和小模型提醒（规范 5） | yui.js priorityRules / smallModelReminder，main-stand 周报、画像 |
 | 2 | Tools 被拒后重发，附注重复、「重新生成」标记丢失 | 重发时用原始消息和原来的 regenerate 标记 | main-stand requestCompletion |
 | 3 | 「提醒他」写死男性；爸爸/妈妈对应有三份 | 改成称呼；对应只留 `userTitle`（规范 9） | yui.js featureInstructions，CardinalSystem，tests |
 | 4 ✅ | remember / forget 工具从不发出，tooltest 还在要求用 | 删掉这两个工具定义和测试里的说法（记忆一直用标签） | yui.js TOOLS，tests/tooltest.js |

@@ -539,8 +539,15 @@ T.Widget {
         };
     }
 
+    // The active connection for a request that wants only text (see requestCompletion).
+    function textConfig() {
+        var config = Object.assign({}, activeConfig());
+        config.textOnly = true;
+        return config;
+    }
+
     function systemExtras(title, query, mode) {
-        return Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode) + Yui.bondFacts(title, widget.settings.player_birthday, widget.settings.meeting_day) + Yui.recallContext(title, recall(query)) + notesExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + nowExtras(title);
+        return (mode === "text" ? "" : Yui.featureInstructions(title, Yui.coreMemories(heartCache), allowedActions(), mode)) + Yui.bondFacts(title, widget.settings.player_birthday, widget.settings.meeting_day) + Yui.recallContext(title, recall(query)) + notesExtras(title, query) + Yui.traitContext(characterTraits()) + logRecallExtras(title, query) + nowExtras(title);
     }
 
     // Character Traits (Cardinal System, Personality): 0 less, 1 as the personality says, 2 more.
@@ -605,7 +612,7 @@ T.Widget {
                 "created": Date.now()
             };
             onDone("");
-        });
+        }, textConfig());
     }
 
     // Quest Log (Skill Slots): the notes not done yet, sent only when the message is about them.
@@ -1086,16 +1093,18 @@ T.Widget {
             };
         }
         // Tools for the OpenAI-compatible format; other formats and servers that rejected tools get tags.
-        var tools = actionMode === "tools" && format === "openai" && !config.noTools && !toolsRejected[config.endpoint] ? Yui.toolDefinitions(allowedActions()) : [];
+        // config.textOnly: a request that wants only text (Weekly Report, Through Yui's Eyes): no tags,
+        // tools or tag reminders, so nothing asks for a tag that the request says not to add.
+        var tools = actionMode === "tools" && format === "openai" && !config.noTools && !config.textOnly && !toolsRejected[config.endpoint] ? Yui.toolDefinitions(allowedActions()) : [];
         var systemPrompt = config.systemPrompt !== undefined ? config.systemPrompt : widget.settings.system_prompt;
         var lastUser = messages.filter(function(m) {
             return m.role === "user";
         }).pop();
-        var mode = tools.length > 0 ? "tools" : "tags";
+        var mode = config.textOnly ? "text" : tools.length > 0 ? "tools" : "tags";
         var title = config.userTitle || userTitle();
         // The priority rules first, then the personality, then the feature instructions and memories.
         systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
-        if (!raw && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
+        if (!raw && mode !== "text" && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var latest = messages[messages.length - 1];
             messages[messages.length - 1] = {
@@ -3526,7 +3535,7 @@ T.Widget {
                 announce(qsTr("Weekly Report"), "📊 这周的小结写好啦～");
             }
             onDone("");
-        });
+        }, textConfig());
     }
 
     // Weekly Report on Sunday evenings (from 20:00), once a week, when it is turned on.

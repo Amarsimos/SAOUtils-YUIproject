@@ -2033,8 +2033,12 @@ function featureInstructions(title, core, allowed, mode) {
 
 // The most important rules, put before the personality (whatever the user wrote there) so that small
 // models do not lose them: the expression tag, that actions only happen through tools / tags (the
-// enabled ones only), and searching instead of inventing real-time facts. mode: "tools" or "tags".
+// enabled ones only), and searching instead of inventing real-time facts. mode: "tools", "tags" or
+// "text" (a request that wants only text: none of these rules).
 function priorityRules(title, allowed, mode) {
+    if (mode === "text")
+        return "";
+
     allowed = allowed || {};
     var acts = [];
     if (allowed.web !== false)

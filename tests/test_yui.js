@@ -290,6 +290,7 @@ test("tools mode instructions and the emotion guess", () => {
 });
 
 test("priority rules and the small model reminder", () => {
+    assert.strictEqual(Yui.priorityRules("爸爸", {}, "text"), "", "a text-only request (weekly report, portrait) has no tag rules");
     const tools = Yui.priorityRules("爸爸", {}, "tools");
     assert.ok(tools.startsWith("【最重要的规则】") && tools.includes("必须调用提供的工具") && tools.includes("记住、忘记事情时，必须在回复里写对应的标签") && tools.includes("必须搜索"));
     const tags = Yui.priorityRules("爸爸", { web: false }, "tags");
