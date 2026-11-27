@@ -3966,7 +3966,7 @@ T.Widget {
         });
 
         // SAO Utils' message box shows about three short lines (more is cut off with "...").
-        askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
+        askConfirm(qsTr("Navigation"), title + "，Seedling 还没有能种下的地方呢……\n要打开挂件库吗？\n把「Seedling」拖到桌面上，结衣就开始培育哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
             // The manager closing is not seen: waiting ends after a while with nothing placed (at once
@@ -3987,7 +3987,7 @@ T.Widget {
             return ;
 
         diag("seedling: no widget on the desktop, " + why);
-        waiting.onDone(said || "没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
+        waiting.onDone(said || "Seedling 没有能种下的地方，这次就先不培育了。想要的时候，先在桌面放一个 Seedling，再叫结衣一声吧", false, "declined");
     }
 
     Timer {
