@@ -512,7 +512,7 @@ R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalS
 | D2 | 结衣：`link/SeedlingPort.qml`，Bench 改用 `attach(port)`；Seedling 只通过 Port 调结衣 |
 | D3 | Bench 的 Link 接口归成一组 + `linkVersion`，两边检查版本；结衣只调这一组 |
 | D4 | Send to Yui 改成 `fixWidget`；@yui 数据名由 `dataKeys()` 给出，规则 15 和 props.js 跟着它 |
-| D5 | Seedling 专用代码搬出结衣：System Console 的 Seedling 测试、假回复队列、`rawSystem` 分支、旧 `seedling_model` 迁移 |
+| D5 | Seedling 专用代码搬出结衣：写代码的测试和假回复搬到 Seedling Settings → Test → Writing（`fakes.js`，Bench 自己的 `fakeReplies`）；删掉旧 `seedling_model` 迁移。结衣只留 Test Place Seedling（那是她自己的提问）；`rawSystem` 保留，它就是 Port 的 `ask`「只用这段 system」 |
 | D6 | 找 Seedling 的路径只写一处；试 `nvg://` 加载（需要实机看日志） |
 | D7 | `tests/yui/`、`tests/seedling/`；`check_deploy` 分插件检查，并检查两边接口清单一致；Prompt Rules 第九节搬到 Seedling 文档 |
 

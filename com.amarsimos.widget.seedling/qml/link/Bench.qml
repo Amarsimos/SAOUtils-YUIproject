@@ -278,6 +278,9 @@ QtObject {
     // One request through the chosen connection: onDelta(soFar), onFinished(text, isError). Returns
     // {abort()}. timeout: no data for that long ends it.
     function ask(system, user, onDelta, onFinished) {
+        if (fakeReplies.length > 0)
+            return fakeAnswer(onDelta, onFinished);
+
         if (connectionKind() === "yui")
             return yui.ask(system, user, writingModel(), onDelta, onFinished);
 
@@ -300,6 +303,42 @@ QtObject {
         });
         timer.start();
         return handle;
+    }
+
+    // Seedling Settings' Test, Writing: the next replies, made up (fakes.js); no request is made while
+    // there are some. Not saved.
+    property var fakeReplies: []
+
+    // The next made-up reply, streamed in a few pieces like a real one. Returns {abort()}.
+    function fakeAnswer(onDelta, onFinished) {
+        var queued = fakeReplies.slice();
+        var text = queued.shift();
+        fakeReplies = queued;
+        var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 120; repeat: true }", bench);
+        var shown = 0;
+        var done = false;
+        var end = function(value, isError) {
+            if (done)
+                return ;
+
+            done = true;
+            timer.stop();
+            timer.destroy();
+            onFinished(value, isError);
+        };
+        timer.triggered.connect(function() {
+            shown = Math.min(text.length, shown + Math.max(40, Math.ceil(text.length / 12)));
+            onDelta(text.slice(0, shown));
+            if (shown >= text.length)
+                end(text, false);
+
+        });
+        timer.start();
+        return {
+            "abort": function() {
+                end(text.slice(0, shown), false);
+            }
+        };
     }
 
     // The job being written, or null: {handle, stopped}.
@@ -330,7 +369,7 @@ QtObject {
             onDone("busy", "a widget is being written", "");
             return "busy";
         }
-        var why = cannotWrite();
+        var why = fakeReplies.length > 0 ? "" : cannotWrite();
         if (why) {
             onDone("unset", why, "");
             return why;

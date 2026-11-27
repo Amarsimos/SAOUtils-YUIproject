@@ -127,6 +127,18 @@ test("what the writer could not do, and whether it goes online", () => {
     assert.ok(!W.goesOnline("// https://example.com in a comment\nItem {}"));
 });
 
+test("fakes.js (Seedling Settings' Test, Writing): its widgets pass the check (Network only for network), fix has a broken one first", () => {
+    const F = load("fakes.js");
+    const S = load("safety.js");
+    for (const kind of ["write", "props", "moods", "network"]) {
+        const code = W.codeFrom(F.replies(kind, "")[0]);
+        const problems = S.check(code, false);
+        assert.ok(kind === "network" ? S.onlyNetwork(problems) : problems.length === 0, kind + ": " + JSON.stringify(problems));
+    }
+    assert.strictEqual(F.replies("fix", "").length, 2);
+    assert.strictEqual(F.replies("edit", "Item {}").length, 0);
+});
+
 const A = load("api.js");
 
 test("api.js: what is missing before a request", () => {

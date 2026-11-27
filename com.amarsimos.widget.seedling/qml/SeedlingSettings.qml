@@ -7,6 +7,7 @@ import QtQuick.Layouts 1.12
 import "link" 1.0 as Link
 import "templates.js" as Templates
 import "api.js" as Api
+import "fakes.js" as Fakes
 
 // Seedling Settings (the Seedling widget's menu): General (Code Editor, Network) and Test, which
 // tries the workbench's states without the AI and without a request: a widget, a compile error, the
@@ -664,6 +665,10 @@ NVG.Window {
                             "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +)."),
                             "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Large Widget", "large"]]
                         }, {
+                            "title": "Writing",
+                            "note": qsTr("The whole writing flow with made-up replies (no request): progress, edits, a fix after an error, the network question, Yui's data. Edit changes a color of the code there (Write first)."),
+                            "tests": [["Write", "fake:write"], ["Edit", "fake:edit"], ["Fix", "fake:fix"], ["Network", "fake:network"], ["Mood Calendar", "fake:moods"]]
+                        }, {
                             "title": "Settings & Keep",
                             "note": qsTr("A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them."),
                             "tests": [["Todo Widget", "props"]]
@@ -740,7 +745,28 @@ NVG.Window {
 
     }
 
+    // Test, Writing: Bench.write with replies from fakes.js (no request), in this widget's workbench.
+    function writeFake(kind) {
+        var replies = Fakes.replies(kind, Link.Bench.currentCode());
+        if (replies.length === 0) {
+            console.log("Seedling test: no code with a color to change; Write first");
+            return ;
+        }
+        if (kind === "network")
+            targetWidget.settings.allow_network = false;
+
+        Link.Bench.used(targetWidget);
+        Link.Bench.fakeReplies = replies;
+        Link.Bench.write("(test) " + kind, null, function(result, message) {
+            Link.Bench.fakeReplies = [];
+            console.log("Seedling test: " + kind + " - " + result + ", " + message);
+        });
+    }
+
     function run(tag) {
+        if (tag.indexOf("fake:") === 0)
+            return writeFake(tag.slice(5));
+
         if (tag === "widget")
             load(sampleCode);
         else if (tag === "broken")
