@@ -535,7 +535,9 @@ T.Widget {
             // Media (System Console, Authority): only with Media Player installed.
             "media": full && mediaReady,
             // Seedling (companion plugin) installed: Yui can have a desktop widget written.
-            "seedling": seedlingInstalled,
+            // Asked of SAO Utils each time (enabled or disabled while she runs); seedlingBench() also
+            // loads it when it came back, done long before her reply asks for a widget.
+            "seedling": seedlingBench() !== null || !!NVG.Resources.resolve(seedlingAddress),
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -3822,8 +3824,18 @@ T.Widget {
     // written (the chat's Send turns into Stop).
     property var seedlingJob: null
 
-    function seedlingWrite(request, onDone, onProgress) {
+    function seedlingWrite(request, onDone, onProgress, retried) {
         var bench = seedlingBench();
+        // Installed but still loading (enabled again a moment ago): asked once more a second later.
+        if (!bench && !retried && seedlingLoading) {
+            var later = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000 }", widget);
+            later.triggered.connect(function() {
+                later.destroy();
+                seedlingWrite(request, onDone, onProgress, true);
+            });
+            later.start();
+            return ;
+        }
         if (!bench || !bench.write)
             return onDone("Seedling 没有安装", false, "missing");
 
