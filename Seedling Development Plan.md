@@ -49,7 +49,7 @@
 ### 2.3 现在的漏洞（已核对代码）
 1. **生成的代码能摸到外面（最严重）**
    - `Qt.createQmlObject(code, 父元素)` 创建的对象，**继承父元素所在文件的上下文**：工作台里的 `bench`、`editor`、`targetWidget` 这些 id，在生成的代码里都可以直接用。
-   - 顺着 `targetWidget` → `Link.Bench.writer` 就到了结衣，结衣的设置里有 API Key，也有能发请求、执行动作的函数。
+   - 顺着 `targetWidget` → `Link.Bench` 就到了结衣的 Port（当时是结衣本身），结衣的设置里有 API Key，也有能发请求、执行动作的函数。（现在 Bench 只拿得到 Port，见第十二节。）
    - 顺着 `parent.parent...` 一路往上，也能摸到工作台和挂件本身。
    - 挂件里（`SeedlingWidget.qml`）和试放窗口里（`TryView.qml`，按第五节删除）也是同样的结构。
    - 文字检查完全拦不住：这些写法里没有任何禁用词。
@@ -487,21 +487,23 @@ R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalS
 | `ask(system, user, model, onDelta, onFinished)` | 用结衣的连接发一次请求（model 为空用聊天的模型）；返回 `{abort()}`。不带人格、历史、附注 |
 | `models()` | `{server, models: [id], scanned, chatModel}`：结衣服务器的名字和模型列表（Scan Cores 的结果或内置）、聊天用的模型 |
 | `scanModels(onDone)` / `restoreModels()` | 在结衣的服务器上 Scan Cores / Restore Registry，列表存在结衣那边；`onDone(models, error)` |
-| `dataKeys()` | `{名字: {type, text}}`：@yui 可读的数据，text 是给模型看的中文说明 |
+| `dataKeys()` | `{名字: {type, text, fast}}`：@yui 可读的数据，text 是给模型看的中文说明，fast 为 true 的变化快（挂件要常刷新） |
 | `value(name)` | `{current, …}`；未知或关掉的功能返回 null |
 | `fixWidget(problems)` | Send to Yui：打开聊天，让结衣去修 |
 | `sendToChat(text)` / `prefillChat(text)` | 把文字发进聊天 / 填进输入框 |
 | `font` / `panelAlpha`（属性） | 工作台跟随结衣聊天窗口的字体和不透明度（0–1） |
+
+结衣不在了（挂件被移走，Seedling 还拿着 Port）时，每个方法都照常可调，只是回答「不在」：`connection().ready` 为 false、模型列表为空、`value` 为 null，`ask` 立刻以错误结束，不会抛错。
 
 ### 12.3 Bench 的 Link 接口（Seedling → 结衣）
 
 | 成员 | 说明 |
 | :-- | :-- |
 | `linkVersion` | 1 |
-| `attach(port)` / `detach(port)` | 结衣启动 / 关闭时交出 / 收回 Port |
-| `attached()` | 是否已有结衣接上（之前的结衣关了，新的可以接上） |
+| `attach(port)` / `detach(port)` | 结衣启动 / 关闭时交出 / 收回 Port。`attach` 返回是否接上（版本不同为 false）。`detach` 时正在写的挂件立刻停下，不再回调结衣 |
+| `attached()` | 是否已有结衣接上。已有时新来的结衣不抢，等之前的走了再接上 |
 | `widgets` / `widgetsChanged` | 桌面上的 Seedling 挂件（结衣只看有没有） |
-| `write(request, onProgress, onDone)` | 写或改挂件（进度和结果由结衣在聊天里说） |
+| `write(request, onProgress, onDone)` | 写或改挂件（进度和结果由结衣在聊天里说）。`onDone(kind, message, code)`，kind：done、edited、failed、stopped、offline、busy、missing、unset、declined（没有同意免责声明） |
 | `stop()` | 停下正在写的 |
 | `ownSetup()` | Seedling 自己配好的连接（含密钥，供后装的结衣直接用，API 只配一次）；没配好为 null |
 

@@ -3753,8 +3753,8 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Seedling (companion plugin)
-    // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
-    // Probe.qml (seedlingLoad), so Yui still loads when Seedling is not installed. null when missing.
+    // Seedling's Bench, reached at run time through the Probe its "link" resource names (seedlingLoad),
+    // so Yui still loads when Seedling is not installed. null when missing.
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
@@ -3835,8 +3835,17 @@ T.Widget {
         // Only the Link interface of the same version (section 12 of "Seedling Development Plan.md");
         // another is taken as Seedling not installed.
         var bench = probe.bench;
-        if (bench.linkVersion !== seedlingLinkVersion || !bench.attach || !bench.attach(seedlingPort)) {
+        if (bench.linkVersion !== seedlingLinkVersion || !bench.attach) {
             diag("seedling: its Link version " + bench.linkVersion + " is not " + seedlingLinkVersion + ", working without it");
+            probe.destroy();
+            return ;
+        }
+        // Another MHCP-YUI on the desktop has it: not taken from her (seedlingBench takes over once she
+        // is gone, section 12.3).
+        if (bench.attached())
+            diag("seedling: another MHCP-YUI is attached; this one takes over when she goes");
+        else if (!bench.attach(seedlingPort)) {
+            diag("seedling: its Bench refused this Link port, working without it");
             probe.destroy();
             return ;
         }
