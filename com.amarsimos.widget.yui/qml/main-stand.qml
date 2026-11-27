@@ -1603,6 +1603,14 @@ T.Widget {
                     diag("tags not understood (hidden): " + reply.unknown.join(" "));
 
                 text = reply.text || silentReplyText(reply);
+                // A widget asked for while Seedling cannot grow one (not installed, or busy): her
+                // "on it!" is replaced by why not, rather than followed by it.
+                var seedlingBlock = reply.seedling ? seedlingBlocked() : "";
+                if (seedlingBlock) {
+                    diag("seedling: asked for a widget, " + seedlingBlock);
+                    text = Yui.seedlingChatLine(seedlingBlock, userTitle());
+                    reply.seedling = "";
+                }
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
@@ -4087,6 +4095,15 @@ T.Widget {
     // last words (the reply's <<seedling:>>, and System Console's tests).
     // Seedling's state is checked here, when a widget is asked for: still growing the last one ("busy"),
     // not installed ("missing", in seedlingWrite), no widget on the desktop (seedlingAskPlace).
+    // Why a widget cannot be grown now ("" when it can): "busy" (one is growing, or a widget is waited
+    // for), "missing" (not installed; one still loading counts as there).
+    function seedlingBlocked() {
+        if (seedlingJob || seedlingWaiting)
+            return "busy";
+
+        return seedlingBench() || NVG.Resources.resolve(seedlingAddress) ? "" : "missing";
+    }
+
     function seedlingStart(request) {
         var said = seedlingSay();
         if (seedlingJob || seedlingWaiting)
