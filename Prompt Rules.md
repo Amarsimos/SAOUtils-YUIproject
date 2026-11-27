@@ -2,8 +2,8 @@
 
 > 记录发给模型的每一段文字：在哪个场景、由哪段代码生成、放在请求的什么位置，以及写提示词、写挂件代码时要遵守的规范。
 > 代码位置：结衣 `com.amarsimos.widget.yui/qml/main-stand.qml`（拼装、读数据）、`qml/yui.js`（纯函数，有测试）；Seedling `com.amarsimos.widget.seedling/qml/writer.js`（写代码的提示）、`link/Bench.qml`（写代码的流程、重试说明）、`safety.js`（安全检查）、`props.js`（声明）。
-> 最后核对：2026-11-27（feature/prompts，c44ac11 之后）。
-> **状态：草案，待审核。** 标【拟】的是重构后的新规范 / 新规则，审核通过后才改代码；其余是现状。
+> 最后核对：2026-11-27（feature/prompts，第十节各条改完之后）。
+> **状态：已审核并按第十节改完代码（2026-11-27，feature/prompts）。**
 
 ---
 
@@ -51,8 +51,8 @@ tools                         只在 Tools 模式（toolDefinitions）
 
 | # | 段落 | 生成 | 什么时候出现 | 内容要点 |
 | :-- | :-- | :-- | :-- | :-- |
-| ① | 最重要的规则 | `Yui.priorityRules(title, allowed, mode)` | 每次 | 表情标签必写；操作电脑 / 记忆必须写标签或调用工具（只说不做电脑上什么都不会发生）；开着网页功能时「实时信息必须搜索，不编造」；最后一条始终在：「电脑上的事，结衣只能……（只列开着的，含控制音乐播放）；其他事做不到就直接说，请{title}自己操作，绝不假装已经做了」（都关掉时为「结衣不能操作电脑」）。放在人格**前面**，因为用户可能改人格，小模型也容易丢后面的规则 |
-| ② | 人格 | 设置 `system_prompt`；默认 `defaultSystemPrompt`（main-stand.qml 313 行）；MHCP Profile 切换 | 每次 | 身份、性格、说话方式。用户可编辑 |
+| ① | 最重要的规则 | `Yui.priorityRules(title, allowed, mode)` | 每次（周报、画像这类只要文字的请求不带，③-1 也不带） | 表情标签必写；操作电脑 / 记忆必须写标签或调用工具（只说不做电脑上什么都不会发生）；开着网页功能时「实时信息必须搜索，不编造」；最后一条始终在：「电脑上的事，结衣只能……（只列开着的，含控制音乐播放）；其他事做不到就直接说，请{title}自己操作，绝不假装已经做了」（都关掉时为「结衣不能操作电脑」）。放在人格**前面**，因为用户可能改人格，小模型也容易丢后面的规则 |
+| ② | 人格 | 设置 `system_prompt`；默认 `defaultSystemPrompt`（main-stand.qml 约 314 行，普通文字）；为空时也用默认人格；MHCP Profile 切换；`{{user_title}}` 由 `Yui.withTitle` 换成称呼 | 每次 | 身份、性格、说话方式。用户可编辑 |
 | ③-1 | 系统功能说明 | `Yui.featureInstructions(title, 心核, allowed, mode)` | 每次 | 开头「以下是系统功能说明，不要向{title}提起」。表情、结衣之心（core / memory / forget 标签与记忆规则）、心理关怀、导航（web）、桌面代行（launch / find / kill）、音乐（Control Media）、快捷回复、小工具（隐藏时不出现）；最后附**心核**（`[MM-dd] 内容`）。只写开着的功能；Tools 模式去掉导航 / 代行 / 音乐的标签说明，改成一句「你可以用提供的工具……」 |
 | ③-2 | 羁绊 | `Yui.bondFacts` | 设了生日 / 相遇日时 | 两个日子作为事实，「被问到时以此为准」（当天的祝贺移到「此刻」） |
 | ③-3 | 相关回忆 | `Yui.recallContext(title, recall(query))` | 有相关记忆碎片时 | 结衣之心里和最新消息相关的碎片（`[MM-dd] 内容`），数量由 Yui's Heart → Recall 设定 |
@@ -84,7 +84,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 
 * 从 `historyStart` 起的聊天记录，取最近 `maxHistory` 条（Yui's Heart → Context，默认 20）。
 * 跳过：还在生成的消息、`isError` 的消息（请求失败、设置提示）。
-* **保留** `local` 消息（唤醒语、Navigation Report、System Call 的回复、Seedling 的进度和结果、测试消息等程序自己写的），让后面的回复能接上。【拟】进请求时在这类消息前标「（系统生成）」，让模型知道那不是它自己说的，不去模仿（第十节第 11 条）。
+* **保留** `local` 消息（唤醒语、Navigation Report、System Call 的回复、Seedling 的进度和结果、测试消息等程序自己写的），让后面的回复能接上。进请求时在这类消息前标「（系统生成）」（`Yui.historyContent`），让模型知道那不是它自己说的；回复里照抄了这个标记会被 `cleanReply` 去掉。
 * 连续同一角色的消息合并（Gemini / Claude 要求一问一答交替）；开头必须是 user。
 * Clear Log（Yui's Heart）会同时清空聊天窗口，否则旧对话仍会进上下文。
 
@@ -94,7 +94,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 
 | 请求 | 生成 | 要点 |
 | :-- | :-- | :-- |
-| 开机问候 | `getInitialMessage`（main-stand.qml 约 1751 行） | 启动时没有保存的对话：「（系统提示：{t}刚刚打开电脑……打招呼）」；缺「不要提起这条提示」【拟：补上】 |
+| 开机问候 | `getInitialMessage`（main-stand.qml 约 1751 行） | 启动时没有保存的对话：「（系统提示：{t}刚刚打开电脑……打招呼，不要提起这条提示）」 |
 | Login Greeting | `welcomeBack` | 启动时，以及点醒待机的结衣时（2026-11-26 起，代替本地唤醒语；不需要问候时仍用本地唤醒语）。早安（带天气）/ 欢迎回来（≥ 30 分钟）/ 好久不见（≥ 2 天，原 3 天）三种；「一两句话即可，不要提起这条提示」 |
 | Spontaneous Talk | `careTick` → `idleChat` | 告诉她现在的样子（水晶 / 妖精 / 立绘）和位置（只作背景，叫她不要说起自己的样子或位置），请她主动说一句；有由头时加「可以从这个由头说起：…」（`Yui.chatHooks` 20 种：节日、去年今天、快到的跟进 / 生日、正在听的歌、深夜听歌、电脑一直很忙、周五晚上、周末早上、周一早上、午饭、晚饭、月末、下雨下雪、冷、热、陪了很久、心情不错、一条较早的记忆、今天还没说过话；特别的日子优先，其余随机，同一个由头当天只用一次） |
 | Mood Care | `careTick` → `Yui.moodCareInstruction` | 中优先级，09–22 点；最近 3 次心情平均 ≤ 2 且最近一次在 3 天内；带这几天的记录，「温柔地问问要不要说说，不要说教，也不要列一串建议」 |
@@ -104,7 +104,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 | 跟进 | `careTick` → `Yui.followupInstruction` | 高优先级；当天「主动打打气、关心一下」，之后 7 天内「自然地问问结果怎么样」；带原话和「就是今天 / 那是 N 天前的事」；一两句话，不要提起提示 |
 | Through Yui's Eyes | `Yui.portraitPrompt` | 全部记忆 + 要求（两到四段、只根据记忆、不加标签）；不进聊天 |
 
-| Link Start!（Cardinal System） | CardinalSystem.qml 约 530 行 | 用正在编辑的设置发「Hello」测试连接；带完整的 system。【拟】改成中文 |
+| Link Start!（Cardinal System） | CardinalSystem.qml 约 530 行 | 用正在编辑的设置发「你好」测试连接；带完整的 system |
 
 前四种经 `yuiSpeaks` 发出，仍带完整的 system 提示和聊天历史。后三种由关心调度（`careTick`，2026-11-25）决定何时说：每天上限与最短间隔随 Care Level / 学到的欢迎度变化（默认每天 20 次、每 30 分钟一次），免打扰时段不闲聊；Login Greeting 启动时立即说并计入次数。提示词内容本身没有变。
 
@@ -115,7 +115,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 | | Tags（默认） | Tools（Action Mode，OpenAI 格式且服务器接受 tools 时） |
 | :-- | :-- | :-- |
 | 代行（网页、启动、找文件、关闭、音乐） | 标签 `<<open:>> <<search:>> <<launch:>> <<find:>> <<kill:>> <<media:>>` | 工具 `open_url web_search launch_program find_file close_program media_control`（`Yui.TOOLS`） |
-| 记忆 | 标签 `<<core:>> <<memory:>> <<forget:>>` | 仍用标签。`Yui.TOOLS` 里的 remember / forget 工具**从不发出**（`toolDefinitions` 不带 withMemory）；【拟】删掉（第十节第 4 条） |
+| 记忆 | 标签 `<<core:>> <<memory:>> <<forget:>>` | 两种模式都用标签（remember / forget 工具已删掉：测试里没有模型调用过） |
 | 表情、心情、快捷回复 | 标签 | 标签 |
 | 服务器拒绝 tools | — | 自动退回 Tags 并记住（`toolsRejected`） |
 
@@ -136,7 +136,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 
 ---
 
-## 八、写提示词的通用规范【拟】
+## 八、写提示词的通用规范
 
 适用于结衣和 Seedling 发给模型的所有文字。原第八节的 0–9 条保留并入下面各条。
 
@@ -221,9 +221,9 @@ user   ┬ 现在的代码      只在修改时
 
 | 项目 | 下限 | 上限 | 由谁保证 | 说明 |
 | :-- | :-- | :-- | :-- | :-- |
-| 根元素宽、高 | 20（挂件框最小值） | 2000 | 安全检查（上限） | 【拟】规则写「建议 80 以上」，太小在桌面上点不到 |
-| 文字字号 | 【拟】11 | 【拟】200 | 规则（不检查） | 小于 11 在桌面上看不清 |
-| Timer interval | 16 ms | — | 安全检查 | 【拟】显示时间用 1000；联网刷新 ≥ 600000（10 分钟） |
+| 根元素宽、高 | 80（规则；挂件框最小 20） | 2000 | 安全检查（上限） | 太小在桌面上点不到；挂件框不能拖得比挂件本身小 |
+| 文字字号 | 11 | 200 | 规则（不检查） | 小于 11 在桌面上看不清 |
+| Timer interval | 16 ms | — | 安全检查 | 显示时间用 1000；联网刷新 ≥ 600000（10 分钟） |
 | for 循环 | — | 1000 次 | 安全检查 | 计数器从数字或 .length 开始，朝终点走 |
 | 粒子 emitRate / maximumEmitted / count | — | 1000 | 安全检查 | |
 | 代码行数 | — | 300 | 规则 | 回复被截断时要求精简到 200 行 |
@@ -282,7 +282,7 @@ user   ┬ 现在的代码      只在修改时
 
 ---
 
-## 十、待改清单【拟，审核后逐条改，每条一个提交】
+## 十、待改清单（已全部改完，每条一个提交）
 
 | # | 问题 | 改法 | 位置 |
 | :-- | :-- | :-- | :-- |
@@ -297,7 +297,7 @@ user   ┬ 现在的代码      只在修改时
 | 9 ✅ | 人格用 Markdown 却要求不用；兜底是「你是ai助手」 | 默认人格改成普通文字（内容不变）；兜底改成默认人格（规范 12） | main-stand defaultSystemPrompt |
 | 10 ✅ | 同一规则说多遍（表情 3 处、MHCP001、记忆、关闭程序、跟进、深夜关怀） | 按规范 2 合并 | yui.js，main-stand |
 | 11 ✅ | 本地台词进聊天历史后被当作结衣自己说的 | **保留，但标明是程序生成**：进请求时在这类消息前加「（系统生成）」 | main-stand buildHistory |
-| 12 | 文档过时 | 本次重写；改完代码后再核对一次 | 本文档 |
+| 12 ✅ | 文档过时 | 本次重写；改完代码后再核对一次 | 本文档 |
 | 13 ✅ | tagtest / tooltest 用旧的时间附注、空的 allowed | 改成和现在相同的拼法 | tests |
 
 ---
