@@ -292,7 +292,7 @@ user   ┬ 现在的代码      只在修改时
 | 4 ✅ | remember / forget 工具从不发出，tooltest 还在要求用 | 删掉这两个工具定义和测试里的说法（记忆一直用标签） | yui.js TOOLS，tests/tooltest.js |
 | 5 ✅ | Seedling 规则互相打架（150 / 120 行、规则 6 混进地址、@yui 与联网、整段重写时还有修改方式、新挂件重试写成「要修改」） | 按 9.4、9.5 改 | writer.js，Bench.qml |
 | 6 ✅ | 三种称呼写法 `{{user_title}}`、`{t}`、拼接 | 统一 `{t}` + 一个替换函数（规范 9） | yui.js，main-stand |
-| 7 | 「系统提示 / 系统信息 / 提醒」混用，部分段落没有括号；开机问候、深夜、休息缺「不要提起」 | 按规范 10、11 统一 | yui.js，main-stand |
+| 7 ✅ | 「系统提示 / 系统信息 / 提醒」混用，部分段落没有括号；开机问候、深夜、休息缺「不要提起」 | 按规范 10、11 统一 | yui.js，main-stand |
 | 8 | 中英混杂：Seedling 重试里的英文报错、两个测试的「Hello」、功能名写法 | 按规范 8 | Bench.qml，CardinalSystem，SeedlingSettings，yui.js |
 | 9 ✅ | 人格用 Markdown 却要求不用；兜底是「你是ai助手」 | 默认人格改成普通文字（内容不变）；兜底改成默认人格（规范 12） | main-stand defaultSystemPrompt |
 | 10 | 同一规则说多遍（表情 3 处、MHCP001、记忆、关闭程序、跟进、深夜关怀） | 按规范 2 合并 | yui.js，main-stand |

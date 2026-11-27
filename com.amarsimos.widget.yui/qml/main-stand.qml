@@ -1765,7 +1765,7 @@ T.Widget {
         }
         startReply([{
             "role": "user",
-            "content": "（系统提示：" + userTitle() + "刚刚打开电脑，结衣启动了。请以结衣的身份，用一两句话向" + userTitle() + "打招呼，可以结合现在的时间。）"
+            "content": "（系统提示：" + userTitle() + "刚刚打开电脑，结衣启动了。请以结衣的身份，用一两句话向" + userTitle() + "打招呼，可以结合现在的时间，不要提起这条提示。）"
         }]);
     }
 
@@ -4576,12 +4576,12 @@ T.Widget {
         var title = userTitle();
         var spoke = false;
         if (result.pick.kind === "night") {
-            spoke = yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(date, "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话。）", qsTr("Mental Health Counseling"));
+            spoke = yuiSpeaks("（系统提示：现在已经是深夜 " + Qt.formatTime(date, "HH:mm") + " 了，" + title + "还在电脑前。请以结衣的身份关心" + title + "，温柔地提醒早点休息。一两句话即可，不要提起这条提示。）", qsTr("Mental Health Counseling"));
             if (spoke)
                 widget.settings.last_night_care = night;
 
         } else if (result.pick.kind === "rest") {
-            spoke = yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话。）", qsTr("Mental Health Counseling"));
+            spoke = yuiSpeaks("（系统提示：" + title + "已经连续使用电脑 " + Yui.formatDuration(now - sessionStart) + " 了。请以结衣的身份关心" + title + "，提醒休息一下眼睛、喝点水、活动活动身体。一两句话即可，不要提起这条提示。）", qsTr("Mental Health Counseling"));
             if (spoke)
                 widget.settings.last_rest_care = now;
 

@@ -1102,7 +1102,7 @@ function mediaChangeNote(info) {
         return "";
 
     var track = info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》";
-    return "\n\n（系统信息：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
+    return "\n\n（系统提示：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
 }
 
 // Whether a reply says Yui has done something on the computer ("已经帮你打开了", "音乐已经重新动起来啦"),
@@ -2321,7 +2321,7 @@ function tuningFields(format, providerId, t) {
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
-    return "\n\n（提醒：回复最后加上表情标签" + (allowed.suggest ? "，可以接着聊时加上快捷回复标签" : "") + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+    return "\n\n（系统提示：回复最后加上表情标签" + (allowed.suggest ? "，可以接着聊时加上快捷回复标签" : "") + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
 }
 
 // A memory as sent to the AI: "[10-12] 喜欢拉面", the day it was noted first, so time in it can be
