@@ -42,11 +42,11 @@
 | C3 | 聊天里说"做个时钟挂件" | 思考中不出字，也不先说「收到」；只出一条她自己的话：Seedling 的权限还在沉睡，要先装上 Seedling 程序包、放到桌面上。Log：`seedling: asked for a widget, missing`，接着 `missing (asked again)` 不应出现 | |
 | C4 | 结衣开着时停用 Seedling，再点 **Test Seedling Link** | `resolve ...: null`，然后 `not found`；Log 有 `seedling: no longer installed` | |
 | C5 | 再启用 Seedling，点两次 **Test Seedling Link** | 第一次可能还是 not found（正在加载），第二次 `found at ...` | |
-| C6 | 装着 Seedling、她正在写一个挂件时，再让她做另一个 | 同 C3，只出一条她自己的话：上一个还在培育中 | |
+| C6 | 她正在写挂件时，再让她做另一个 | 这条消息排队（标着「⏳ 排队中：结衣忙完就发送」），等第一个写完才发出，然后开始写第二个 | |
 | C7 | 装着 Seedling、桌面上有挂件，让她做挂件 | 没有「收到」这类回复，思考的占位原地变成进度消息（「在想…」），然后写出来 | |
-| C8 | 她还在思考时，再发一条消息（回车） | 消息马上显示，下面标着「⏳ 排队中：结衣回完上一条就发送」；回复结束后标记消失、消息发出；Log：`message queued`，之后 `queued message(s) sent` | |
-| C9 | 她写挂件时发一条普通聊天 | 照常回复，不会再要一次挂件（聊天记录顺序：做挂件 → 进度 → 你的消息） | |
-| C10 | 有消息在排队时点 **Cancel** | 回复停下；排队的消息从聊天里撤回，文字回到输入框（多条按行合并，原来输入框里的字接在后面），不会再发出；Log：`cancel: N queued message(s) back in the input field` | |
+| C8 | 她还在思考时，再发一条消息（回车） | 消息马上显示，标着「⏳ 排队中：结衣忙完就发送」；回复结束后标记消失、消息发出；Log：`message queued`，之后 `queued message(s) sent` | |
+| C9 | 她写挂件时发一条普通聊天 | 同样排队，挂件写完才发出；写挂件期间她也不会自己找你说话（问候、关心） | |
+| C10 | 有消息在排队时点 **Cancel**（思考中）或 **Stop**（写挂件中） | 停下；排队的消息从聊天里撤回，文字回到输入框（多条按行合并，原来输入框里的字接在后面），不会再发出；Log：`cancel: N queued message(s) back in the input field` | |
 
 ## D. 只装 Seedling（关掉结衣挂件：结衣不在桌面上就当没有她）
 

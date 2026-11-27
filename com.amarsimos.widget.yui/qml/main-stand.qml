@@ -120,9 +120,12 @@ T.Widget {
     property bool replyQueued: false
     // The queued messages (chat indexes), shown with this note until sent.
     property var queuedAt: []
-    readonly property string queuedNote: "⏳ 排队中：结衣回完上一条就发送"
-    onBusyChanged: {
-        if (!busy && replyQueued)
+    readonly property string queuedNote: "⏳ 排队中：结衣忙完就发送"
+    // Yui is not to be disturbed: a reply on its way, or a Seedling widget being grown (one at a time,
+    // its wait for a widget to be placed included). Messages queue, she does not talk by herself.
+    readonly property bool occupied: busy || seedlingJob !== null || seedlingWaiting !== null
+    onOccupiedChanged: {
+        if (!occupied && replyQueued)
             Qt.callLater(sendQueued);
 
     }
@@ -1778,6 +1781,13 @@ T.Widget {
     // Cancel (the chat's button while she replies): the reply stops and the messages queued behind it
     // are taken back, out of the chat and into the input field (to send again or change), as agents do.
     function cancelReply() {
+        takeBackQueued();
+        stopReply();
+    }
+
+    // The queued messages out of the chat and into the input field (Cancel, or Stop while a widget
+    // grows: what was queued behind it is not sent).
+    function takeBackQueued() {
         var taken = [];
         for (var i = queuedAt.length - 1; i >= 0; i--) {
             var at = queuedAt[i];
@@ -1795,12 +1805,11 @@ T.Widget {
             scheduleSave();
             diag("cancel: " + taken.length + " queued message(s) back in the input field");
         }
-        stopReply();
     }
 
     // Drop the last reply and ask again.
     function regenerateReply() {
-        if (widget.busy || chatModel.count === 0 || chatModel.get(chatModel.count - 1).author === "user")
+        if (widget.occupied || chatModel.count === 0 || chatModel.get(chatModel.count - 1).author === "user")
             return ;
 
         chatModel.remove(chatModel.count - 1);
@@ -1831,7 +1840,7 @@ T.Widget {
     // notifyTitle: a title for the reply (care reminders); like every reply while the chat is closed, it
     // is shown in the bubble next to Yui (see announce()).
     function yuiSpeaks(instruction, notifyTitle) {
-        if (widget.busy || !activeConfig().apiKey)
+        if (widget.occupied || !activeConfig().apiKey)
             return false;
 
         var messages = buildHistory();
@@ -1875,8 +1884,9 @@ T.Widget {
         if (!text.trim())
             return false;
 
-        // A reply on its way: this one waits its turn (shown now, asked for when she is free).
-        if (widget.busy) {
+        // A reply on its way, or a widget growing: this one waits its turn (shown now, asked for when
+        // she is free).
+        if (widget.occupied) {
             noteActivity();
             careHeard(text, Date.now());
             widget.settings.last_active = Date.now();
@@ -1950,7 +1960,7 @@ T.Widget {
 
     // The messages queued while she was busy, asked for in one reply (the history has them all).
     function sendQueued() {
-        if (widget.busy || !replyQueued)
+        if (widget.occupied || !replyQueued)
             return ;
 
         replyQueued = false;
@@ -4704,7 +4714,7 @@ T.Widget {
             diag(line);
 
         careLastLog = line;
-        if (!result.pick || widget.busy)
+        if (!result.pick || widget.occupied)
             return ;
 
         var title = userTitle();
@@ -6575,10 +6585,12 @@ T.Widget {
                     onClicked: {
                         if (widget.busy)
                             widget.cancelReply();
-                        else if (widget.seedlingJob || widget.seedlingWaiting)
+                        else if (widget.seedlingJob || widget.seedlingWaiting) {
+                            widget.takeBackQueued();
                             widget.seedlingStop();
-                        else
+                        } else {
                             textInput.submit();
+                        }
                         textInput.forceActiveFocus();
                     }
                 }
