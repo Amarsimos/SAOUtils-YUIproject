@@ -786,9 +786,6 @@ NVG.Window {
 
     }
 
-    // Test, Link: the last result, shown under its buttons.
-    property string testResult: ""
-
     function linkStatus() {
         var yui = Link.Bench.yui;
         var lines = ["Link version: " + Link.Bench.linkVersion];

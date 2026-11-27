@@ -61,6 +61,16 @@ for (const file of files) {
             if (props.has(f[1]))
                 errors.push(at(f.index) + ": function " + f[1] + "Changed clashes with property " + f[1] + "'s change signal");
 
+        // 1b. a property or function declared twice on the root object (indented 4 spaces): the
+        // whole file then fails to load (e.g. a settings window that no longer opens)
+        const rootNames = new Map();
+        for (const d of code.matchAll(/^ {4}(?:readonly\s+|default\s+)*(?:property\s+\S+|function)\s+(\w+)/gm)) {
+            if (rootNames.has(d[1]))
+                errors.push(at(d.index) + ": " + d[1] + " is declared twice (also line " + lineOf(raw, rootNames.get(d[1])) + ")");
+            else
+                rootNames.set(d[1], d.index);
+        }
+
         // 2. FINAL properties (only on a window: the root is a View / Window)
         const rootType = (code.match(/^\s*([A-Z][\w.]*)\s*\{/m) || [])[1] || "";
         if (/(^|\.)(View|Window|ApplicationWindow)$/.test(rootType))
