@@ -1,4 +1,5 @@
 pragma Singleton
+import NERvGear 1.0 as NVG
 import QtQml 2.12
 import QtQuick.LocalStorage 2.12
 import "../templates.js" as Templates
@@ -366,6 +367,31 @@ QtObject {
     // "checking", lines, edits, seconds, attempt, problem}. onDone(kind, message, code) once: kind
     // "done", "edited", "failed", "stopped", "offline" (not allowed online), "busy", "missing" (no
     // widget), "unset" (no connection). Returns "" or why it did not start.
+    // AI-written code is not certain: said once, before the first widget is written, in SAO Utils'
+    // alert box (about three short lines are shown). then(accepted).
+    readonly property string disclaimerText: "挂件代码由 AI 生成，不保证正确、安全。\n请先在工作台预览，确认后再保存使用。\n使用中产生的问题由使用者自行承担。"
+
+    function askDisclaimer(then) {
+        try {
+            var answer = NVG.SystemCall.messageBox({
+                "title": "Alert",
+                "text": disclaimerText,
+                "modal": true
+            });
+            if (answer && typeof answer.then === "function") {
+                answer.then(function(result) {
+                    then(result !== false && result !== 0);
+                }, function() {
+                    then(false);
+                });
+                return ;
+            }
+        } catch (e) {
+            console.log("Seedling: cannot show the disclaimer:", e);
+        }
+        then(false);
+    }
+
     function write(request, onProgress, onDone) {
         if (widgets.length === 0) {
             onDone("missing", "no Seedling widget on the desktop", "");
@@ -379,6 +405,19 @@ QtObject {
         if (why) {
             onDone("unset", why, "");
             return why;
+        }
+        // The first time (for every way of writing: the workbench, MHCP-YUI, the tests): the
+        // disclaimer, accepted once; declined, nothing is written.
+        if (setting("disclaimer_accepted", false) !== true) {
+            askDisclaimer(function(accepted) {
+                if (!accepted) {
+                    onDone("declined", "the disclaimer was not accepted", "");
+                    return ;
+                }
+                setSetting("disclaimer_accepted", true);
+                write(request, onProgress, onDone);
+            });
+            return "";
         }
         var keys = yuiKeys();
         var current = currentCode();

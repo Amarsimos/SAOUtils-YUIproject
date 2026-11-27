@@ -702,6 +702,15 @@ NVG.Window {
                             onClicked: settingsWindow.sendToYuiFake()
                         }
 
+                        // The first-use disclaimer shows again before the next widget is written.
+                        Button {
+                            text: "Reset Disclaimer"
+                            onClicked: {
+                                Link.Bench.setSetting("disclaimer_accepted", false);
+                                settingsWindow.testResult = "The disclaimer shows again before the next widget is written.";
+                            }
+                        }
+
                     }
 
                     Label {
