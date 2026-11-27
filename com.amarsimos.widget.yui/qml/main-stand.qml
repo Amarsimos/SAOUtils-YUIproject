@@ -3968,6 +3968,34 @@ T.Widget {
 
     // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log.
     function testSeedlingLink() {
+        // Trying SAO Utils' resources (NVG.Resources): what it knows of amarsimos packages, and whether
+        // Seedling's Probe loads by its resource address (instead of the folder next to Yui).
+        try {
+            var found = NVG.Resources.filter(/amarsimos/, /.*/);
+            diag("seedling link: resources of amarsimos: " + found.length);
+            found.forEach(function(m) {
+                diag("seedling link:   " + m.package + " | " + m.catalog + " | " + m.location + " | " + m.url);
+                var files = m.files() || [];
+                files.slice(0, 8).forEach(function(f) {
+                    diag("seedling link:     file " + f.entry + " -> " + f.url);
+                });
+                if (m.catalog === "link") {
+                    var tries = [String(m.url)].concat(files.filter(function(f) {
+                        return f.name === "Probe.qml" || String(f.entry).indexOf("Probe.qml") !== -1;
+                    }).map(function(f) {
+                        return String(f.url);
+                    }));
+                    tries.forEach(function(address) {
+                        var c = Qt.createComponent(address);
+                        diag("seedling link:     load " + address + " -> status " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
+                    });
+                }
+            });
+            var resolved = NVG.Resources.resolve("nvg://seedling.widget.amarsimos.com/link/bench");
+            diag("seedling link: resolve nvg://seedling.widget.amarsimos.com/link/bench -> " + (resolved ? resolved.url : "null"));
+        } catch (e) {
+            diag("seedling link: resources failed: " + e);
+        }
         var bench = seedlingBench();
         if (!bench) {
             diag("seedling link: not installed (or another Link version); Yui works without it");
