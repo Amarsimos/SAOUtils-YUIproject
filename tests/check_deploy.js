@@ -188,6 +188,17 @@ if (packages.length === 2) {
         if (name !== "js" && !portMembers.has(name))
             errors.push("Link: Seedling calls yui." + name + ", which MHCP-YUI's SeedlingPort does not have");
     }
+    // props.js gets the port as "writer" (props.feed(code, writer)).
+    for (const name of new Set((read(seedDir + "/props.js").match(/\bwriter\.([a-zA-Z_]\w*)/g) || []).map((m) => m.split(".").pop()))) {
+        if (!portMembers.has(name))
+            errors.push("Link: props.js calls writer." + name + " (the port), which MHCP-YUI's SeedlingPort does not have");
+    }
+    // What the port calls of Yui (her.X) is there in main-stand.qml (a rename there breaks Seedling).
+    const standMembers = members(read(yuiDir + "/main-stand.qml"));
+    for (const name of new Set((port.match(/\bher\.([a-zA-Z_]\w*)/g) || []).map((m) => m.slice(4)))) {
+        if (!standMembers.has(name))
+            errors.push("Link: SeedlingPort calls her." + name + ", which main-stand.qml does not have");
+    }
     const version = (text) => (text.match(/linkVersion:\s*(\d+)/) || [])[1];
     const yuiVersion = (read(yuiDir + "/main-stand.qml").match(/seedlingLinkVersion:\s*(\d+)/) || [])[1];
     if (version(bench) !== version(port) || version(bench) !== yuiVersion)
