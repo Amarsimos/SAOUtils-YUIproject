@@ -1775,6 +1775,29 @@ T.Widget {
 
     }
 
+    // Cancel (the chat's button while she replies): the reply stops and the messages queued behind it
+    // are taken back, out of the chat and into the input field (to send again or change), as agents do.
+    function cancelReply() {
+        var taken = [];
+        for (var i = queuedAt.length - 1; i >= 0; i--) {
+            var at = queuedAt[i];
+            if (at < chatModel.count && chatModel.get(at).note === queuedNote) {
+                taken.unshift(chatModel.get(at).message);
+                chatModel.remove(at);
+            }
+        }
+        replyQueued = false;
+        queuedAt = [];
+        if (taken.length > 0) {
+            var typed = textInput.text.trim();
+            textInput.text = taken.concat(typed ? [typed] : []).join("\n");
+            textInput.cursorPosition = textInput.text.length;
+            scheduleSave();
+            diag("cancel: " + taken.length + " queued message(s) back in the input field");
+        }
+        stopReply();
+    }
+
     // Drop the last reply and ask again.
     function regenerateReply() {
         if (widget.busy || chatModel.count === 0 || chatModel.get(chatModel.count - 1).author === "user")
@@ -1857,9 +1880,20 @@ T.Widget {
             noteActivity();
             careHeard(text, Date.now());
             widget.settings.last_active = Date.now();
-            appendMessage("user", text, false);
-            // Marked as waiting (its note) until it is sent.
-            chatModel.setProperty(chatModel.count - 1, "note", queuedNote);
+            // Marked as waiting (its note) until it is sent; logged only then (Cancel takes it back).
+            chatModel.append({
+                "author": "user",
+                "message": text,
+                "pending": false,
+                "isError": false,
+                "local": false,
+                "note": queuedNote,
+                "action": "",
+                "actionState": "",
+                "suggestions": ""
+            });
+            chatView.stickToBottom = true;
+            scheduleSave();
             queuedAt.push(chatModel.count - 1);
             replyQueued = true;
             diag("message queued (a reply is on its way)");
@@ -1922,9 +1956,10 @@ T.Widget {
         replyQueued = false;
         // Sent now: the waiting mark goes (only on those still marked, the chat may have changed).
         queuedAt.forEach(function(at) {
-            if (at < chatModel.count && chatModel.get(at).note === queuedNote)
+            if (at < chatModel.count && chatModel.get(at).note === queuedNote) {
                 chatModel.setProperty(at, "note", "");
-
+                logMessage("user", chatModel.get(at).message);
+            }
         });
         queuedAt = [];
         diag("queued message(s) sent");
@@ -6539,7 +6574,7 @@ T.Widget {
                     enabled: widget.busy || widget.seedlingJob !== null || widget.seedlingWaiting !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
-                            widget.stopReply();
+                            widget.cancelReply();
                         else if (widget.seedlingJob || widget.seedlingWaiting)
                             widget.seedlingStop();
                         else
