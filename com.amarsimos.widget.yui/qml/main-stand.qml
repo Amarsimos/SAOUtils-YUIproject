@@ -3723,7 +3723,22 @@ T.Widget {
         yui: widget
     }
 
+    // Asked each time, as SAO Utils may disable / remove Seedling, or add it, while Yui runs: the
+    // Bench already loaded stays in memory, so the resource is what says it is still there.
     function seedlingBench() {
+        var there = !!NVG.Resources.resolve(seedlingAddress);
+        if (seedlingProbe && !there) {
+            diag("seedling: no longer installed (no " + seedlingAddress + "), working without it");
+            seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
+            seedlingProbe.bench.detach(seedlingPort);
+            seedlingProbe.destroy();
+            seedlingProbe = null;
+            seedlingFoundAt = "";
+            seedlingInstalled = false;
+        } else if (!seedlingProbe && there && seedlingChecked && !seedlingLoading) {
+            // Installed (or enabled again) since: loaded now, ready from the next call.
+            seedlingLoad();
+        }
         if (!seedlingProbe)
             return null;
 
@@ -3740,10 +3755,14 @@ T.Widget {
     readonly property string seedlingAddress: "nvg://seedling.widget.amarsimos.com/link/bench"
     property string seedlingFoundAt: ""
 
+    property bool seedlingLoading: false
+
     function seedlingLoad() {
         var done = function() {
+            seedlingLoading = false;
             seedlingChecked = true;
         };
+        seedlingLoading = true;
         if (!NVG.Resources.resolve(seedlingAddress)) {
             diag("seedling: not installed (no " + seedlingAddress + ")");
             return done();
