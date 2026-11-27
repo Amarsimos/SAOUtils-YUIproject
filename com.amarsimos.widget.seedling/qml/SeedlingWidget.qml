@@ -211,14 +211,13 @@ T.Widget {
     // How SAO Utils treats a widget's implicit size (as in MHCP-YUI's applyFrameSize): for a resizable
     // widget it is only the minimum, so the frame keeps its old size and the new content was cut off
     // until the frame was resized by hand. So: the implicit size, resizing off for a moment so the
-    // frame takes it, then resizing back on with a small minimum again.
+    // frame takes it, then resizing back on. The content's size stays the minimum, so the frame
+    // cannot be made smaller than the widget (larger is fine).
     property bool applyingFrameSize: false
 
     function fitFrame(w, h) {
-        implicitWidth = Math.max(20, w);
-        implicitHeight = Math.max(20, h);
-        width = implicitWidth;
-        height = implicitHeight;
+        width = Math.max(20, w);
+        height = Math.max(20, h);
         applyingFrameSize = true;
         frameTimer.restart();
     }
@@ -229,8 +228,6 @@ T.Widget {
         interval: 200
         onTriggered: {
             widget.applyingFrameSize = false;
-            widget.implicitWidth = 20;
-            widget.implicitHeight = 20;
         }
     }
 
@@ -277,9 +274,10 @@ T.Widget {
     }
 
     resizable: !applyingFrameSize
-    // The empty card's size; once there is code, the frame takes the code's size (fitFrame).
-    implicitWidth: code ? 20 : 250
-    implicitHeight: code ? 20 : 72
+    // The frame's minimum: the widget's own size (the frame takes it when saved, fitFrame), else the
+    // empty card's.
+    implicitWidth: created ? Math.max(20, Math.ceil(created.width)) : (code ? 20 : 250)
+    implicitHeight: created ? Math.max(20, Math.ceil(created.height)) : (code ? 20 : 72)
     Component.onCompleted: {
         show(code);
         Link.Bench.register(widget);
