@@ -514,7 +514,7 @@ R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalS
 | D3 | Bench 的 Link 接口归成一组 + `linkVersion`，两边检查版本；结衣只调这一组 |
 | D4 | Send to Yui 改成 `fixWidget`；@yui 数据名由 `dataKeys()` 给出，规则 15 和 props.js 跟着它 |
 | D5 | Seedling 专用代码搬出结衣：写代码的测试和假回复搬到 Seedling Settings → Test → Writing（`fakes.js`，Bench 自己的 `fakeReplies`）；删掉旧 `seedling_model` 迁移。结衣只留 Test Place Seedling（那是她自己的提问）；`rawSystem` 保留，它就是 Port 的 `ask`「只用这段 system」 |
-| D6 | 找 Seedling 的路径只写一处；试 `nvg://` 加载（需要实机看日志） |
+| D6 | 找 Seedling 的路径只写一处。`nvg://` 包地址加载不到文件（2026-11-27 实测），只用 Packages 里相邻的文件夹 |
 | D7 | `tests/yui/`、`tests/seedling/`；`check_deploy` 分插件检查，并检查两边接口清单一致；Prompt Rules 第九节搬到 Seedling 文档 |
 
 实机测试（D5 之后）：只装结衣、只装 Seedling、两个都装，各试一次。

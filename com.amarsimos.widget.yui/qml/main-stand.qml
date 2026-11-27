@@ -3731,9 +3731,9 @@ T.Widget {
         if (seedlingInstalled === false && seedlingChecked)
             return null;
 
-        // Where Seedling's Probe is looked for, in order: by its package (not tied to the folder; to be
-        // confirmed in SAO Utils), then next to this package in Packages. The only place of this.
-        var places = ["nvg://seedling.widget.amarsimos.com/qml/link/Probe.qml", Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml")];
+        // Where Seedling's Probe is looked for: next to this package in Packages (a package's files
+        // cannot be loaded by an nvg:// address, tried 2026-11-27). The only place of this.
+        var places = [Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml")];
         var component = null;
         var why = [];
         for (var i = 0; i < places.length; i++) {
