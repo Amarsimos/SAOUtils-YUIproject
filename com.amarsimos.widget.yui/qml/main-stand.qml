@@ -3971,7 +3971,7 @@ T.Widget {
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
             // The manager closing is not seen: waiting ends after a while with nothing placed (at once
             // when it could not be opened).
-            seedlingGiveUp.interval = opened ? 90000 : 1;
+            seedlingGiveUp.interval = opened ? 60000 : 1;
             seedlingGiveUp.restart();
         }, false, function() {
             seedlingStopWaiting("the widget manager was not opened");
