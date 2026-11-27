@@ -3803,9 +3803,22 @@ T.Widget {
         if (seedlingInstalled === false && seedlingChecked)
             return null;
 
-        var component = Qt.createComponent(Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml"));
-        if (component.status !== Component.Ready) {
-            diag("seedling: not installed (" + component.errorString().trim() + ")");
+        // Where Seedling's Probe is looked for, in order: by its package (not tied to the folder; to be
+        // confirmed in SAO Utils), then next to this package in Packages. The only place of this.
+        var places = ["nvg://seedling.widget.amarsimos.com/qml/link/Probe.qml", Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml")];
+        var component = null;
+        var why = [];
+        for (var i = 0; i < places.length; i++) {
+            var tried = Qt.createComponent(places[i]);
+            if (tried.status === Component.Ready) {
+                component = tried;
+                diag("seedling: found at " + places[i]);
+                break;
+            }
+            why.push(places[i] + ": " + (tried.status === Component.Error ? tried.errorString().trim() : "status " + tried.status));
+        }
+        if (!component) {
+            diag("seedling: not installed (" + why.join(" | ") + ")");
             return null;
         }
         seedlingProbe = component.createObject(widget);
