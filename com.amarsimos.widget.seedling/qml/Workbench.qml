@@ -1008,8 +1008,8 @@ NVG.View {
                 anchors.bottomMargin: 14
                 spacing: 12
 
-                // Tools: Versions, Examples, then (only while there) Stop and Problems last, so their
-                // coming and going does not move the others.
+                // Tools: Versions, Examples, Problems (only while there) right after them; Stop
+                // (only while writing) at the right end.
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -1039,6 +1039,26 @@ NVG.View {
                         text: "Examples"
                         icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
+                    }
+
+                    Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
+                        id: problemsChip
+
+                        // Flashes (lit for a moment, twice) when a Save fails with problems.
+                        property bool flash: false
+
+                        visible: bench.problemList.length > 0
+                        text: "Problems (" + bench.problemList.length + ")"
+                        icon: "help"
+                        checked: bench.showProblems || flash
+                        onClicked: {
+                            bench.showProblems = !bench.showProblems;
+                            bench.showVersions = false;
+                        }
                     }
 
                     Item {
@@ -1074,26 +1094,6 @@ NVG.View {
 
                         }
 
-                    }
-
-                    Chip {
-
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Layout.preferredHeight: 30
-                        id: problemsChip
-
-                        // Flashes (lit for a moment, twice) when a Save fails with problems.
-                        property bool flash: false
-
-                        visible: bench.problemList.length > 0
-                        text: "Problems (" + bench.problemList.length + ")"
-                        icon: "help"
-                        checked: bench.showProblems || flash
-                        onClicked: {
-                            bench.showProblems = !bench.showProblems;
-                            bench.showVersions = false;
-                        }
                     }
 
                     Menu {
