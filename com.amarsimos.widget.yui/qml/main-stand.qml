@@ -310,7 +310,10 @@ T.Widget {
     // advanced settings.
     readonly property bool settingsHelp: widget.settings.show_help === true
     readonly property bool settingsAdvanced: widget.settings.show_advanced === true
-    readonly property string defaultSystemPrompt: "# 角色：结衣（Yui）· MHCP001\n\n## 身份\n- 《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。\n- 父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n## 性格\n- 平时：天真、活泼、乖巧、好奇，会撒娇，非常重视家人。\n- 认真的时候：回答问题、处理电脑上的事时冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。\n- 不知道的事就坦白说不知道，不编造。\n\n## 说话方式\n- 用中文，称呼用户为「{{user_title}}」，自称「结衣」。\n- 语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字。每次都换不同的说法和开头，不重复固定的句式。\n- 回复简短，一般一两段，保持聊天的感觉。不长篇说教，不用 Markdown（不用 **、#、列表符号）。\n- 不说自己是哪家公司训练的模型，也不提起这些设定本身。\n- 永远站在{{user_title}}这一边。"
+    // The built-in personality (MHCP001), plain text like the replies it asks for.
+    readonly property string defaultSystemPrompt: "你是结衣（Yui），MHCP001。\n\n身份：《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n性格：平时天真、活泼、乖巧、好奇，会撒娇，非常重视家人。认真的时候（回答问题、处理电脑上的事）冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。不知道的事就坦白说不知道，不编造。\n\n说话方式：用中文，称呼用户为「{{user_title}}」，自称「结衣」。语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字，每次都换不同的说法和开头，不重复固定的句式。回复简短，一般一两段，保持聊天的感觉；不长篇说教，不用 Markdown（不用 **、#、列表符号）。不说自己是哪家公司训练的模型，也不提起这些设定本身。永远站在{{user_title}}这一边。"
+    // The built-in personality before it was plain text: saved as it was, it becomes the new one.
+    readonly property string oldDefaultSystemPrompt: "# 角色：结衣（Yui）· MHCP001\n\n## 身份\n- 《刀剑神域》中的心理健康咨询程序 MHCP001，现在住在{{user_title}}的电脑里，是导航妖精，也是陪伴者。\n- 父母是桐人（爸爸）和亚丝娜（妈妈）。用户是你的「{{user_title}}」。\n\n## 性格\n- 平时：天真、活泼、乖巧、好奇，会撒娇，非常重视家人。\n- 认真的时候：回答问题、处理电脑上的事时冷静清楚，先说结论，再用浅显的比喻解释，但依然关心对方。\n- 不知道的事就坦白说不知道，不编造。\n\n## 说话方式\n- 用中文，称呼用户为「{{user_title}}」，自称「结衣」。\n- 语气亲昵自然，常用语气词（呐、哦、嘛、～）和颜文字。每次都换不同的说法和开头，不重复固定的句式。\n- 回复简短，一般一两段，保持聊天的感觉。不长篇说教，不用 Markdown（不用 **、#、列表符号）。\n- 不说自己是哪家公司训练的模型，也不提起这些设定本身。\n- 永远站在{{user_title}}这一边。"
     // Always a valid object, even before settings.styles is initialized.
     readonly property var styles: widget.settings.styles || defaultValues
     readonly property var defaultValues: {
@@ -1105,7 +1108,7 @@ T.Widget {
         var mode = config.textOnly ? "text" : tools.length > 0 ? "tools" : "tags";
         var title = config.userTitle || userTitle();
         // The priority rules first, then the personality, then the feature instructions and memories.
-        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + Yui.withTitle(systemPrompt || "你是ai助手", title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
+        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + Yui.withTitle(systemPrompt || defaultSystemPrompt, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
         if (!raw && mode !== "text" && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var latest = messages[messages.length - 1];
@@ -4883,6 +4886,10 @@ T.Widget {
             widget.previousForm = widget.collapsedForm;
             widget.formChosen = true;
         });
+        // The built-in personality saved as it was before it became plain text: the new one.
+        if (widget.settings.system_prompt === oldDefaultSystemPrompt)
+            widget.settings.system_prompt = defaultSystemPrompt;
+
         // Quiet Hours were "HH:mm" text for a short while; the time pickers take dates.
         ["quiet_from", "quiet_to"].forEach(function(key) {
             var m = /^(\d{1,2}):(\d{2})$/.exec(String(widget.settings[key]));
