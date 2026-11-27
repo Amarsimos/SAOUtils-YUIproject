@@ -3759,18 +3759,44 @@ T.Widget {
         return Qt.rect(corner.x, corner.y, item.width, item.height);
     }
 
-    // While the bubble is shown it follows her collapsed form: its floating, and the widget being
-    // moved. It closes when the chat is opened.
+    // While the bubble is shown it follows her collapsed form: its floating (the crystal's and the
+    // pixie's hover) and the widget being moved (its view), when they change rather than every frame;
+    // a slow check catches any other move. It closes when the chat is opened.
+    readonly property bool bubbleShown: !!widget.crystalBubble && widget.crystalBubble.visible
+
+    function followBubble() {
+        if (!bubbleShown)
+            return ;
+
+        if (widget.showChat)
+            widget.crystalBubble.hide();
+        else
+            widget.crystalBubble.follow(widget.collapsedScreenRect());
+    }
+
+    onShowChatChanged: followBubble()
+
+    Connections {
+        target: widget.bubbleShown ? crystalForm : null
+        onHoverChanged: widget.followBubble()
+    }
+
+    Connections {
+        target: widget.bubbleShown ? pixieImage : null
+        onHoverChanged: widget.followBubble()
+    }
+
+    Connections {
+        target: widget.bubbleShown ? widget.hostView : null
+        onXChanged: widget.followBubble()
+        onYChanged: widget.followBubble()
+    }
+
     Timer {
-        interval: 16
+        interval: 250
         repeat: true
-        running: !!widget.crystalBubble && widget.crystalBubble.visible
-        onTriggered: {
-            if (!widget.showChat)
-                widget.crystalBubble.follow(widget.collapsedScreenRect());
-            else
-                widget.crystalBubble.hide();
-        }
+        running: widget.bubbleShown
+        onTriggered: widget.followBubble()
     }
 
     // ---------------------------------------------------------------- Seedling (companion plugin)
