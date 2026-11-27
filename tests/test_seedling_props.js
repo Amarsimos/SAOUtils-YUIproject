@@ -301,7 +301,7 @@ Item {
     assert.deepStrictEqual(plain(P.guard(S.check(bare, true), P.parse(bare))), []);
 });
 
-test("@yui: values come from Yui's linkValue, fit their type; only the fast ones every second", () => {
+test("@yui: values come from Yui's port (value), fit their type; only the fast ones every second", () => {
     const decl = P.parse(`import QtQuick 2.12
 Item {
     // @yui companion_days
@@ -312,7 +312,7 @@ Item {
     property var moods: []
 }
 `);
-    const writer = { linkValue: (k) => ({ companion_days: { current: 42 }, raid_timer: { current: "12:30" }, mood_history: { current: [{ day: "2026-11-27", score: 4 }] } })[k] || null };
+    const writer = { value: (k) => ({ companion_days: { current: 42 }, raid_timer: { current: "12:30" }, mood_history: { current: [{ day: "2026-11-27", score: 4 }] } })[k] || null };
     const item = { days: 0, raid: "", moods: [] };
     P.feed(item, decl.yuis, writer, true);
     assert.deepStrictEqual(plain(item), { days: 0, raid: "12:30", moods: [] });

@@ -3784,12 +3784,18 @@ T.Widget {
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
+    // The Link interface this Yui speaks (Seedling's Bench must say the same).
+    readonly property int seedlingLinkVersion: 1
+    // What Seedling gets of Yui (never Yui herself).
+    property SeedlingPort seedlingPort: SeedlingPort {
+        yui: widget
+    }
 
     function seedlingBench() {
         if (seedlingProbe) {
-            // Another Yui that was the writer is gone: this one takes over.
-            if (!seedlingProbe.bench.writer)
-                seedlingProbe.bench.writer = widget;
+            // Another Yui that was attached is gone: this one takes over.
+            if (!seedlingProbe.bench.port)
+                seedlingProbe.bench.attach(seedlingPort);
 
             return seedlingProbe.bench;
         }
@@ -3806,8 +3812,16 @@ T.Widget {
         if (!seedlingProbe)
             return null;
 
-        // Seedling's Generate (the workbench's request) is written by Yui.
-        seedlingProbe.bench.writer = widget;
+        // Only the Link interface of the same version (section 12 of "Seedling Development Plan.md");
+        // another is taken as Seedling not installed.
+        var bench = seedlingProbe.bench;
+        if (bench.linkVersion !== seedlingLinkVersion || !bench.attach || !bench.attach(seedlingPort)) {
+            diag("seedling: its Link version " + bench.linkVersion + " is not " + seedlingLinkVersion + ", working without it");
+            seedlingProbe.destroy();
+            seedlingProbe = null;
+            seedlingInstalled = false;
+            return null;
+        }
         Qt.callLater(seedlingOfferConnection);
         seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
         seedlingInstalled = true;
@@ -4877,8 +4891,7 @@ T.Widget {
         // Seedling's Bench outlives this widget: it must not keep calling a removed Yui.
         if (seedlingProbe && seedlingProbe.bench) {
             seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
-            if (seedlingProbe.bench.writer === widget)
-                seedlingProbe.bench.writer = null;
+            seedlingProbe.bench.detach(seedlingPort);
 
         }
     }

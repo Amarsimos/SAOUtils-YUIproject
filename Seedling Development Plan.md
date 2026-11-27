@@ -485,13 +485,13 @@ R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalS
 | `linkVersion` | 1 |
 | `connection()` | `{ready, provider, title, model}`：结衣的连接是否配好、服务商 id 和名字、聊天用的模型。不含密钥和地址 |
 | `ask(system, user, model, onDelta, onFinished)` | 用结衣的连接发一次请求（model 为空用聊天的模型）；返回 `{abort()}`。不带人格、历史、附注 |
-| `models()` | 结衣服务器的模型列表（Scan Cores 的结果或内置），`[id]` |
+| `models()` | `{server, models: [id], scanned, chatModel}`：结衣服务器的名字和模型列表（Scan Cores 的结果或内置）、聊天用的模型 |
 | `scanModels(onDone)` / `restoreModels()` | 在结衣的服务器上 Scan Cores / Restore Registry，列表存在结衣那边；`onDone(models, error)` |
 | `dataKeys()` | `{名字: {type, text}}`：@yui 可读的数据，text 是给模型看的中文说明 |
-| `value(name)` | 数据的当前值；关掉的功能返回 null |
+| `value(name)` | `{current, …}`；未知或关掉的功能返回 null |
 | `fixWidget(problems)` | Send to Yui：打开聊天，让结衣去修 |
 | `sendToChat(text)` / `prefillChat(text)` | 把文字发进聊天 / 填进输入框 |
-| `theme()` | `{font, panelAlpha}`：工作台跟随结衣聊天窗口的字体和不透明度 |
+| `font` / `panelAlpha`（属性） | 工作台跟随结衣聊天窗口的字体和不透明度（0–1） |
 
 ### 12.3 Bench 的 Link 接口（Seedling → 结衣）
 

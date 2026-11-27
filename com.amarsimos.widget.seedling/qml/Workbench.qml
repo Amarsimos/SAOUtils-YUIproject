@@ -86,7 +86,7 @@ NVG.View {
     // Chinese (or Japanese) text: SAO UI has no such characters and the system picked any font for
     // them. The Message Font of Yui's Equipment (MHCP-YUI running), else her default; English stays in
     // SAO UI.
-    readonly property string messageFont: Link.Bench.writer && Link.Bench.writer.fontFamilyOf ? Link.Bench.writer.fontFamilyOf(Link.Bench.writer.styles.bubble_font_family) : "Source Han Sans SC"
+    readonly property string messageFont: Link.Bench.yui && Link.Bench.yui.font ? Link.Bench.yui.font : "Source Han Sans SC"
 
     function fontFor(text) {
         return /[　-ヿ㐀-鿿豈-﫿＀-￯]/.test(String(text || "")) ? messageFont : "SAO UI";
@@ -104,7 +104,7 @@ NVG.View {
     }
     // The bands are translucent as Yui's chat (her Chat Opacity in Equipment when MHCP-YUI runs, else
     // 80 %); the code, the preview and the text on them stay opaque.
-    readonly property real panelAlpha: Link.Bench.writer && Link.Bench.writer.chatOpacity !== undefined ? Link.Bench.writer.chatOpacity : 0.8
+    readonly property real panelAlpha: Link.Bench.yui ? Link.Bench.yui.panelAlpha : 0.8
     readonly property int leastWidth: 720
     readonly property int leastHeight: 520
     readonly property int titleHeight: 64

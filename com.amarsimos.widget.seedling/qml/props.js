@@ -401,10 +401,10 @@ function guard(problems, decl) {
     });
 }
 
-// Yui's values given to item: all of them, or only the fast ones (timers). writer: MHCP-YUI (its
-// linkValue(key) -> {current}), or null (then nothing changes: the code's defaults stay).
+// Yui's values given to item: all of them, or only the fast ones (timers). writer: MHCP-YUI's port
+// (its value(key) -> {current}), or null (then nothing changes: the code's defaults stay).
 function feed(item, yuis, writer, fastOnly) {
-    if (!item || !writer || typeof writer.linkValue !== "function")
+    if (!item || !writer || typeof writer.value !== "function")
         return ;
 
     for (var i = 0; i < yuis.length; i++) {
@@ -413,7 +413,7 @@ function feed(item, yuis, writer, fastOnly) {
 
         var found = null;
         try {
-            found = writer.linkValue(yuis[i].key);
+            found = writer.value(yuis[i].key);
         } catch (e) {
             found = null;
         }

@@ -13,14 +13,34 @@ QtObject {
     id: bench
 
     property var widgets: []
-    readonly property int version: 1
-    // MHCP-YUI when it is running (it sets itself here): her connection (seedlingConnection) can be
-    // borrowed, and her data read (@yui, linkValue).
-    property var writer: null
+    // The Link interface (section 12 of "Seedling Development Plan.md"): what MHCP-YUI may call here
+    // (linkVersion, attach, detach, widgets, write, stop, ownSetup) and what Seedling may call of her
+    // (her YuiPort). Goes up when it changes in a way that breaks the other side.
+    readonly property int linkVersion: 1
+    // MHCP-YUI's YuiPort while she is running (attach): her connection can be borrowed (ask), her data
+    // read (@yui, value). Never Yui herself.
+    property var port: null
     // MHCP-YUI as Seedling sees her: null while Pretend No Yui is on (Seedling Settings' Test, for
     // trying Seedling on its own; not saved).
     property bool hideYui: false
-    readonly property var yui: hideYui ? null : writer
+    readonly property var yui: hideYui ? null : port
+
+    // Link: MHCP-YUI gives her port (true when taken; a port of another version is not).
+    function attach(given) {
+        if (!given || given.linkVersion !== linkVersion) {
+            console.log("Seedling: MHCP-YUI's Link version " + (given ? given.linkVersion : "none") + " is not " + linkVersion + ", working without her");
+            return false;
+        }
+        port = given;
+        return true;
+    }
+
+    // Link: MHCP-YUI is going.
+    function detach(given) {
+        if (port === given)
+            port = null;
+
+    }
 
     // The code being worked on: the target widget's open workbench's, else its saved code ("" when none).
     function currentCode() {
@@ -196,11 +216,7 @@ QtObject {
 
     // Whether MHCP-YUI is there with her connection set up (server, key, model in Cardinal System).
     function yuiReady() {
-        if (!yui || !yui.seedlingConnection || !yui.activeConfig)
-            return false;
-
-        var config = yui.activeConfig();
-        return !!(config.apiKey && config.endpoint && config.model);
+        return !!yui && yui.connection().ready;
     }
 
     // The connection used: MHCP-YUI's whenever she is there and set up (her server, key and models:
@@ -210,7 +226,7 @@ QtObject {
         if (yuiReady())
             return "yui";
 
-        if (!yui || !yui.seedlingConnection)
+        if (!yui)
             return "own";
 
         return Api.missing(ownConfig()) === "" ? "own" : "yui";
@@ -258,7 +274,7 @@ QtObject {
     // {abort()}. timeout: no data for that long ends it.
     function ask(system, user, onDelta, onFinished) {
         if (connectionKind() === "yui")
-            return yui.seedlingConnection(system, user, writingModel(), onDelta, onFinished);
+            return yui.ask(system, user, writingModel(), onDelta, onFinished);
 
         var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 240000 }", bench);
         var finished = false;

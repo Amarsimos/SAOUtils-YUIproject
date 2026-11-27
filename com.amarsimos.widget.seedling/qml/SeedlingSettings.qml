@@ -43,10 +43,10 @@ NVG.Window {
                 settingsWindow.linkRevision++;
         }
     }
-    // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
+    // With MHCP-YUI: her server's name, models and chat model (her port's models()); yuiRevision makes it
     // read again after Scan Cores / Restore Registry.
     property int yuiRevision: 0
-    readonly property var yuiModels: (yuiRevision, Link.Bench.yui && Link.Bench.yui.seedlingModels ? Link.Bench.yui.seedlingModels() : null)
+    readonly property var yuiModels: (yuiRevision, Link.Bench.yui ? Link.Bench.yui.models() : null)
     // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
     // Restore Registry.
     readonly property var scanned: (scannedRevision, Link.Bench.setting("scanned_models", {}))
@@ -60,7 +60,7 @@ NVG.Window {
         if (!ownConnection) {
             scanning = true;
             scanStatus = qsTr("Scanning...");
-            Link.Bench.yui.seedlingScanModels(function(models, error) {
+            Link.Bench.yui.scanModels(function(models, error) {
                 scanning = false;
                 yuiRevision++;
                 scanStatus = models ? qsTr("Found %1 core(s).").arg(models.length) : qsTr("Scan failed: %1").arg(error);
@@ -93,7 +93,7 @@ NVG.Window {
 
     function restoreRegistry() {
         if (!ownConnection) {
-            Link.Bench.yui.seedlingRestoreModels();
+            Link.Bench.yui.restoreModels();
             yuiRevision++;
             scanStatus = "";
             return ;
