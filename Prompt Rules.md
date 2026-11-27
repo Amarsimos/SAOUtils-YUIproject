@@ -296,7 +296,7 @@ user   ┬ 现在的代码      只在修改时
 | 8 | 中英混杂：Seedling 重试里的英文报错、两个测试的「Hello」、功能名写法 | 按规范 8 | Bench.qml，CardinalSystem，SeedlingSettings，yui.js |
 | 9 ✅ | 人格用 Markdown 却要求不用；兜底是「你是ai助手」 | 默认人格改成普通文字（内容不变）；兜底改成默认人格（规范 12） | main-stand defaultSystemPrompt |
 | 10 | 同一规则说多遍（表情 3 处、MHCP001、记忆、关闭程序、跟进、深夜关怀） | 按规范 2 合并 | yui.js，main-stand |
-| 11 | 本地台词进聊天历史后被当作结衣自己说的 | **保留，但标明是程序生成**：进请求时在这类消息前加「（系统生成）」 | main-stand buildHistory |
+| 11 ✅ | 本地台词进聊天历史后被当作结衣自己说的 | **保留，但标明是程序生成**：进请求时在这类消息前加「（系统生成）」 | main-stand buildHistory |
 | 12 | 文档过时 | 本次重写；改完代码后再核对一次 | 本文档 |
 | 13 | tagtest / tooltest 用旧的时间附注、空的 allowed | 改成和现在相同的拼法 | tests |
 

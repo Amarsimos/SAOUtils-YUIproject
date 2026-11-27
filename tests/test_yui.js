@@ -290,6 +290,9 @@ test("tools mode instructions and the emotion guess", () => {
 });
 
 test("priority rules and the small model reminder", () => {
+    assert.ok(!Yui.parseReply("（系统生成）你好", []).text.includes("系统生成"), "the mark copied by the model is dropped");
+    assert.strictEqual(Yui.historyContent("早安", true), "（系统生成）早安");
+    assert.strictEqual(Yui.historyContent("早安", false), "早安");
     assert.strictEqual(Yui.titleOf("mama") + Yui.titleOf("papa") + Yui.titleOf(undefined), "妈妈爸爸爸爸");
     assert.strictEqual(Yui.withTitle("{t}和{{user_title}}", "妈妈"), "妈妈和妈妈");
     assert.ok(!/[他她]/.test(Yui.featureInstructions("妈妈", [], {}, "tags").replace(/其他/g, "")), "no 他 / 她, the title");

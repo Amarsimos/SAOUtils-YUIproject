@@ -695,6 +695,8 @@ function cleanReply(text) {
         value = value.slice(end + "</think>".length);
 
     value = value.replace(/<think>[\s\S]*?(<\/think>|$)/g, "");
+    // The history's mark of program-made lines, copied by the model: not part of a reply.
+    value = value.split(PROGRAM_MARK).join("");
     var seen = [];
     return value.split(/\n\s*\n/).filter(function(paragraph) {
         var key = paragraph.trim();
@@ -2029,6 +2031,14 @@ function featureInstructions(title, core, allowed, mode) {
         });
     }
     return lines.join("\n");
+}
+
+// A message of the chat as sent in the history: Yui's lines written by the program itself (wake lines,
+// System Call, Seedling's reports...) marked, so the model does not take them for its own words.
+var PROGRAM_MARK = "（系统生成）";
+
+function historyContent(message, local) {
+    return local ? PROGRAM_MARK + message : String(message);
 }
 
 // How Yui calls the user: settings.user_title "mama" or "papa" (the default). The only place of this.

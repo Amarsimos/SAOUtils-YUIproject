@@ -1474,14 +1474,15 @@ T.Widget {
                 continue;
 
             var role = item.author === "user" ? "user" : "assistant";
+            var content = Yui.historyContent(item.message, role === "assistant" && item.local);
             // Merge consecutive turns of the same role (e.g. after a failed reply),
             // since Gemini and Claude expect user and assistant turns to alternate.
             if (messages.length > 0 && messages[messages.length - 1].role === role)
-                messages[messages.length - 1].content += "\n\n" + item.message;
+                messages[messages.length - 1].content += "\n\n" + content;
             else
                 messages.push({
                 "role": role,
-                "content": item.message
+                "content": content
             });
         }
         messages = messages.slice(-maxHistory);
