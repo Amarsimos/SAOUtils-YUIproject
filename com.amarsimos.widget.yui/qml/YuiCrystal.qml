@@ -80,7 +80,7 @@ Item {
             return seed / 233280;
         }
         var light = norm([-0.55, -0.65, 0.55]), back = norm([0.45, 0.5, 0.6]);
-        var deep = [10, 86, 160], pale = [200, 238, 255];
+        var deep = [92, 168, 202], pale = [240, 252, 255];
         var facets = [];
         // Diamond lattice: staggered rows of points; each diamond spans rows k-1..k+1.
         for (k = 0; k <= rows; k++) {
@@ -144,6 +144,87 @@ Item {
         return [0.55, 0.85];
     }
 
+    // ---- The halo's heart (box units; from yui-halo-editor.html): the right half's cubic curves, the
+    // left half mirrored. Upside down: point at y 35 behind the crystal, notch at y 164 under it.
+    readonly property var haloCurves: [[107.1, 70.1, 134.1, 78.3, 173.5, 140.4], [194.9, 179, 162.8, 216.3, 119.1, 202.6], [70, 176, 71.1, 170.4, 70, 164]]
+    readonly property real haloMiddle: (35 + 202.6) / 2
+    // Glitter phase (0 - 1, a round of 3.2 s) for the sparkles of the halo's inner layer.
+    property real glitter: 0
+
+    function heartPath(ctx) {
+        var k = haloCurves, i, m = function(x) {
+            return 140 - x;
+        };
+        ctx.beginPath();
+        ctx.moveTo(70, 35);
+        for (i = 0; i < k.length; i++)
+            ctx.bezierCurveTo(k[i][0], k[i][1], k[i][2], k[i][3], k[i][4], k[i][5]);
+
+        // back up the left side, the same curves mirrored and reversed
+        var ends = [[70, 35]].concat(k.map(function(s) {
+            return [s[4], s[5]];
+        }));
+        for (i = k.length - 1; i >= 0; i--)
+            ctx.bezierCurveTo(m(k[i][2]), k[i][3], m(k[i][0]), k[i][1], m(ends[i][0]), ends[i][1]);
+
+        ctx.closePath();
+    }
+
+    // Where the sparkles sit (inside the inner layer: the heart at 0.76 about its middle, 4 lower), the
+    // same every time (a seeded random). dots: [x, y, r, speed, offset]; glints: [x, y, r, offset].
+    readonly property var sparkles: {
+        var poly = [], k = haloCurves, p = [70, 35], i, j, t;
+        function at(a, b, c, d, t) {
+            var s = 1 - t;
+            return s * s * s * a + 3 * s * s * t * b + 3 * s * t * t * c + t * t * t * d;
+        }
+        for (i = 0; i < k.length; i++) {
+            for (j = 1; j <= 12; j++) {
+                t = j / 12;
+                poly.push([at(p[0], k[i][0], k[i][2], k[i][4], t), at(p[1], k[i][1], k[i][3], k[i][5], t)]);
+            }
+            p = [k[i][4], k[i][5]];
+        }
+        poly = poly.concat(poly.slice().reverse().map(function(q) {
+            return [140 - q[0], q[1]];
+        })).map(function(q) {
+            return [70 + (q[0] - 70) * 0.76, haloMiddle + (q[1] - haloMiddle) * 0.76 + 4];
+        });
+        function inside(x, y) {
+            var w = false;
+            for (var a = 0, b = poly.length - 1; a < poly.length; b = a++)
+                if ((poly[a][1] > y) !== (poly[b][1] > y) && x < (poly[b][0] - poly[a][0]) * (y - poly[a][1]) / (poly[b][1] - poly[a][1]) + poly[a][0])
+                    w = !w;
+
+            return w;
+        }
+        var seed = 21;
+        function rnd() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        }
+        var dots = [], glints = [], x, y;
+        while (dots.length < 60) {
+            x = -30 + rnd() * 200;
+            y = 40 + rnd() * 170;
+            if (inside(x, y))
+                dots.push([x, y, 0.3 + rnd() * 0.55, 0.7 + rnd() * 0.8, rnd()]);
+
+        }
+        while (glints.length < 9) {
+            x = -20 + rnd() * 180;
+            y = 60 + rnd() * 140;
+            // not behind the crystal
+            if (inside(x, y) && !(Math.abs(x - 70) < 30 && y < 190))
+                glints.push([x, y, 2.2 + rnd() * 2.6, rnd()]);
+
+        }
+        return {
+            "dots": dots,
+            "glints": glints
+        };
+    }
+
     implicitWidth: 80
     implicitHeight: 120
 
@@ -165,43 +246,122 @@ Item {
             heart.requestPaint();
         }
 
-        // Glow behind the crystal in the status color, breathing.
-        Canvas {
-            id: glow
-
-            anchors.fill: parent
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.reset();
-                ctx.scale(box.u, box.u);
-                ctx.translate(70, 115);
-                ctx.scale(1, 82 / 66);
-                var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 66);
-                var c = crystal.statusColor;
-                g.addColorStop(0, Qt.rgba(c.r, c.g, c.b, 0.4));
-                g.addColorStop(1, Qt.rgba(c.r, c.g, c.b, 0));
-                ctx.fillStyle = g;
-                ctx.beginPath();
-                ctx.arc(0, 0, 66, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        // The halo behind the crystal, breathing: an upside-down heart (point behind the upper body,
+        // lobes wide at the lower sides, notch under the crystal; drawn in yui-halo-editor.html) in two
+        // layers: outside a faint rosy haze, much blurred, touched with the status color; inside, 0.76
+        // the size and 4 lower, a film of the crystal's own ice, glittering (sparkles, below). Wider than
+        // the box: drawn on a larger canvas. Painted once (the breathing is its opacity).
+        Item {
+            id: halo
 
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: crystal.visible
 
                 NumberAnimation {
-                    from: 0.35
-                    to: 0.85
+                    from: 0.55
+                    to: 1
                     duration: 1600
                     easing.type: Easing.InOutSine
                 }
 
                 NumberAnimation {
-                    from: 0.85
-                    to: 0.35
+                    from: 1
+                    to: 0.55
                     duration: 1600
                     easing.type: Easing.InOutSine
+                }
+
+            }
+
+            Canvas {
+                id: glow
+
+                // box units -90 .. 230 across, 0 .. 260 down
+                x: -90 * box.u
+                width: 320 * box.u
+                height: 260 * box.u
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.reset();
+                    var u = box.u;
+                    var c = crystal.statusColor;
+                    // A layer with a soft edge: the heart filled many times, from a little larger to a
+                    // little smaller (spread: how far the edge fades, in box units), each faint, so they
+                    // add up to alpha inside and fade out over the edge (Canvas has no blur here).
+                    function layer(scale, dy, rgb, alpha, spread) {
+                        var n = 24, each = 1 - Math.pow(1 - alpha, 1 / n);
+                        var half = spread / 125;
+                        for (var i = 0; i < n; i++) {
+                            var s = scale * (1 + half - 2 * half * i / (n - 1));
+                            ctx.save();
+                            ctx.scale(u, u);
+                            ctx.translate(90, dy);
+                            ctx.translate(70, crystal.haloMiddle);
+                            ctx.scale(s, s);
+                            ctx.translate(-70, -crystal.haloMiddle);
+                            crystal.heartPath(ctx);
+                            ctx.fillStyle = Qt.rgba(rgb[0], rgb[1], rgb[2], each);
+                            ctx.fill();
+                            ctx.restore();
+                        }
+                    }
+                    layer(1, 0, [0.91 * 0.85 + c.r * 0.15, 0.85 * 0.85 + c.g * 0.15, 0.88 * 0.85 + c.b * 0.15], 0.3, 24);
+                    layer(0.76, 4, [0.66, 0.86, 0.93], 0.66, 9);
+                }
+            }
+
+            // Glitter in the inner layer: fine dots twinkling, and a few four-point glints now and then.
+            Repeater {
+                model: crystal.sparkles.dots
+
+                delegate: Rectangle {
+                    readonly property real wave: Math.max(0, Math.sin(Math.PI * 2 * (crystal.glitter * modelData[3] + modelData[4])))
+
+                    visible: !crystal.sleeping
+                    x: (modelData[0] - modelData[2]) * box.u
+                    y: (modelData[1] - modelData[2]) * box.u
+                    width: modelData[2] * 2 * box.u
+                    height: width
+                    radius: width / 2
+                    color: "#ffffff"
+                    opacity: 0.15 + 0.85 * wave
+                }
+
+            }
+
+            Repeater {
+                model: crystal.sparkles.glints
+
+                delegate: Canvas {
+                    // each lights up briefly once a round, at its own moment
+                    readonly property real phase: (crystal.glitter / 1.4 + modelData[3]) % 1
+
+                    visible: !crystal.sleeping
+                    x: (modelData[0] - modelData[2]) * box.u
+                    y: (modelData[1] - modelData[2]) * box.u
+                    width: modelData[2] * 2 * box.u
+                    height: width
+                    opacity: phase < 0.7 ? 0 : phase < 0.8 ? (phase - 0.7) / 0.1 : phase < 0.9 ? 1 - 0.7 * (phase - 0.8) / 0.1 : 0.3 * (1 - (phase - 0.9) / 0.1)
+                    onWidthChanged: requestPaint()
+                    onPaint: {
+                        var ctx = getContext("2d");
+                        ctx.reset();
+                        var r = width / 2, w = r * 0.22;
+                        ctx.translate(r, r);
+                        ctx.beginPath();
+                        ctx.moveTo(0, -r);
+                        ctx.lineTo(w, -w);
+                        ctx.lineTo(r, 0);
+                        ctx.lineTo(w, w);
+                        ctx.lineTo(0, r);
+                        ctx.lineTo(-w, w);
+                        ctx.lineTo(-r, 0);
+                        ctx.lineTo(-w, -w);
+                        ctx.closePath();
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fill();
+                    }
                 }
 
             }
@@ -226,13 +386,13 @@ Item {
                     ctx.reset();
                     ctx.scale(box.u, box.u);
                     crystal.tracePath(ctx, box.shape.outline);
-                    ctx.fillStyle = "#3f9fd6";
+                    ctx.fillStyle = "#a8dcee";
                     ctx.fill();
                     ctx.save();
                     crystal.tracePath(ctx, box.shape.outline);
                     ctx.clip();
                     ctx.lineWidth = 0.5;
-                    ctx.strokeStyle = "rgba(223,244,255,0.35)";
+                    ctx.strokeStyle = "rgba(255,255,255,0.45)";
                     var list = crystal.geometry(crystal.spin).facets;
                     for (var i = 0; i < list.length; i++) {
                         crystal.tracePath(ctx, list[i].points);
@@ -261,8 +421,8 @@ Item {
                     ctx.translate(58, 102);
                     ctx.scale(1, 127 / 60);
                     var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
-                    g.addColorStop(0.45, "rgba(0,28,70,0)");
-                    g.addColorStop(1, "rgba(0,28,70,0.55)");
+                    g.addColorStop(0.45, "rgba(40,110,150,0)");
+                    g.addColorStop(1, "rgba(40,110,150,0.32)");
                     ctx.fillStyle = g;
                     ctx.fillRect(-80, -80, 160, 160);
                     ctx.restore();
@@ -282,8 +442,8 @@ Item {
                     var rim = ctx.createLinearGradient(28, 14, 112, 67);
                     rim.addColorStop(0, "rgba(255,255,255,0.85)");
                     rim.addColorStop(0.4, "rgba(255,255,255,0)");
-                    rim.addColorStop(0.85, "rgba(159,224,255,0)");
-                    rim.addColorStop(1, "rgba(159,224,255,0.35)");
+                    rim.addColorStop(0.85, "rgba(200,238,252,0)");
+                    rim.addColorStop(1, "rgba(200,238,252,0.35)");
                     ctx.strokeStyle = rim;
                     ctx.lineWidth = 1.4;
                     crystal.tracePath(ctx, outline);
@@ -443,6 +603,14 @@ Item {
         repeat: true
         running: crystal.visible && !crystal.sleeping && crystal.spinSeconds > 0
         onTriggered: crystal.spin = (crystal.spin + Math.PI * 2 * interval / (crystal.spinSeconds * 1000)) % (Math.PI * 2)
+    }
+
+    NumberAnimation on glitter {
+        from: 0
+        to: 1
+        duration: 3200
+        loops: Animation.Infinite
+        running: crystal.visible && !crystal.sleeping
     }
 
     NumberAnimation on blink {
