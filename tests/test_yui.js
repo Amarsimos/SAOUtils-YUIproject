@@ -262,7 +262,6 @@ const same = (a, b) => assert.strictEqual(JSON.stringify(a), JSON.stringify(b));
 
 test("tool definitions follow the switches", () => {
     same(Yui.toolDefinitions({}).map(t => t.name), ["open_url", "web_search", "launch_program", "find_file", "close_program"]);
-    same(Yui.toolDefinitions({}, true).map(t => t.name), ["open_url", "web_search", "launch_program", "find_file", "close_program", "remember", "forget"]);
     same(Yui.toolDefinitions({ web: false, kill: false, memory: false }).map(t => t.name), ["launch_program", "find_file"]);
     assert.strictEqual(Yui.toolDefinitions({})[0].parameters.required[0], "url");
 });
@@ -274,8 +273,7 @@ test("tool calls become the same actions as tags", () => {
     same(Yui.toolCallToAction("close_program", { process: "explorer.exe" }, []), { kind: "blocked", blocked: "explorer.exe" });
     assert.strictEqual(Yui.toolCallToAction("open_url", { url: "file:///c:/x" }, []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("web_search", { query: "天气" }, [], { searchEngine: "baidu" }).action.url, "https://www.baidu.com/s?wd=%E5%A4%A9%E6%B0%94");
-    same(Yui.toolCallToAction("remember", '{"text":"喜欢猫","core":true}', []), { kind: "remember", text: "喜欢猫", core: true });
-    assert.strictEqual(Yui.toolCallToAction("forget", { text: "猫" }, [], { allowed: { memory: false } }).kind, "error");
+    assert.strictEqual(Yui.toolCallToAction("remember", '{"text":"喜欢猫"}', []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("launch_program", "{bad json", []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("navigation", {}, []).kind, "error");
 });

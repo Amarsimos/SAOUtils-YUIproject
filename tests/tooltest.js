@@ -22,7 +22,7 @@ const now = new Date();
 const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 const time = "\n\n（系统信息：当前本地时间是 " + now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日 " + weekdays[now.getDay()] + " " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + "。回答与时间、日期有关的问题时以此为准。）";
 const system = Yui.priorityRules(title, {}, "tools") + persona.replace(/\{\{user_title\}\}/g, title) + Yui.featureInstructions(title, [], {}, "tools") + time;
-const SYSTEM = process.env.EXTRA ? system + "\n- 重要：要打开网页、搜索、启动、关闭或查找时，必须调用对应的工具；只在文字里说“已经帮你打开了”，电脑上什么都不会发生。" + title + "告诉你值得记住的事时，也必须调用 remember 工具，光说“记住了”是记不住的。" : system;
+const SYSTEM = process.env.EXTRA ? system + "\n- 重要：要打开网页、搜索、启动、关闭或查找时，必须调用对应的工具；只在文字里说“已经帮你打开了”，电脑上什么都不会发生。" : system;
 
 // [id, message, check(reply) -> [ok, note]] ; "chain" tests keep the history.
 const has = (r, k) => r.raw.includes("<<" + k);
@@ -82,9 +82,7 @@ async function ask(messages) {
 function apply(p, calls) {
     calls.forEach(c => {
         const m = Yui.toolCallToAction(c.name, c.arguments, []);
-        if (m.kind === "remember") (m.core ? p.cores : p.memories).push(m.text);
-        else if (m.kind === "forget") p.forgets.push(m.text);
-        else if (m.kind === "blocked") p.blocked = m.blocked;
+        if (m.kind === "blocked") p.blocked = m.blocked;
         else if (m.kind === "action" && !p.action) p.action = m.action;
     });
     return p;

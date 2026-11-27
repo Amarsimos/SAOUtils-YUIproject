@@ -2039,11 +2039,7 @@ T.Widget {
         (toolCalls || []).forEach(function(call) {
             var made = Yui.toolCallToAction(call.name, call.arguments, widget.settings.kill_protected, replyOptions());
             var outcome = made.kind;
-            if (made.kind === "remember") {
-                (made.core ? reply.cores : reply.memories).push(made.text);
-            } else if (made.kind === "forget") {
-                reply.forgets.push(made.text);
-            } else if (made.kind === "media") {
+            if (made.kind === "media") {
                 reply.media.push(made.command);
             } else if (made.kind === "blocked") {
                 reply.blocked = made.blocked;

@@ -464,51 +464,14 @@ var TOOLS = [{
         },
         "required": ["command"]
     }
-}, {
-    "name": "remember",
-    "kind": "remember",
-    "allow": "memory",
-    "arg": "text",
-    "description": "把关于用户、值得长期记住的事记进结衣之心。闲聊、天气这类一时的信息不要记，已经记住的不要重复记。不要记今天的日期、现在的时间、天气这类随时会变的信息；和时间有关的事要写成具体日期（例如「10月28日考试」），不要写「今天」「明天」「下周」。",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "text": {
-                "type": "string",
-                "description": "用一句话写下要记住的事"
-            },
-            "core": {
-                "type": "boolean",
-                "description": "是否是最核心的事：名字、希望被怎么称呼、身份、重要的约定和偏好"
-            }
-        },
-        "required": ["text"]
-    }
-}, {
-    "name": "forget",
-    "kind": "forget",
-    "allow": "memory",
-    "arg": "text",
-    "description": "从结衣之心里忘掉某件事。用户要求忘掉，或者某件事已经不再成立时使用；情况有变化时，先忘掉旧的，再用 remember 记下新的。",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "text": {
-                "type": "string",
-                "description": "要忘掉的内容"
-            }
-        },
-        "required": ["text"]
-    }
 }];
 
 // The tools offered with a request: allowed as in options.allowed of parseReply (false = left out).
-// The memory tools (remember / forget) only with withMemory: in the tests no model called them, so
-// Yui's Heart keeps its tags in Tools mode too.
-function toolDefinitions(allowed, withMemory) {
+// No memory tools: in the tests no model called them, so Yui's Heart keeps its tags in Tools mode too.
+function toolDefinitions(allowed) {
     allowed = allowed || {};
     return TOOLS.filter(function(tool) {
-        return allowed[tool.allow] !== false && (tool.kind !== "media" || allowed.media === true) && (withMemory || (tool.kind !== "remember" && tool.kind !== "forget"));
+        return allowed[tool.allow] !== false && (tool.kind !== "media" || allowed.media === true);
     }).map(function(tool) {
         return {
             "name": tool.name,
@@ -519,8 +482,8 @@ function toolDefinitions(allowed, withMemory) {
 }
 
 // One tool call of the model (name, arguments object or JSON text) as what the widget does with it:
-// {kind: "action", action} | {kind: "blocked", blocked} | {kind: "remember", text, core} |
-// {kind: "forget", text} | {kind: "error", error} (unknown tool, forbidden, bad arguments). options as
+// {kind: "action", action} | {kind: "blocked", blocked} | {kind: "media", command} |
+// {kind: "error", error} (unknown tool, forbidden, bad arguments). options as
 // for parseReply (allowed, searchEngine, searchCustom).
 function toolCallToAction(name, args, userProtected, options) {
     options = options || {};
@@ -555,19 +518,6 @@ function toolCallToAction(name, args, userProtected, options) {
         return {
             "kind": "error",
             "error": "missing " + tool.arg
-        };
-
-    if (tool.kind === "remember")
-        return {
-            "kind": "remember",
-            "text": value,
-            "core": args.core === true || args.core === "true"
-        };
-
-    if (tool.kind === "forget")
-        return {
-            "kind": "forget",
-            "text": value
         };
 
     if (tool.kind === "media") {

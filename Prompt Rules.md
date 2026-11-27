@@ -289,7 +289,7 @@ user   ┬ 现在的代码      只在修改时
 | 1 | 周报、画像说「不要加标签」，但 ① 规则和小模型提醒要求加 | 按请求类型去掉表情规则和小模型提醒（规范 5） | yui.js priorityRules / smallModelReminder，main-stand 周报、画像 |
 | 2 | Tools 被拒后重发，附注重复、「重新生成」标记丢失 | 重发时用原始消息和原来的 regenerate 标记 | main-stand requestCompletion |
 | 3 | 「提醒他」写死男性；爸爸/妈妈对应有三份 | 改成称呼；对应只留 `userTitle`（规范 9） | yui.js featureInstructions，CardinalSystem，tests |
-| 4 | remember / forget 工具从不发出，tooltest 还在要求用 | 删掉这两个工具定义和测试里的说法（记忆一直用标签） | yui.js TOOLS，tests/tooltest.js |
+| 4 ✅ | remember / forget 工具从不发出，tooltest 还在要求用 | 删掉这两个工具定义和测试里的说法（记忆一直用标签） | yui.js TOOLS，tests/tooltest.js |
 | 5 ✅ | Seedling 规则互相打架（150 / 120 行、规则 6 混进地址、@yui 与联网、整段重写时还有修改方式、新挂件重试写成「要修改」） | 按 9.4、9.5 改 | writer.js，Bench.qml |
 | 6 | 三种称呼写法 `{{user_title}}`、`{t}`、拼接 | 统一 `{t}` + 一个替换函数（规范 9） | yui.js，main-stand |
 | 7 | 「系统提示 / 系统信息 / 提醒」混用，部分段落没有括号；开机问候、深夜、休息缺「不要提起」 | 按规范 10、11 统一 | yui.js，main-stand |
