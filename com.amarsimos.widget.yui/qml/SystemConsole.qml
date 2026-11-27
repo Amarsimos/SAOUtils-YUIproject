@@ -63,24 +63,16 @@ NVG.Window {
     }
 
 
-    // Run a Test: "Test Bubble" shows a sample line in the speech bubble, "Test Streaming" a made-up
-    // streamed reply (neither makes an API request), "Test Link Start" plays the startup effect, "Test
-    // Media" logs the track and plays / pauses it, "Care Tick" runs the care scheduler at once, the
+    // Run a Test (no API request): "Test Media" logs the track and plays / pauses it, "Care Tick" runs the care scheduler at once, the
     // follow-up, mood and weather tests have Yui say it now; a <<tag>> is a desktop action.
     function runTest(tag) {
         var yui = targetWidget;
-        if (tag === "bubble")
-            yui.testBubble();
-        else if (tag === "stream")
-            yui.testStreamReply();
-        else if (tag === "linkstart")
-            yui.testLinkStart();
-        else if (tag === "media")
+        if (tag === "media")
             yui.testMedia();
+        else if (tag === "seedling_link")
+            yui.testSeedlingLink();
         else if (tag === "seedling_place")
             yui.testSeedlingPlace();
-        else if (tag.indexOf("seedling_write:") === 0)
-            yui.testSeedlingWrite(tag.slice(15));
         else if (tag === "care")
             yui.testCareTick();
         else if (tag.indexOf("followup_") === 0)
@@ -675,13 +667,10 @@ NVG.Window {
                                     "tests": [[qsTr("Launch Notepad"), "<<launch:notepad>>"], [qsTr("Close Notepad"), "<<kill:notepad.exe>>"], [qsTr("Find File"), "<<find:notepad.exe>>"], [qsTr("Open Link"), "<<open:https://www.bilibili.com>>"], [qsTr("Protected Process"), "<<kill:explorer.exe>>"], [qsTr("Test Media"), "media"]]
                                 }, {
                                     "title": "Seedling",
-                                    "tests": [[qsTr("Test Place Seedling"), "seedling_place"], [qsTr("Seedling: Write"), "seedling_write:write"], [qsTr("Seedling: Edit"), "seedling_write:edit"], [qsTr("Seedling: Fix"), "seedling_write:fix"], [qsTr("Seedling: Network"), "seedling_write:network"], [qsTr("Seedling: Props"), "seedling_write:props"], [qsTr("Seedling: Mood Calendar"), "seedling_write:moods"]]
+                                    "tests": [[qsTr("Test Seedling Link"), "seedling_link"], [qsTr("Test Place Seedling"), "seedling_place"]]
                                 }, {
                                     "title": qsTr("Care"),
                                     "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"]]
-                                }, {
-                                    "title": qsTr("Display"),
-                                    "tests": [[qsTr("Test Bubble"), "bubble"], [qsTr("Test Streaming"), "stream"], [qsTr("Test Link Start"), "linkstart"]]
                                 }]
 
                                 ColumnLayout {

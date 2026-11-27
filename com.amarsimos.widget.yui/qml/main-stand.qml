@@ -115,6 +115,10 @@ T.Widget {
     readonly property real characterMinimumWidth: 300
     readonly property real minimumFrameHeight: 400
     property bool busy: false
+    // Yui is not to be disturbed: a reply on its way, or a Seedling widget being grown (one at a time,
+    // its wait for a widget to be placed included). Nothing is sent meanwhile (the text stays in the
+    // input field) and she does not talk by herself.
+    readonly property bool occupied: busy || seedlingJob !== null || seedlingWaiting !== null
     // Controller of the reply being generated (see requestCompletion), used by stopReply().
     property var currentRequest: null
     property int chatSession: 0
@@ -534,8 +538,9 @@ T.Widget {
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Console, Authority): only with Media Player installed.
             "media": full && mediaReady,
-            // Seedling (companion plugin) installed: Yui can have a desktop widget written.
-            "seedling": seedlingInstalled,
+            // Seedling: always offered; whether it is there (installed, a widget on the desktop, not
+            // busy) is checked only when her reply asks for a widget (seedlingStart), and she says so.
+            "seedling": true,
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
@@ -1054,17 +1059,6 @@ T.Widget {
     // config: optional, defaults to activeConfig(); may carry "systemPrompt" and "userTitle" to override the saved ones.
     // Returns { abort() }: ends the request early, keeping the text received so far.
     function requestCompletion(messages, onFinished, config, onDelta) {
-        if (testStreaming) {
-            testStreaming = false;
-            return fakeStream(onFinished, onDelta);
-        }
-        // System Console's Seedling tests: the code request answered from the queue, no API.
-        if (config && config.rawSystem !== undefined && seedlingFakeReplies.length > 0) {
-            var queued = seedlingFakeReplies.slice();
-            var fake = queued.shift();
-            seedlingFakeReplies = queued;
-            return fakeStream(onFinished, onDelta, fake);
-        }
         config = config || activeConfig();
         var format = config.provider.format;
         // Regenerating: a note the user does not see asks for another answer, a little warmer when a
@@ -1470,7 +1464,9 @@ T.Widget {
         var messages = [];
         for (var i = widget.historyStart; i < chatModel.count; i++) {
             var item = chatModel.get(i);
-            if (item.pending || item.isError)
+            // A reply still on its way is left out; her Seedling progress (pending, local) is kept, so
+            // a message sent while a widget grows comes after it, not merged with the request.
+            if ((item.pending && !item.local) || item.isError)
                 continue;
 
             var role = item.author === "user" ? "user" : "assistant";
@@ -1584,7 +1580,6 @@ T.Widget {
     // Show a "..." placeholder and replace it in place once the reply arrives.
     function startReply(messages, notifyTitle) {
         var session = widget.chatSession;
-        var test = widget.testStreaming;
         var index = chatModel.count;
         chatModel.append({
             "author": "ai",
@@ -1599,7 +1594,9 @@ T.Widget {
         });
         chatView.stickToBottom = true;
         widget.busy = true;
-        widget.currentRequest = requestCompletion(messages, function(text, isError, notConfigured, toolCalls) {
+        // A widget asked for while Seedling cannot grow one: asked once more with why (seedlingHinted).
+        var seedlingHinted = false;
+        var finished = function(text, isError, notConfigured, toolCalls) {
             // The chat was cleared while this request was in flight.
             if (session !== widget.chatSession)
                 return ;
@@ -1613,7 +1610,35 @@ T.Widget {
                 if (reply.unknown.length > 0)
                     diag("tags not understood (hidden): " + reply.unknown.join(" "));
 
+                // A widget asked for: her reply is the tag alone (hidden while it streams), so nothing
+                // was said yet. Seedling's state is checked only now: it can start (her progress
+                // message follows, this one goes), or not (not installed, busy): she is asked again,
+                // told why, and answers in her own words; the line of seedlingChatLine if she asks again.
+                if (reply.seedling) {
+                    var seedlingBlock = seedlingBlocked();
+                    diag("seedling: asked for a widget, " + (seedlingBlock || "starting") + (seedlingHinted ? " (asked again)" : ""));
+                    if (seedlingBlock && !seedlingHinted) {
+                        seedlingHinted = true;
+                        widget.currentRequest = requestCompletion(Yui.withNote(messages, Yui.seedlingBlockedNote(seedlingBlock, userTitle())), finished, null, streamed);
+                        return ;
+                    }
+                    if (seedlingBlock) {
+                        reply.text = Yui.seedlingChatLine(seedlingBlock, userTitle());
+                        reply.seedling = "";
+                    }
+                }
                 text = reply.text || silentReplyText(reply);
+                // Starting with nothing said: this reply's "..." becomes her progress message, in its
+                // place (before any message queued meanwhile, which is asked for after it).
+                if (reply.seedling && !reply.text) {
+                    if (reply.emotion)
+                        setEmotion(reply.emotion);
+
+                    seedlingStart(reply.seedling, index);
+                    widget.busy = false;
+                    widget.currentRequest = null;
+                    return ;
+                }
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
 
@@ -1694,7 +1719,7 @@ T.Widget {
             chatModel.set(index, {
                 "message": text,
                 "pending": false,
-                "local": test,
+                "local": false,
                 "isError": isError,
                 "note": note,
                 "action": action,
@@ -1707,7 +1732,7 @@ T.Widget {
             widget.busy = false;
             widget.currentRequest = null;
             scheduleSave();
-            if (!isError && !test) {
+            if (!isError) {
                 logMessage("ai", text);
                 announce(notifyTitle, text);
             }
@@ -1715,7 +1740,8 @@ T.Widget {
             if (action)
                 Qt.callLater(confirmAction, index);
 
-        }, null, function(partial) {
+        };
+        var streamed = function(partial) {
             if (session !== widget.chatSession)
                 return ;
 
@@ -1727,7 +1753,8 @@ T.Widget {
                     "pending": false
                 });
 
-        });
+        };
+        widget.currentRequest = requestCompletion(messages, finished, null, streamed);
         // The request may have finished synchronously (e.g. API not configured).
         if (!widget.busy)
             widget.currentRequest = null;
@@ -1741,9 +1768,10 @@ T.Widget {
 
     }
 
+
     // Drop the last reply and ask again.
     function regenerateReply() {
-        if (widget.busy || chatModel.count === 0 || chatModel.get(chatModel.count - 1).author === "user")
+        if (widget.occupied || chatModel.count === 0 || chatModel.get(chatModel.count - 1).author === "user")
             return ;
 
         chatModel.remove(chatModel.count - 1);
@@ -1774,7 +1802,7 @@ T.Widget {
     // notifyTitle: a title for the reply (care reminders); like every reply while the chat is closed, it
     // is shown in the bubble next to Yui (see announce()).
     function yuiSpeaks(instruction, notifyTitle) {
-        if (widget.busy || !activeConfig().apiKey)
+        if (widget.occupied || !activeConfig().apiKey)
             return false;
 
         var messages = buildHistory();
@@ -1815,7 +1843,8 @@ T.Widget {
     }
 
     function sendMessage(text) {
-        if (!text.trim() || widget.busy)
+        // A reply on its way, or a widget growing: not sent (the text stays in the input field).
+        if (!text.trim() || widget.occupied)
             return false;
 
         noteActivity();
@@ -1845,16 +1874,6 @@ T.Widget {
             });
             return true;
         }
-        // Seedling's Send to Yui ("帮我修好这个挂件：" + the problems): straight to the code flow, no
-        // chat request deciding it.
-        if (text.indexOf(Yui.SEEDLING_FIX_PREFIX) === 0 && seedlingBench() && !seedlingJob) {
-            var problems = text.slice(Yui.SEEDLING_FIX_PREFIX.length).trim();
-            appendMessage("user", text, false, true);
-            afterUserMessage(function() {
-                seedlingStart("修好这些问题：\n" + problems);
-            });
-            return true;
-        }
         chatBefore = widget.settings.last_active || 0;
         widget.settings.last_active = Date.now();
         appendMessage("user", text, false);
@@ -1875,6 +1894,7 @@ T.Widget {
         });
         return true;
     }
+
 
     // Runs next once the user's message has finished popping up (MessageWindow.popUp, 650 ms), so
     // Yui's "..." only appears after it. Yui counts as busy meanwhile (no second message).
@@ -2076,17 +2096,15 @@ T.Widget {
         var line = Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + message;
         console.log("[diag]", message);
         diagLog = diagLog.concat([line]).slice(-200);
+        diagTotal++;
     }
+
+    // Lines written by diag since the start (diagLog keeps only the last 200).
+    property int diagTotal: 0
 
     // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
-    // System Console: the Link Start effect again.
-    function testLinkStart() {
-        diag("test link start");
-        linkStartAnimation.restart();
-    }
-
     function testAction(tag) {
         diag("test " + tag);
         var reply = Yui.parseReply("[" + qsTr("Test") + "] " + tag, widget.settings.kill_protected, replyOptions());
@@ -2240,16 +2258,30 @@ T.Widget {
         var started = NVG.SystemCall.command(command);
         diag("command(" + command + ") -> " + started + " (not used, waiting for the status file)");
         var tries = 0;
+        var reading = false;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
-            tries++;
-            var status = Yui.parseFindStatus(readUrl(statusUrl));
-            if (!status && tries < 20)
+            // one read at a time (each is asynchronous)
+            if (reading)
                 return ;
 
-            timer.stop();
-            timer.destroy();
-            reportFind(action, status, Yui.parseSearchResults(status ? readUrl(resultUrl) : ""), esSetting);
+            tries++;
+            reading = true;
+            readUrl(statusUrl, function(text) {
+                reading = false;
+                var status = Yui.parseFindStatus(text);
+                if (!status && tries < 20)
+                    return ;
+
+                timer.stop();
+                timer.destroy();
+                if (!status)
+                    return reportFind(action, status, [], esSetting);
+
+                readUrl(resultUrl, function(results) {
+                    reportFind(action, status, Yui.parseSearchResults(results), esSetting);
+                }, true);
+            }, true);
         });
         timer.start();
     }
@@ -2293,20 +2325,28 @@ T.Widget {
             openLink(link);
     }
 
-    // Contents of a package file ("" when missing). A changing query is added so a cached earlier
-    // read (made before es.exe wrote the file) is never returned again. Each read is logged.
-    function readUrl(url) {
-        var target = url + "?t=" + Date.now();
+    // Contents of a local file, asynchronously (a slow disk never holds SAO Utils): done(text), "" when
+    // missing. fresh: a changing query is added so a cached earlier read (made before es.exe wrote
+    // the file) is never returned again. quiet: not logged.
+    function readUrl(url, done, fresh, quiet) {
+        var target = fresh ? url + "?t=" + Date.now() : String(url);
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", target, false); // sync-ok: a local file
+            request.onreadystatechange = function() {
+                if (request.readyState !== XMLHttpRequest.DONE)
+                    return ;
+
+                var text = request.responseText || "";
+                if (!quiet)
+                    diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
+
+                done(text);
+            };
+            request.open("GET", target);
             request.send(null);
-            var text = request.responseText || "";
-            diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
-            return text;
         } catch (e) {
             diag("GET " + target + " failed: " + e);
-            return "";
+            done("");
         }
     }
 
@@ -2814,16 +2854,11 @@ T.Widget {
             if (put.readyState !== XMLHttpRequest.DONE)
                 return ;
 
-            var ok = false;
-            try {
-                var get = new XMLHttpRequest();
-                get.open("GET", fileUrl(path) + "?t=" + Date.now(), false);
-                get.send(null);
-                ok = get.responseText === text;
-            } catch (e) {
-            }
-            diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
-            onDone(ok);
+            readUrl(fileUrl(path), function(written) {
+                var ok = written === text;
+                diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
+                onDone(ok);
+            }, true, true);
         };
         try {
             put.open("PUT", fileUrl(path));
@@ -2897,44 +2932,48 @@ T.Widget {
     // reading them first (no window), so the command (which shows a console window for a moment) only
     // runs when there is something to delete.
     function removeOldBackups() {
-        var found = [];
+        var paths = [];
         heartFolders().forEach(function(folder) {
-            for (var n = backupDays + 1; n <= 30; n++) {
-                var path = folder + "/heart-backup-" + n + ".json";
-                try {
-                    var get = new XMLHttpRequest();
-                    get.open("GET", fileUrl(path), false); // sync-ok: a local file
-                    get.send(null);
-                    if (get.responseText)
-                        found.push(path.replace(/\//g, "\\"));
-
-                } catch (e) {
-                }
-            }
+            for (var n = backupDays + 1; n <= 30; n++)
+                paths.push(folder + "/heart-backup-" + n + ".json");
         });
-        if (found.length === 0)
-            return ;
+        // Read asynchronously; the command runs once all have answered.
+        var found = [];
+        var left = paths.length;
+        paths.forEach(function(path) {
+            readUrl(fileUrl(path), function(text) {
+                if (text)
+                    found.push(path.replace(/\//g, "\\"));
 
-        var command = 'cmd /c del /q "' + found.join('" "') + '"';
-        NVG.SystemCall.command(command);
-        diag("command(" + command + ")");
+                if (--left > 0 || found.length === 0)
+                    return ;
+
+                var command = 'cmd /c del /q "' + found.join('" "') + '"';
+                NVG.SystemCall.command(command);
+                diag("command(" + command + ")");
+            }, false, true);
+        });
     }
 
-    onBackupDaysChanged: removeOldBackups()
+    // Backup Days is a slider: checked once it rests, not at each step.
+    onBackupDaysChanged: removeBackupsTimer.restart()
+
+    Timer {
+        id: removeBackupsTimer
+
+        interval: 1000
+        onTriggered: removeOldBackups()
+    }
 
     // System Console "Import": adds the memories of an exported file (and its chat history, if it has
-    // one) to Yui's Heart; nothing is replaced. Returns a message for the user.
-    function importHeart(url) {
-        var text = "";
-        try {
-            var get = new XMLHttpRequest();
-            get.open("GET", String(url), false); // sync-ok: a local file
-            get.send(null);
-            text = get.responseText || "";
-            diag("import " + url + " -> status " + get.status + ", " + text.length + " chars");
-        } catch (e) {
-            diag("import " + url + " failed: " + e);
-        }
+    // one) to Yui's Heart; nothing is replaced. done(message for the user), once the file is read.
+    function importHeart(url, done) {
+        readUrl(url, function(text) {
+            done(importHeartText(text));
+        });
+    }
+
+    function importHeartText(text) {
         var document;
         try {
             document = JSON.parse(text.replace(/^﻿/, ""));
@@ -3306,6 +3345,23 @@ T.Widget {
             textInput.text = text;
             textInput.cursorPosition = text.length;
             textInput.forceActiveFocus();
+        });
+    }
+
+    // Seedling's Send to Yui (its port's fixWidget): the chat opens with the request in it, and the
+    // code flow fixes the widget (no chat request deciding it). While a widget is being written: sent
+    // as a message.
+    function seedlingFix(problems) {
+        var text = Yui.SEEDLING_FIX_PREFIX + "\n" + String(problems || "").trim();
+        if (!seedlingBench() || seedlingJob)
+            return sendToChat(text);
+
+        if (!showChat)
+            openView();
+
+        appendMessage("user", text, false, true);
+        afterUserMessage(function() {
+            seedlingStart("修好这些问题：\n" + String(problems || "").trim());
         });
     }
 
@@ -3703,115 +3759,149 @@ T.Widget {
         return Qt.rect(corner.x, corner.y, item.width, item.height);
     }
 
-    // While the bubble is shown it follows her collapsed form: its floating, and the widget being
-    // moved. It closes when the chat is opened.
+    // While the bubble is shown it follows her collapsed form: its floating (the crystal's and the
+    // pixie's hover) and the widget being moved (its view), when they change rather than every frame;
+    // a slow check catches any other move. It closes when the chat is opened.
+    readonly property bool bubbleShown: !!widget.crystalBubble && widget.crystalBubble.visible
+
+    function followBubble() {
+        if (!bubbleShown)
+            return ;
+
+        if (widget.showChat)
+            widget.crystalBubble.hide();
+        else
+            widget.crystalBubble.follow(widget.collapsedScreenRect());
+    }
+
+    onShowChatChanged: followBubble()
+
+    Connections {
+        target: widget.bubbleShown ? crystalForm : null
+        onHoverChanged: widget.followBubble()
+    }
+
+    Connections {
+        target: widget.bubbleShown ? pixieImage : null
+        onHoverChanged: widget.followBubble()
+    }
+
+    Connections {
+        target: widget.bubbleShown ? widget.hostView : null
+        onXChanged: widget.followBubble()
+        onYChanged: widget.followBubble()
+    }
+
     Timer {
-        interval: 16
+        interval: 250
         repeat: true
-        running: !!widget.crystalBubble && widget.crystalBubble.visible
-        onTriggered: {
-            if (!widget.showChat)
-                widget.crystalBubble.follow(widget.collapsedScreenRect());
-            else
-                widget.crystalBubble.hide();
-        }
-    }
-
-    // System Console "Test Bubble": a sample line in the crystal's bubble, without an API request. Each
-    // click shows the next sample (short, long, a status report), so the layout can be checked.
-    property int testBubbleCount: 0
-    // The next reply is a made-up streamed one (Test Streaming): no API request, no tokens.
-    property bool testStreaming: false
-
-    // Diagnostics: Yui "thinks" for 8 s (long enough for a thinking hint), then a sample reply streams in a few characters at a time.
-    function testStreamReply() {
-        if (busy) {
-            diag("test streaming: Yui is busy with a reply");
-            return ;
-        }
-        if (!yuiView || !yuiView.visible)
-            diag("test streaming: open the chat (click Yui) to watch it");
-
-        testStreaming = true;
-        startReply([], "Yui");
-    }
-
-    // A fake streamed completion with requestCompletion's callbacks and an abort().
-    // text: the reply to stream (Seedling's tests); else the chat's test reply.
-    function fakeStream(onFinished, onDelta, text) {
-        var full = text !== undefined ? text : "（测试回复，没有调用 API）
-嗯嗯，结衣正在一个字一个字地回答" + userTitle() + "哦～这样就能看到流式传输时消息框慢慢变高的样子了。再多写几句吧：今天天气怎么样呢？要记得喝水、休息眼睛哦！(｡･ω･｡)";
-        var shown = 0;
-        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { repeat: true }", widget);
-        timer.interval = text !== undefined ? 3000 : 8000;
-        timer.triggered.connect(function() {
-            timer.interval = text !== undefined ? 40 : 60;
-            shown = Math.min(full.length, shown + (text !== undefined ? 14 : 2));
-            if (shown < full.length) {
-                if (onDelta)
-                    onDelta(full.slice(0, shown));
-
-                return ;
-            }
-            timer.stop();
-            timer.destroy();
-            onFinished(full, false, false);
-        });
-        timer.start();
-        return {
-            "abort": function() {
-                timer.stop();
-                timer.destroy();
-                onFinished(full.slice(0, shown) || "(・ω・)", false, false);
-            }
-        };
-    }
-
-    function testBubble() {
-        if (showChat) {
-            diag("test bubble: the chat is open; close it first (the bubble is shown next to her collapsed form)");
-            return ;
-        }
-        var title = userTitle();
-        var samples = [["", title + "～结衣在这里哦！(｡･ω･｡)"], ["", "嗯……" + title + "已经对着屏幕好久了呢。结衣刚才在想，等这件事忙完，要不要一起去看看窗外的风景？外面的天空说不定很漂亮哦！不过在那之前，先喝一口水吧～这句话故意写得很长，用来测试气泡最多显示六行时的省略效果。"], [qsTr("Navigation Report"), "警告！系统负荷过高：GPU 98%……" + title + "，要不要看看是什么程序在占用呢？(・_・;)"], [qsTr("Mental Health Counseling"), "已经连续使用电脑 2 小时了哦，" + title + "，休息一下眼睛吧 (´・ω・`)"]];
-        var sample = samples[testBubbleCount++ % samples.length];
-        showBubble("Yui", sample[1]);
+        running: widget.bubbleShown
+        onTriggered: widget.followBubble()
     }
 
     // ---------------------------------------------------------------- Seedling (companion plugin)
-    // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
-    // Probe.qml, so Yui still loads when Seedling is not installed. null when it is missing.
+    // Seedling's Bench, reached at run time through the Probe its "link" resource names (seedlingLoad),
+    // so Yui still loads when Seedling is not installed. null when missing.
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
+    // The Link interface this Yui speaks (Seedling's Bench must say the same).
+    readonly property int seedlingLinkVersion: 1
+    // What Seedling gets of Yui (never Yui herself).
+    property SeedlingPort seedlingPort: SeedlingPort {
+        yui: widget
+    }
 
+    // Asked each time, as SAO Utils may disable / remove Seedling, or add it, while Yui runs: the
+    // Bench already loaded stays in memory, so the resource is what says it is still there.
     function seedlingBench() {
-        if (seedlingProbe) {
-            // Another Yui that was the writer is gone: this one takes over.
-            if (!seedlingProbe.bench.writer)
-                seedlingProbe.bench.writer = widget;
-
-            return seedlingProbe.bench;
+        var there = !!NVG.Resources.resolve(seedlingAddress);
+        if (seedlingProbe && !there) {
+            diag("seedling: no longer installed (no " + seedlingAddress + "), working without it");
+            seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
+            seedlingProbe.bench.detach(seedlingPort);
+            seedlingProbe.destroy();
+            seedlingProbe = null;
+            seedlingFoundAt = "";
+            seedlingInstalled = false;
+        } else if (!seedlingProbe && there && seedlingChecked && !seedlingLoading) {
+            // Installed (or enabled again) since: loaded now, ready from the next call.
+            seedlingLoad();
         }
-
-        if (seedlingInstalled === false && seedlingChecked)
-            return null;
-
-        var component = Qt.createComponent(Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml"));
-        if (component.status !== Component.Ready) {
-            diag("seedling: not installed (" + component.errorString().trim() + ")");
-            return null;
-        }
-        seedlingProbe = component.createObject(widget);
         if (!seedlingProbe)
             return null;
 
-        // Seedling's Generate (the workbench's request) is written by Yui.
-        seedlingProbe.bench.writer = widget;
-        Qt.callLater(seedlingOfferConnection);
-        seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
-        seedlingInstalled = true;
+        // Another Yui that was attached is gone: this one takes over.
+        if (!seedlingProbe.bench.attached())
+            seedlingProbe.bench.attach(seedlingPort);
+
         return seedlingProbe.bench;
+    }
+
+    // Seedling is found through SAO Utils' resources (the "link" resource in its package.json),
+    // not by its folder: installed or not (Resources.resolve), then its Probe loaded by that address,
+    // asynchronously (tried 2026-11-27: both work). The only place of this.
+    readonly property string seedlingAddress: "nvg://seedling.widget.amarsimos.com/link/bench"
+    property string seedlingFoundAt: ""
+
+    property bool seedlingLoading: false
+
+    function seedlingLoad() {
+        var done = function() {
+            seedlingLoading = false;
+            seedlingChecked = true;
+        };
+        seedlingLoading = true;
+        if (!NVG.Resources.resolve(seedlingAddress)) {
+            diag("seedling: not installed (no " + seedlingAddress + ")");
+            return done();
+        }
+        var component = Qt.createComponent(seedlingAddress, Component.Asynchronous);
+        var loaded = function() {
+            if (component.status === Component.Loading)
+                return ;
+
+            if (component.status !== Component.Ready) {
+                diag("seedling: could not be loaded (" + component.errorString().trim() + ")");
+                return done();
+            }
+            seedlingAttach(component);
+            done();
+        };
+        if (component.status === Component.Loading)
+            component.statusChanged.connect(loaded);
+        else
+            loaded();
+    }
+
+    function seedlingAttach(component) {
+        var probe = component.createObject(widget);
+        if (!probe)
+            return ;
+
+        // Only the Link interface of the same version (section 12 of "Seedling Development Plan.md");
+        // another is taken as Seedling not installed.
+        var bench = probe.bench;
+        if (bench.linkVersion !== seedlingLinkVersion || !bench.attach) {
+            diag("seedling: its Link version " + bench.linkVersion + " is not " + seedlingLinkVersion + ", working without it");
+            probe.destroy();
+            return ;
+        }
+        // Another MHCP-YUI on the desktop has it: not taken from her (seedlingBench takes over once she
+        // is gone, section 12.3).
+        if (bench.attached())
+            diag("seedling: another MHCP-YUI is attached; this one takes over when she goes");
+        else if (!bench.attach(seedlingPort)) {
+            diag("seedling: its Bench refused this Link port, working without it");
+            probe.destroy();
+            return ;
+        }
+        seedlingProbe = probe;
+        seedlingFoundAt = seedlingAddress;
+        diag("seedling: found at " + seedlingAddress + " (" + bench.widgets.length + " widget(s) on the desktop)");
+        Qt.callLater(seedlingOfferConnection);
+        bench.widgetsChanged.connect(seedlingPlaced);
+        seedlingInstalled = true;
     }
 
     property bool seedlingChecked: false
@@ -3821,10 +3911,7 @@ T.Widget {
 
         interval: 1500
         running: true
-        onTriggered: {
-            widget.seedlingBench();
-            widget.seedlingChecked = true;
-        }
+        onTriggered: widget.seedlingLoad()
     }
 
     // A widget written for request by Seedling (its writing flow, section 11 of "Seedling Development
@@ -3833,20 +3920,24 @@ T.Widget {
     // written (the chat's Send turns into Stop).
     property var seedlingJob: null
 
-    function seedlingWrite(request, onDone, onProgress) {
+    function seedlingWrite(request, onDone, onProgress, retried) {
         var bench = seedlingBench();
+        // Installed but still loading (enabled again a moment ago): asked once more a second later.
+        if (!bench && !retried && seedlingLoading) {
+            var later = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 1000 }", widget);
+            later.triggered.connect(function() {
+                later.destroy();
+                seedlingWrite(request, onDone, onProgress, true);
+            });
+            later.start();
+            return ;
+        }
         if (!bench || !bench.write)
             return onDone("Seedling 没有安装", false, "missing");
 
         if (bench.widgets.length === 0)
             return seedlingAskPlace(request, onDone, onProgress);
 
-        // A Seedling Model set here before (Cardinal System) moves to Seedling the first time.
-        var oldModel = String(widget.settings.seedling_model || "").trim();
-        if (oldModel && bench.setSetting && !bench.writingModel()) {
-            bench.setSetting("custom_model", oldModel);
-            widget.settings.seedling_model = "";
-        }
         seedlingJob = {
             "request": request
         };
@@ -3854,11 +3945,12 @@ T.Widget {
             if (onProgress)
                 onProgress(state);
 
-        }, function(kind, message, code) {
+        }, function(kind, message, code, info) {
             seedlingJob = null;
             var ok = kind === "done" || kind === "edited";
             diag("seedling: " + kind + ", " + message);
-            onDone(message, ok, kind, ok ? Yui.seedlingExtra(code, userTitle()) : "");
+            // What Seedling made of the code (info), never read from the code here.
+            onDone(message, ok, kind, ok ? Yui.seedlingExtra(info, userTitle()) : "");
         });
     }
 
@@ -3983,17 +4075,34 @@ T.Widget {
         });
 
         // SAO Utils' message box shows about three short lines (more is cut off with "...").
-        askConfirm(qsTr("Navigation"), title + "，种子还没有发芽的地方呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
+        askConfirm(qsTr("Navigation"), title + "，Seedling 还没地方种下呢……\n要打开挂件库吗？\n请把「Seedling」拖到桌面上哦～", function() {
             var opened = NVG.SystemCall.manageWidgets();
             diag("seedling: no widget on the desktop, widget manager " + (opened ? "opened" : "could not be opened"));
+            // The manager closing is not seen: waiting ends after a while with nothing placed (at once
+            // when it could not be opened).
+            seedlingGiveUp.interval = opened ? 60000 : 1;
+            seedlingGiveUp.restart();
         }, false, function() {
-            var waiting = seedlingWaiting;
-            seedlingWaiting = null;
-            diag("seedling: no widget on the desktop, the widget manager was not opened");
-            if (waiting)
-                waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
-
+            seedlingStopWaiting("the widget manager was not opened");
         });
+    }
+
+    // Ends the wait for a Seedling widget: nothing written this time (she says so).
+    function seedlingStopWaiting(why, said) {
+        seedlingGiveUp.stop();
+        var waiting = seedlingWaiting;
+        seedlingWaiting = null;
+        if (!waiting)
+            return ;
+
+        diag("seedling: no widget on the desktop, " + why);
+        waiting.onDone(said || "Seedling 没有能种下的地方，这次就先不培育了。想要的时候，先在桌面放一个 Seedling，再叫结衣一声吧", false, "declined");
+    }
+
+    Timer {
+        id: seedlingGiveUp
+
+        onTriggered: seedlingStopWaiting("none placed in time")
     }
 
     // A Seedling widget was placed (Bench.widgets changed) while a request waits: carry on.
@@ -4002,6 +4111,7 @@ T.Widget {
         if (!seedlingWaiting || !bench || bench.widgets.length === 0)
             return ;
 
+        seedlingGiveUp.stop();
         var waiting = seedlingWaiting;
         seedlingWaiting = null;
         if (waiting.test) {
@@ -4011,6 +4121,50 @@ T.Widget {
         }
         diag("seedling: a widget was placed, writing goes on");
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
+    }
+
+    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log and in
+    // Storages\yui\seedling-link.txt (each line written at once, steps 0.5 s apart).
+    function testSeedlingLink() {
+        var lines = [];
+        var file = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/").replace(/\/+$/, "") + "/seedling-link.txt";
+        var say = function(text) {
+            diag("seedling link: " + text);
+            lines.push(Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + text);
+            var put = new XMLHttpRequest();
+            put.open("PUT", fileUrl(file));
+            put.send(lines.join("\n"));
+        };
+        var steps = [function() {
+            var resolved = NVG.Resources.resolve(seedlingAddress);
+            say("resolve " + seedlingAddress + ": " + (resolved ? resolved.package + " | " + resolved.catalog : "null (not installed)"));
+        }, function() {
+            var bench = seedlingBench();
+            if (!bench)
+                return say("Seedling: not found (or another Link version); Yui works without it");
+
+            say("Seedling: found at " + seedlingFoundAt + ", Link version " + bench.linkVersion + " (Yui " + seedlingLinkVersion + "), attached: " + bench.attached() + ", widgets: " + bench.widgets.length);
+            var own = bench.ownSetup();
+            var mine = seedlingPort.connection();
+            say("Seedling's own AI: " + (own ? own.title + " · " + own.model : "not set up") + "; Yui's: " + (mine.ready ? mine.title + " · " + mine.model : "not set up"));
+            say("end");
+        }];
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
+        var next = 0;
+        timer.triggered.connect(function() {
+            if (next >= steps.length) {
+                timer.stop();
+                timer.destroy();
+                return ;
+            }
+            try {
+                steps[next++]();
+            } catch (e) {
+                say("step " + next + " failed: " + e);
+            }
+        });
+        say("start (file " + file + ")");
+        timer.start();
     }
 
     // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
@@ -4029,8 +4183,22 @@ T.Widget {
 
     // A Seedling widget written for request: Yui's thinking message saying the steps, ending with her
     // last words (the reply's <<seedling:>>, and System Console's tests).
-    function seedlingStart(request) {
-        var said = seedlingSay();
+    // Seedling's state is checked here, when a widget is asked for: still growing the last one ("busy"),
+    // not installed ("missing", in seedlingWrite), no widget on the desktop (seedlingAskPlace).
+    // Why a widget cannot be grown now ("" when it can): "busy" (one is growing, or a widget is waited
+    // for), "missing" (not installed; one still loading counts as there).
+    function seedlingBlocked() {
+        if (seedlingJob || seedlingWaiting)
+            return "busy";
+
+        return seedlingBench() || NVG.Resources.resolve(seedlingAddress) ? "" : "missing";
+    }
+
+    function seedlingStart(request, at) {
+        var said = seedlingSay(at);
+        if (seedlingJob || seedlingWaiting)
+            return said.end(Yui.seedlingChatLine("busy", userTitle()));
+
         seedlingWrite(request, function(message, ok, kind, extra) {
             said.end(Yui.seedlingChatLine(kind, userTitle()) + (extra ? "\n" + extra : ""));
         }, function(state) {
@@ -4038,65 +4206,12 @@ T.Widget {
         });
     }
 
-    // System Console's Seedling tests: the code request's replies, made up (no API), in order.
-    property var seedlingFakeReplies: []
-
-    // kind: "write" (a clock), "edit" (the code there, one color changed), "fix" (a mistake, then
-    // fixed when the error comes back), "network" (asks the Internet). The whole way runs as for a
-    // real request: the thinking message, the Bench (the widget fixed at the start), the workbench,
-    // the safety check, Stop in the chat, the last words. Log: "seedling test".
-    function testSeedlingWrite(kind) {
-        var bench = seedlingBench();
-        if (!bench) {
-            diag("seedling test: Seedling is not installed");
-            return ;
-        }
-        if (!showChat)
-            openView();
-
-        var fence = function(code) {
-            return "```qml\n" + code + "```";
-        };
-        var clock = "import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n";
-        if (kind === "edit") {
-            var current = bench.currentCode();
-            var line = current.split("\n").filter(function(l) {
-                return /^\s*color:\s*"#/.test(l);
-            })[0];
-            if (!line) {
-                diag("seedling test: no code with a color to change; Write first");
-                return ;
-            }
-            seedlingFakeReplies = ["<<<<<<< SEARCH\n" + line + "\n=======\n" + line.replace(/"#[0-9A-Fa-f]+"/, "\"#E6C82864\"") + "\n>>>>>>> REPLACE\n"];
-        } else if (kind === "fix") {
-            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    width: 220; height: 90; radius: 10\n    color: \"#E61F2630\"\n\n    Text {\n        colr: \"white\"\n        id: time\n        anchors.centerIn: parent\n        color: \"white\"\n        font.pixelSize: 36\n        text: Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n\n    Timer {\n        interval: 1000; running: true; repeat: true\n        onTriggered: time.text = Qt.formatTime(new Date(), \"hh:mm:ss\")\n    }\n}\n"), fence(clock)];
-        } else if (kind === "moods") {
-            // A mood calendar reading Yui's data (@yui): her moods of the last 30 days.
-            seedlingFakeReplies = [fence("import QtQuick 2.12\n\n// @name Mood Calendar\nRectangle {\n    id: root\n    width: 250; height: 150; radius: 10\n    color: \"#E6F4F4F4\"\n    border.color: \"#D4D4D4\"\n\n    // @yui mood_history\n    property var moods: []\n    // @yui companion_days\n    property int days: 0\n    // @setting Accent\n    property color accent: \"#F1AA03\"\n\n    // The last 30 days, oldest first: the score of each (0: not recorded).\n    readonly property var cells: {\n        var out = [];\n        var now = new Date();\n        for (var i = 0; i < 30; i++) {\n            var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29 + i);\n            var key = Qt.formatDate(d, \"yyyy-MM-dd\");\n            var score = 0;\n            for (var j = 0; j < root.moods.length; j++)\n                if (root.moods[j].day === key)\n                    score = root.moods[j].score;\n            out.push(score);\n        }\n        return out;\n    }\n\n    function shade(score) {\n        if (score === 0)\n            return \"#E2E2E2\";\n        return Qt.rgba(0.95, 0.67, 0.01, 0.25 + score * 0.15);\n    }\n\n    Text {\n        x: 12; y: 8\n        text: \"MOOD · 30 DAYS\"\n        color: root.accent\n        font.family: \"SAO UI\"\n        font.pixelSize: 15\n    }\n\n    Text {\n        anchors.right: parent.right; anchors.rightMargin: 12\n        y: 8\n        text: \"DAY \" + root.days\n        color: \"#888888\"\n        font.family: \"SAO UI\"\n        font.pixelSize: 15\n    }\n\n    Grid {\n        x: 12; y: 34\n        columns: 10\n        spacing: 4\n\n        Repeater {\n            model: root.cells\n\n            Rectangle {\n                width: 19; height: 19; radius: 4\n                color: root.shade(modelData)\n                border.color: index === 29 ? root.accent : \"transparent\"\n                border.width: 2\n            }\n        }\n    }\n\n    Text {\n        x: 12\n        anchors.bottom: parent.bottom; anchors.bottomMargin: 8\n        text: \"颜色越深，那天心情越好\"\n        color: \"#999999\"\n        font.pixelSize: 11\n    }\n}\n")];
-        } else if (kind === "props") {
-            // A todo list with @name, @setting and @keep: its Settings... and what it remembers.
-            seedlingFakeReplies = [fence("import QtQuick 2.12\nimport QtQuick.Controls 2.12\n\n// @name Todo\nRectangle {\n    id: root\n    width: 240; height: 220; radius: 8\n    color: root.dark ? \"#E61F2630\" : \"#E6F4F4F4\"\n\n    // @setting Title\n    property string heading: \"TODO\"\n    // @setting Theme | Light / Dark\n    property string theme: \"Light\"\n    // @setting Font Size | 12 - 24\n    property int fontSize: 15\n    // @setting Accent\n    property color accent: \"#F1AA03\"\n    // @setting Show Done\n    property bool showDone: true\n    // @keep\n    property var todos: []\n\n    readonly property bool dark: root.theme === \"Dark\"\n\n    Column {\n        anchors.fill: parent\n        anchors.margins: 10\n        spacing: 6\n\n        Text {\n            text: root.heading + \" · \" + root.todos.filter(function(t) { return !t.done; }).length\n            color: root.accent\n            font.pixelSize: root.fontSize + 3\n            font.bold: true\n        }\n\n        TextField {\n            id: input\n            width: parent.width\n            placeholderText: \"+\"\n            onAccepted: {\n                if (input.text.trim() === \"\")\n                    return;\n                root.todos = root.todos.concat([{\"text\": input.text, \"done\": false}]);\n                input.text = \"\";\n            }\n        }\n\n        Repeater {\n            model: root.todos\n            Text {\n                visible: root.showDone || !modelData.done\n                width: parent.width\n                elide: Text.ElideRight\n                text: (modelData.done ? \"✓ \" : \"○ \") + modelData.text\n                color: modelData.done ? \"#888888\" : (root.dark ? \"white\" : \"#333333\")\n                font.pixelSize: root.fontSize\n                font.strikeout: modelData.done\n                MouseArea {\n                    anchors.fill: parent\n                    onClicked: {\n                        var list = root.todos.slice();\n                        list[index] = {\"text\": modelData.text, \"done\": !modelData.done};\n                        root.todos = list;\n                    }\n                }\n            }\n        }\n    }\n}\n")];
-        } else if (kind === "network") {
-            seedlingFakeReplies = [fence("import QtQuick 2.12\n\nRectangle {\n    id: root\n    width: 220; height: 80; radius: 8\n    color: \"#E61F2630\"\n    property string temp: \"--\"\n\n    Text { anchors.centerIn: parent; color: \"white\"; font.pixelSize: 28; text: root.temp }\n\n    Component.onCompleted: {\n        var request = new XMLHttpRequest();\n        request.onreadystatechange = function() {\n            if (request.readyState === XMLHttpRequest.DONE)\n                root.temp = request.status === 200 ? \"online\" : \"offline\";\n        };\n        request.open(\"GET\", \"https://www.bing.com/\");\n        request.send();\n    }\n}\n")];
-        } else {
-            seedlingFakeReplies = [fence(clock)];
-        }
-        var target = bench.target();
-        diag("seedling test: " + kind + " for " + (bench.labelOf(target) || "the only Seedling widget"));
-        seedlingStart("(test) " + kind);
-    }
-
-    // Shows code in Seedling's workbench; onResult gets what came of it. Returns "" or why not.
-    function seedlingPreview(code, title, onResult) {
-        var bench = seedlingBench();
-        if (!bench)
-            return "Seedling is not installed";
-
-        return bench.preview(code, title, onResult);
-    }
-
     // Stop (Seedling's workbench): ends the request being written; what was written stays.
     function seedlingStop() {
+        // Still waiting for a Seedling widget to be placed: that wait ends.
+        if (seedlingWaiting)
+            return seedlingStopWaiting("stopped in the chat", "好，那这次先不写了。");
+
         var bench = seedlingBench();
         if (bench && bench.stop)
             bench.stop();
@@ -4106,10 +4221,16 @@ T.Widget {
     // How a Seedling widget is going, in Yui's thinking message (MessageWindow's "YUI正在思考" with the
     // hopping dots, here saying the step: seedlingNoteLine), which becomes her last words when it ends,
     // as a reply does (kept in the conversation; in the bubble too while the chat is closed).
-    function seedlingSay() {
-        var index = chatModel.count;
+    // at: the message to say it in (her reply's "..." that asked for the widget, so it keeps its place
+    // before messages sent meanwhile); else a new one at the end.
+    function seedlingSay(at) {
+        var index = at !== undefined ? at : chatModel.count;
         var session = widget.chatSession;
-        chatModel.append({
+        (at !== undefined ? function(item) {
+            chatModel.set(at, item);
+        } : function(item) {
+            chatModel.append(item);
+        })({
             "author": "ai",
             "message": Yui.seedlingNoteLine({
                 "stage": "writing",
@@ -4570,7 +4691,7 @@ T.Widget {
             diag(line);
 
         careLastLog = line;
-        if (!result.pick || widget.busy)
+        if (!result.pick || widget.occupied)
             return ;
 
         var title = userTitle();
@@ -4877,8 +4998,7 @@ T.Widget {
         // Seedling's Bench outlives this widget: it must not keep calling a removed Yui.
         if (seedlingProbe && seedlingProbe.bench) {
             seedlingProbe.bench.widgetsChanged.disconnect(seedlingPlaced);
-            if (seedlingProbe.bench.writer === widget)
-                seedlingProbe.bench.writer = null;
+            seedlingProbe.bench.detach(seedlingPort);
 
         }
     }
@@ -6400,7 +6520,8 @@ T.Widget {
                                 event.accepted = true;
                             }
 
-                            placeholderText: qsTr("Message to Yui...")
+                            // While she is occupied nothing is sent (text typed meanwhile waits here).
+                            placeholderText: widget.busy ? qsTr("Yui is thinking...") : widget.occupied ? qsTr("Yui is growing a widget...") : qsTr("Message to Yui...")
                             color: "black"
                             font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                             wrapMode: TextArea.Wrap
@@ -6432,13 +6553,14 @@ T.Widget {
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignBottom
                     // Turns into a stop button while a reply is being generated, and while Yui writes a
-                    // Seedling widget (as the workbench's Stop, which is small and may be closed).
-                    text: widget.busy ? qsTr("Cancel") : widget.seedlingJob ? qsTr("Stop") : qsTr("Send")
-                    enabled: widget.busy || widget.seedlingJob !== null || textInput.text.trim().length > 0
+                    // Seedling widget (as the workbench's Stop, which is small and may be closed) or waits
+                    // for one to be placed.
+                    text: widget.busy ? qsTr("Cancel") : (widget.seedlingJob || widget.seedlingWaiting) ? qsTr("Stop") : qsTr("Send")
+                    enabled: widget.busy || widget.seedlingJob !== null || widget.seedlingWaiting !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
                             widget.stopReply();
-                        else if (widget.seedlingJob)
+                        else if (widget.seedlingJob || widget.seedlingWaiting)
                             widget.seedlingStop();
                         else
                             textInput.submit();

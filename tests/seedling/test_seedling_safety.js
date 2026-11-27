@@ -1,12 +1,13 @@
 // Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js), S3 of "Seedling Development
 // Plan.md": what must be refused (S1's probes and ways round), what goes only with Network on, and what
-// normal widgets must still be able to do. Run: node tests/test_seedling_safety.js
+// normal widgets must still be able to do. Run: node tests/seedling/test_seedling_safety.js
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
+const KEYS = require("./yui_port.js").dataKeys; // MHCP-YUI's @yui data (her port's dataKeys)
 
-const root = path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml");
+const root = path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml");
 const load = (file) => {
     const box = {};
     vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
@@ -180,8 +181,8 @@ Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 // ---- The code prompt (Seedling's writer.js, codePrompt) says the same as the check (S6): the modules it
 // allows are exactly the check's, the Qt functions it names are allowed, and its examples pass.
 const Y = {};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-const prompt = Y.codePrompt(false, false, true);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+const prompt = Y.codePrompt(false, false, KEYS);
 const importRule = prompt.split("\n").find((line) => line.indexOf("1. 模块：只能 import") === 0);
 const promptModules = importRule.split("。")[0].replace("1. 模块：只能 import ", "").split("、").map((m) => m.trim().split(" ")[0]);
 assert.deepStrictEqual(promptModules.slice().sort(), Array.from(S.ALLOWED_MODULES).sort(), "the prompt's modules: " + promptModules.join(", "));
@@ -194,6 +195,23 @@ expect("prompt example: colors.sunny", script("var colors = {sunny: \"red\"}; va
 expect("prompt example: address + city", script("var city = \"Tokyo\"; var r = new XMLHttpRequest(); r.open(\"GET\", \"https://api.example.com/data?q=\" + city);"), true, "pass");
 expect("prompt example: for in", script("var obj = {a: 1}; for (var k in obj) console.log(k);"), false, "pass");
 assert.ok(prompt.indexOf("QtQuick.Window") !== -1 && importRule.indexOf("包括 QtQuick.Window") !== -1, "the prompt says QtQuick.Window is not allowed");
+
+// Sizes that freeze SAO Utils, each part within its own limit (checkSizes)
+expect("size: Repeater of 100000000", widget("    Repeater { model: 100000000; Rectangle { width: 1; height: 1 } }"), false, "refuse");
+expect("size: model as a product", widget("    ListView { anchors.fill: parent; model: 10000 * 10000 }"), false, "refuse");
+expect("size: Repeater of 60", widget("    Repeater { model: 60; Rectangle { width: 2; height: 2 } }"), false, "pass");
+expect("size: model of a list", widget("    property var items: [1, 2, 3]\n    Repeater { model: items.length; Rectangle { width: 2; height: 2 } }"), false, "pass");
+expect("size: three loops of 1000", script("var n = 0; for (var i = 0; i < 1000; i++) { for (var j = 0; j < 1000; j++) { for (var k = 0; k < 1000; k++) n++; } }"), false, "refuse");
+expect("size: two loops of 1000", script("var n = 0; for (var i = 0; i < 1000; i++) { for (var j = 0; j < 1000; j++) n++; }"), false, "refuse");
+expect("size: a 30 x 30 grid", script("var n = 0; for (var i = 0; i < 30; i++) { for (var j = 0; j < 30; j++) n++; }"), false, "pass");
+expect("size: loops one after another", script("var n = 0; for (var i = 0; i < 1000; i++) n++; for (var j = 0; j < 1000; j++) n++;"), false, "pass");
+expect("size: huge repeat", script("var s = \"x\".repeat(1000000000);"), false, "refuse");
+expect("size: repeat of a variable", script("var n = 5; var s = \"★\".repeat(n);"), false, "refuse");
+expect("size: padStart(2, \"0\")", script("var s = String(7).padStart(2, \"0\");"), false, "pass");
+expect("size: new Array(1e8)", script("var a = new Array(100000000);"), false, "refuse");
+expect("size: Array(n)", script("var n = 5; var a = Array(n);"), false, "refuse");
+expect("size: new Array(1, 2, 3)", script("var a = new Array(1, 2, 3);"), false, "pass");
+expect("size: Timer repeat: true still fine", widget("    Timer { interval: 1000; running: true; repeat: true }"), false, "pass");
 
 // Messages say the line
 const lined = S.check("import QtQuick 2.12\nItem {\n    Component.onCompleted: Qt.quit()\n}\n", false);

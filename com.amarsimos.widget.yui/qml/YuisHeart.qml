@@ -334,9 +334,13 @@ NVG.Window {
                                 }
                                 var dialog = component.createObject(heartWindow);
                                 dialog.accepted.connect(function() {
-                                    heartMessage.text = heartWindow.targetWidget.importHeart(dialog.fileUrl);
-                                    heartWindow.refreshLogSize();
+                                    var picked = dialog.fileUrl;
                                     dialog.destroy();
+                                    // read asynchronously: the message once it is imported
+                                    heartWindow.targetWidget.importHeart(picked, function(message) {
+                                        heartMessage.text = message;
+                                        heartWindow.refreshLogSize();
+                                    });
                                 });
                                 dialog.rejected.connect(function() {
                                     dialog.destroy();

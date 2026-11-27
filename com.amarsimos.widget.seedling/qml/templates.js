@@ -2,7 +2,7 @@
 
 // Seedling's templates: the workbench's Examples, and what Yui looks at when she writes a widget of
 // the same kind (through the Bench). Each passes the safety check (Weather: with Network on) and its
-// declarations all take effect (tests/test_seedling_props.js).
+// declarations all take effect (tests/seedling/test_seedling_props.js).
 
 var TEMPLATES = [
     {

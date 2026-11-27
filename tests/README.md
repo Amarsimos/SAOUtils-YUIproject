@@ -2,28 +2,30 @@
 
 这些脚本不属于挂件本身：`cp.bat` 只复制两个插件目录（`com.amarsimos.widget.yui/`、`com.amarsimos.widget.seedling/`），所以它们不会被复制到 SAO Utils，也不会打进 `.nvg`。需要 Node.js 18 以上版本。
 
+两个插件的测试分开放：`tests/yui/` 只用结衣的代码，`tests/seedling/` 只用 Seedling 的代码（结衣那边的数据用 `tests/seedling/yui_port.js` 代替，部署前检查会核对它和结衣的是否一致）。
+
 ## 单元测试
 
 ```
-node tests/test_yui.js
+node tests/yui/test_yui.js
 ```
 
 测试 `qml/yui.js` 里与界面无关的逻辑：标签解析、工具调用转换、记忆、搜索地址、Markdown 显示、提示词规则等。改了 `yui.js` 以后都应该跑一遍。
 
 ```
-node tests/test_seedling_safety.js
+node tests/seedling/test_seedling_safety.js
 ```
 
 测试 Seedling 的安全检查（`com.amarsimos.widget.seedling/qml/safety.js`）：每条规则都有"必须拦下"和"必须放行"的样本，包括 S1 的探针和代码审查找到的绕过写法；还检查写代码的提示词（`writer.js`）和检查规则一致（允许的模块、Qt 函数、提示词里的例子都能通过）。改了 `safety.js` 或 `writer.js` 的提示词以后都应该跑一遍。
 
 ```
-node tests/test_seedling_props.js
+node tests/seedling/test_seedling_props.js
 ```
 
 测试 Seedling 挂件自己的设置和记忆（`com.amarsimos.widget.seedling/qml/props.js`）：`@name` / `@setting` / `@keep` 的解析（只认根元素最外层、宽松的写法、不生效时说明原因、数量上限）、值的类型转换（范围、选项、颜色、JSON）、改代码后保留哪些值、64 KB 上限，以及写代码提示词第 13 条（设置和记忆）和解析器一致。
 
 ```
-node tests/test_seedling_writer.js
+node tests/seedling/test_seedling_writer.js
 ```
 
 测试 Seedling 写代码的流程（`writer.js`、`api.js`）：提示词的规则编号和长度、只在修改时带修改方式、新挂件重试的说法、SEARCH / REPLACE 修改、从回复里取代码，以及三种接口的请求和流式读取。
@@ -31,10 +33,11 @@ node tests/test_seedling_writer.js
 ## 提示词文档
 
 ```
-node tests/prompt_doc.js
+node tests/yui/prompt_doc.js
+node tests/seedling/prompt_doc.js
 ```
 
-从 `yui.js` 和 `writer.js` 生成 `Prompt Rules.md` 文末的附录（提示词原文）。改了任何提示词以后都要跑一遍，再一起提交。
+第一个从 `yui.js` 生成 `Prompt Rules.md` 文末的附录，第二个从 `writer.js` 生成 `Seedling Development Plan.md` 第 13.6 节（提示词原文）。改了提示词以后跑对应的那个，再一起提交。
 
 ## 部署前检查
 
@@ -48,15 +51,16 @@ node tests/check_deploy.js
 - Qt 5.13（SAO Utils 用的版本）没有的东西：更新版本的 import、`WheelHandler`、`??`、`?.`；
 - 同步的 XMLHttpRequest（`open(..., false)` 会卡死 SAO Utils）。读取本地文件可以同步，在那一行末尾写 `// sync-ok`；
 - 和上次提交相比删掉了、但还在被调用（`name(` 或 `.name`）的函数和属性，包括整个被删掉的文件；
-- 上面四套单元测试。
+- 每个插件自己的单元测试；
+- 两个插件之间的 Link 接口（`Seedling Development Plan.md` 第十二节）：两边只调用对方清单里的函数、版本号一致、`tests/seedling/yui_port.js` 和结衣的数据一致。
 
 ## 模型测试（需要本地 Ollama）
 
 25 条测试，覆盖表情、记忆、网页、桌面代行、人设、时间、不泄露提示词、不用 Markdown，以及“不该触发时不要触发”的情况。提示词的拼法和挂件完全相同：规则块、默认人格提示词、功能说明、时间。
 
 ```
-node tests/tagtest.js qwen3.5:9b      # Tags 模式（Action Mode = Tags）
-node tests/tooltest.js qwen3.5:9b     # Tools 模式（Action Mode = Tools）
+node tests/yui/tagtest.js qwen3.5:9b      # Tags 模式（Action Mode = Tags）
+node tests/yui/tooltest.js qwen3.5:9b     # Tools 模式（Action Mode = Tools）
 ```
 
 可选的环境变量：

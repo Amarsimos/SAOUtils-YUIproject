@@ -52,18 +52,11 @@ NVG.View {
         status = qsTr("Copied %1 problem(s).").arg(problemList.length);
     }
 
-    // Sent to Yui's chat at once; the start ("帮我修好这个挂件：", Yui's SEEDLING_FIX_PREFIX) makes her fix
-    // it with the code flow. An older Yui without sendToChat: written in her input box instead.
+    // Send to Yui: she fixes the widget (her port's fixWidget).
     function sendProblemsToYui() {
-        var yui = Link.Bench.yui;
-        if (!yui)
-            return ;
+        if (Link.Bench.yui)
+            Link.Bench.yui.fixWidget(problemsText());
 
-        var text = "帮我修好这个挂件：\n" + problemsText();
-        if (yui.sendToChat)
-            yui.sendToChat(text);
-        else if (yui.prefillChat)
-            yui.prefillChat(text);
     }
 
     // Problems: a click puts the cursor at the line (with Code Editor on).
@@ -86,7 +79,7 @@ NVG.View {
     // Chinese (or Japanese) text: SAO UI has no such characters and the system picked any font for
     // them. The Message Font of Yui's Equipment (MHCP-YUI running), else her default; English stays in
     // SAO UI.
-    readonly property string messageFont: Link.Bench.writer && Link.Bench.writer.fontFamilyOf ? Link.Bench.writer.fontFamilyOf(Link.Bench.writer.styles.bubble_font_family) : "Source Han Sans SC"
+    readonly property string messageFont: Link.Bench.yui && Link.Bench.yui.font ? Link.Bench.yui.font : "Source Han Sans SC"
 
     function fontFor(text) {
         return /[　-ヿ㐀-鿿豈-﫿＀-￯]/.test(String(text || "")) ? messageFont : "SAO UI";
@@ -104,7 +97,7 @@ NVG.View {
     }
     // The bands are translucent as Yui's chat (her Chat Opacity in Equipment when MHCP-YUI runs, else
     // 80 %); the code, the preview and the text on them stay opaque.
-    readonly property real panelAlpha: Link.Bench.writer && Link.Bench.writer.chatOpacity !== undefined ? Link.Bench.writer.chatOpacity : 0.8
+    readonly property real panelAlpha: Link.Bench.yui ? Link.Bench.yui.panelAlpha : 0.8
     readonly property int leastWidth: 720
     readonly property int leastHeight: 520
     readonly property int titleHeight: 64
@@ -354,7 +347,7 @@ NVG.View {
         if (!preview)
             return ;
 
-        var decl = Props.parse(editor.text);
+        var decl = Props.parse(editor.text, Link.Bench.yuiKeys());
         Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
     }
 
@@ -395,7 +388,7 @@ NVG.View {
             return false;
         }
         // A widget reading Yui's data (@yui) may not go online, Network or not (refused, not asked).
-        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code), settings.allow_network === true)), Props.parse(code));
+        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code, Link.Bench.yuiKeys()), settings.allow_network === true)), Props.parse(code, Link.Bench.yuiKeys()));
         refusedProblems = problems;
 
         if (problems.length > 0) {
@@ -426,7 +419,7 @@ NVG.View {
             // @setting / @keep (props.js): the widget's settings given to the preview (kept values are
             // not: the preview starts from the defaults); declarations that do not take effect are
             // listed in Problems as notes (they do not stop it).
-            var decl = Props.parse(code);
+            var decl = Props.parse(code, Link.Bench.yuiKeys());
             Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
             // Yui's values too (read only, so the preview shows them as the widget will).
             previewYuis = decl.yuis;
@@ -1015,8 +1008,8 @@ NVG.View {
                 anchors.bottomMargin: 14
                 spacing: 12
 
-                // Tools: Versions, Examples, then (only while there) Stop and Problems last, so their
-                // coming and going does not move the others.
+                // Tools: Versions, Examples, Problems (only while there) right after them; Stop
+                // (only while writing) at the right end.
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -1046,6 +1039,26 @@ NVG.View {
                         text: "Examples"
                         icon: "items"
                         onClicked: examplesMenu.popup(examplesChip, 0, examplesChip.height + 2)
+                    }
+
+                    Chip {
+
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Layout.preferredHeight: 30
+                        id: problemsChip
+
+                        // Flashes (lit for a moment, twice) when a Save fails with problems.
+                        property bool flash: false
+
+                        visible: bench.problemList.length > 0
+                        text: "Problems (" + bench.problemList.length + ")"
+                        icon: "help"
+                        checked: bench.showProblems || flash
+                        onClicked: {
+                            bench.showProblems = !bench.showProblems;
+                            bench.showVersions = false;
+                        }
                     }
 
                     Item {
@@ -1081,26 +1094,6 @@ NVG.View {
 
                         }
 
-                    }
-
-                    Chip {
-
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Layout.preferredHeight: 30
-                        id: problemsChip
-
-                        // Flashes (lit for a moment, twice) when a Save fails with problems.
-                        property bool flash: false
-
-                        visible: bench.problemList.length > 0
-                        text: "Problems (" + bench.problemList.length + ")"
-                        icon: "help"
-                        checked: bench.showProblems || flash
-                        onClicked: {
-                            bench.showProblems = !bench.showProblems;
-                            bench.showVersions = false;
-                        }
                     }
 
                     Menu {

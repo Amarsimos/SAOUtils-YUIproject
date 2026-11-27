@@ -7,6 +7,7 @@ import QtQuick.Layouts 1.12
 import "link" 1.0 as Link
 import "templates.js" as Templates
 import "api.js" as Api
+import "fakes.js" as Fakes
 
 // Seedling Settings (the Seedling widget's menu): General (Code Editor, Network) and Test, which
 // tries the workbench's states without the AI and without a request: a widget, a compile error, the
@@ -43,10 +44,10 @@ NVG.Window {
                 settingsWindow.linkRevision++;
         }
     }
-    // With MHCP-YUI: her server's name, models and chat model (seedlingModels); yuiRevision makes it
+    // With MHCP-YUI: her server's name, models and chat model (her port's models()); yuiRevision makes it
     // read again after Scan Cores / Restore Registry.
     property int yuiRevision: 0
-    readonly property var yuiModels: (yuiRevision, Link.Bench.yui && Link.Bench.yui.seedlingModels ? Link.Bench.yui.seedlingModels() : null)
+    readonly property var yuiModels: (yuiRevision, Link.Bench.yui ? Link.Bench.yui.models() : null)
     // Scan Cores (Link, Core): the server's own model list, kept per server (scanned_models) until
     // Restore Registry.
     readonly property var scanned: (scannedRevision, Link.Bench.setting("scanned_models", {}))
@@ -60,7 +61,7 @@ NVG.Window {
         if (!ownConnection) {
             scanning = true;
             scanStatus = qsTr("Scanning...");
-            Link.Bench.yui.seedlingScanModels(function(models, error) {
+            Link.Bench.yui.scanModels(function(models, error) {
                 scanning = false;
                 yuiRevision++;
                 scanStatus = models ? qsTr("Found %1 core(s).").arg(models.length) : qsTr("Scan failed: %1").arg(error);
@@ -93,7 +94,7 @@ NVG.Window {
 
     function restoreRegistry() {
         if (!ownConnection) {
-            Link.Bench.yui.seedlingRestoreModels();
+            Link.Bench.yui.restoreModels();
             yuiRevision++;
             scanStatus = "";
             return ;
@@ -438,8 +439,9 @@ NVG.Window {
 
                     }
 
+                    // Which connection the core below belongs to: each keeps its own choice.
                     Heading {
-                        text: "Core"
+                        text: settingsWindow.ownConnection ? "Core · Seedling's own AI" : "Core · MHCP-YUI's AI"
                     }
 
                     P.PreferenceGroup {
@@ -470,16 +472,22 @@ NVG.Window {
                                 if (JSON.stringify(next) === JSON.stringify(models))
                                     return ;
 
-                                // The list swap moves the selection by itself: not a choice to save.
+                                // The list swap moves the selection by itself, maybe later: not a choice
+                                // to save, until followModels has put the saved one back.
                                 refreshing = true;
                                 models = next;
-                                refreshing = false;
                                 Qt.callLater(followModels);
                             }
 
                             property bool refreshing: false
 
                             readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
+                            // The other connection's choice is shown at once (the list may be the same);
+                            // nothing is saved under the new key before that.
+                            onKeyChanged: {
+                                refreshing = true;
+                                Qt.callLater(followModels);
+                            }
 
                             visible: models.length > 0
                             label: "Core Program"
@@ -520,17 +528,18 @@ NVG.Window {
 
                                 var current = String(Link.Bench.setting(key, ""));
                                 var at = !settingsWindow.ownConnection && current === "" ? 0 : models.indexOf(current);
+                                refreshing = true;
                                 value = Math.max(0, at);
-                                if (at === -1 && models.length > 0)
-                                    Link.Bench.setSetting(key, stored(0));
-
+                                refreshing = false;
+                                // A saved core missing from the list is kept (the list may be another
+                                // server's for a moment, or not scanned yet): only shown as the first.
                             }
                         }
 
                         SettingNote {
                             visible: settingsWindow.help && corePreference.visible
                             besidePreferences: true
-                            text: qsTr("The AI model that writes the widgets.")
+                            text: qsTr("The AI model that writes the widgets. MHCP-YUI's AI and Seedling's own AI each keep their own choice; this is the one used now.")
                         }
 
                         RowLayout {
@@ -570,18 +579,24 @@ NVG.Window {
                             id: customModelPreference
 
                             property bool ready: false
+                            // Each connection keeps its own: Seedling's server, or MHCP-YUI's.
+                            readonly property string key: settingsWindow.ownConnection ? "custom_model" : "yui_custom_model"
+
+                            function load() {
+                                ready = false;
+                                value = String(Link.Bench.setting(key, ""));
+                                ready = true;
+                            }
 
                             visible: settingsWindow.advanced || corePreference.models.length === 0
                             label: "Manual Core ID"
                             display: P.TextFieldPreference.ExpandAll
                             hint: qsTr("model id, e.g. gpt-6-sol")
-                            Component.onCompleted: {
-                                value = String(Link.Bench.setting("custom_model", ""));
-                                ready = true;
-                            }
+                            Component.onCompleted: load()
+                            onKeyChanged: load()
                             onValueChanged: {
                                 if (ready)
-                                    Link.Bench.setSetting("custom_model", value.trim());
+                                    Link.Bench.setSetting(key, value.trim());
 
                             }
                         }
@@ -658,11 +673,66 @@ NVG.Window {
 
                     }
 
+                    // Link: what Seedling gets of MHCP-YUI (section 12 of "Seedling Development Plan.md"),
+                    // shown below; Send to Yui runs her whole fixing flow with a made-up reply.
+                    Heading {
+                        text: "Link"
+                    }
+
+                    SettingNote {
+                        visible: settingsWindow.help
+                        besidePreferences: true
+                        text: qsTr("What Seedling gets of MHCP-YUI. Link Status: whether she is there, the Link version, which AI writes. Yui's Data: what @yui reads now. Send to Yui: she fixes this widget in her chat with a made-up reply (no request).")
+                    }
+
+                    CenteredFlow {
+                        Button {
+                            text: "Link Status"
+                            onClicked: settingsWindow.linkStatus()
+                        }
+
+                        Button {
+                            text: "Yui's Data"
+                            onClicked: settingsWindow.yuiData()
+                        }
+
+                        Button {
+                            text: "Send to Yui"
+                            enabled: Link.Bench.yui !== null
+                            onClicked: settingsWindow.sendToYuiFake()
+                        }
+
+                        // As never answered: the disclaimer shows when a Seedling widget is placed next
+                        // (or before the next widget is written).
+                        Button {
+                            text: "Reset Disclaimer"
+                            onClicked: {
+                                Link.Bench.setSetting("disclaimer", "");
+                                settingsWindow.testResult = "The disclaimer shows when a Seedling widget is placed next, or before the next widget is written.";
+                            }
+                        }
+
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: settingsWindow.testResult !== ""
+                        text: settingsWindow.testResult
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        font.family: "Consolas"
+                        font.pixelSize: 12
+                    }
+
                     Repeater {
                         model: [{
                             "title": "Render",
                             "note": qsTr("Code put in the editor and rendered: a widget, a compile error (red marks, RENDER FAILED), refused by the safety check, one that needs to go online (Network is turned off first; the question comes as for code Yui brings, and on Save when typed in), and one larger than the preview (Fit, − / +)."),
                             "tests": [["Widget", "widget"], ["Compile Error", "broken"], ["Safety Check", "unsafe"], ["Needs Network", "network"], ["Large Widget", "large"]]
+                        }, {
+                            "title": "Writing",
+                            "note": qsTr("The whole writing flow with made-up replies (no request): progress, edits, a fix after an error, the network question, Yui's data. Edit changes a color of the code there (Write first)."),
+                            "tests": [["Write", "fake:write"], ["Edit", "fake:edit"], ["Fix", "fake:fix"], ["Network", "fake:network"], ["Mood Calendar", "fake:moods"]]
                         }, {
                             "title": "Settings & Keep",
                             "note": qsTr("A todo list with its own settings and memory (@name, @setting, @keep): save it with ○, then right-click the widget: Settings... and the Show Done switch. Add a few todos (Enter), restart SAO Utils: they are still there. The preview does not keep them."),
@@ -740,7 +810,80 @@ NVG.Window {
 
     }
 
+    function linkStatus() {
+        var yui = Link.Bench.yui;
+        var lines = ["Link version: " + Link.Bench.linkVersion];
+        if (!yui) {
+            lines.push(Link.Bench.hideYui ? "MHCP-YUI: hidden (Pretend No Yui)" : "MHCP-YUI: not running (or another Link version)");
+        } else {
+            var c = yui.connection();
+            lines.push("MHCP-YUI: attached, her Link version " + yui.linkVersion);
+            lines.push("Her AI: " + (c.ready ? c.title + " · " + c.model : "not set up"));
+            lines.push("Her data: " + Object.keys(yui.dataKeys()).length + " names");
+        }
+        var own = Link.Bench.ownSetup();
+        lines.push("Own AI: " + (own ? own.title + " · " + own.model : "not set up"));
+        lines.push("Writing uses: " + (Link.Bench.connectionKind() === "yui" ? "MHCP-YUI's AI" : "Seedling's own AI") + (Link.Bench.cannotWrite() ? " (" + Link.Bench.cannotWrite() + ")" : ""));
+        // The model widgets are written with: with her, Seedling's own choice for her server
+        // (yui_custom_model / yui_model, "" = her chat's); alone, its own (custom_model / model).
+        lines.push("Writing model: " + (Link.Bench.connectionKind() === "yui" ? (Link.Bench.writingModel() || "same as her chat (" + (yui ? yui.connection().model : "") + ")") : Api.modelOf(Link.Bench.ownConfig())));
+        lines.push("Saved: with Yui " + JSON.stringify(Link.Bench.setting("yui_model", "")) + " / " + JSON.stringify(Link.Bench.setting("yui_custom_model", "")) + ", alone " + JSON.stringify(Link.Bench.setting("model", "")) + " / " + JSON.stringify(Link.Bench.setting("custom_model", "")));
+        testResult = lines.join("\n");
+        console.log("Seedling test: " + lines.join(" | "));
+    }
+
+    function yuiData() {
+        var yui = Link.Bench.yui;
+        if (!yui) {
+            testResult = "No MHCP-YUI: @yui values stay the code's defaults.";
+            return ;
+        }
+        var keys = yui.dataKeys();
+        testResult = Object.keys(keys).map(function(key) {
+            var found = yui.value(key);
+            var shown = found ? JSON.stringify(found.current) : "null (off or none)";
+            return key + " (" + keys[key].type + "): " + (shown.length > 60 ? shown.slice(0, 57) + "..." : shown);
+        }).join("\n");
+    }
+
+    // Send to Yui with a made-up reply: her chat opens and she fixes this widget (no request).
+    function sendToYuiFake() {
+        if (!Link.Bench.yui)
+            return ;
+
+        // Busy: she would send it as a chat message, which makes a real request.
+        if (Link.Bench.job) {
+            testResult = "A widget is being written; try again when it is done.";
+            return ;
+        }
+        Link.Bench.used(targetWidget);
+        Link.Bench.fakeReplies = Fakes.replies("write", "");
+        Link.Bench.yui.fixWidget("Line 3, column 5: (test) a made-up problem");
+        testResult = "Sent: watch MHCP-YUI's chat (the fix runs with a made-up reply).";
+    }
+
+    // Test, Writing: Bench.write with replies from fakes.js (no request), in this widget's workbench.
+    function writeFake(kind) {
+        var replies = Fakes.replies(kind, Link.Bench.currentCode());
+        if (replies.length === 0) {
+            console.log("Seedling test: no code with a color to change; Write first");
+            return ;
+        }
+        if (kind === "network")
+            targetWidget.settings.allow_network = false;
+
+        Link.Bench.used(targetWidget);
+        Link.Bench.fakeReplies = replies;
+        Link.Bench.write("(test) " + kind, null, function(result, message) {
+            Link.Bench.fakeReplies = [];
+            console.log("Seedling test: " + kind + " - " + result + ", " + message);
+        });
+    }
+
     function run(tag) {
+        if (tag.indexOf("fake:") === 0)
+            return writeFake(tag.slice(5));
+
         if (tag === "widget")
             load(sampleCode);
         else if (tag === "broken")

@@ -1,4 +1,5 @@
 pragma Singleton
+import NERvGear 1.0 as NVG
 import QtQml 2.12
 import QtQuick.LocalStorage 2.12
 import "../templates.js" as Templates
@@ -13,14 +14,54 @@ QtObject {
     id: bench
 
     property var widgets: []
-    readonly property int version: 1
-    // MHCP-YUI when it is running (it sets itself here): her connection (seedlingConnection) can be
-    // borrowed, and her data read (@yui, linkValue).
-    property var writer: null
+    // The Link interface (section 12 of "Seedling Development Plan.md"): what MHCP-YUI may call here
+    // (linkVersion, attach, attached, detach, widgets, write, stop, ownSetup) and what Seedling may call of her
+    // (her YuiPort). Goes up when it changes in a way that breaks the other side.
+    readonly property int linkVersion: 1
+    // MHCP-YUI's YuiPort while she is running (attach): her connection can be borrowed (ask), her data
+    // read (@yui, value). Never Yui herself.
+    property var port: null
     // MHCP-YUI as Seedling sees her: null while Pretend No Yui is on (Seedling Settings' Test, for
     // trying Seedling on its own; not saved).
     property bool hideYui: false
-    readonly property var yui: hideYui ? null : writer
+    readonly property var yui: hideYui ? null : port
+
+    // Link: MHCP-YUI gives her port (true when taken; a port of another version is not).
+    function attach(given) {
+        if (!given || given.linkVersion !== linkVersion) {
+            console.log("Seedling: MHCP-YUI's Link version " + (given ? given.linkVersion : "none") + " is not " + linkVersion + ", working without her");
+            return false;
+        }
+        port = given;
+        return true;
+    }
+
+    // What a widget may read of MHCP-YUI (@yui): her port's dataKeys(), null without her.
+    function yuiKeys() {
+        return yui ? yui.dataKeys() : null;
+    }
+
+    // Link: whether a MHCP-YUI is attached (another one that went may be replaced).
+    function attached() {
+        return port !== null;
+    }
+
+    // Link: MHCP-YUI is going. A widget being written ends with her (its request may be hers, and
+    // what it reports goes to her): stopped at once, without calling her back.
+    function detach(given) {
+        if (port !== given)
+            return ;
+
+        port = null;
+        var going = job;
+        if (going) {
+            going.silent = true;
+            stop();
+            if (going.finish)
+                going.finish("stopped", "MHCP-YUI went away");
+
+        }
+    }
 
     // The code being worked on: the target widget's open workbench's, else its saved code ("" when none).
     function currentCode() {
@@ -38,9 +79,10 @@ QtObject {
         return String(setting("widget_style", "")).trim() || Templates.DEFAULT_STYLE;
     }
 
-    // With Yui's connection: Manual Core ID, else the core chosen in Link ("": her chat's model).
+    // With Yui's connection: its own Manual Core ID, else the core chosen in Link ("": her chat's
+    // model). Kept apart from Seedling's own (model / custom_model): the two are different servers.
     function writingModel() {
-        return String(setting("custom_model", "")).trim() || String(setting("yui_model", "")).trim();
+        return String(setting("yui_custom_model", "")).trim() || String(setting("yui_model", "")).trim();
     }
 
     // ---- Seedling's own settings, shared by all its widgets (section 11.3): connection ("yui" /
@@ -196,11 +238,7 @@ QtObject {
 
     // Whether MHCP-YUI is there with her connection set up (server, key, model in Cardinal System).
     function yuiReady() {
-        if (!yui || !yui.seedlingConnection || !yui.activeConfig)
-            return false;
-
-        var config = yui.activeConfig();
-        return !!(config.apiKey && config.endpoint && config.model);
+        return !!yui && yui.connection().ready;
     }
 
     // The connection used: MHCP-YUI's whenever she is there and set up (her server, key and models:
@@ -210,7 +248,7 @@ QtObject {
         if (yuiReady())
             return "yui";
 
-        if (!yui || !yui.seedlingConnection)
+        if (!yui)
             return "own";
 
         return Api.missing(ownConfig()) === "" ? "own" : "yui";
@@ -257,8 +295,11 @@ QtObject {
     // One request through the chosen connection: onDelta(soFar), onFinished(text, isError). Returns
     // {abort()}. timeout: no data for that long ends it.
     function ask(system, user, onDelta, onFinished) {
+        if (fakeReplies.length > 0)
+            return fakeAnswer(onDelta, onFinished);
+
         if (connectionKind() === "yui")
-            return yui.seedlingConnection(system, user, writingModel(), onDelta, onFinished);
+            return yui.ask(system, user, writingModel(), onDelta, onFinished);
 
         var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 240000 }", bench);
         var finished = false;
@@ -281,6 +322,42 @@ QtObject {
         return handle;
     }
 
+    // Seedling Settings' Test, Writing: the next replies, made up (fakes.js); no request is made while
+    // there are some. Not saved.
+    property var fakeReplies: []
+
+    // The next made-up reply, streamed in a few pieces like a real one. Returns {abort()}.
+    function fakeAnswer(onDelta, onFinished) {
+        var queued = fakeReplies.slice();
+        var text = queued.shift();
+        fakeReplies = queued;
+        var timer = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 120; repeat: true }", bench);
+        var shown = 0;
+        var done = false;
+        var end = function(value, isError) {
+            if (done)
+                return ;
+
+            done = true;
+            timer.stop();
+            timer.destroy();
+            onFinished(value, isError);
+        };
+        timer.triggered.connect(function() {
+            shown = Math.min(text.length, shown + Math.max(40, Math.ceil(text.length / 12)));
+            onDelta(text.slice(0, shown));
+            if (shown >= text.length)
+                end(text, false);
+
+        });
+        timer.start();
+        return {
+            "abort": function() {
+                end(text.slice(0, shown), false);
+            }
+        };
+    }
+
     // The job being written, or null: {handle, stopped}.
     property var job: null
 
@@ -290,8 +367,14 @@ QtObject {
             return ;
 
         job.stopped = true;
-        if (job.handle)
-            job.handle.abort();
+        // The request may be MHCP-YUI's, already gone with her.
+        try {
+            if (job.handle)
+                job.handle.abort();
+
+        } catch (e) {
+            console.log("Seedling: stop:", e);
+        }
 
     }
 
@@ -299,7 +382,59 @@ QtObject {
     // onProgress(state) every second and at each step: {stage "writing" | "editing" | "fixing" |
     // "checking", lines, edits, seconds, attempt, problem}. onDone(kind, message, code) once: kind
     // "done", "edited", "failed", "stopped", "offline" (not allowed online), "busy", "missing" (no
-    // widget), "unset" (no connection). Returns "" or why it did not start.
+    // widget), "unset" (no connection), "declined" (the disclaimer not accepted). Returns "" or why it
+    // did not start.
+    // AI-written code is not certain: said in SAO Utils' alert box (about three short lines are shown)
+    // the moment the first Seedling widget is on the desktop (register: placed, or there at start),
+    // before anything is written. Setting "disclaimer": "" never answered, "accepted", "declined".
+    // Declined: asked again only when the AI is to write (write).
+    readonly property string disclaimerText: "挂件代码由 AI 生成，不保证正确、安全。\n请先在工作台预览，确认后再保存使用。\n使用中产生的问题由使用者自行承担。"
+    // Waiting for the box on screen (one box at a time: a write asked meanwhile, e.g. MHCP-YUI's right
+    // after the widget she asked for was placed, waits for its answer).
+    property var disclaimerWaiters: []
+
+    function disclaimerAccepted() {
+        return setting("disclaimer", "") === "accepted";
+    }
+
+    // then(accepted), at once when accepted before.
+    function askDisclaimer(then) {
+        if (disclaimerAccepted())
+            return then(true);
+
+        disclaimerWaiters.push(then);
+        if (disclaimerWaiters.length > 1)
+            return ;
+
+        var answered = function(accepted) {
+            setSetting("disclaimer", accepted ? "accepted" : "declined");
+            console.log("Seedling: disclaimer " + (accepted ? "accepted" : "declined"));
+            var waiting = disclaimerWaiters;
+            disclaimerWaiters = [];
+            waiting.forEach(function(waiter) {
+                waiter(accepted);
+            });
+        };
+        try {
+            var answer = NVG.SystemCall.messageBox({
+                "title": "Alert",
+                "text": disclaimerText,
+                "modal": true
+            });
+            if (answer && typeof answer.then === "function") {
+                answer.then(function(result) {
+                    answered(result !== false && result !== 0);
+                }, function() {
+                    answered(false);
+                });
+                return ;
+            }
+        } catch (e) {
+            console.log("Seedling: cannot show the disclaimer:", e);
+        }
+        answered(false);
+    }
+
     function write(request, onProgress, onDone) {
         if (widgets.length === 0) {
             onDone("missing", "no Seedling widget on the desktop", "");
@@ -309,12 +444,23 @@ QtObject {
             onDone("busy", "a widget is being written", "");
             return "busy";
         }
-        var why = cannotWrite();
+        var why = fakeReplies.length > 0 ? "" : cannotWrite();
         if (why) {
             onDone("unset", why, "");
             return why;
         }
-        var withYui = !!yui;
+        // Not accepted (declined, or its box still on screen after the widget was placed): the AI
+        // writes only once it is (every way of writing: the workbench, MHCP-YUI, the tests).
+        if (!disclaimerAccepted()) {
+            askDisclaimer(function(accepted) {
+                if (accepted)
+                    write(request, onProgress, onDone);
+                else
+                    onDone("declined", qsTr("The disclaimer was not accepted, so nothing was written."), "");
+            });
+            return "";
+        }
+        var keys = yuiKeys();
         var current = currentCode();
         var editing = current.trim() !== "";
         var extra = Writer.styleNote(writingStyle()) + Writer.templateNote(editing ? "" : templateFor(request));
@@ -331,25 +477,44 @@ QtObject {
         var ticker = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 1000; repeat: true }", bench);
         var current_job = {
             "handle": null,
-            "stopped": false
+            "stopped": false,
+            "silent": false,
+            "finished": false,
+            "finish": null
         };
         // The last way out was taken: the whole code asked for once after the edits did not fit.
         var wholeTaken = false;
         var progress = function() {
             state.seconds = Math.round((Date.now() - started) / 1000);
-            if (onProgress)
+            // silent: whoever asked is gone (MHCP-YUI removed, see detach)
+            if (onProgress && !current_job.silent)
                 onProgress(state);
 
         };
         var finish = function(kind, message, code) {
+            // once (detach may end it before its request answers)
+            if (current_job.finished)
+                return ;
+
+            current_job.finished = true;
             ticker.stop();
             ticker.destroy();
-            job = null;
+            if (job === current_job)
+                job = null;
+
             var ok = kind === "done" || kind === "edited";
             endWriting(ok, message);
             console.log("Seedling: " + kind + ", " + message);
-            onDone(kind, message, code || "");
+            // info: what Seedling makes of the code for whoever asked (MHCP-YUI says it), so nobody
+            // else reads Seedling's code: {online: it goes online, note: what the writer could not do}.
+            if (!current_job.silent)
+                onDone(kind, message, code || "", {
+                "online": ok && Writer.goesOnline(code),
+                "note": ok ? Writer.noteOf(code) : ""
+            });
+
         };
+        current_job.finish = finish;
         var askFor;
         // Asks again with what went wrong (twice at most); when editing, after that once more for the
         // whole code.
@@ -405,7 +570,7 @@ QtObject {
         askFor = function(code, problem, whole) {
             var edits = editing && !whole;
             // The whole code asked for: the edit format is left out of the rules.
-            var system = Writer.codePrompt(network, editing, withYui, editing && whole) + extra;
+            var system = Writer.codePrompt(network, editing, keys, editing && whole) + extra;
             current_job.handle = ask(system, Writer.codeRequest(request, code, problem, editing && whole, !editing), function(soFar) {
                 var count = edits ? Writer.editCount(soFar) : 0;
                 if (count > 0) {
@@ -487,6 +652,12 @@ QtObject {
         moveOldSettings(widget);
         if (widgets.indexOf(widget) === -1)
             widgets = widgets.concat([widget]);
+
+        // The first Seedling widget on the desktop (placed, or already there at start): the
+        // disclaimer, if it was never answered.
+        if (setting("disclaimer", "") === "")
+            Qt.callLater(askDisclaimer, function() {
+            });
 
     }
 

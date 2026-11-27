@@ -17,7 +17,7 @@ T.Widget {
     title: declared.name || "Seedling"
 
     // The saved code's @name / @setting / @keep (props.js).
-    readonly property var declared: Props.parse(code)
+    readonly property var declared: Props.parse(code, Link.Bench.yuiKeys())
     // The declarations of what is shown now (the code being saved may not be settings.code yet).
     property var shownDecl: Props.parse("")
     // The kept values as last saved (JSON), to see whether they changed.
@@ -40,7 +40,7 @@ T.Widget {
             return "";
 
         // A widget reading Yui's data (@yui) may not go online, Network or not.
-        var decl = Props.parse(source);
+        var decl = Props.parse(source, Link.Bench.yuiKeys());
         var problems = Props.guard(Safety.check(source, Props.networkAllowed(decl, settings.allow_network === true)), decl);
         if (problems.length > 0) {
             problem = Safety.describe(problems);
@@ -69,7 +69,7 @@ T.Widget {
     // The settings and kept values given to what was just created (code: its source). Values whose
     // declaration is gone or changed type are dropped.
     function giveValues(source) {
-        var decl = Props.parse(source);
+        var decl = Props.parse(source, Link.Bench.yuiKeys());
         shownDecl = decl;
         var given = Props.carry(settings.prop_settings, decl.settings);
         settings.prop_settings = given;

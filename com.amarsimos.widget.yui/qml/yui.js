@@ -2470,7 +2470,25 @@ function systemCall(text, title, loads) {
 // Seedling's Send to Yui starts with this: such a message goes straight to the code flow (sendMessage).
 var SEEDLING_FIX_PREFIX = "帮我修好这个挂件：";
 
-var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
+// What a Seedling widget may read of Yui (@yui, the Link interface's dataKeys): type, what it is (for
+// Seedling's code rule 15) and fast (every second, else every 10 s). The values: linkValue.
+var SEEDLING_DATA = {
+    "companion_days": { "type": "int", "text": "陪伴天数", "fast": false },
+    "mood": { "type": "int", "text": "今天心情 1-5，0 是没记录", "fast": false },
+    "mood_text": { "type": "string", "text": "今天心情的文字", "fast": false },
+    "mood_history": { "type": "var", "text": "最近 30 天心情：[{day: \"yyyy-MM-dd\", score: 1-5}]", "fast": false },
+    "boss_raid": { "type": "int", "text": "Boss Raid 剩余分钟", "fast": true },
+    "raid_timer": { "type": "string", "text": "Boss Raid 计时文字", "fast": true },
+    "raid_cleared": { "type": "int", "text": "刚打赢 Boss Raid 的几秒内是 1", "fast": true },
+    "next_alarm": { "type": "int", "text": "下一个闹钟还有几分钟", "fast": false },
+    "next_alarm_text": { "type": "string", "text": "下一个闹钟的文字", "fast": false },
+    "quest_log": { "type": "string", "text": "待办，每行一条", "fast": false },
+    "heart_core": { "type": "int", "text": "结衣之心的记忆条数", "fast": false },
+    "col_ledger": { "type": "real", "text": "本月用掉的 k token", "fast": false },
+    "latest_report": { "type": "string", "text": "最新周报", "fast": false }
+};
+
+var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，这一次只回复 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>> 这一个标签，标签前后不要写任何话：能不能马上开始、进度和结果，都由程序以你的口吻告诉{t}。代码由程序另外去写，不要在回复里写代码；只是聊到挂件、没有要做或要改的时候不要加。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要猜原因，同样只回复 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
 
 // What Yui says while a widget is written, as a message of her own that changes as it goes (the
 // numbers and the errors are only in the workbench): thinking while nothing has come out yet, then
@@ -2496,6 +2514,31 @@ function seedlingNoteLine(state, title) {
 
 // The last words of that message. kind: "done", "edited", "failed", "stopped", "declined", "missing"
 // or "busy".
+// The messages of a chat request with a note the user does not see added to the last one (as the
+// regeneration note is).
+function withNote(messages, note) {
+    var copy = messages.slice();
+    var last = copy[copy.length - 1];
+    copy[copy.length - 1] = {
+        "role": last.role,
+        // A message with an image is a list of parts: the note is one more text part.
+        "content": typeof last.content === "string" ? last.content + "\n\n" + note : (last.content || []).concat([{
+            "type": "text",
+            "text": note
+        }])
+    };
+    return copy;
+}
+
+// Why a widget asked for cannot be grown now, for her to say in her own words (the request is asked
+// again with it): "missing" in the setting (The Seed's authority asleep in her core, awakened by
+// installing the Seedling package), "busy" while one is growing.
+function seedlingBlockedNote(kind, title) {
+    var t = title || "你";
+    var why = kind === "missing" ? "Seedling 还没有安装：你核心深处那份 The Seed 的权限「Seedling（萌芽）」还在沉睡，要" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，然后再叫你。" : "上一个挂件还在培育中，要等它长好了再做下一个。";
+    return "（系统提示：" + t + "刚才想要的挂件现在没办法开始，因为" + why + "请用你自己的口吻告诉" + t + "，简短自然，这次不要加 <<seedling:>> 标签，不要提起这条提示。）";
+}
+
 function seedlingChatLine(kind, title) {
     var t = title || "你";
     return {
@@ -2504,34 +2547,25 @@ function seedlingChatLine(kind, title) {
         "failed": "呜……这次没能做好 (T_T) 哪里不对写在 Seedling 里了",
         "stopped": "好的，结衣停下来啦",
         "declined": "那这次就先不做啦，想做的时候再叫结衣哦～",
-        "missing": "结衣找不到 Seedling 呢……(・_・;)",
-        "busy": "结衣还在做上一个，等一下下哦～",
-        "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 里看看 Connection 吧～",
+        // The setting (Yui 1.2.0 announcement): Seedling is a small part of The Seed's authority,
+        // asleep deep in her core program; installing the package awakens it.
+        "missing": "唔……结衣核心深处的「Seedling（萌芽）」权限还在沉睡，没办法种下呢 (｡･ω･｡)\n" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，叫结衣一声就能开始培育啦～",
+        "busy": "上一个挂件还在培育中呢，等它长好了再叫结衣哦～",
+        "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 的 Link 里看看吧～",
         "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"
     }[kind] || "呜……这次没能做好 (T_T)";
 }
 
-// What the code writer said it could not do (its "// SEEDLING-NOTE:" line), "" when nothing.
-function seedlingNoteOf(code) {
-    var m = /\/\/\s*SEEDLING-NOTE:\s*(.+)/.exec(String(code || ""));
-    return m ? m[1].trim() : "";
-}
-
-// Whether the code goes online (asks the Internet for something).
-function seedlingGoesOnline(code) {
-    var text = String(code || "").replace(/\/\/.*$/gm, "");
-    return /\bXMLHttpRequest\b|\bWebSocket\b|["']https?:\/\//i.test(text);
-}
-
-// What Yui adds to her last words: that it goes online, and what it could not do (the writer's note).
-function seedlingExtra(code, title) {
+// What Yui adds to her last words, from what Seedling made of the code (write's onDone info, Link
+// section 12.3; Seedling's code is never read here): that it goes online, and what the writer could
+// not do.
+function seedlingExtra(info, title) {
     var parts = [];
-    if (seedlingGoesOnline(code))
+    if (info && info.online)
         parts.push("它会联网获取数据哦。");
 
-    var note = seedlingNoteOf(code);
-    if (note)
-        parts.push("不过有一点要告诉" + (title || "你") + "：" + note);
+    if (info && info.note)
+        parts.push("不过有一点要告诉" + (title || "你") + "：" + info.note);
 
     return parts.join("");
 }

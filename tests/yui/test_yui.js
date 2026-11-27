@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 
-const src = fs.readFileSync(process.argv[2] || require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, "");
+const src = fs.readFileSync(process.argv[2] || require("path").join(__dirname, "..", "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, "");
 const Yui = {};
 vm.runInNewContext(src, Yui);
 
@@ -515,7 +515,7 @@ test("Quest Log notes", () => {
 // A QML file with two functions or properties of the same name does not load at all (the widget
 // shows as unknown), and qmllint does not catch it.
 test("No duplicate members in the QML files", () => {
-    const dir = require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml");
+    const dir = require("path").join(__dirname, "..", "..", "com.amarsimos.widget.yui", "qml");
     fs.readdirSync(dir).filter((name) => name.endsWith(".qml")).forEach((name) => {
         const names = [...fs.readFileSync(require("path").join(dir, name), "utf8").matchAll(/^    (?:function (\w+)|(?:readonly )?property \w+ (\w+))/gm)].map((m) => m[1] || m[2]);
         const twice = names.filter((n, i) => names.indexOf(n) !== i);
@@ -785,7 +785,29 @@ test("Follow-ups", () => {
     same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
 });
 
-test("Seedling in Yui's words (the writing itself is Seedling's: tests/test_seedling_writer.js)", () => {
+test("Seedling is checked when a widget is asked for: not installed, she says how to awaken it", () => {
+    const missing = Yui.seedlingChatLine("missing", "爸爸");
+    assert.ok(missing.indexOf("Seedling") !== -1 && missing.indexOf("程序包") !== -1 && missing.indexOf("爸爸") !== -1);
+    assert.ok(Yui.seedlingChatLine("busy", "爸爸").indexOf("培育") !== -1);
+    assert.ok(Yui.seedlingChatLine("unset", "爸爸").indexOf("Connection") === -1);
+});
+
+test("Seedling cannot start: she is asked again with why, in her own words and without the tag", () => {
+    const missing = Yui.seedlingBlockedNote("missing", "爸爸");
+    assert.ok(missing.indexOf("（系统提示：") === 0 && missing.indexOf("The Seed") !== -1 && missing.indexOf("程序包") !== -1);
+    assert.ok(missing.indexOf("不要加 <<seedling:>>") !== -1 && missing.indexOf("不要提起这条提示") !== -1);
+    assert.ok(Yui.seedlingBlockedNote("busy", "爸爸").indexOf("培育中") !== -1);
+    // the note goes on the last message only, the messages given stay as they were
+    const asked = [{ role: "user", content: "早" }, { role: "assistant", content: "早呀" }, { role: "user", content: "做个时钟" }];
+    const again = Yui.withNote(asked, "（系统提示：x）");
+    assert.strictEqual(again[2].content, "做个时钟\n\n（系统提示：x）");
+    assert.strictEqual(asked[2].content, "做个时钟");
+    assert.strictEqual(again[0], asked[0]);
+    const withImage = Yui.withNote([{ role: "user", content: [{ type: "text", text: "看" }] }], "n");
+    assert.strictEqual(withImage[0].content.length, 2);
+});
+
+test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
     // the chat line: thinking until something is written, no numbers
     assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);
     const writing = Yui.seedlingNoteLine({ "stage": "writing", "lines": 24, "edits": 0, "seconds": 9 }, "爸爸");
@@ -794,14 +816,15 @@ test("Seedling in Yui's words (the writing itself is Seedling's: tests/test_seed
     assert.ok(Yui.seedlingChatLine("edited", "妈妈").indexOf("妈妈") !== -1);
     assert.ok(Yui.seedlingChatLine("unset", "爸爸").indexOf("Seedling Settings") !== -1);
     // going online is said, and what the writer could not do (its note) is passed on
-    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("需要联网") !== -1);
+    assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("只回复") !== -1 && Yui.SEEDLING_INSTRUCTION.indexOf("不要写任何话") !== -1);
     assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("<<seedling:修好这些问题") !== -1);
     assert.strictEqual(Yui.SEEDLING_FIX_PREFIX, "帮我修好这个挂件：");
-    assert.strictEqual(Yui.seedlingNoteOf("// SEEDLING-NOTE: 拿不到实时汇率\nimport QtQuick 2.12"), "拿不到实时汇率");
-    assert.ok(Yui.seedlingGoesOnline("var r = new XMLHttpRequest();"));
-    assert.ok(!Yui.seedlingGoesOnline("// https://example.com in a comment\nItem {}"));
-    assert.strictEqual(Yui.seedlingExtra("import QtQuick 2.12\nItem {}", "爸爸"), "");
-    assert.ok(Yui.seedlingExtra("// SEEDLING-NOTE: 拿不到\nvar r = new XMLHttpRequest();", "爸爸").indexOf("联网") !== -1);
+    // from what Seedling tells (write's onDone info), never from the code
+    assert.strictEqual(Yui.seedlingExtra({ online: false, note: "" }, "爸爸"), "");
+    assert.strictEqual(Yui.seedlingExtra(undefined, "爸爸"), "");
+    const extra = Yui.seedlingExtra({ online: true, note: "拿不到实时汇率" }, "爸爸");
+    assert.ok(extra.indexOf("联网") !== -1 && extra.indexOf("爸爸：拿不到实时汇率") !== -1);
+    assert.ok(typeof Yui.seedlingNoteOf === "undefined" && typeof Yui.seedlingGoesOnline === "undefined", "Yui no longer reads Seedling's code");
     assert.ok(Yui.seedlingChatLine("offline", "爸爸").indexOf("没有允许联网") !== -1);
 });
 

@@ -1,14 +1,15 @@
 // How Seedling has a widget written (com.amarsimos.widget.seedling/qml/writer.js), section 11 of
 // "Seedling Development Plan.md": the prompt, the request, the code out of a reply, SEARCH / REPLACE
-// edits, and what is told to the model when they do not fit. Run: node tests/test_seedling_writer.js
+// edits, and what is told to the model when they do not fit. Run: node tests/seedling/test_seedling_writer.js
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
+const KEYS = require("./yui_port.js").dataKeys; // MHCP-YUI's @yui data (her port's dataKeys)
 
 const load = (file) => {
     const box = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
     return box;
 };
 const W = load("writer.js");
@@ -67,16 +68,16 @@ test("the prompt: edit rules only when editing; rule 15 (Yui's data) only with M
     assert.ok(W.codePrompt(false, false, false).indexOf("SEARCH/REPLACE") === -1);
     assert.ok(W.codePrompt(false, false, false).indexOf("SEEDLING-NOTE") !== -1);
     assert.ok(W.codePrompt(false, false, false).indexOf("@yui") === -1);
-    const rule = W.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("15. ") === 0);
+    const rule = W.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("15. ") === 0);
     assert.ok(rule);
     const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
-    same(named.sort(), Object.keys(P.YUI_KEYS).sort());
+    same(named.sort(), Object.keys(KEYS).sort());
 });
 
 test("the prompt: rules 1-14 in order, one length, no edit format when the whole code is asked for", () => {
     const rules = W.codePrompt(false, false, false).split("\n").filter((l) => /^\d+\. /.test(l)).map((l) => parseInt(l, 10));
     same(rules, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
-    const text = W.codePrompt(true, true, true);
+    const text = W.codePrompt(true, true, KEYS);
     assert.ok(text.indexOf(W.MAX_LINES + " 行以内") !== -1 && text.indexOf("120 行") === -1);
     assert.ok(W.CUT_LINES < W.MAX_LINES);
     assert.ok(W.codePrompt(false, true, false, true).indexOf("SEARCH/REPLACE") === -1);
@@ -124,6 +125,18 @@ test("what the writer could not do, and whether it goes online", () => {
     assert.strictEqual(W.noteOf("import QtQuick 2.12"), "");
     assert.ok(W.goesOnline("var r = new XMLHttpRequest();"));
     assert.ok(!W.goesOnline("// https://example.com in a comment\nItem {}"));
+});
+
+test("fakes.js (Seedling Settings' Test, Writing): its widgets pass the check (Network only for network), fix has a broken one first", () => {
+    const F = load("fakes.js");
+    const S = load("safety.js");
+    for (const kind of ["write", "props", "moods", "network"]) {
+        const code = W.codeFrom(F.replies(kind, "")[0]);
+        const problems = S.check(code, false);
+        assert.ok(kind === "network" ? S.onlyNetwork(problems) : problems.length === 0, kind + ": " + JSON.stringify(problems));
+    }
+    assert.strictEqual(F.replies("fix", "").length, 2);
+    assert.strictEqual(F.replies("edit", "Item {}").length, 0);
 });
 
 const A = load("api.js");

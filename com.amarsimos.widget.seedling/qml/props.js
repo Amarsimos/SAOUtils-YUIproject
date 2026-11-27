@@ -22,23 +22,9 @@ var MAX_TEXT = 500;
 var MAX_KEEP_BYTES = 65536;
 var MAX_NAME = 40;
 
-// @yui <key>: what Yui (MHCP-YUI) tells about herself and you, read only; fast: every second (timers),
-// else every 10 s. A widget that reads them may not go online (guard).
-var YUI_KEYS = {
-    "companion_days": false,
-    "mood": false,
-    "mood_text": false,
-    "mood_history": false,
-    "boss_raid": true,
-    "raid_timer": true,
-    "raid_cleared": true,
-    "next_alarm": false,
-    "next_alarm_text": false,
-    "quest_log": false,
-    "heart_core": false,
-    "col_ledger": false,
-    "latest_report": false
-};
+// @yui <key>: what Yui (MHCP-YUI) tells about herself and you, read only. The names, types and which
+// are fast (every second, else every 10 s) are hers: her port's dataKeys(), given to parse. A widget
+// that reads them may not go online (guard).
 var YUI_TYPES = ["string", "int", "real", "double", "bool", "var"];
 
 var SETTING_TYPES = ["string", "int", "real", "double", "bool", "color"];
@@ -130,7 +116,7 @@ function typeOf(type) {
     return type === "double" ? "real" : type;
 }
 
-function parse(code) {
+function parse(code, yuiKeys) {
     var text = String(code || "");
     var lines = text.split("\n");
     var depths = lineDepths(text);
@@ -191,8 +177,9 @@ function parse(code) {
         }
         if (kind === "yui") {
             var key = rest.split(/\s+/)[0];
-            if (!YUI_KEYS.hasOwnProperty(key)) {
-                note(at, "@yui " + name + ": \"" + key + "\" is not something Yui tells (" + Object.keys(YUI_KEYS).join(", ") + ")");
+            // Without Yui (yuiKeys null) any plain name is kept: nothing is read, the defaults stay.
+            if (yuiKeys ? !yuiKeys.hasOwnProperty(key) : !/^[a-z_]+$/.test(key)) {
+                note(at, "@yui " + name + ": \"" + key + "\" is not something Yui tells" + (yuiKeys ? " (" + Object.keys(yuiKeys).join(", ") + ")" : ""));
                 continue;
             }
             if (YUI_TYPES.indexOf(type) === -1) {
@@ -203,7 +190,7 @@ function parse(code) {
                 "name": name,
                 "type": typeOf(type),
                 "key": key,
-                "fast": YUI_KEYS[key],
+                "fast": !!(yuiKeys && yuiKeys[key].fast),
                 "line": at
             });
         } else if (kind === "setting") {
@@ -401,10 +388,10 @@ function guard(problems, decl) {
     });
 }
 
-// Yui's values given to item: all of them, or only the fast ones (timers). writer: MHCP-YUI (its
-// linkValue(key) -> {current}), or null (then nothing changes: the code's defaults stay).
+// Yui's values given to item: all of them, or only the fast ones (timers). writer: MHCP-YUI's port
+// (its value(key) -> {current}), or null (then nothing changes: the code's defaults stay).
 function feed(item, yuis, writer, fastOnly) {
-    if (!item || !writer || typeof writer.linkValue !== "function")
+    if (!item || !writer || typeof writer.value !== "function")
         return ;
 
     for (var i = 0; i < yuis.length; i++) {
@@ -413,7 +400,7 @@ function feed(item, yuis, writer, fastOnly) {
 
         var found = null;
         try {
-            found = writer.linkValue(yuis[i].key);
+            found = writer.value(yuis[i].key);
         } catch (e) {
             found = null;
         }

@@ -33,6 +33,12 @@
             "title": "Seedling",
             "preview": "Presets/widget-seedling.png",
             "entry": "qml/SeedlingWidget.qml"
+        },
+        {
+            "location": "/link/bench",
+            "catalog": "link",
+            "title": "Seedling Link",
+            "entry": "qml/link/Probe.qml"
         }
     ]
 }
