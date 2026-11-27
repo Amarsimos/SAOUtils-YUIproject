@@ -18,10 +18,10 @@ const persona = JSON.parse(qml.match(/readonly property string defaultSystemProm
 const model = process.argv[2] || "qwen3:8b";
 const numCtx = process.argv[3] ? Number(process.argv[3]) : 0;
 const title = "爸爸";
-const now = new Date();
-const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-const time = "\n\n（系统信息：当前本地时间是 " + now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日 " + weekdays[now.getDay()] + " " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + "。回答与时间、日期有关的问题时以此为准。）";
-const system = Yui.priorityRules(title, {}, "tags") + Yui.withTitle(persona, title) + Yui.featureInstructions(title, [], {}, "tags") + time;
+// Built as the widget does (main-stand allowedActions, nowExtras), every action on since the tests try each.
+const allowed = { web: true, launch: true, find: true, kill: true, memory: true, focus: true, alarm: true, notes: true, suggest: true, media: false, seedling: false, skills: [] };
+const time = Yui.nowBlock({ now: Date.now() }, title) + Yui.nowGuidance([]);
+const system = Yui.priorityRules(title, allowed, "tags") + Yui.withTitle(persona, title) + Yui.featureInstructions(title, [], allowed, "tags") + time;
 
 // [id, message, check(reply) -> [ok, note]] ; "chain" tests keep the history.
 const has = (r, k) => r.raw.includes("<<" + k);
