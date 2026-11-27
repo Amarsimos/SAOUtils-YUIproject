@@ -148,6 +148,9 @@ Item {
     // left half mirrored. Upside down: point at y 35 behind the crystal, notch at y 164 under it.
     readonly property var haloCurves: [[107.1, 70.1, 134.1, 78.3, 173.5, 140.4], [194.9, 179, 162.8, 216.3, 119.1, 202.6], [70, 176, 71.1, 170.4, 70, 164]]
     readonly property real haloMiddle: (35 + 202.6) / 2
+    // The whole halo (both layers, the sparkles) scaled about its middle to fit the widget: drawn at
+    // full size its lobes reached past the sides and were cut off.
+    readonly property real haloScale: 0.58
     // Glitter phase (0 - 1, a round of 3.2 s) for the sparkles of the halo's inner layer.
     property real glitter: 0
 
@@ -219,9 +222,18 @@ Item {
                 glints.push([x, y, 2.2 + rnd() * 2.6, rnd()]);
 
         }
+        // to the halo's size (haloScale about its middle)
+        var hs = haloScale;
+        function fit(q) {
+            var r = q.slice();
+            r[0] = 70 + (q[0] - 70) * hs;
+            r[1] = haloMiddle + (q[1] - haloMiddle) * hs;
+            r[2] = Math.max(0.3, q[2] * hs);
+            return r;
+        }
         return {
-            "dots": dots,
-            "glints": glints
+            "dots": dots.map(fit),
+            "glints": glints.map(fit)
         };
     }
 
@@ -293,10 +305,10 @@ Item {
                         var n = 24, each = 1 - Math.pow(1 - alpha, 1 / n);
                         var half = spread / 125;
                         for (var i = 0; i < n; i++) {
-                            var s = scale * (1 + half - 2 * half * i / (n - 1));
+                            var s = crystal.haloScale * scale * (1 + half - 2 * half * i / (n - 1));
                             ctx.save();
                             ctx.scale(u, u);
-                            ctx.translate(90, dy);
+                            ctx.translate(90, dy * crystal.haloScale);
                             ctx.translate(70, crystal.haloMiddle);
                             ctx.scale(s, s);
                             ctx.translate(-70, -crystal.haloMiddle);
