@@ -25,6 +25,7 @@ const out = [START, "",
     fence(Y.priorityRules(title, allowed, "tags")),
     ["### B. 默认人格（`defaultSystemPrompt`）", ""], fence(Y.withTitle(persona, title)),
     ["### C. 系统功能说明（`Yui.featureInstructions`，Tags 模式）", ""], fence(Y.featureInstructions(title, [], allowed, "tags")),
+    ["#### 要的挂件开始不了时，带着这条再问一次（`Yui.seedlingBlockedNote`）", ""], fence(["missing", "busy"].map((k) => k + "：" + Y.seedlingBlockedNote(k, title)).join("\n")),
     ["### D. 小模型提醒（`Yui.smallModelReminder`）", ""], fence(Y.smallModelReminder("tags", { web: false, launch: false, find: false, kill: false, memory: true, suggest: true })),
     [END]).join("\n");
 

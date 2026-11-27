@@ -2514,6 +2514,31 @@ function seedlingNoteLine(state, title) {
 
 // The last words of that message. kind: "done", "edited", "failed", "stopped", "declined", "missing"
 // or "busy".
+// The messages of a chat request with a note the user does not see added to the last one (as the
+// regeneration note is).
+function withNote(messages, note) {
+    var copy = messages.slice();
+    var last = copy[copy.length - 1];
+    copy[copy.length - 1] = {
+        "role": last.role,
+        // A message with an image is a list of parts: the note is one more text part.
+        "content": typeof last.content === "string" ? last.content + "\n\n" + note : (last.content || []).concat([{
+            "type": "text",
+            "text": note
+        }])
+    };
+    return copy;
+}
+
+// Why a widget asked for cannot be grown now, for her to say in her own words (the request is asked
+// again with it): "missing" in the setting (The Seed's authority asleep in her core, awakened by
+// installing the Seedling package), "busy" while one is growing.
+function seedlingBlockedNote(kind, title) {
+    var t = title || "你";
+    var why = kind === "missing" ? "Seedling 还没有安装：你核心深处那份 The Seed 的权限「Seedling（萌芽）」还在沉睡，要" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，然后再叫你。" : "上一个挂件还在培育中，要等它长好了再做下一个。";
+    return "（系统提示：" + t + "刚才想要的挂件现在没办法开始，因为" + why + "请用你自己的口吻告诉" + t + "，简短自然，这次不要加 <<seedling:>> 标签，不要提起这条提示。）";
+}
+
 function seedlingChatLine(kind, title) {
     var t = title || "你";
     return {
@@ -2525,7 +2550,6 @@ function seedlingChatLine(kind, title) {
         // The setting (Yui 1.2.0 announcement): Seedling is a small part of The Seed's authority,
         // asleep deep in her core program; installing the package awakens it.
         "missing": "唔……结衣核心深处的「Seedling（萌芽）」权限还在沉睡，没办法种下呢 (｡･ω･｡)\n" + t + "先装上 Seedling 这个程序包把它唤醒，再把 Seedling 从挂件库拖到桌面上，叫结衣一声就能开始培育啦～",
-        "start": "好～结衣这就开始培育！(｀・ω・´)",
         "busy": "上一个挂件还在培育中呢，等它长好了再叫结衣哦～",
         "unset": "Seedling 还没设置好写代码用的 AI 呢……在 Seedling Settings 的 Link 里看看吧～",
         "offline": "没有允许联网，这个挂件拿不到网上的数据呢……想让它联网的话，可以在 Seedling Settings 里打开 Network，再叫结衣一声哦"

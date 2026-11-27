@@ -1588,7 +1588,9 @@ T.Widget {
         });
         chatView.stickToBottom = true;
         widget.busy = true;
-        widget.currentRequest = requestCompletion(messages, function(text, isError, notConfigured, toolCalls) {
+        // A widget asked for while Seedling cannot grow one: asked once more with why (seedlingHinted).
+        var seedlingHinted = false;
+        var finished = function(text, isError, notConfigured, toolCalls) {
             // The chat was cleared while this request was in flight.
             if (session !== widget.chatSession)
                 return ;
@@ -1602,19 +1604,34 @@ T.Widget {
                 if (reply.unknown.length > 0)
                     diag("tags not understood (hidden): " + reply.unknown.join(" "));
 
-                text = reply.text || silentReplyText(reply);
                 // A widget asked for: her reply is the tag alone (hidden while it streams), so nothing
-                // was said before Seedling's state is known; what she says comes from it: why not (not
-                // installed, busy), else that she starts. Words she added anyway stay when it starts.
+                // was said yet. Seedling's state is checked only now: it can start (her progress
+                // message follows, this one goes), or not (not installed, busy): she is asked again,
+                // told why, and answers in her own words; the line of seedlingChatLine if she asks again.
                 if (reply.seedling) {
                     var seedlingBlock = seedlingBlocked();
-                    diag("seedling: asked for a widget, " + (seedlingBlock || "starting"));
-                    if (seedlingBlock) {
-                        text = Yui.seedlingChatLine(seedlingBlock, userTitle());
-                        reply.seedling = "";
-                    } else if (!reply.text) {
-                        text = Yui.seedlingChatLine("start", userTitle());
+                    diag("seedling: asked for a widget, " + (seedlingBlock || "starting") + (seedlingHinted ? " (asked again)" : ""));
+                    if (seedlingBlock && !seedlingHinted) {
+                        seedlingHinted = true;
+                        widget.currentRequest = requestCompletion(Yui.withNote(messages, Yui.seedlingBlockedNote(seedlingBlock, userTitle())), finished, null, streamed);
+                        return ;
                     }
+                    if (seedlingBlock) {
+                        reply.text = Yui.seedlingChatLine(seedlingBlock, userTitle());
+                        reply.seedling = "";
+                    }
+                }
+                text = reply.text || silentReplyText(reply);
+                // Starting with nothing said: no message of this reply (the progress one is hers).
+                if (reply.seedling && !reply.text) {
+                    if (reply.emotion)
+                        setEmotion(reply.emotion);
+
+                    chatModel.remove(index);
+                    widget.busy = false;
+                    widget.currentRequest = null;
+                    Qt.callLater(seedlingStart, reply.seedling);
+                    return ;
                 }
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
                 setEmotion(reply.emotion || Yui.guessEmotion(text));
@@ -1717,7 +1734,8 @@ T.Widget {
             if (action)
                 Qt.callLater(confirmAction, index);
 
-        }, null, function(partial) {
+        };
+        var streamed = function(partial) {
             if (session !== widget.chatSession)
                 return ;
 
@@ -1729,7 +1747,8 @@ T.Widget {
                     "pending": false
                 });
 
-        });
+        };
+        widget.currentRequest = requestCompletion(messages, finished, null, streamed);
         // The request may have finished synchronously (e.g. API not configured).
         if (!widget.busy)
             widget.currentRequest = null;

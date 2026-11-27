@@ -792,6 +792,21 @@ test("Seedling is checked when a widget is asked for: not installed, she says ho
     assert.ok(Yui.seedlingChatLine("unset", "爸爸").indexOf("Connection") === -1);
 });
 
+test("Seedling cannot start: she is asked again with why, in her own words and without the tag", () => {
+    const missing = Yui.seedlingBlockedNote("missing", "爸爸");
+    assert.ok(missing.indexOf("（系统提示：") === 0 && missing.indexOf("The Seed") !== -1 && missing.indexOf("程序包") !== -1);
+    assert.ok(missing.indexOf("不要加 <<seedling:>>") !== -1 && missing.indexOf("不要提起这条提示") !== -1);
+    assert.ok(Yui.seedlingBlockedNote("busy", "爸爸").indexOf("培育中") !== -1);
+    // the note goes on the last message only, the messages given stay as they were
+    const asked = [{ role: "user", content: "早" }, { role: "assistant", content: "早呀" }, { role: "user", content: "做个时钟" }];
+    const again = Yui.withNote(asked, "（系统提示：x）");
+    assert.strictEqual(again[2].content, "做个时钟\n\n（系统提示：x）");
+    assert.strictEqual(asked[2].content, "做个时钟");
+    assert.strictEqual(again[0], asked[0]);
+    const withImage = Yui.withNote([{ role: "user", content: [{ type: "text", text: "看" }] }], "n");
+    assert.strictEqual(withImage[0].content.length, 2);
+});
+
 test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
     // the chat line: thinking until something is written, no numbers
     assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);

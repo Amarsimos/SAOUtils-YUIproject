@@ -39,10 +39,11 @@
 | :-- | :-- | :-- | :-- |
 | C1 | 结衣启动后，System Console → **Test Seedling Link** | `resolve ...: null (not installed)`，然后是 `not found ...; Yui works without it` | |
 | C2 | Log | 有 `seedling: not installed (no nvg://...)`，没有报错 | |
-| C3 | 聊天里说"做个时钟挂件" | 结衣不说「收到」，直接说「Seedling（萌芽）」权限还在沉睡，引导你装上 Seedling 程序包、放到桌面上 | |
-| C6 | 装着 Seedling、她正在写一个挂件时，再让她做另一个 | 她不说「收到」，直接说上一个还在培育中，等长好了再叫她 | |
+| C3 | 聊天里说"做个时钟挂件" | 思考中不出字，也不先说「收到」；只出一条她自己的话：Seedling 的权限还在沉睡，要先装上 Seedling 程序包、放到桌面上。Log：`seedling: asked for a widget, missing`，接着 `missing (asked again)` 不应出现 | |
 | C4 | 结衣开着时停用 Seedling，再点 **Test Seedling Link** | `resolve ...: null`，然后 `not found`；Log 有 `seedling: no longer installed` | |
 | C5 | 再启用 Seedling，点两次 **Test Seedling Link** | 第一次可能还是 not found（正在加载），第二次 `found at ...` | |
+| C6 | 装着 Seedling、她正在写一个挂件时，再让她做另一个 | 同 C3，只出一条她自己的话：上一个还在培育中 | |
+| C7 | 装着 Seedling、桌面上有挂件，让她做挂件 | 没有「收到」这类回复，直接出现进度消息（「在想…」），然后写出来 | |
 
 ## D. 只装 Seedling（关掉结衣挂件：结衣不在桌面上就当没有她）
 
