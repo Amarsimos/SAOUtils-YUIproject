@@ -702,12 +702,13 @@ NVG.Window {
                             onClicked: settingsWindow.sendToYuiFake()
                         }
 
-                        // The first-use disclaimer shows again before the next widget is written.
+                        // As never answered: the disclaimer shows when a Seedling widget is placed next
+                        // (or before the next widget is written).
                         Button {
                             text: "Reset Disclaimer"
                             onClicked: {
-                                Link.Bench.setSetting("disclaimer_accepted", false);
-                                settingsWindow.testResult = "The disclaimer shows again before the next widget is written.";
+                                Link.Bench.setSetting("disclaimer", "");
+                                settingsWindow.testResult = "The disclaimer shows when a Seedling widget is placed next, or before the next widget is written.";
                             }
                         }
 

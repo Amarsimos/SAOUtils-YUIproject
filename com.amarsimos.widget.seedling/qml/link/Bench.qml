@@ -367,11 +367,37 @@ QtObject {
     // "checking", lines, edits, seconds, attempt, problem}. onDone(kind, message, code) once: kind
     // "done", "edited", "failed", "stopped", "offline" (not allowed online), "busy", "missing" (no
     // widget), "unset" (no connection). Returns "" or why it did not start.
-    // AI-written code is not certain: said once, before the first widget is written, in SAO Utils'
-    // alert box (about three short lines are shown). then(accepted).
+    // AI-written code is not certain: said in SAO Utils' alert box (about three short lines are shown)
+    // the moment the first Seedling widget is on the desktop (register: placed, or there at start),
+    // before anything is written. Setting "disclaimer": "" never answered, "accepted", "declined".
+    // Declined: asked again only when the AI is to write (write).
     readonly property string disclaimerText: "挂件代码由 AI 生成，不保证正确、安全。\n请先在工作台预览，确认后再保存使用。\n使用中产生的问题由使用者自行承担。"
+    // Waiting for the box on screen (one box at a time: a write asked meanwhile, e.g. MHCP-YUI's right
+    // after the widget she asked for was placed, waits for its answer).
+    property var disclaimerWaiters: []
 
+    function disclaimerAccepted() {
+        return setting("disclaimer", "") === "accepted";
+    }
+
+    // then(accepted), at once when accepted before.
     function askDisclaimer(then) {
+        if (disclaimerAccepted())
+            return then(true);
+
+        disclaimerWaiters.push(then);
+        if (disclaimerWaiters.length > 1)
+            return ;
+
+        var answered = function(accepted) {
+            setSetting("disclaimer", accepted ? "accepted" : "declined");
+            console.log("Seedling: disclaimer " + (accepted ? "accepted" : "declined"));
+            var waiting = disclaimerWaiters;
+            disclaimerWaiters = [];
+            waiting.forEach(function(waiter) {
+                waiter(accepted);
+            });
+        };
         try {
             var answer = NVG.SystemCall.messageBox({
                 "title": "Alert",
@@ -380,16 +406,16 @@ QtObject {
             });
             if (answer && typeof answer.then === "function") {
                 answer.then(function(result) {
-                    then(result !== false && result !== 0);
+                    answered(result !== false && result !== 0);
                 }, function() {
-                    then(false);
+                    answered(false);
                 });
                 return ;
             }
         } catch (e) {
             console.log("Seedling: cannot show the disclaimer:", e);
         }
-        then(false);
+        answered(false);
     }
 
     function write(request, onProgress, onDone) {
@@ -406,16 +432,14 @@ QtObject {
             onDone("unset", why, "");
             return why;
         }
-        // The first time (for every way of writing: the workbench, MHCP-YUI, the tests): the
-        // disclaimer, accepted once; declined, nothing is written.
-        if (setting("disclaimer_accepted", false) !== true) {
+        // Not accepted (declined, or its box still on screen after the widget was placed): the AI
+        // writes only once it is (every way of writing: the workbench, MHCP-YUI, the tests).
+        if (!disclaimerAccepted()) {
             askDisclaimer(function(accepted) {
-                if (!accepted) {
-                    onDone("declined", "the disclaimer was not accepted", "");
-                    return ;
-                }
-                setSetting("disclaimer_accepted", true);
-                write(request, onProgress, onDone);
+                if (accepted)
+                    write(request, onProgress, onDone);
+                else
+                    onDone("declined", qsTr("The disclaimer was not accepted, so nothing was written."), "");
             });
             return "";
         }
@@ -592,6 +616,12 @@ QtObject {
         moveOldSettings(widget);
         if (widgets.indexOf(widget) === -1)
             widgets = widgets.concat([widget]);
+
+        // The first Seedling widget on the desktop (placed, or already there at start): the
+        // disclaimer, if it was never answered.
+        if (setting("disclaimer", "") === "")
+            Qt.callLater(askDisclaimer, function() {
+            });
 
     }
 

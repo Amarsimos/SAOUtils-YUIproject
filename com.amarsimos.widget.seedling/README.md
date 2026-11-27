@@ -5,8 +5,10 @@ little panel, a decoration. Describe it and an AI writes it (Seedling's own, set
 Settings), write it yourself in the workbench, or, with **MHCP-YUI** installed, ask Yui in her chat.
 
 **Disclaimer.** Widget code written by an AI is not guaranteed to be correct or safe. Preview it in
-the workbench and save it only when it does what you want; you use it at your own risk. Before the
-first widget is written, Seedling asks you to accept this once (declined, nothing is written).
+the workbench and save it only when it does what you want; you use it at your own risk. Seedling
+asks you to accept this once, the moment its first widget is on the desktop (when Yui asked you to
+place one, she writes after you accept). Declined, the AI writes nothing and asks again the next
+time it is to write; code you write yourself is not affected.
 
 ## Using it
 
