@@ -28,7 +28,9 @@ Item {
     // Spin; 0 does not turn).
     property real spinSeconds: 40
     property real spin: 0
-    readonly property real unit: Math.min(width / 140, height / 200)
+    // Laid out in box units over the halo's whole area, -80 .. 220 across and 0 .. 240 down (the
+    // crystal's own 140 x 200 box sits in it at x 0, y 0), so the halo with its soft edge fits the item.
+    readonly property real unit: Math.min(width / 300, height / 240)
 
     // The teardrop's half width at t (0 at the top point, 1 at the bottom).
     function halfWidth(t) {
@@ -148,9 +150,9 @@ Item {
     // left half mirrored. Upside down: point at y 35 behind the crystal, notch at y 164 under it.
     readonly property var haloCurves: [[107.1, 70.1, 134.1, 78.3, 173.5, 140.4], [194.9, 179, 162.8, 216.3, 119.1, 202.6], [70, 176, 71.1, 170.4, 70, 164]]
     readonly property real haloMiddle: (35 + 202.6) / 2
-    // The whole halo (both layers, the sparkles) scaled about its middle to fit the widget: drawn at
-    // full size its lobes reached past the sides and were cut off.
-    readonly property real haloScale: 0.58
+    // The whole halo (both layers, the sparkles) scaled about its middle; 1: as drawn. The item is laid
+    // out to hold all of it (see unit), so it is never cut off.
+    readonly property real haloScale: 1
     // Glitter phase (0 - 1, a round of 3.2 s) for the sparkles of the halo's inner layer.
     property real glitter: 0
 
@@ -237,7 +239,7 @@ Item {
         };
     }
 
-    implicitWidth: 80
+    implicitWidth: 150
     implicitHeight: 120
 
     Item {
@@ -250,7 +252,9 @@ Item {
 
         width: 140 * u
         height: 200 * u
-        anchors.centerIn: parent
+        // the crystal's box in the halo's area (centered across, at the top of 240 down)
+        x: crystal.width / 2 - 70 * u
+        y: (crystal.height - 240 * u) / 2
         onUChanged: {
             glow.requestPaint();
             facets.requestPaint();

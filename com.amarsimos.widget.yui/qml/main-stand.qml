@@ -4861,7 +4861,9 @@ T.Widget {
     function applyCollapsedSize() {
         if (collapsedForm === "crystal") {
             var crystalHeight = widget.styles.crystal_size > 0 ? widget.styles.crystal_size : widget.defaultValues.crystal_size;
-            applyFrameSize(Math.ceil(crystalHeight * 0.75), crystalHeight);
+            // Room for the halo around it (YuiCrystal lays out 300 x 240 for its 140 x 200 crystal):
+            // the crystal keeps its size, the frame holds the halo.
+            applyFrameSize(Math.ceil(crystalHeight * 1.5), Math.ceil(crystalHeight * 1.2));
         } else if (collapsedForm === "pixie") {
             var pixieHeight = widget.styles.pixie_size > 0 ? widget.styles.pixie_size : widget.defaultValues.pixie_size;
             // Extra room for the hovering animation.
