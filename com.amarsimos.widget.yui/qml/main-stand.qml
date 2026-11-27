@@ -3979,7 +3979,7 @@ T.Widget {
     }
 
     // Ends the wait for a Seedling widget: nothing written this time (she says so).
-    function seedlingStopWaiting(why) {
+    function seedlingStopWaiting(why, said) {
         seedlingGiveUp.stop();
         var waiting = seedlingWaiting;
         seedlingWaiting = null;
@@ -3987,7 +3987,7 @@ T.Widget {
             return ;
 
         diag("seedling: no widget on the desktop, " + why);
-        waiting.onDone("没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
+        waiting.onDone(said || "没有地方让种子发芽，这次就先不写了。想做的时候，先在桌面放一个 Seedling 吧", false, "declined");
     }
 
     Timer {
@@ -4085,6 +4085,10 @@ T.Widget {
 
     // Stop (Seedling's workbench): ends the request being written; what was written stays.
     function seedlingStop() {
+        // Still waiting for a Seedling widget to be placed: that wait ends.
+        if (seedlingWaiting)
+            return seedlingStopWaiting("stopped in the chat", "好，那这次先不写了。");
+
         var bench = seedlingBench();
         if (bench && bench.stop)
             bench.stop();
@@ -6419,13 +6423,14 @@ T.Widget {
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignBottom
                     // Turns into a stop button while a reply is being generated, and while Yui writes a
-                    // Seedling widget (as the workbench's Stop, which is small and may be closed).
-                    text: widget.busy ? qsTr("Cancel") : widget.seedlingJob ? qsTr("Stop") : qsTr("Send")
-                    enabled: widget.busy || widget.seedlingJob !== null || textInput.text.trim().length > 0
+                    // Seedling widget (as the workbench's Stop, which is small and may be closed) or waits
+                    // for one to be placed.
+                    text: widget.busy ? qsTr("Cancel") : (widget.seedlingJob || widget.seedlingWaiting) ? qsTr("Stop") : qsTr("Send")
+                    enabled: widget.busy || widget.seedlingJob !== null || widget.seedlingWaiting !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
                             widget.stopReply();
-                        else if (widget.seedlingJob)
+                        else if (widget.seedlingJob || widget.seedlingWaiting)
                             widget.seedlingStop();
                         else
                             textInput.submit();
