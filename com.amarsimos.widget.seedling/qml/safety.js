@@ -17,7 +17,8 @@
 //   its open() takes such an address;
 // - limits: width / height up to 2000, Timer intervals from 16 ms, for loops with an end (a number up
 //   to 1000 or a .length) whose counter starts at a number or a .length, steps toward the end and is
-//   not changed inside (nor the measured list grown), particles bounded;
+//   not changed inside (nor the measured list grown), particles bounded; sizes that freeze SAO Utils
+//   all together (a model of millions, loops inside loops, huge .repeat / Array) refused (checkSizes);
 // - x["open"] / x["source"] and .open kept aside are refused, so the address checks see every use.
 // check(code, allowNetwork) returns [{line, message, network}] ([] when it may be created);
 // network: refused only because Network is off.
@@ -86,6 +87,9 @@ var MAX_SIZE = 2000;
 var MIN_INTERVAL = 16;
 var MAX_LOOP = 1000;
 var MAX_PARTICLES = 1000;
+// Items a model may make, and rounds of loops inside loops all together (checkSizes).
+var MAX_MODEL = 1000;
+var MAX_ROUNDS = 100000;
 
 // ---- tokens
 // [{type: "string" | "number" | "name" | "punct", value, line}]; comments dropped. Problems found while
@@ -535,6 +539,7 @@ function check(code, allowNetwork) {
 
         }
     }
+    checkSizes(tokens, add);
     problems.sort(function(a, b) {
         return a.line - b.line;
     });
@@ -548,6 +553,95 @@ function check(code, allowNetwork) {
         seen[key] = true;
         return true;
     });
+}
+
+// ---- sizes: what could freeze SAO Utils while each part is within its own limit (all of it runs on
+// SAO Utils' one thread): a model of millions of items, loops inside loops (each up to MAX_LOOP, so
+// a billion rounds), huge strings or lists made at once.
+// - model: (Repeater, ListView, GridView, PathView...) any number written there up to MAX_MODEL;
+// - for loops inside for loops: the ends multiplied up to MAX_ROUNDS (a .length end counts as MAX_LOOP);
+// - .repeat( / .padStart( / .padEnd( and Array( / new Array(: a written number up to MAX_MODEL.
+function checkSizes(tokens, add) {
+    var T = function(j) {
+        return tokens[j];
+    };
+    for (var j = 0; j < tokens.length; j++) {
+        var t = T(j);
+        if (isName(t, "model") && isPunct(T(j + 1), ":") && !isPunct(T(j - 1), ".")) {
+            // the value: up to the end of its line
+            for (var q = j + 2; q < tokens.length && T(q).line === t.line; q++)
+                if (T(q).type === "number" && T(q).value > MAX_MODEL) {
+                    add(t.line, "model: " + T(q).value + " items are more than " + MAX_MODEL);
+                    break;
+                }
+        }
+        var sized = (isName(t, "repeat") || isName(t, "padStart") || isName(t, "padEnd")) && isPunct(T(j - 1), ".") || isName(t, "Array") && !isPunct(T(j - 1), ".");
+        if (sized && isPunct(T(j + 1), "(")) {
+            var arg = T(j + 2);
+            // Array() / Array(a, b, ...) list what they hold; a single number is a size
+            var single = arg && isPunct(T(j + 3), ")");
+            if (isName(t, "Array") ? single && arg.type !== "string" && !(arg.type === "number" && arg.value <= MAX_MODEL) : !(arg && arg.type === "number" && arg.value <= MAX_MODEL))
+                add(t.line, t.value + "(...): only a written number up to " + MAX_MODEL);
+        }
+    }
+    // Loops inside loops: [{end: index of the body's last token, rounds}] of the loops around.
+    var around = [];
+    for (j = 0; j < tokens.length; j++) {
+        while (around.length > 0 && j > around[around.length - 1].end)
+            around.pop();
+        if (!(isName(T(j), "for") && isPunct(T(j + 1), "(")))
+            continue;
+
+        // the head: ( ... ) and its end condition (between the two ;)
+        var depth = 0;
+        var semis = 0;
+        var rounds = 0;
+        var close = -1;
+        for (var k = j + 1; k < tokens.length; k++) {
+            if (isPunct(T(k), "("))
+                depth++;
+
+            if (isPunct(T(k), ")") && --depth === 0) {
+                close = k;
+                break;
+            }
+            if (depth === 1 && isPunct(T(k), ";"))
+                semis++;
+            else if (semis === 1 && T(k).type === "number")
+                rounds = Math.max(rounds, T(k).value);
+            else if (semis === 1 && (isName(T(k), "length") || isName(T(k), "count")))
+                rounds = Math.max(rounds, MAX_LOOP);
+        }
+        if (close === -1)
+            break;
+
+        // the body: { ... } or one statement up to ;
+        var end = close + 1;
+        if (isPunct(T(end), "{")) {
+            for (var b = 0; end < tokens.length; end++) {
+                if (isPunct(T(end), "{"))
+                    b++;
+
+                if (isPunct(T(end), "}") && --b === 0)
+                    break;
+
+            }
+        } else {
+            while (end < tokens.length && !isPunct(T(end), ";"))
+                end++;
+        }
+        rounds = Math.max(1, semis === 2 ? rounds : MAX_LOOP);
+        var total = around.reduce(function(product, loop) {
+            return product * loop.rounds;
+        }, rounds);
+        if (around.length > 0 && total > MAX_ROUNDS)
+            add(T(j).line, "for inside for: about " + total + " rounds in all, more than " + MAX_ROUNDS);
+
+        around.push({
+            "end": end,
+            "rounds": rounds
+        });
+    }
 }
 
 // A value starting with a written-out web address string ("https://host/..." + ...); orEmpty: "" too.

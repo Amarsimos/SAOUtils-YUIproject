@@ -649,8 +649,8 @@ user   ┬ 现在的代码      只在修改时
 3. 禁止的写法：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。
 4. 方括号：[ ] 里只能写数字（list[0]）、直接写出的字段名（data["temp"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量，按值查表用 switch 或点号（colors.sunny）；也不要写 ["open"]、["source"]，直接用 .open(、.source。
 5. parent：只能取尺寸和锚线（parent.width、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。
-6. 循环：只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不改计数器，也不往 list 里 push 让它变长；计数器在循环外不再赋别的值，也不拿它的名字当函数参数。
-7. 尺寸和频率：根元素写明 width 和 height，在 80 到 2000 之间；文字的 font.pixelSize 不小于 11；Timer 的 interval 不小于 16（毫秒），显示时间用 1000，联网刷新不短于 10 分钟（600000）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。
+6. 循环：只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不改计数器，也不往 list 里 push 让它变长；计数器在循环外不再赋别的值，也不拿它的名字当函数参数。循环里套循环时，各层终点相乘不超过 100000（例如 300 × 300）。
+7. 尺寸和频率：根元素写明 width 和 height，在 80 到 2000 之间；文字的 font.pixelSize 不小于 11；Timer 的 interval 不小于 16（毫秒），显示时间用 1000，联网刷新不短于 10 分钟（600000）；粒子的 emitRate / maximumEmitted 不超过 1000；Repeater、ListView 等的 model 写数字时不超过 1000；.repeat(、.padStart(、.padEnd(、Array( 里只写不超过 1000 的数字（重复次数由变量决定时，用 for 循环拼）。背景可以是透明的。
 8. 地址：source、url、.open( 用到的地址必须以写全的字符串开头，例如 "https://api.example.com/data?q=" + city；只能是 http / https。不能出现 file:、qrc:、C:/ 这类本地地址；source 也可以是空字符串，或代码里自己元素的 id（给效果用）。
 9. 联网：一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许。不要为了装饰去加载网络图片。拿不到数据时显示「--」或「offline」。用了 @yui（规则 15）的挂件无论如何都不能联网，这一条优先。
 10. 自己画：只用 QML 和 JavaScript，需要时间就用 Timer 和 new Date()。

@@ -196,6 +196,23 @@ expect("prompt example: address + city", script("var city = \"Tokyo\"; var r = n
 expect("prompt example: for in", script("var obj = {a: 1}; for (var k in obj) console.log(k);"), false, "pass");
 assert.ok(prompt.indexOf("QtQuick.Window") !== -1 && importRule.indexOf("包括 QtQuick.Window") !== -1, "the prompt says QtQuick.Window is not allowed");
 
+// Sizes that freeze SAO Utils, each part within its own limit (checkSizes)
+expect("size: Repeater of 100000000", widget("    Repeater { model: 100000000; Rectangle { width: 1; height: 1 } }"), false, "refuse");
+expect("size: model as a product", widget("    ListView { anchors.fill: parent; model: 10000 * 10000 }"), false, "refuse");
+expect("size: Repeater of 60", widget("    Repeater { model: 60; Rectangle { width: 2; height: 2 } }"), false, "pass");
+expect("size: model of a list", widget("    property var items: [1, 2, 3]\n    Repeater { model: items.length; Rectangle { width: 2; height: 2 } }"), false, "pass");
+expect("size: three loops of 1000", script("var n = 0; for (var i = 0; i < 1000; i++) { for (var j = 0; j < 1000; j++) { for (var k = 0; k < 1000; k++) n++; } }"), false, "refuse");
+expect("size: two loops of 1000", script("var n = 0; for (var i = 0; i < 1000; i++) { for (var j = 0; j < 1000; j++) n++; }"), false, "refuse");
+expect("size: a 30 x 30 grid", script("var n = 0; for (var i = 0; i < 30; i++) { for (var j = 0; j < 30; j++) n++; }"), false, "pass");
+expect("size: loops one after another", script("var n = 0; for (var i = 0; i < 1000; i++) n++; for (var j = 0; j < 1000; j++) n++;"), false, "pass");
+expect("size: huge repeat", script("var s = \"x\".repeat(1000000000);"), false, "refuse");
+expect("size: repeat of a variable", script("var n = 5; var s = \"★\".repeat(n);"), false, "refuse");
+expect("size: padStart(2, \"0\")", script("var s = String(7).padStart(2, \"0\");"), false, "pass");
+expect("size: new Array(1e8)", script("var a = new Array(100000000);"), false, "refuse");
+expect("size: Array(n)", script("var n = 5; var a = Array(n);"), false, "refuse");
+expect("size: new Array(1, 2, 3)", script("var a = new Array(1, 2, 3);"), false, "pass");
+expect("size: Timer repeat: true still fine", widget("    Timer { interval: 1000; running: true; repeat: true }"), false, "pass");
+
 // Messages say the line
 const lined = S.check("import QtQuick 2.12\nItem {\n    Component.onCompleted: Qt.quit()\n}\n", false);
 assert.strictEqual(lined[0].line, 3);
