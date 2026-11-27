@@ -529,7 +529,7 @@ NVG.Window {
                                     config.userTitle = Yui.titleOf(userTitlePreference.ids[userTitlePreference.value]);
                                     targetWidget.requestCompletion([{
                                         "role": "user",
-                                        "content": "Hello"
+                                        "content": "你好"
                                     }], function(text, isError) {
                                         apiResponseArea.value = (isError ? "" : qsTr("Link established") + " (" + config.model + "):\n") + text;
                                     }, config);

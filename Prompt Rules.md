@@ -20,11 +20,11 @@
 | 主动开口：闲聊、心情关怀、天气变化、深夜、休息、跟进 | 同上 | 同上 | `yuiSpeaks`：附在最新消息后，或作为新的一条 | 五 |
 | 周报（Weekly Report） | 同上 | 同上 | 一条用户消息：一周数据 + 写法要求；不进聊天 | 五 |
 | Through Yui's Eyes（画像） | 同上 | 同上 | 一条用户消息：全部记忆 + 写法要求；不进聊天 | 五 |
-| 结衣的 Link Start! 测试 | 正在编辑的连接 | 编辑中的人格 + 附加部分 | 「Hello」 | 五 |
+| 结衣的 Link Start! 测试 | 正在编辑的连接 | 编辑中的人格 + 附加部分 | 「你好」 | 五 |
 | Seedling 写新挂件 | 有结衣且她配好了：结衣的连接；否则 Seedling 自己的 | 写代码规则（14 条，有结衣时 15 条）+ 外观 + 同类模板参考 | 「要做的挂件：……」 | 九 |
 | Seedling 修改挂件 | 同上 | 同上 + SEARCH/REPLACE 修改方式（不带模板） | 「现在的代码 + 要修改的地方」 | 九 |
 | Seedling 出错重试（最多 2 次 + 整段兜底 1 次） | 同上 | 同上 | 上一次的说明 + 出错原因 | 9.4 |
-| Seedling 的 Link Start! 测试 | Seedling 选中的连接 | 「Reply with one short line.」 | 「Hello」 | 九 |
+| Seedling 的 Link Start! 测试 | Seedling 选中的连接 | 「用一句话回复。」 | 「你好」 | 九 |
 | 本地台词（System Call、Seedling 进度和结果、唤醒语、Navigation Report 等） | 不单独发；进聊天历史 | — | 作为结衣说过的话进入以后的请求 | 四 |
 
 ---
@@ -293,7 +293,7 @@ user   ┬ 现在的代码      只在修改时
 | 5 ✅ | Seedling 规则互相打架（150 / 120 行、规则 6 混进地址、@yui 与联网、整段重写时还有修改方式、新挂件重试写成「要修改」） | 按 9.4、9.5 改 | writer.js，Bench.qml |
 | 6 ✅ | 三种称呼写法 `{{user_title}}`、`{t}`、拼接 | 统一 `{t}` + 一个替换函数（规范 9） | yui.js，main-stand |
 | 7 ✅ | 「系统提示 / 系统信息 / 提醒」混用，部分段落没有括号；开机问候、深夜、休息缺「不要提起」 | 按规范 10、11 统一 | yui.js，main-stand |
-| 8 | 中英混杂：Seedling 重试里的英文报错、两个测试的「Hello」、功能名写法 | 按规范 8 | Bench.qml，CardinalSystem，SeedlingSettings，yui.js |
+| 8 ✅ | 中英混杂：Seedling 重试里的英文报错、两个测试的「Hello」、功能名写法 | 按规范 8 | Bench.qml，CardinalSystem，SeedlingSettings，yui.js |
 | 9 ✅ | 人格用 Markdown 却要求不用；兜底是「你是ai助手」 | 默认人格改成普通文字（内容不变）；兜底改成默认人格（规范 12） | main-stand defaultSystemPrompt |
 | 10 | 同一规则说多遍（表情 3 处、MHCP001、记忆、关闭程序、跟进、深夜关怀） | 按规范 2 合并 | yui.js，main-stand |
 | 11 ✅ | 本地台词进聊天历史后被当作结衣自己说的 | **保留，但标明是程序生成**：进请求时在这类消息前加「（系统生成）」 | main-stand buildHistory |
