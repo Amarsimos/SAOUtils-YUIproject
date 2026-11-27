@@ -118,6 +118,9 @@ T.Widget {
     // Messages sent while Yui was busy (a reply on its way): shown at once, asked for together once
     // she is free (sendQueued; consecutive user turns are merged by buildHistory).
     property bool replyQueued: false
+    // The queued messages (chat indexes), shown with this note until sent.
+    property var queuedAt: []
+    readonly property string queuedNote: "⏳ 排队中：结衣回完上一条就发送"
     onBusyChanged: {
         if (!busy && replyQueued)
             Qt.callLater(sendQueued);
@@ -1855,6 +1858,9 @@ T.Widget {
             careHeard(text, Date.now());
             widget.settings.last_active = Date.now();
             appendMessage("user", text, false);
+            // Marked as waiting (its note) until it is sent.
+            chatModel.setProperty(chatModel.count - 1, "note", queuedNote);
+            queuedAt.push(chatModel.count - 1);
             replyQueued = true;
             diag("message queued (a reply is on its way)");
             return true;
@@ -1914,6 +1920,13 @@ T.Widget {
             return ;
 
         replyQueued = false;
+        // Sent now: the waiting mark goes (only on those still marked, the chat may have changed).
+        queuedAt.forEach(function(at) {
+            if (at < chatModel.count && chatModel.get(at).note === queuedNote)
+                chatModel.setProperty(at, "note", "");
+
+        });
+        queuedAt = [];
         diag("queued message(s) sent");
         startReply(buildHistory());
     }
@@ -4708,6 +4721,9 @@ T.Widget {
     function clearChat() {
         // Bump the session first so the aborted request's callback is ignored.
         widget.chatSession++;
+        // Queued messages go with the chat.
+        replyQueued = false;
+        queuedAt = [];
         stopReply();
         widget.currentRequest = null;
         widget.busy = false;
