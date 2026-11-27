@@ -788,9 +788,9 @@ test("Follow-ups", () => {
 test("Seedling not installed: asked for a widget, Yui points to the plugin", () => {
     const allowed = { seedling: false };
     const text = Yui.featureInstructions("爸爸", [], allowed, "tags");
-    assert.ok(text.indexOf("伙伴插件 Seedling") !== -1);
+    assert.ok(text.indexOf("The Seed") !== -1 && text.indexOf("程序包") !== -1);
     assert.ok(text.indexOf("<<seedling:") === -1);
-    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: true }, "tags").indexOf("伙伴插件 Seedling") === -1);
+    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: true }, "tags").indexOf("还没被唤醒") === -1);
 });
 
 test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
