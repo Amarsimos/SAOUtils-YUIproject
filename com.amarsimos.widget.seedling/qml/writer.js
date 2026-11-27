@@ -25,8 +25,12 @@ function cleanReply(text) {
     }).join("\n\n").trim();
 }
 
-// Rule 15, only when MHCP-YUI is there: her data (@yui, props.js YUI_KEYS).
-var YUI_RULE = "15. 结衣的数据：挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，int，0 是没记录）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情，var：[{day: \"yyyy-MM-dd\", score: 1-5}]）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，string，每行一条）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网（规则 9）。没有数据时保持属性的默认值，所以默认值要能直接显示。";
+// Rule 15, only when MHCP-YUI is there: her data (@yui), from her port's dataKeys().
+function yuiRule(keys) {
+    return "15. 结衣的数据：挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：" + Object.keys(keys).map(function(key) {
+        return key + "（" + keys[key].text + "，" + keys[key].type + "）";
+    }).join("、") + "。用了 @yui 的挂件不能联网（规则 9）。没有数据时保持属性的默认值，所以默认值要能直接显示。";
+}
 
 // How long a widget's code may be (rule 11), and how short when a reply was cut off.
 var MAX_LINES = 300;
@@ -34,9 +38,10 @@ var CUT_LINES = 200;
 
 // The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on;
 // editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
-// do) instead of being written out again; whole: editing, but the complete code is asked for (the
+// do) instead of being written out again; yuiKeys: MHCP-YUI's data (her port's dataKeys()) or null; whole: editing, but the complete code is asked for (the
 // last way out), so the edit format is left out. Rules 1-15 of "Prompt Rules.md" 9.5.
-function codePrompt(allowNetwork, editing, withYui, whole) {
+function codePrompt(allowNetwork, editing, yuiKeys, whole) {
+    var withYui = !!yuiKeys;
     // The rules follow Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js, S3 of
     // "Seedling Development Plan.md"), each with what to write instead, so the code passes the first
     // time. The check is what keeps widgets safe; these rules only save rewrites. One thing per rule.
@@ -56,7 +61,7 @@ function codePrompt(allowNetwork, editing, withYui, whole) {
         "11. 格式：第一行 import QtQuick 2.12（其他模块紧接着写），然后一行 // @name 挂件名，再写唯一的根元素，给它 id: root。缩进 4 个空格；属性在前，子元素在后，Timer 放最后。颜色写成 \"#RRGGBB\" 或 \"#AARRGGBB\"；英文和数字用字体 \"SAO UI\"，中文不指定字体。注释只在不容易看懂的地方写一句中文。代码控制在 " + MAX_LINES + " 行以内：不堆示例数据、不写用不到的功能，一个挂件做好一件事。" + (edits ? "修改时按下面的「修改方式」只输出改动。" : "输出完整的代码。"),
         "12. 不编数据：不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时，照样写出能用的部分，并在 import 之后写一行注释说明：// SEEDLING-NOTE: 原因（一句话）。",
         "13. 设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。这类属性不要叫 source 或 url，默认值要能直接显示。用户在挂件右键的 Settings... 里调设置，记住的东西由 Seedling 自动保存。",
-        "14. 外观：按下面的「外观」写；要求里另外说了风格时，以要求为准。"].concat(withYui ? [YUI_RULE] : []).concat(edits ? EDIT_RULES : []).join("\n");
+        "14. 外观：按下面的「外观」写；要求里另外说了风格时，以要求为准。"].concat(withYui ? [yuiRule(yuiKeys)] : []).concat(edits ? EDIT_RULES : []).join("\n");
 }
 
 // Widget Style (Seedling Settings) for the code prompt: how the widget looks unless the request says

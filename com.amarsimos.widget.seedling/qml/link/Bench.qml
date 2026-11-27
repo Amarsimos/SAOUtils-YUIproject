@@ -35,6 +35,11 @@ QtObject {
         return true;
     }
 
+    // What a widget may read of MHCP-YUI (@yui): her port's dataKeys(), null without her.
+    function yuiKeys() {
+        return yui ? yui.dataKeys() : null;
+    }
+
     // Link: MHCP-YUI is going.
     function detach(given) {
         if (port === given)
@@ -330,7 +335,7 @@ QtObject {
             onDone("unset", why, "");
             return why;
         }
-        var withYui = !!yui;
+        var keys = yuiKeys();
         var current = currentCode();
         var editing = current.trim() !== "";
         var extra = Writer.styleNote(writingStyle()) + Writer.templateNote(editing ? "" : templateFor(request));
@@ -421,7 +426,7 @@ QtObject {
         askFor = function(code, problem, whole) {
             var edits = editing && !whole;
             // The whole code asked for: the edit format is left out of the rules.
-            var system = Writer.codePrompt(network, editing, withYui, editing && whole) + extra;
+            var system = Writer.codePrompt(network, editing, keys, editing && whole) + extra;
             current_job.handle = ask(system, Writer.codeRequest(request, code, problem, editing && whole, !editing), function(soFar) {
                 var count = edits ? Writer.editCount(soFar) : 0;
                 if (count > 0) {

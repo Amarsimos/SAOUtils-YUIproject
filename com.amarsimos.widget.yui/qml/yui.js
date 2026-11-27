@@ -2470,6 +2470,24 @@ function systemCall(text, title, loads) {
 // Seedling's Send to Yui starts with this: such a message goes straight to the code flow (sendMessage).
 var SEEDLING_FIX_PREFIX = "帮我修好这个挂件：";
 
+// What a Seedling widget may read of Yui (@yui, the Link interface's dataKeys): type, what it is (for
+// Seedling's code rule 15) and fast (every second, else every 10 s). The values: linkValue.
+var SEEDLING_DATA = {
+    "companion_days": { "type": "int", "text": "陪伴天数", "fast": false },
+    "mood": { "type": "int", "text": "今天心情 1-5，0 是没记录", "fast": false },
+    "mood_text": { "type": "string", "text": "今天心情的文字", "fast": false },
+    "mood_history": { "type": "var", "text": "最近 30 天心情：[{day: \"yyyy-MM-dd\", score: 1-5}]", "fast": false },
+    "boss_raid": { "type": "int", "text": "Boss Raid 剩余分钟", "fast": true },
+    "raid_timer": { "type": "string", "text": "Boss Raid 计时文字", "fast": true },
+    "raid_cleared": { "type": "int", "text": "刚打赢 Boss Raid 的几秒内是 1", "fast": true },
+    "next_alarm": { "type": "int", "text": "下一个闹钟还有几分钟", "fast": false },
+    "next_alarm_text": { "type": "string", "text": "下一个闹钟的文字", "fast": false },
+    "quest_log": { "type": "string", "text": "待办，每行一条", "fast": false },
+    "heart_core": { "type": "int", "text": "结衣之心的记忆条数", "fast": false },
+    "col_ledger": { "type": "real", "text": "本月用掉的 k token", "fast": false },
+    "latest_report": { "type": "string", "text": "最新周报", "fast": false }
+};
+
 var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
 
 // What Yui says while a widget is written, as a message of her own that changes as it goes (the

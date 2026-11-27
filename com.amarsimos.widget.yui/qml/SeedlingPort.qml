@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import "yui.js" as Yui
 
 // What Seedling may use of MHCP-YUI (section 12 of "Seedling Development Plan.md", the Link
 // interface): Seedling gets this object, never Yui herself, so her own functions can change freely.
@@ -38,6 +39,16 @@ QtObject {
 
     function restoreModels() {
         yui.seedlingRestoreModels();
+    }
+
+    // The data a widget may read (@yui): {name: {type, text, fast}}.
+    function dataKeys() {
+        return Yui.SEEDLING_DATA;
+    }
+
+    // Send to Yui: the chat opens and she fixes the widget (problems: the workbench's list).
+    function fixWidget(problems) {
+        yui.seedlingFix(problems);
     }
 
     // A value of Yui's data (@yui): {current, ...}, or null (unknown, or its feature is off).

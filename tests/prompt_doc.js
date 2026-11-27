@@ -13,6 +13,7 @@ const load = (file) => {
 };
 const Y = load("com.amarsimos.widget.yui/qml/yui.js");
 const W = load("com.amarsimos.widget.seedling/qml/writer.js");
+const KEYS = Y.SEEDLING_DATA;
 const qml = fs.readFileSync(path.join(root, "com.amarsimos.widget.yui/qml/main-stand.qml"), "utf8");
 const persona = JSON.parse(qml.match(/readonly property string defaultSystemPrompt: ("(?:[^"\\]|\\.)*")/)[1]);
 
@@ -31,7 +32,7 @@ const out = [START, "",
     ["### B. 默认人格（`defaultSystemPrompt`）", ""], fence(Y.withTitle(persona, title)),
     ["### C. 系统功能说明（`Yui.featureInstructions`，Tags 模式）", ""], fence(Y.featureInstructions(title, [], allowed, "tags")),
     ["### D. 小模型提醒（`Yui.smallModelReminder`）", ""], fence(Y.smallModelReminder("tags", { web: false, launch: false, find: false, kill: false, memory: true, suggest: true })),
-    ["### E. Seedling 写新挂件（`codePrompt`，不联网，有结衣）", ""], fence(W.codePrompt(false, false, true)),
+    ["### E. Seedling 写新挂件（`codePrompt`，不联网，有结衣）", ""], fence(W.codePrompt(false, false, KEYS)),
     ["### F. Seedling 修改挂件时多出的修改方式（`EDIT_RULES`）", ""], fence(W.EDIT_RULES.join("\n")),
     ["### G. 联网打开时规则 9 换成", ""], fence(W.codePrompt(true, false, false).split("\n").find((l) => l.indexOf("9. ") === 0)),
     [END]).join("\n");

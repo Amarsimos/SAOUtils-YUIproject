@@ -5,6 +5,7 @@ const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
+const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
 
 const root = path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml");
 const load = (file) => {
@@ -181,7 +182,7 @@ Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 // allows are exactly the check's, the Qt functions it names are allowed, and its examples pass.
 const Y = {};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-const prompt = Y.codePrompt(false, false, true);
+const prompt = Y.codePrompt(false, false, KEYS);
 const importRule = prompt.split("\n").find((line) => line.indexOf("1. 模块：只能 import") === 0);
 const promptModules = importRule.split("。")[0].replace("1. 模块：只能 import ", "").split("、").map((m) => m.trim().split(" ")[0]);
 assert.deepStrictEqual(promptModules.slice().sort(), Array.from(S.ALLOWED_MODULES).sort(), "the prompt's modules: " + promptModules.join(", "));

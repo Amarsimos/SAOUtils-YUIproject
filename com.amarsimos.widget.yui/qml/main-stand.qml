@@ -1845,16 +1845,6 @@ T.Widget {
             });
             return true;
         }
-        // Seedling's Send to Yui ("帮我修好这个挂件：" + the problems): straight to the code flow, no
-        // chat request deciding it.
-        if (text.indexOf(Yui.SEEDLING_FIX_PREFIX) === 0 && seedlingBench() && !seedlingJob) {
-            var problems = text.slice(Yui.SEEDLING_FIX_PREFIX.length).trim();
-            appendMessage("user", text, false, true);
-            afterUserMessage(function() {
-                seedlingStart("修好这些问题：\n" + problems);
-            });
-            return true;
-        }
         chatBefore = widget.settings.last_active || 0;
         widget.settings.last_active = Date.now();
         appendMessage("user", text, false);
@@ -3306,6 +3296,23 @@ T.Widget {
             textInput.text = text;
             textInput.cursorPosition = text.length;
             textInput.forceActiveFocus();
+        });
+    }
+
+    // Seedling's Send to Yui (its port's fixWidget): the chat opens with the request in it, and the
+    // code flow fixes the widget (no chat request deciding it). While a widget is being written: sent
+    // as a message.
+    function seedlingFix(problems) {
+        var text = Yui.SEEDLING_FIX_PREFIX + "\n" + String(problems || "").trim();
+        if (!seedlingBench() || seedlingJob)
+            return sendToChat(text);
+
+        if (!showChat)
+            openView();
+
+        appendMessage("user", text, false, true);
+        afterUserMessage(function() {
+            seedlingStart("修好这些问题：\n" + String(problems || "").trim());
         });
     }
 

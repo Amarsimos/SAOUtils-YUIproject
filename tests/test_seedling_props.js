@@ -5,6 +5,7 @@ const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
+const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
 
 const box = { console };
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "props.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
@@ -205,7 +206,7 @@ test("declarations are only comments: the safety check is the same with or witho
 test("Yui's code prompt (rule 13) says the same as props.js: its examples are read", () => {
     const Y = {};
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("13. ") === 0);
+    const rule = Y.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("13. ") === 0);
     assert.ok(rule, "rule 13 is in the prompt");
     const r = P.parse(`import QtQuick 2.12
 // @name 天气
@@ -222,7 +223,7 @@ Item {
     assert.strictEqual(r.name, "天气");
     ["string", "int", "real", "bool", "color"].forEach((t) => assert.ok(rule.indexOf(t) !== -1 && P.SETTING_TYPES.indexOf(t) !== -1, t));
     ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
-    assert.ok(Y.codePrompt(false, false, true).indexOf("// @name") !== -1);
+    assert.ok(Y.codePrompt(false, false, KEYS).indexOf("// @name") !== -1);
 });
 
 test("templates (templates.js): each passes the safety check (Weather only for going online) and all its declarations take effect", () => {
@@ -269,7 +270,7 @@ Item {
     // @yui mood
     property color c: "red"
 }
-`);
+`, KEYS);
     assert.deepStrictEqual(plain(r.yuis.map((y) => y.name + ":" + y.key + ":" + y.fast)), ["moods:mood_history:false", "days:companion_days:false", "raid:raid_timer:true"]);
     assert.ok(r.notes.some((n) => /secret: "password" is not something Yui tells/.test(n.message)));
     assert.ok(r.notes.some((n) => /c: Yui's values are/.test(n.message)));
@@ -288,8 +289,10 @@ Item {
     }
 }
 `;
-    const decl = P.parse(code);
+    const decl = P.parse(code, KEYS);
     assert.strictEqual(P.networkAllowed(decl, true), false);
+    // Without Yui the declaration still counts (nothing read, still no network).
+    assert.strictEqual(P.networkAllowed(P.parse(code), true), false);
     const problems = P.guard(S.check(code, P.networkAllowed(decl, true)), decl);
     assert.ok(problems.length > 0);
     assert.ok(!S.onlyNetwork(problems), "not something Network could allow");
@@ -311,7 +314,7 @@ Item {
     // @yui mood_history
     property var moods: []
 }
-`);
+`, KEYS);
     const writer = { value: (k) => ({ companion_days: { current: 42 }, raid_timer: { current: "12:30" }, mood_history: { current: [{ day: "2026-11-27", score: 4 }] } })[k] || null };
     const item = { days: 0, raid: "", moods: [] };
     P.feed(item, decl.yuis, writer, true);
@@ -327,10 +330,10 @@ Item {
 test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", () => {
     const Y = {};
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("15. ") === 0);
+    const rule = Y.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("15. ") === 0);
     assert.ok(rule, "rule 15 is in the prompt");
     const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
-    assert.deepStrictEqual(named.sort(), Object.keys(P.YUI_KEYS).sort());
+    assert.deepStrictEqual(named.sort(), Object.keys(KEYS).sort());
     assert.ok(rule.indexOf("// @yui") !== -1 && rule.indexOf("不能联网") !== -1);
 });
 

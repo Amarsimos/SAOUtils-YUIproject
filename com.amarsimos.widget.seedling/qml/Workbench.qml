@@ -52,18 +52,11 @@ NVG.View {
         status = qsTr("Copied %1 problem(s).").arg(problemList.length);
     }
 
-    // Sent to Yui's chat at once; the start ("帮我修好这个挂件：", Yui's SEEDLING_FIX_PREFIX) makes her fix
-    // it with the code flow. An older Yui without sendToChat: written in her input box instead.
+    // Send to Yui: she fixes the widget (her port's fixWidget).
     function sendProblemsToYui() {
-        var yui = Link.Bench.yui;
-        if (!yui)
-            return ;
+        if (Link.Bench.yui)
+            Link.Bench.yui.fixWidget(problemsText());
 
-        var text = "帮我修好这个挂件：\n" + problemsText();
-        if (yui.sendToChat)
-            yui.sendToChat(text);
-        else if (yui.prefillChat)
-            yui.prefillChat(text);
     }
 
     // Problems: a click puts the cursor at the line (with Code Editor on).
@@ -354,7 +347,7 @@ NVG.View {
         if (!preview)
             return ;
 
-        var decl = Props.parse(editor.text);
+        var decl = Props.parse(editor.text, Link.Bench.yuiKeys());
         Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
     }
 
@@ -395,7 +388,7 @@ NVG.View {
             return false;
         }
         // A widget reading Yui's data (@yui) may not go online, Network or not (refused, not asked).
-        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code), settings.allow_network === true)), Props.parse(code));
+        var problems = Props.guard(Safety.check(code, Props.networkAllowed(Props.parse(code, Link.Bench.yuiKeys()), settings.allow_network === true)), Props.parse(code, Link.Bench.yuiKeys()));
         refusedProblems = problems;
 
         if (problems.length > 0) {
@@ -426,7 +419,7 @@ NVG.View {
             // @setting / @keep (props.js): the widget's settings given to the preview (kept values are
             // not: the preview starts from the defaults); declarations that do not take effect are
             // listed in Problems as notes (they do not stop it).
-            var decl = Props.parse(code);
+            var decl = Props.parse(code, Link.Bench.yuiKeys());
             Props.apply(preview, decl.settings, Props.carry(settings.prop_settings, decl.settings));
             // Yui's values too (read only, so the preview shows them as the widget will).
             previewYuis = decl.yuis;

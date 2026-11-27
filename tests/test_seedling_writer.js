@@ -5,6 +5,7 @@ const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
+const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
 
 const load = (file) => {
     const box = {};
@@ -67,16 +68,16 @@ test("the prompt: edit rules only when editing; rule 15 (Yui's data) only with M
     assert.ok(W.codePrompt(false, false, false).indexOf("SEARCH/REPLACE") === -1);
     assert.ok(W.codePrompt(false, false, false).indexOf("SEEDLING-NOTE") !== -1);
     assert.ok(W.codePrompt(false, false, false).indexOf("@yui") === -1);
-    const rule = W.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("15. ") === 0);
+    const rule = W.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("15. ") === 0);
     assert.ok(rule);
     const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
-    same(named.sort(), Object.keys(P.YUI_KEYS).sort());
+    same(named.sort(), Object.keys(KEYS).sort());
 });
 
 test("the prompt: rules 1-14 in order, one length, no edit format when the whole code is asked for", () => {
     const rules = W.codePrompt(false, false, false).split("\n").filter((l) => /^\d+\. /.test(l)).map((l) => parseInt(l, 10));
     same(rules, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
-    const text = W.codePrompt(true, true, true);
+    const text = W.codePrompt(true, true, KEYS);
     assert.ok(text.indexOf(W.MAX_LINES + " 行以内") !== -1 && text.indexOf("120 行") === -1);
     assert.ok(W.CUT_LINES < W.MAX_LINES);
     assert.ok(W.codePrompt(false, true, false, true).indexOf("SEARCH/REPLACE") === -1);

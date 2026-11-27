@@ -379,7 +379,7 @@ user   ┬ 现在的代码      只在修改时
 12. 不编数据：不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时，照样写出能用的部分，并在 import 之后写一行注释说明：// SEEDLING-NOTE: 原因（一句话）。
 13. 设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。这类属性不要叫 source 或 url，默认值要能直接显示。用户在挂件右键的 Settings... 里调设置，记住的东西由 Seedling 自动保存。
 14. 外观：按下面的「外观」写；要求里另外说了风格时，以要求为准。
-15. 结衣的数据：挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，int，0 是没记录）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情，var：[{day: "yyyy-MM-dd", score: 1-5}]）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，string，每行一条）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网（规则 9）。没有数据时保持属性的默认值，所以默认值要能直接显示。
+15. 结衣的数据：挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，0 是没记录，int）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情：[{day: "yyyy-MM-dd", score: 1-5}]，var）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，每行一条，string）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网（规则 9）。没有数据时保持属性的默认值，所以默认值要能直接显示。
 ````
 
 ### F. Seedling 修改挂件时多出的修改方式（`EDIT_RULES`）
