@@ -115,20 +115,10 @@ T.Widget {
     readonly property real characterMinimumWidth: 300
     readonly property real minimumFrameHeight: 400
     property bool busy: false
-    // Messages sent while Yui was busy (a reply on its way): shown at once, asked for together once
-    // she is free (sendQueued; consecutive user turns are merged by buildHistory).
-    property bool replyQueued: false
-    // The queued messages (chat indexes), shown with this note until sent.
-    property var queuedAt: []
-    readonly property string queuedNote: "⏳ 排队中：结衣忙完就发送"
     // Yui is not to be disturbed: a reply on its way, or a Seedling widget being grown (one at a time,
-    // its wait for a widget to be placed included). Messages queue, she does not talk by herself.
+    // its wait for a widget to be placed included). Nothing is sent meanwhile (the text stays in the
+    // input field) and she does not talk by herself.
     readonly property bool occupied: busy || seedlingJob !== null || seedlingWaiting !== null
-    onOccupiedChanged: {
-        if (!occupied && replyQueued)
-            Qt.callLater(sendQueued);
-
-    }
     // Controller of the reply being generated (see requestCompletion), used by stopReply().
     property var currentRequest: null
     property int chatSession: 0
@@ -1778,34 +1768,6 @@ T.Widget {
 
     }
 
-    // Cancel (the chat's button while she replies): the reply stops and the messages queued behind it
-    // are taken back, out of the chat and into the input field (to send again or change), as agents do.
-    function cancelReply() {
-        takeBackQueued();
-        stopReply();
-    }
-
-    // The queued messages out of the chat and into the input field (Cancel, or Stop while a widget
-    // grows: what was queued behind it is not sent).
-    function takeBackQueued() {
-        var taken = [];
-        for (var i = queuedAt.length - 1; i >= 0; i--) {
-            var at = queuedAt[i];
-            if (at < chatModel.count && chatModel.get(at).note === queuedNote) {
-                taken.unshift(chatModel.get(at).message);
-                chatModel.remove(at);
-            }
-        }
-        replyQueued = false;
-        queuedAt = [];
-        if (taken.length > 0) {
-            var typed = textInput.text.trim();
-            textInput.text = taken.concat(typed ? [typed] : []).join("\n");
-            textInput.cursorPosition = textInput.text.length;
-            scheduleSave();
-            diag("cancel: " + taken.length + " queued message(s) back in the input field");
-        }
-    }
 
     // Drop the last reply and ask again.
     function regenerateReply() {
@@ -1881,34 +1843,9 @@ T.Widget {
     }
 
     function sendMessage(text) {
-        if (!text.trim())
+        // A reply on its way, or a widget growing: not sent (the text stays in the input field).
+        if (!text.trim() || widget.occupied)
             return false;
-
-        // A reply on its way, or a widget growing: this one waits its turn (shown now, asked for when
-        // she is free).
-        if (widget.occupied) {
-            noteActivity();
-            careHeard(text, Date.now());
-            widget.settings.last_active = Date.now();
-            // Marked as waiting (its note) until it is sent; logged only then (Cancel takes it back).
-            chatModel.append({
-                "author": "user",
-                "message": text,
-                "pending": false,
-                "isError": false,
-                "local": false,
-                "note": queuedNote,
-                "action": "",
-                "actionState": "",
-                "suggestions": ""
-            });
-            chatView.stickToBottom = true;
-            scheduleSave();
-            queuedAt.push(chatModel.count - 1);
-            replyQueued = true;
-            diag("message queued (a reply is on its way)");
-            return true;
-        }
 
         noteActivity();
         awaken();
@@ -1958,23 +1895,6 @@ T.Widget {
         return true;
     }
 
-    // The messages queued while she was busy, asked for in one reply (the history has them all).
-    function sendQueued() {
-        if (widget.occupied || !replyQueued)
-            return ;
-
-        replyQueued = false;
-        // Sent now: the waiting mark goes (only on those still marked, the chat may have changed).
-        queuedAt.forEach(function(at) {
-            if (at < chatModel.count && chatModel.get(at).note === queuedNote) {
-                chatModel.setProperty(at, "note", "");
-                logMessage("user", chatModel.get(at).message);
-            }
-        });
-        queuedAt = [];
-        diag("queued message(s) sent");
-        startReply(buildHistory());
-    }
 
     // Runs next once the user's message has finished popping up (MessageWindow.popUp, 650 ms), so
     // Yui's "..." only appears after it. Yui counts as busy meanwhile (no second message).
@@ -4766,9 +4686,6 @@ T.Widget {
     function clearChat() {
         // Bump the session first so the aborted request's callback is ignored.
         widget.chatSession++;
-        // Queued messages go with the chat.
-        replyQueued = false;
-        queuedAt = [];
         stopReply();
         widget.currentRequest = null;
         widget.busy = false;
@@ -6546,7 +6463,8 @@ T.Widget {
                                 event.accepted = true;
                             }
 
-                            placeholderText: qsTr("Message to Yui...")
+                            // While she is occupied nothing is sent (text typed meanwhile waits here).
+                            placeholderText: widget.busy ? qsTr("Yui is thinking...") : widget.occupied ? qsTr("Yui is growing a widget...") : qsTr("Message to Yui...")
                             color: "black"
                             font.family: widget.fontFamilyOf(widget.styles.bubble_font_family)
                             wrapMode: TextArea.Wrap
@@ -6584,13 +6502,11 @@ T.Widget {
                     enabled: widget.busy || widget.seedlingJob !== null || widget.seedlingWaiting !== null || textInput.text.trim().length > 0
                     onClicked: {
                         if (widget.busy)
-                            widget.cancelReply();
-                        else if (widget.seedlingJob || widget.seedlingWaiting) {
-                            widget.takeBackQueued();
+                            widget.stopReply();
+                        else if (widget.seedlingJob || widget.seedlingWaiting)
                             widget.seedlingStop();
-                        } else {
+                        else
                             textInput.submit();
-                        }
                         textInput.forceActiveFocus();
                     }
                 }
