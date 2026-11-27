@@ -46,11 +46,21 @@ QtObject {
         return port !== null;
     }
 
-    // Link: MHCP-YUI is going.
+    // Link: MHCP-YUI is going. A widget being written ends with her (its request may be hers, and
+    // what it reports goes to her): stopped at once, without calling her back.
     function detach(given) {
-        if (port === given)
-            port = null;
+        if (port !== given)
+            return ;
 
+        port = null;
+        var going = job;
+        if (going) {
+            going.silent = true;
+            stop();
+            if (going.finish)
+                going.finish("stopped", "MHCP-YUI went away");
+
+        }
     }
 
     // The code being worked on: the target widget's open workbench's, else its saved code ("" when none).
@@ -357,8 +367,14 @@ QtObject {
             return ;
 
         job.stopped = true;
-        if (job.handle)
-            job.handle.abort();
+        // The request may be MHCP-YUI's, already gone with her.
+        try {
+            if (job.handle)
+                job.handle.abort();
+
+        } catch (e) {
+            console.log("Seedling: stop:", e);
+        }
 
     }
 
@@ -366,7 +382,8 @@ QtObject {
     // onProgress(state) every second and at each step: {stage "writing" | "editing" | "fixing" |
     // "checking", lines, edits, seconds, attempt, problem}. onDone(kind, message, code) once: kind
     // "done", "edited", "failed", "stopped", "offline" (not allowed online), "busy", "missing" (no
-    // widget), "unset" (no connection). Returns "" or why it did not start.
+    // widget), "unset" (no connection), "declined" (the disclaimer not accepted). Returns "" or why it
+    // did not start.
     // AI-written code is not certain: said in SAO Utils' alert box (about three short lines are shown)
     // the moment the first Seedling widget is on the desktop (register: placed, or there at start),
     // before anything is written. Setting "disclaimer": "" never answered, "accepted", "declined".
@@ -460,25 +477,39 @@ QtObject {
         var ticker = Qt.createQmlObject("import QtQml 2.12; Timer { interval: 1000; repeat: true }", bench);
         var current_job = {
             "handle": null,
-            "stopped": false
+            "stopped": false,
+            "silent": false,
+            "finished": false,
+            "finish": null
         };
         // The last way out was taken: the whole code asked for once after the edits did not fit.
         var wholeTaken = false;
         var progress = function() {
             state.seconds = Math.round((Date.now() - started) / 1000);
-            if (onProgress)
+            // silent: whoever asked is gone (MHCP-YUI removed, see detach)
+            if (onProgress && !current_job.silent)
                 onProgress(state);
 
         };
         var finish = function(kind, message, code) {
+            // once (detach may end it before its request answers)
+            if (current_job.finished)
+                return ;
+
+            current_job.finished = true;
             ticker.stop();
             ticker.destroy();
-            job = null;
+            if (job === current_job)
+                job = null;
+
             var ok = kind === "done" || kind === "edited";
             endWriting(ok, message);
             console.log("Seedling: " + kind + ", " + message);
-            onDone(kind, message, code || "");
+            if (!current_job.silent)
+                onDone(kind, message, code || "");
+
         };
+        current_job.finish = finish;
         var askFor;
         // Asks again with what went wrong (twice at most); when editing, after that once more for the
         // whole code.
