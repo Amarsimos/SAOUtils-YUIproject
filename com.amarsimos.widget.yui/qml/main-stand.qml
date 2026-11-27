@@ -3984,6 +3984,7 @@ T.Widget {
             put.send(lines.join("\n"));
         };
         var found = [];
+        var resolved = null;
         var steps = [function() {
             say("step 1: NVG.Resources.filter(/amarsimos/, /.*/) ...");
             found = NVG.Resources.filter(/amarsimos/, /.*/) || [];
@@ -3993,12 +3994,10 @@ T.Widget {
             });
         }, function() {
             say("step 2: resolve nvg://seedling.widget.amarsimos.com/link/bench ...");
-            var resolved = NVG.Resources.resolve("nvg://seedling.widget.amarsimos.com/link/bench");
-            say("step 2 done: " + (resolved ? resolved.catalog + " | " + resolved.url : "null"));
+            resolved = NVG.Resources.resolve("nvg://seedling.widget.amarsimos.com/link/bench");
+            say("step 2 done: " + (resolved ? resolved.package + " | " + resolved.catalog + " | " + resolved.location + " | " + resolved.url : "null"));
         }, function() {
-            var link = found.filter(function(m) {
-                return m.catalog === "link";
-            })[0];
+            var link = resolved;
             if (!link)
                 return say("step 3: no link resource, files not listed");
 
@@ -4009,9 +4008,7 @@ T.Widget {
                 say("  " + f.entry + " | " + f.name + " | " + f.url);
             });
         }, function() {
-            var link = found.filter(function(m) {
-                return m.catalog === "link";
-            })[0];
+            var link = resolved;
             if (!link)
                 return say("step 4: no link resource, nothing loaded");
 
