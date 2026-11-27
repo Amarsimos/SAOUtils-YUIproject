@@ -3975,7 +3975,7 @@ T.Widget {
     // the file's last line says at which step.
     function testSeedlingLink() {
         var lines = [];
-        var file = String(NVG.Utils.storagePath("yui")).replace(/\/g, "/").replace(/\/+$/, "") + "/seedling-link.txt";
+        var file = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/").replace(/\/+$/, "") + "/seedling-link.txt";
         var say = function(text) {
             diag("seedling link: " + text);
             lines.push(Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + text);
