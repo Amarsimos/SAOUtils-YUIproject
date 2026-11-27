@@ -3970,51 +3970,84 @@ T.Widget {
     // Where Seedling's Probe was found ("" when it was not).
     property string seedlingFoundAt: ""
 
-    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log.
+    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log. Done in steps
+    // 0.5 s apart, each written at once to Storages\yui\seedling-link.txt, so that if SAO Utils hangs
+    // the file's last line says at which step.
     function testSeedlingLink() {
-        // Its lines are also written to Storages\yui\seedling-link.txt (to read without copying the log).
-        var logStart = diagTotal;
-        Qt.callLater(function() {
-            writeHeartFile("seedling-link.txt", diagLog.slice(-Math.min(200, diagTotal - logStart)).join("\n"), function(path) {
-                diag("seedling link: written to " + (path || "nowhere"));
-            });
-        });
-        // Trying SAO Utils' resources (NVG.Resources): what it knows of amarsimos packages, and whether
-        // Seedling's Probe loads by its resource address (instead of the folder next to Yui).
-        try {
-            var found = NVG.Resources.filter(/amarsimos/, /.*/);
-            diag("seedling link: resources of amarsimos: " + found.length);
+        var lines = [];
+        var file = String(NVG.Utils.storagePath("yui")).replace(/\/g, "/").replace(/\/+$/, "") + "/seedling-link.txt";
+        var say = function(text) {
+            diag("seedling link: " + text);
+            lines.push(Qt.formatTime(new Date(), "hh:mm:ss.zzz") + "  " + text);
+            var put = new XMLHttpRequest();
+            put.open("PUT", fileUrl(file));
+            put.send(lines.join("\n"));
+        };
+        var found = [];
+        var steps = [function() {
+            say("step 1: NVG.Resources.filter(/amarsimos/, /.*/) ...");
+            found = NVG.Resources.filter(/amarsimos/, /.*/) || [];
+            say("step 1 done: " + found.length + " resource(s)");
             found.forEach(function(m) {
-                diag("seedling link:   " + m.package + " | " + m.catalog + " | " + m.location + " | " + m.url);
-                var files = m.files() || [];
-                files.slice(0, 8).forEach(function(f) {
-                    diag("seedling link:     file " + f.entry + " -> " + f.url);
-                });
-                if (m.catalog === "link") {
-                    var tries = [String(m.url)].concat(files.filter(function(f) {
-                        return f.name === "Probe.qml" || String(f.entry).indexOf("Probe.qml") !== -1;
-                    }).map(function(f) {
-                        return String(f.url);
-                    }));
-                    tries.forEach(function(address) {
-                        var c = Qt.createComponent(address);
-                        diag("seedling link:     load " + address + " -> status " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
-                    });
-                }
+                say("  " + m.package + " | " + m.catalog + " | " + m.location + " | " + m.url);
             });
+        }, function() {
+            say("step 2: resolve nvg://seedling.widget.amarsimos.com/link/bench ...");
             var resolved = NVG.Resources.resolve("nvg://seedling.widget.amarsimos.com/link/bench");
-            diag("seedling link: resolve nvg://seedling.widget.amarsimos.com/link/bench -> " + (resolved ? resolved.url : "null"));
-        } catch (e) {
-            diag("seedling link: resources failed: " + e);
-        }
-        var bench = seedlingBench();
-        if (!bench) {
-            diag("seedling link: not installed (or another Link version); Yui works without it");
-            return ;
-        }
-        diag("seedling link: found at " + seedlingFoundAt + ", Link version " + bench.linkVersion + " (Yui " + seedlingLinkVersion + "), attached: " + bench.attached() + ", widgets on the desktop: " + bench.widgets.length);
-        var own = bench.ownSetup();
-        diag("seedling link: Seedling's own connection " + (own ? own.title + " · " + own.model : "not set up") + "; Yui's " + (seedlingPort.connection().ready ? seedlingPort.connection().title + " · " + seedlingPort.connection().model : "not set up"));
+            say("step 2 done: " + (resolved ? resolved.catalog + " | " + resolved.url : "null"));
+        }, function() {
+            var link = found.filter(function(m) {
+                return m.catalog === "link";
+            })[0];
+            if (!link)
+                return say("step 3: no link resource, files not listed");
+
+            say("step 3: files() of the link resource ...");
+            var files = link.files() || [];
+            say("step 3 done: " + files.length + " file(s)");
+            files.slice(0, 10).forEach(function(f) {
+                say("  " + f.entry + " | " + f.name + " | " + f.url);
+            });
+        }, function() {
+            var link = found.filter(function(m) {
+                return m.catalog === "link";
+            })[0];
+            if (!link)
+                return say("step 4: no link resource, nothing loaded");
+
+            say("step 4: Qt.createComponent(" + link.url + ") ...");
+            var c = Qt.createComponent(String(link.url), Component.Asynchronous);
+            say("step 4 status now: " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
+            c.statusChanged.connect(function() {
+                say("step 4 status later: " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
+            });
+        }, function() {
+            var bench = seedlingBench();
+            if (!bench)
+                return say("Seedling: not found (or another Link version); Yui works without it");
+
+            say("Seedling: found at " + seedlingFoundAt + ", Link version " + bench.linkVersion + " (Yui " + seedlingLinkVersion + "), attached: " + bench.attached() + ", widgets: " + bench.widgets.length);
+            var own = bench.ownSetup();
+            var mine = seedlingPort.connection();
+            say("Seedling's own AI: " + (own ? own.title + " · " + own.model : "not set up") + "; Yui's: " + (mine.ready ? mine.title + " · " + mine.model : "not set up"));
+            say("end");
+        }];
+        var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
+        var next = 0;
+        timer.triggered.connect(function() {
+            if (next >= steps.length) {
+                timer.stop();
+                timer.destroy();
+                return ;
+            }
+            try {
+                steps[next++]();
+            } catch (e) {
+                say("step " + next + " failed: " + e);
+            }
+        });
+        say("start (file " + file + ")");
+        timer.start();
     }
 
     // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
