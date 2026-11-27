@@ -43,7 +43,9 @@
 | C4 | 结衣开着时停用 Seedling，再点 **Test Seedling Link** | `resolve ...: null`，然后 `not found`；Log 有 `seedling: no longer installed` | |
 | C5 | 再启用 Seedling，点两次 **Test Seedling Link** | 第一次可能还是 not found（正在加载），第二次 `found at ...` | |
 | C6 | 装着 Seedling、她正在写一个挂件时，再让她做另一个 | 同 C3，只出一条她自己的话：上一个还在培育中 | |
-| C7 | 装着 Seedling、桌面上有挂件，让她做挂件 | 没有「收到」这类回复，直接出现进度消息（「在想…」），然后写出来 | |
+| C7 | 装着 Seedling、桌面上有挂件，让她做挂件 | 没有「收到」这类回复，思考的占位原地变成进度消息（「在想…」），然后写出来 | |
+| C8 | 她还在思考时，再发一条消息（回车） | 消息马上显示在聊天里，但等这次回复结束才发出；Log：`message queued`，之后 `queued message(s) sent` | |
+| C9 | 她写挂件时发一条普通聊天 | 照常回复，不会再要一次挂件（聊天记录顺序：做挂件 → 进度 → 你的消息） | |
 
 ## D. 只装 Seedling（关掉结衣挂件：结衣不在桌面上就当没有她）
 

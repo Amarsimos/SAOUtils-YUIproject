@@ -115,6 +115,14 @@ T.Widget {
     readonly property real characterMinimumWidth: 300
     readonly property real minimumFrameHeight: 400
     property bool busy: false
+    // Messages sent while Yui was busy (a reply on its way): shown at once, asked for together once
+    // she is free (sendQueued; consecutive user turns are merged by buildHistory).
+    property bool replyQueued: false
+    onBusyChanged: {
+        if (!busy && replyQueued)
+            Qt.callLater(sendQueued);
+
+    }
     // Controller of the reply being generated (see requestCompletion), used by stopReply().
     property var currentRequest: null
     property int chatSession: 0
@@ -1460,7 +1468,9 @@ T.Widget {
         var messages = [];
         for (var i = widget.historyStart; i < chatModel.count; i++) {
             var item = chatModel.get(i);
-            if (item.pending || item.isError)
+            // A reply still on its way is left out; her Seedling progress (pending, local) is kept, so
+            // a message sent while a widget grows comes after it, not merged with the request.
+            if ((item.pending && !item.local) || item.isError)
                 continue;
 
             var role = item.author === "user" ? "user" : "assistant";
@@ -1622,15 +1632,15 @@ T.Widget {
                     }
                 }
                 text = reply.text || silentReplyText(reply);
-                // Starting with nothing said: no message of this reply (the progress one is hers).
+                // Starting with nothing said: this reply's "..." becomes her progress message, in its
+                // place (before any message queued meanwhile, which is asked for after it).
                 if (reply.seedling && !reply.text) {
                     if (reply.emotion)
                         setEmotion(reply.emotion);
 
-                    chatModel.remove(index);
+                    seedlingStart(reply.seedling, index);
                     widget.busy = false;
                     widget.currentRequest = null;
-                    Qt.callLater(seedlingStart, reply.seedling);
                     return ;
                 }
                 // No <<emotion:>>: guessed from the reply's kaomoji and words.
@@ -1836,8 +1846,19 @@ T.Widget {
     }
 
     function sendMessage(text) {
-        if (!text.trim() || widget.busy)
+        if (!text.trim())
             return false;
+
+        // A reply on its way: this one waits its turn (shown now, asked for when she is free).
+        if (widget.busy) {
+            noteActivity();
+            careHeard(text, Date.now());
+            widget.settings.last_active = Date.now();
+            appendMessage("user", text, false);
+            replyQueued = true;
+            diag("message queued (a reply is on its way)");
+            return true;
+        }
 
         noteActivity();
         awaken();
@@ -1885,6 +1906,16 @@ T.Widget {
             startReply(history);
         });
         return true;
+    }
+
+    // The messages queued while she was busy, asked for in one reply (the history has them all).
+    function sendQueued() {
+        if (widget.busy || !replyQueued)
+            return ;
+
+        replyQueued = false;
+        diag("queued message(s) sent");
+        startReply(buildHistory());
     }
 
     // Runs next once the user's message has finished popping up (MessageWindow.popUp, 650 ms), so
@@ -4128,8 +4159,8 @@ T.Widget {
         return seedlingBench() || NVG.Resources.resolve(seedlingAddress) ? "" : "missing";
     }
 
-    function seedlingStart(request) {
-        var said = seedlingSay();
+    function seedlingStart(request, at) {
+        var said = seedlingSay(at);
         if (seedlingJob || seedlingWaiting)
             return said.end(Yui.seedlingChatLine("busy", userTitle()));
 
@@ -4155,10 +4186,16 @@ T.Widget {
     // How a Seedling widget is going, in Yui's thinking message (MessageWindow's "YUI正在思考" with the
     // hopping dots, here saying the step: seedlingNoteLine), which becomes her last words when it ends,
     // as a reply does (kept in the conversation; in the bubble too while the chat is closed).
-    function seedlingSay() {
-        var index = chatModel.count;
+    // at: the message to say it in (her reply's "..." that asked for the widget, so it keeps its place
+    // before messages sent meanwhile); else a new one at the end.
+    function seedlingSay(at) {
+        var index = at !== undefined ? at : chatModel.count;
         var session = widget.chatSession;
-        chatModel.append({
+        (at !== undefined ? function(item) {
+            chatModel.set(at, item);
+        } : function(item) {
+            chatModel.append(item);
+        })({
             "author": "ai",
             "message": Yui.seedlingNoteLine({
                 "stage": "writing",
