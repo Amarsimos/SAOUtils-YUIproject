@@ -3712,7 +3712,7 @@ T.Widget {
 
     // ---------------------------------------------------------------- Seedling (companion plugin)
     // Seedling's Bench (com.amarsimos.widget.seedling/qml/link), reached at run time through its
-    // Probe.qml, so Yui still loads when Seedling is not installed. null when it is missing.
+    // Probe.qml (seedlingLoad), so Yui still loads when Seedling is not installed. null when missing.
     property var seedlingProbe: null
     // Seedling was found (checked shortly after start, see seedlingCheck).
     property bool seedlingInstalled: false
@@ -3724,54 +3724,67 @@ T.Widget {
     }
 
     function seedlingBench() {
-        if (seedlingProbe) {
-            // Another Yui that was attached is gone: this one takes over.
-            if (!seedlingProbe.bench.attached())
-                seedlingProbe.bench.attach(seedlingPort);
-
-            return seedlingProbe.bench;
-        }
-
-        if (seedlingInstalled === false && seedlingChecked)
-            return null;
-
-        // Where Seedling's Probe is looked for: next to this package in Packages (a package's files
-        // cannot be loaded by an nvg:// address, tried 2026-11-27). The only place of this.
-        var places = [Qt.resolvedUrl("../../com.amarsimos.widget.seedling/qml/link/Probe.qml")];
-        var component = null;
-        var why = [];
-        for (var i = 0; i < places.length; i++) {
-            var tried = Qt.createComponent(places[i]);
-            if (tried.status === Component.Ready) {
-                component = tried;
-                seedlingFoundAt = places[i];
-                diag("seedling: found at " + places[i]);
-                break;
-            }
-            why.push(places[i] + ": " + (tried.status === Component.Error ? tried.errorString().trim() : "status " + tried.status));
-        }
-        if (!component) {
-            diag("seedling: not installed (" + why.join(" | ") + ")");
-            return null;
-        }
-        seedlingProbe = component.createObject(widget);
         if (!seedlingProbe)
             return null;
 
+        // Another Yui that was attached is gone: this one takes over.
+        if (!seedlingProbe.bench.attached())
+            seedlingProbe.bench.attach(seedlingPort);
+
+        return seedlingProbe.bench;
+    }
+
+    // Seedling is found through SAO Utils' resources (the "link" resource in its package.json),
+    // not by its folder: installed or not (Resources.resolve), then its Probe loaded by that address,
+    // asynchronously (tried 2026-11-27: both work). The only place of this.
+    readonly property string seedlingAddress: "nvg://seedling.widget.amarsimos.com/link/bench"
+    property string seedlingFoundAt: ""
+
+    function seedlingLoad() {
+        var done = function() {
+            seedlingChecked = true;
+        };
+        if (!NVG.Resources.resolve(seedlingAddress)) {
+            diag("seedling: not installed (no " + seedlingAddress + ")");
+            return done();
+        }
+        var component = Qt.createComponent(seedlingAddress, Component.Asynchronous);
+        var loaded = function() {
+            if (component.status === Component.Loading)
+                return ;
+
+            if (component.status !== Component.Ready) {
+                diag("seedling: could not be loaded (" + component.errorString().trim() + ")");
+                return done();
+            }
+            seedlingAttach(component);
+            done();
+        };
+        if (component.status === Component.Loading)
+            component.statusChanged.connect(loaded);
+        else
+            loaded();
+    }
+
+    function seedlingAttach(component) {
+        var probe = component.createObject(widget);
+        if (!probe)
+            return ;
+
         // Only the Link interface of the same version (section 12 of "Seedling Development Plan.md");
         // another is taken as Seedling not installed.
-        var bench = seedlingProbe.bench;
+        var bench = probe.bench;
         if (bench.linkVersion !== seedlingLinkVersion || !bench.attach || !bench.attach(seedlingPort)) {
             diag("seedling: its Link version " + bench.linkVersion + " is not " + seedlingLinkVersion + ", working without it");
-            seedlingProbe.destroy();
-            seedlingProbe = null;
-            seedlingInstalled = false;
-            return null;
+            probe.destroy();
+            return ;
         }
+        seedlingProbe = probe;
+        seedlingFoundAt = seedlingAddress;
+        diag("seedling: found at " + seedlingAddress + " (" + bench.widgets.length + " widget(s) on the desktop)");
         Qt.callLater(seedlingOfferConnection);
-        seedlingProbe.bench.widgetsChanged.connect(seedlingPlaced);
+        bench.widgetsChanged.connect(seedlingPlaced);
         seedlingInstalled = true;
-        return seedlingProbe.bench;
     }
 
     property bool seedlingChecked: false
@@ -3781,10 +3794,7 @@ T.Widget {
 
         interval: 1500
         running: true
-        onTriggered: {
-            widget.seedlingBench();
-            widget.seedlingChecked = true;
-        }
+        onTriggered: widget.seedlingLoad()
     }
 
     // A widget written for request by Seedling (its writing flow, section 11 of "Seedling Development
@@ -3967,12 +3977,8 @@ T.Widget {
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
     }
 
-    // Where Seedling's Probe was found ("" when it was not).
-    property string seedlingFoundAt: ""
-
-    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log. Done in steps
-    // 0.5 s apart, each written at once to Storages\yui\seedling-link.txt, so that if SAO Utils hangs
-    // the file's last line says at which step.
+    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log and in
+    // Storages\yui\seedling-link.txt (each line written at once, steps 0.5 s apart).
     function testSeedlingLink() {
         var lines = [];
         var file = String(NVG.Utils.storagePath("yui")).replace(/\\/g, "/").replace(/\/+$/, "") + "/seedling-link.txt";
@@ -3983,41 +3989,9 @@ T.Widget {
             put.open("PUT", fileUrl(file));
             put.send(lines.join("\n"));
         };
-        var found = [];
-        var resolved = null;
         var steps = [function() {
-            say("step 1: NVG.Resources.filter(/amarsimos/, /.*/) ...");
-            found = NVG.Resources.filter(/amarsimos/, /.*/) || [];
-            say("step 1 done: " + found.length + " resource(s)");
-            found.forEach(function(m) {
-                say("  " + m.package + " | " + m.catalog + " | " + m.location + " | " + m.url);
-            });
-        }, function() {
-            say("step 2: resolve nvg://seedling.widget.amarsimos.com/link/bench ...");
-            resolved = NVG.Resources.resolve("nvg://seedling.widget.amarsimos.com/link/bench");
-            say("step 2 done: " + (resolved ? resolved.package + " | " + resolved.catalog + " | " + resolved.location + " | " + resolved.url : "null"));
-        }, function() {
-            var link = resolved;
-            if (!link)
-                return say("step 3: no link resource, files not listed");
-
-            say("step 3: files() of the link resource ...");
-            var files = link.files() || [];
-            say("step 3 done: " + files.length + " file(s)");
-            files.slice(0, 10).forEach(function(f) {
-                say("  " + f.entry + " | " + f.name + " | " + f.url);
-            });
-        }, function() {
-            var link = resolved;
-            if (!link)
-                return say("step 4: no link resource, nothing loaded");
-
-            say("step 4: Qt.createComponent(" + link.url + ") ...");
-            var c = Qt.createComponent(String(link.url), Component.Asynchronous);
-            say("step 4 status now: " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
-            c.statusChanged.connect(function() {
-                say("step 4 status later: " + c.status + (c.status === Component.Error ? " " + c.errorString().trim() : ""));
-            });
+            var resolved = NVG.Resources.resolve(seedlingAddress);
+            say("resolve " + seedlingAddress + ": " + (resolved ? resolved.package + " | " + resolved.catalog : "null (not installed)"));
         }, function() {
             var bench = seedlingBench();
             if (!bench)
