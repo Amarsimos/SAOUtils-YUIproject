@@ -526,10 +526,10 @@ NVG.Window {
                                     apiResponseArea.value = qsTr("Linking...");
                                     var config = targetWidget.providerConfig(targetWidget.providers[shownProvider], shownSettings());
                                     config.systemPrompt = systemPromptPreference.value;
-                                    config.userTitle = userTitlePreference.ids[userTitlePreference.value] === "mama" ? "妈妈" : "爸爸";
+                                    config.userTitle = Yui.titleOf(userTitlePreference.ids[userTitlePreference.value]);
                                     targetWidget.requestCompletion([{
                                         "role": "user",
-                                        "content": "Hello"
+                                        "content": "你好"
                                     }], function(text, isError) {
                                         apiResponseArea.value = (isError ? "" : qsTr("Link established") + " (" + config.model + "):\n") + text;
                                     }, config);

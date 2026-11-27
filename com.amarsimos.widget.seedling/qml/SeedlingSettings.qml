@@ -119,7 +119,7 @@ NVG.Window {
         testResult = qsTr("Linking...");
         var own = Link.Bench.connectionKind() === "own";
         var model = own ? Api.modelOf(Link.Bench.ownConfig()) : (Link.Bench.writingModel() || qsTr("Yui's chat model"));
-        Link.Bench.ask("Reply with one short line.", "Hello", function() {
+        Link.Bench.ask("用一句话回复。", "你好", function() {
         }, function(text, isError) {
             testing = false;
             testResult = (isError ? "" : qsTr("Link established") + " (" + model + "):\n") + String(text).trim();

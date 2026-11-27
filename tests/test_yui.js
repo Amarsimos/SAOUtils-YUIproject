@@ -262,7 +262,6 @@ const same = (a, b) => assert.strictEqual(JSON.stringify(a), JSON.stringify(b));
 
 test("tool definitions follow the switches", () => {
     same(Yui.toolDefinitions({}).map(t => t.name), ["open_url", "web_search", "launch_program", "find_file", "close_program"]);
-    same(Yui.toolDefinitions({}, true).map(t => t.name), ["open_url", "web_search", "launch_program", "find_file", "close_program", "remember", "forget"]);
     same(Yui.toolDefinitions({ web: false, kill: false, memory: false }).map(t => t.name), ["launch_program", "find_file"]);
     assert.strictEqual(Yui.toolDefinitions({})[0].parameters.required[0], "url");
 });
@@ -274,8 +273,7 @@ test("tool calls become the same actions as tags", () => {
     same(Yui.toolCallToAction("close_program", { process: "explorer.exe" }, []), { kind: "blocked", blocked: "explorer.exe" });
     assert.strictEqual(Yui.toolCallToAction("open_url", { url: "file:///c:/x" }, []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("web_search", { query: "天气" }, [], { searchEngine: "baidu" }).action.url, "https://www.baidu.com/s?wd=%E5%A4%A9%E6%B0%94");
-    same(Yui.toolCallToAction("remember", '{"text":"喜欢猫","core":true}', []), { kind: "remember", text: "喜欢猫", core: true });
-    assert.strictEqual(Yui.toolCallToAction("forget", { text: "猫" }, [], { allowed: { memory: false } }).kind, "error");
+    assert.strictEqual(Yui.toolCallToAction("remember", '{"text":"喜欢猫"}', []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("launch_program", "{bad json", []).kind, "error");
     assert.strictEqual(Yui.toolCallToAction("navigation", {}, []).kind, "error");
 });
@@ -292,6 +290,13 @@ test("tools mode instructions and the emotion guess", () => {
 });
 
 test("priority rules and the small model reminder", () => {
+    assert.ok(!Yui.parseReply("（系统生成）你好", []).text.includes("系统生成"), "the mark copied by the model is dropped");
+    assert.strictEqual(Yui.historyContent("早安", true), "（系统生成）早安");
+    assert.strictEqual(Yui.historyContent("早安", false), "早安");
+    assert.strictEqual(Yui.titleOf("mama") + Yui.titleOf("papa") + Yui.titleOf(undefined), "妈妈爸爸爸爸");
+    assert.strictEqual(Yui.withTitle("{t}和{{user_title}}", "妈妈"), "妈妈和妈妈");
+    assert.ok(!/[他她]/.test(Yui.featureInstructions("妈妈", [], {}, "tags").replace(/其他/g, "")), "no 他 / 她, the title");
+    assert.strictEqual(Yui.priorityRules("爸爸", {}, "text"), "", "a text-only request (weekly report, portrait) has no tag rules");
     const tools = Yui.priorityRules("爸爸", {}, "tools");
     assert.ok(tools.startsWith("【最重要的规则】") && tools.includes("必须调用提供的工具") && tools.includes("记住、忘记事情时，必须在回复里写对应的标签") && tools.includes("必须搜索"));
     const tags = Yui.priorityRules("爸爸", { web: false }, "tags");

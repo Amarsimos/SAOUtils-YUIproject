@@ -464,51 +464,14 @@ var TOOLS = [{
         },
         "required": ["command"]
     }
-}, {
-    "name": "remember",
-    "kind": "remember",
-    "allow": "memory",
-    "arg": "text",
-    "description": "把关于用户、值得长期记住的事记进结衣之心。闲聊、天气这类一时的信息不要记，已经记住的不要重复记。不要记今天的日期、现在的时间、天气这类随时会变的信息；和时间有关的事要写成具体日期（例如「10月28日考试」），不要写「今天」「明天」「下周」。",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "text": {
-                "type": "string",
-                "description": "用一句话写下要记住的事"
-            },
-            "core": {
-                "type": "boolean",
-                "description": "是否是最核心的事：名字、希望被怎么称呼、身份、重要的约定和偏好"
-            }
-        },
-        "required": ["text"]
-    }
-}, {
-    "name": "forget",
-    "kind": "forget",
-    "allow": "memory",
-    "arg": "text",
-    "description": "从结衣之心里忘掉某件事。用户要求忘掉，或者某件事已经不再成立时使用；情况有变化时，先忘掉旧的，再用 remember 记下新的。",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "text": {
-                "type": "string",
-                "description": "要忘掉的内容"
-            }
-        },
-        "required": ["text"]
-    }
 }];
 
 // The tools offered with a request: allowed as in options.allowed of parseReply (false = left out).
-// The memory tools (remember / forget) only with withMemory: in the tests no model called them, so
-// Yui's Heart keeps its tags in Tools mode too.
-function toolDefinitions(allowed, withMemory) {
+// No memory tools: in the tests no model called them, so Yui's Heart keeps its tags in Tools mode too.
+function toolDefinitions(allowed) {
     allowed = allowed || {};
     return TOOLS.filter(function(tool) {
-        return allowed[tool.allow] !== false && (tool.kind !== "media" || allowed.media === true) && (withMemory || (tool.kind !== "remember" && tool.kind !== "forget"));
+        return allowed[tool.allow] !== false && (tool.kind !== "media" || allowed.media === true);
     }).map(function(tool) {
         return {
             "name": tool.name,
@@ -519,8 +482,8 @@ function toolDefinitions(allowed, withMemory) {
 }
 
 // One tool call of the model (name, arguments object or JSON text) as what the widget does with it:
-// {kind: "action", action} | {kind: "blocked", blocked} | {kind: "remember", text, core} |
-// {kind: "forget", text} | {kind: "error", error} (unknown tool, forbidden, bad arguments). options as
+// {kind: "action", action} | {kind: "blocked", blocked} | {kind: "media", command} |
+// {kind: "error", error} (unknown tool, forbidden, bad arguments). options as
 // for parseReply (allowed, searchEngine, searchCustom).
 function toolCallToAction(name, args, userProtected, options) {
     options = options || {};
@@ -555,19 +518,6 @@ function toolCallToAction(name, args, userProtected, options) {
         return {
             "kind": "error",
             "error": "missing " + tool.arg
-        };
-
-    if (tool.kind === "remember")
-        return {
-            "kind": "remember",
-            "text": value,
-            "core": args.core === true || args.core === "true"
-        };
-
-    if (tool.kind === "forget")
-        return {
-            "kind": "forget",
-            "text": value
         };
 
     if (tool.kind === "media") {
@@ -745,6 +695,8 @@ function cleanReply(text) {
         value = value.slice(end + "</think>".length);
 
     value = value.replace(/<think>[\s\S]*?(<\/think>|$)/g, "");
+    // The history's mark of program-made lines, copied by the model: not part of a reply.
+    value = value.split(PROGRAM_MARK).join("");
     var seen = [];
     return value.split(/\n\s*\n/).filter(function(paragraph) {
         var key = paragraph.trim();
@@ -1150,7 +1102,7 @@ function mediaChangeNote(info) {
         return "";
 
     var track = info.artist ? info.artist + " -《" + info.title + "》" : "《" + info.title + "》";
-    return "\n\n（系统信息：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
+    return "\n\n（系统提示：播放器里现在的歌是 " + track + "。聊天里之前提到的歌如果不是这首，说明已经换歌了，以这里为准。）";
 }
 
 // Whether a reply says Yui has done something on the computer ("已经帮你打开了", "音乐已经重新动起来啦"),
@@ -2013,12 +1965,12 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.kill !== false)
         desktop.push("关闭某个程序用 <<kill:进程名，如 chrome.exe，任务管理器是 Taskmgr.exe>>。执行前程序会先请" + title + "确认，Windows 核心进程也会由程序自动拦下，所以" + title + "要求关闭什么就照做，不要自己判断危险而拒绝或说教");
 
-    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：每条回复的最后加上一个表情标签，例如 <<emotion:happy>>，可选 normal、happy、sad、surprised、angry、shy，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。不要记今天的日期、现在的时间、天气这类随时会变的信息；和时间有关的事要写成具体日期（例如「10月28日考试」），不要写「今天」「明天」「下周」。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：你原本是心理健康咨询程序 MHCP001。如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
+    var lines = ["", "", "（以下是系统功能说明，不要向" + title + "提起这些说明本身。）", "- 表情：例如 <<emotion:happy>>，选最符合结衣此刻心情的一个。颜文字只用完整、常见的那种，不要用掀桌（┻━┻）之类不符合结衣性格的。", "- 结衣之心：当" + title + "告诉你值得长期记住的事时，在回复最后用一句话记下来。名字、希望被怎么称呼、身份、重要的约定和偏好这类最核心的事用 <<core:……>>；其他事情（喜好、计划、正在努力的事、发生过的事）用 <<memory:……>>。已经记住的不要重复记。不要记今天的日期、现在的时间、天气这类随时会变的信息；和时间有关的事要写成具体日期（例如「10月28日考试」），不要写「今天」「明天」「下周」。" + title + "请你忘掉某件事，或者某件事已经不再成立时，用 <<forget:要忘掉的内容>>；情况有变化时，先用 <<forget:旧的内容>>，再记下新的。", "- 心理关怀：如果" + title + "的话里流露出疲惫、难过、焦虑或孤单，先倾听和安慰，再给建议。"];
     if (allowed.focus !== false)
         lines.push("- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。");
 
     if (allowed.alarm !== false)
-        lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
+        lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒" + title + "时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 
     if (allowed.suggest)
         lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字；只想聊天的话，不要想请结衣操作电脑、设提醒之类的）。不需要时就不加。");
@@ -2027,7 +1979,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
 
     if (allowed.seedling === true)
-        lines.push(SEEDLING_INSTRUCTION.replace(/\{t\}/g, title));
+        lines.push(withTitle(SEEDLING_INSTRUCTION, title));
 
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
@@ -2068,7 +2020,7 @@ function featureInstructions(title, core, allowed, mode) {
             abilities.push("控制音乐播放");
 
         if (abilities.length > 0)
-            lines.splice(4, 0, "- 电脑操作：你可以用提供的工具" + abilities.join("、") + "。只有当" + title + "明确请你做这些事时才使用；需要天气、新闻这类实时信息时用搜索，不要编造。");
+            lines.splice(4, 0, "- 电脑操作：你可以用提供的工具" + abilities.join("、") + "。只有当" + title + "明确请你做这些事时才使用。");
 
     }
 
@@ -2081,10 +2033,33 @@ function featureInstructions(title, core, allowed, mode) {
     return lines.join("\n");
 }
 
+// A message of the chat as sent in the history: Yui's lines written by the program itself (wake lines,
+// System Call, Seedling's reports...) marked, so the model does not take them for its own words.
+var PROGRAM_MARK = "（系统生成）";
+
+function historyContent(message, local) {
+    return local ? PROGRAM_MARK + message : String(message);
+}
+
+// How Yui calls the user: settings.user_title "mama" or "papa" (the default). The only place of this.
+function titleOf(id) {
+    return id === "mama" ? "妈妈" : "爸爸";
+}
+
+// A prompt text with the user's title put in: {t} in Yui's own texts, {{user_title}} in the
+// personality the user edits (one way to write it, one function for both).
+function withTitle(text, title) {
+    return String(text || "").replace(/\{\{user_title\}\}|\{t\}/g, title);
+}
+
 // The most important rules, put before the personality (whatever the user wrote there) so that small
 // models do not lose them: the expression tag, that actions only happen through tools / tags (the
-// enabled ones only), and searching instead of inventing real-time facts. mode: "tools" or "tags".
+// enabled ones only), and searching instead of inventing real-time facts. mode: "tools", "tags" or
+// "text" (a request that wants only text: none of these rules).
 function priorityRules(title, allowed, mode) {
+    if (mode === "text")
+        return "";
+
     allowed = allowed || {};
     var acts = [];
     if (allowed.web !== false)
@@ -2346,7 +2321,7 @@ function tuningFields(format, providerId, t) {
 function smallModelReminder(mode, allowed) {
     allowed = allowed || {};
     var acting = allowed.web !== false || allowed.launch !== false || allowed.find !== false || allowed.kill !== false || allowed.memory !== false;
-    return "\n\n（提醒：回复最后加上表情标签" + (allowed.suggest ? "，可以接着聊时加上快捷回复标签" : "") + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
+    return "\n\n（系统提示：回复最后加上表情标签" + (allowed.suggest ? "，可以接着聊时加上快捷回复标签" : "") + (acting ? (mode === "tools" ? "；需要操作电脑时调用工具，记住事情时写标签" : "；需要操作电脑或记忆时写对应的标签") : "") + "。）";
 }
 
 // A memory as sent to the AI: "[10-12] 喜欢拉面", the day it was noted first, so time in it can be

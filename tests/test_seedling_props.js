@@ -202,11 +202,11 @@ test("declarations are only comments: the safety check is the same with or witho
     assert.deepStrictEqual(plain(S.check(bare, false)), []);
 });
 
-test("Yui's code prompt (rule 14) says the same as props.js: its examples are read", () => {
+test("Yui's code prompt (rule 13) says the same as props.js: its examples are read", () => {
     const Y = {};
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
-    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("14. ") === 0);
-    assert.ok(rule, "rule 14 is in the prompt");
+    const rule = Y.codePrompt(false, false, true).split("\n").find((l) => l.indexOf("13. ") === 0);
+    assert.ok(rule, "rule 13 is in the prompt");
     const r = P.parse(`import QtQuick 2.12
 // @name 天气
 Item {
@@ -221,7 +221,8 @@ Item {
     assert.strictEqual(r.notes.length, 0);
     assert.strictEqual(r.name, "天气");
     ["string", "int", "real", "bool", "color"].forEach((t) => assert.ok(rule.indexOf(t) !== -1 && P.SETTING_TYPES.indexOf(t) !== -1, t));
-    ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep", "// @name"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
+    ["// @setting 字号 | 12 - 48", "// @setting 主题 | 浅色 / 深色", "// @keep"].forEach((x) => assert.ok(rule.indexOf(x) !== -1, x));
+    assert.ok(Y.codePrompt(false, false, true).indexOf("// @name") !== -1);
 });
 
 test("templates (templates.js): each passes the safety check (Weather only for going online) and all its declarations take effect", () => {

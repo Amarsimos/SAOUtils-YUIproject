@@ -26,31 +26,37 @@ function cleanReply(text) {
 }
 
 // Rule 15, only when MHCP-YUI is there: her data (@yui, props.js YUI_KEYS).
-var YUI_RULE = "15. 挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，int，0 是没记录）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情，var：[{day: \"yyyy-MM-dd\", score: 1-5}]）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，string，每行一条）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网。没有数据时保持属性的默认值，所以默认值要能直接显示。";
+var YUI_RULE = "15. 结衣的数据：挂件要显示结衣这边的数据时，写在根元素最外层的 property 上，上一行写 // @yui 名字，Seedling 会自动填进去（只读）。名字只能是：companion_days（陪伴天数，int）、mood（今天心情 1-5，int，0 是没记录）、mood_text（今天心情的文字，string）、mood_history（最近 30 天心情，var：[{day: \"yyyy-MM-dd\", score: 1-5}]）、boss_raid（Boss Raid 剩余分钟，int）、raid_timer（Boss Raid 计时文字，string）、raid_cleared（刚打赢 Boss Raid 的几秒内是 1，int）、next_alarm（下一个闹钟还有几分钟，int）、next_alarm_text（下一个闹钟的文字，string）、quest_log（待办，string，每行一条）、heart_core（结衣之心的记忆条数，int）、col_ledger（本月用掉的 k token，real）、latest_report（最新周报，string）。用了 @yui 的挂件不能联网（规则 9）。没有数据时保持属性的默认值，所以默认值要能直接显示。";
+
+// How long a widget's code may be (rule 11), and how short when a reply was cut off.
+var MAX_LINES = 300;
+var CUT_LINES = 200;
 
 // The system prompt of the request that writes the code. allowNetwork: the workbench's Network is on;
 // editing: there is code to change, which is changed with SEARCH / REPLACE blocks (as Aider and Cline
-// do) instead of being written out again.
-function codePrompt(allowNetwork, editing, withYui) {
+// do) instead of being written out again; whole: editing, but the complete code is asked for (the
+// last way out), so the edit format is left out. Rules 1-15 of "Prompt Rules.md" 9.5.
+function codePrompt(allowNetwork, editing, withYui, whole) {
     // The rules follow Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js, S3 of
     // "Seedling Development Plan.md"), each with what to write instead, so the code passes the first
-    // time. The check is what keeps widgets safe; these rules only save rewrites.
+    // time. The check is what keeps widgets safe; these rules only save rewrites. One thing per rule.
+    var edits = editing && !whole;
     return [editing ? "你是一个只写 QML 的程序，负责修改一个 SAO Utils 桌面小挂件的代码。" : "你是一个只写 QML 的程序。根据要求写一个 SAO Utils 桌面小挂件，只输出一个 ```qml 代码块，不要任何解释。",
         "代码会先经过安全检查，不符合下面规则的会被拒绝。规则：",
-        "1. 只能 import：QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtGraphicalEffects 1.0、QtQuick.Particles 2.12。不能 import 文件、文件夹或其他模块（包括 QtQuick.Window、NERvGear）。",
-        "2. Qt.* 只能用颜色、日期、几何和绑定：Qt.rgba / rgb / hsla / lighter / darker / tint、Qt.formatDate / formatTime / formatDateTime、Qt.point / size / rect、Qt.binding、Qt.callLater，以及 Qt.AlignCenter 这类常量。",
-        "3. 不能用：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。",
-        "4. 方括号 [ ] 里只能写数字（list[0]）、直接写出的字段名（data[\"temp\"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量：按值查表用 switch 或对象的点号（colors.sunny）。",
-        "5. parent 只能用来取尺寸和锚线（parent.width、parent.height、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。",
-        "6. 循环只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不要改计数器，也不要往 list 里 push 让它变长；计数器在循环外不要再赋别的值，也不要拿它的名字当函数参数。地址属性（source、url）赋值时也要以写全的 \"https://主机/...\" 开头；用 .open( 、.source 的写法，不要写成 [\"open\"]。",
-        "7. 根元素写明 width 和 height，都不超过 2000；Timer 的 interval 不小于 16（毫秒）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。",
-        allowNetwork ? "8. 可以联网：用 XMLHttpRequest；地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；Image 的 source 也一样。只能用 http / https。" : "8. 一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许这个挂件联网。地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；只能用 http / https。不要为了装饰去加载网络图片。",
-        "9. 不能读写本地文件：不能出现 file:、qrc:、C:/ 这类地址，source 只能是写全的 https 地址、空字符串，或代码里自己元素的 id（给效果用）。",
-        "10. 只用 QML 和 JavaScript 自己画，需要时间就用 Timer 和 new Date()。",
-        editing ? "11. 修改时按下面的「修改方式」只输出改动。" : "11. 输出完整的代码。",
-        "12. 代码要精简，控制在 150 行以内：不要堆大量示例数据、不要写用不到的功能，一个挂件做好一件事。",
-        "13. 不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时（比如拿不到某个数据），照样写出能用的部分，并在代码第一行写一条注释说明：// SEEDLING-NOTE: 原因（一句话）。",
-        "14. 挂件自己的设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。再写一行 // @name 挂件名。这类属性不要叫 source 或 url。用户会在挂件的右键 Settings... 里调这些设置，记住的东西由 Seedling 自动保存。"].concat(withYui ? [YUI_RULE] : []).concat(editing ? EDIT_RULES : []).join("\n");
+        "1. 模块：只能 import QtQuick 2.12、QtQuick.Controls 2.12、QtQuick.Layouts 1.12、QtQuick.Shapes 1.12、QtQuick.Particles 2.12、QtGraphicalEffects 1.0。不能 import 文件、文件夹或其他模块（包括 QtQuick.Window、NERvGear）。",
+        "2. Qt 函数：只能用颜色、日期、几何和绑定：Qt.rgba / rgb / hsla / lighter / darker / tint、Qt.formatDate / formatTime / formatDateTime、Qt.point / size / rect、Qt.binding、Qt.callLater，以及 Qt.AlignCenter 这类常量。",
+        "3. 禁止的写法：eval、Function、constructor、prototype、__proto__、this、arguments、globalThis、Loader、createObject、LocalStorage、WorkerScript、Window、反引号模板字符串（`...`）、正则表达式（/.../）。拼字符串用 +，查找文字用 indexOf / split。",
+        "4. 方括号：[ ] 里只能写数字（list[0]）、直接写出的字段名（data[\"temp\"]）或 for 循环的计数器 / Repeater 的 index（list[i]）。不能写别的变量，按值查表用 switch 或点号（colors.sunny）；也不要写 [\"open\"]、[\"source\"]，直接用 .open(、.source。",
+        "5. parent：只能取尺寸和锚线（parent.width、anchors.left: parent.left），或写 anchors.fill: parent / anchors.centerIn: parent。不能写 parent.parent、x.parent，也不能把 parent 存进变量或传出去；要用别的元素就给它一个 id。",
+        "6. 循环：只用 for，并且要有终点：i < 一个不超过 1000 的数字，或 i < list.length；也可以用 for (var k in obj)。不能用 while、do。计数器从数字或 list.length 开始，每次朝终点走（i++、i += 2，倒数用 i--）；循环里不改计数器，也不往 list 里 push 让它变长；计数器在循环外不再赋别的值，也不拿它的名字当函数参数。",
+        "7. 尺寸和频率：根元素写明 width 和 height，在 80 到 2000 之间；文字的 font.pixelSize 不小于 11；Timer 的 interval 不小于 16（毫秒），显示时间用 1000，联网刷新不短于 10 分钟（600000）；粒子的 emitRate / maximumEmitted 不超过 1000。背景可以是透明的。",
+        "8. 地址：source、url、.open( 用到的地址必须以写全的字符串开头，例如 \"https://api.example.com/data?q=\" + city；只能是 http / https。不能出现 file:、qrc:、C:/ 这类本地地址；source 也可以是空字符串，或代码里自己元素的 id（给效果用）。",
+        (allowNetwork ? "9. 联网：可以用 XMLHttpRequest 联网，Image 也可以加载网络图片。" : "9. 联网：一般不要联网；只有挂件本身必须用网上的数据时（天气、汇率、新闻之类）才用 XMLHttpRequest，程序会先问用户是否允许。不要为了装饰去加载网络图片。") + "拿不到数据时显示「--」或「offline」。" + (withYui ? "用了 @yui（规则 15）的挂件无论如何都不能联网，这一条优先。" : ""),
+        "10. 自己画：只用 QML 和 JavaScript，需要时间就用 Timer 和 new Date()。",
+        "11. 格式：第一行 import QtQuick 2.12（其他模块紧接着写），然后一行 // @name 挂件名，再写唯一的根元素，给它 id: root。缩进 4 个空格；属性在前，子元素在后，Timer 放最后。颜色写成 \"#RRGGBB\" 或 \"#AARRGGBB\"；英文和数字用字体 \"SAO UI\"，中文不指定字体。注释只在不容易看懂的地方写一句中文。代码控制在 " + MAX_LINES + " 行以内：不堆示例数据、不写用不到的功能，一个挂件做好一件事。" + (edits ? "修改时按下面的「修改方式」只输出改动。" : "输出完整的代码。"),
+        "12. 不编数据：不要用编出来的数据冒充网上的实时数据。做不到要求里的某件事时，照样写出能用的部分，并在 import 之后写一行注释说明：// SEEDLING-NOTE: 原因（一句话）。",
+        "13. 设置和记忆：用户可能想调的值（城市、颜色、字号、主题、开关）写成根元素最外层的 property，上一行写 // @setting 标签；数字可加范围 // @setting 字号 | 12 - 48，几个选项 // @setting 主题 | 浅色 / 深色；类型用 string、int、real、bool、color。要在重启后记住的东西（待办、计数、笔记）也写在根元素最外层，上一行写 // @keep，类型用 var、string、int、real、bool。这类属性不要叫 source 或 url，默认值要能直接显示。用户在挂件右键的 Settings... 里调设置，记住的东西由 Seedling 自动保存。",
+        "14. 外观：按下面的「外观」写；要求里另外说了风格时，以要求为准。"].concat(withYui ? [YUI_RULE] : []).concat(edits ? EDIT_RULES : []).join("\n");
 }
 
 // Widget Style (Seedling Settings) for the code prompt: how the widget looks unless the request says
@@ -84,13 +90,13 @@ var EDIT_RULES = ["",
 
 // The user message of that request: what is wanted, the code so far (when changing it) and, when
 // asked again, what went wrong. whole: the complete code is asked for (the last way out when the
-// edits do not fit).
-function codeRequest(request, currentCode, problem, whole) {
+// edits do not fit); fresh: a new widget asked again, its code is the last try, not one to change.
+function codeRequest(request, currentCode, problem, whole, fresh) {
     var parts = [];
     if (currentCode)
-        parts.push("现在的代码：\n```qml\n" + currentCode + "\n```");
+        parts.push((fresh ? "上一次写出的代码：" : "现在的代码：") + "\n```qml\n" + currentCode + "\n```");
 
-    parts.push((currentCode ? "要修改的地方：" : "要做的挂件：") + request);
+    parts.push((currentCode && !fresh ? "要修改的地方：" : "要做的挂件：") + request);
     if (problem)
         parts.push(problem);
 

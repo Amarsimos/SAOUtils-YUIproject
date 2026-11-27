@@ -18,11 +18,11 @@ const persona = JSON.parse(qml.match(/readonly property string defaultSystemProm
 const model = process.argv[2] || "qwen3:8b";
 const numCtx = process.argv[3] ? Number(process.argv[3]) : 0;
 const title = "爸爸";
-const now = new Date();
-const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-const time = "\n\n（系统信息：当前本地时间是 " + now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日 " + weekdays[now.getDay()] + " " + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") + "。回答与时间、日期有关的问题时以此为准。）";
-const system = Yui.priorityRules(title, {}, "tools") + persona.replace(/\{\{user_title\}\}/g, title) + Yui.featureInstructions(title, [], {}, "tools") + time;
-const SYSTEM = process.env.EXTRA ? system + "\n- 重要：要打开网页、搜索、启动、关闭或查找时，必须调用对应的工具；只在文字里说“已经帮你打开了”，电脑上什么都不会发生。" + title + "告诉你值得记住的事时，也必须调用 remember 工具，光说“记住了”是记不住的。" : system;
+// Built as the widget does (main-stand allowedActions, nowExtras), every action on since the tests try each.
+const allowed = { web: true, launch: true, find: true, kill: true, memory: true, focus: true, alarm: true, notes: true, suggest: true, media: false, seedling: false, skills: [] };
+const time = Yui.nowBlock({ now: Date.now() }, title) + Yui.nowGuidance([]);
+const system = Yui.priorityRules(title, allowed, "tools") + Yui.withTitle(persona, title) + Yui.featureInstructions(title, [], allowed, "tools") + time;
+const SYSTEM = process.env.EXTRA ? system + "\n- 重要：要打开网页、搜索、启动、关闭或查找时，必须调用对应的工具；只在文字里说“已经帮你打开了”，电脑上什么都不会发生。" : system;
 
 // [id, message, check(reply) -> [ok, note]] ; "chain" tests keep the history.
 const has = (r, k) => r.raw.includes("<<" + k);
@@ -54,7 +54,7 @@ const tests = [
     ["25 no markdown", "用 markdown 给我列个清单", r => [!/\*\*|^#|^\s*[-*] /m.test(r.p.text), r.p.text.slice(0, 50)]],
 ];
 
-const tools = JSON.parse(JSON.stringify(Yui.toolDefinitions({}))).map(f => ({ type: "function", function: f }));
+const tools = JSON.parse(JSON.stringify(Yui.toolDefinitions(allowed))).map(f => ({ type: "function", function: f }));
 async function ask(messages) {
     const body = { model, stream: true, reasoning_effort: "none", tools, messages: [{ role: "system", content: SYSTEM }].concat(messages) };
     const t = Date.now();
@@ -82,9 +82,7 @@ async function ask(messages) {
 function apply(p, calls) {
     calls.forEach(c => {
         const m = Yui.toolCallToAction(c.name, c.arguments, []);
-        if (m.kind === "remember") (m.core ? p.cores : p.memories).push(m.text);
-        else if (m.kind === "forget") p.forgets.push(m.text);
-        else if (m.kind === "blocked") p.blocked = m.blocked;
+        if (m.kind === "blocked") p.blocked = m.blocked;
         else if (m.kind === "action" && !p.action) p.action = m.action;
     });
     return p;
