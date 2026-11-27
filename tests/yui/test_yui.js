@@ -793,6 +793,16 @@ test("Seedling not installed: asked for a widget, Yui points to the plugin", () 
     assert.ok(Yui.featureInstructions("爸爸", [], { seedling: true }, "tags").indexOf("还没被唤醒") === -1);
 });
 
+test("Seedling's state is told after the instruction", () => {
+    const busy = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "busy" }, "tags");
+    assert.ok(busy.indexOf("正在培育上一个挂件") !== -1);
+    const none = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "noWidget" }, "tags");
+    assert.ok(none.indexOf("还没有 Seedling 挂件") !== -1 && none.indexOf("正在培育") === -1);
+    const ready = Yui.featureInstructions("爸爸", [], { seedling: true, seedlingState: "ready" }, "tags");
+    assert.ok(ready.indexOf("还没有 Seedling 挂件") === -1 && ready.indexOf("正在培育上一个") === -1);
+    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: false, seedlingState: "busy" }, "tags").indexOf("正在培育上一个") === -1);
+});
+
 test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
     // the chat line: thinking until something is written, no numbers
     assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);

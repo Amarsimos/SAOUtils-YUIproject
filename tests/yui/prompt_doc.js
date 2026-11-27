@@ -26,6 +26,7 @@ const out = [START, "",
     ["### B. 默认人格（`defaultSystemPrompt`）", ""], fence(Y.withTitle(persona, title)),
     ["### C. 系统功能说明（`Yui.featureInstructions`，Tags 模式）", ""], fence(Y.featureInstructions(title, [], allowed, "tags")),
     ["#### 没装 Seedling 时，桌面小挂件这一条换成", ""], fence(Y.featureInstructions(title, [], Object.assign({}, allowed, { seedling: false }), "tags").split("\n").find((l) => l.indexOf("- 桌面小挂件") === 0)),
+    ["#### 装了 Seedling 时，按现在的状态接在那一条后面（`Yui.SEEDLING_STATE`，就绪时不加）", ""], fence(Object.keys(Y.SEEDLING_STATE).map((k) => k + "：" + Y.withTitle(Y.SEEDLING_STATE[k], title)).join("\n")),
     ["### D. 小模型提醒（`Yui.smallModelReminder`）", ""], fence(Y.smallModelReminder("tags", { web: false, launch: false, find: false, kill: false, memory: true, suggest: true })),
     [END]).join("\n");
 

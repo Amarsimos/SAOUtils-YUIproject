@@ -538,6 +538,8 @@ T.Widget {
             // Asked of SAO Utils each time (enabled or disabled while she runs); seedlingBench() also
             // loads it when it came back, done long before her reply asks for a widget.
             "seedling": seedlingBench() !== null || !!NVG.Resources.resolve(seedlingAddress),
+            // How it is now, so her reply fits (Yui.SEEDLING_STATE): one being grown, none on the desktop.
+            "seedlingState": seedlingJob ? "busy" : (seedlingProbe && seedlingProbe.bench.widgets.length === 0) ? "noWidget" : "ready",
             "skills": toolsEnabled ? swordSkills().map(function(skill) {
                 return skill.name;
             }) : []
