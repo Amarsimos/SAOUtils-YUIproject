@@ -2258,16 +2258,30 @@ T.Widget {
         var started = NVG.SystemCall.command(command);
         diag("command(" + command + ") -> " + started + " (not used, waiting for the status file)");
         var tries = 0;
+        var reading = false;
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer { interval: 500; repeat: true }", widget);
         timer.triggered.connect(function() {
-            tries++;
-            var status = Yui.parseFindStatus(readUrl(statusUrl));
-            if (!status && tries < 20)
+            // one read at a time (each is asynchronous)
+            if (reading)
                 return ;
 
-            timer.stop();
-            timer.destroy();
-            reportFind(action, status, Yui.parseSearchResults(status ? readUrl(resultUrl) : ""), esSetting);
+            tries++;
+            reading = true;
+            readUrl(statusUrl, function(text) {
+                reading = false;
+                var status = Yui.parseFindStatus(text);
+                if (!status && tries < 20)
+                    return ;
+
+                timer.stop();
+                timer.destroy();
+                if (!status)
+                    return reportFind(action, status, [], esSetting);
+
+                readUrl(resultUrl, function(results) {
+                    reportFind(action, status, Yui.parseSearchResults(results), esSetting);
+                }, true);
+            }, true);
         });
         timer.start();
     }
@@ -2311,20 +2325,28 @@ T.Widget {
             openLink(link);
     }
 
-    // Contents of a package file ("" when missing). A changing query is added so a cached earlier
-    // read (made before es.exe wrote the file) is never returned again. Each read is logged.
-    function readUrl(url) {
-        var target = url + "?t=" + Date.now();
+    // Contents of a local file, asynchronously (a slow disk never holds SAO Utils): done(text), "" when
+    // missing. fresh: a changing query is added so a cached earlier read (made before es.exe wrote
+    // the file) is never returned again. quiet: not logged.
+    function readUrl(url, done, fresh, quiet) {
+        var target = fresh ? url + "?t=" + Date.now() : String(url);
         try {
             var request = new XMLHttpRequest();
-            request.open("GET", target, false); // sync-ok: a local file
+            request.onreadystatechange = function() {
+                if (request.readyState !== XMLHttpRequest.DONE)
+                    return ;
+
+                var text = request.responseText || "";
+                if (!quiet)
+                    diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
+
+                done(text);
+            };
+            request.open("GET", target);
             request.send(null);
-            var text = request.responseText || "";
-            diag("GET " + target + " -> status " + request.status + ", " + text.length + " chars");
-            return text;
         } catch (e) {
             diag("GET " + target + " failed: " + e);
-            return "";
+            done("");
         }
     }
 
@@ -2832,16 +2854,11 @@ T.Widget {
             if (put.readyState !== XMLHttpRequest.DONE)
                 return ;
 
-            var ok = false;
-            try {
-                var get = new XMLHttpRequest();
-                get.open("GET", fileUrl(path) + "?t=" + Date.now(), false);
-                get.send(null);
-                ok = get.responseText === text;
-            } catch (e) {
-            }
-            diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
-            onDone(ok);
+            readUrl(fileUrl(path), function(written) {
+                var ok = written === text;
+                diag("write " + path + " -> " + (ok ? "ok" : "failed (status " + put.status + ")"));
+                onDone(ok);
+            }, true, true);
         };
         try {
             put.open("PUT", fileUrl(path));
@@ -2915,44 +2932,48 @@ T.Widget {
     // reading them first (no window), so the command (which shows a console window for a moment) only
     // runs when there is something to delete.
     function removeOldBackups() {
-        var found = [];
+        var paths = [];
         heartFolders().forEach(function(folder) {
-            for (var n = backupDays + 1; n <= 30; n++) {
-                var path = folder + "/heart-backup-" + n + ".json";
-                try {
-                    var get = new XMLHttpRequest();
-                    get.open("GET", fileUrl(path), false); // sync-ok: a local file
-                    get.send(null);
-                    if (get.responseText)
-                        found.push(path.replace(/\//g, "\\"));
-
-                } catch (e) {
-                }
-            }
+            for (var n = backupDays + 1; n <= 30; n++)
+                paths.push(folder + "/heart-backup-" + n + ".json");
         });
-        if (found.length === 0)
-            return ;
+        // Read asynchronously; the command runs once all have answered.
+        var found = [];
+        var left = paths.length;
+        paths.forEach(function(path) {
+            readUrl(fileUrl(path), function(text) {
+                if (text)
+                    found.push(path.replace(/\//g, "\\"));
 
-        var command = 'cmd /c del /q "' + found.join('" "') + '"';
-        NVG.SystemCall.command(command);
-        diag("command(" + command + ")");
+                if (--left > 0 || found.length === 0)
+                    return ;
+
+                var command = 'cmd /c del /q "' + found.join('" "') + '"';
+                NVG.SystemCall.command(command);
+                diag("command(" + command + ")");
+            }, false, true);
+        });
     }
 
-    onBackupDaysChanged: removeOldBackups()
+    // Backup Days is a slider: checked once it rests, not at each step.
+    onBackupDaysChanged: removeBackupsTimer.restart()
+
+    Timer {
+        id: removeBackupsTimer
+
+        interval: 1000
+        onTriggered: removeOldBackups()
+    }
 
     // System Console "Import": adds the memories of an exported file (and its chat history, if it has
-    // one) to Yui's Heart; nothing is replaced. Returns a message for the user.
-    function importHeart(url) {
-        var text = "";
-        try {
-            var get = new XMLHttpRequest();
-            get.open("GET", String(url), false); // sync-ok: a local file
-            get.send(null);
-            text = get.responseText || "";
-            diag("import " + url + " -> status " + get.status + ", " + text.length + " chars");
-        } catch (e) {
-            diag("import " + url + " failed: " + e);
-        }
+    // one) to Yui's Heart; nothing is replaced. done(message for the user), once the file is read.
+    function importHeart(url, done) {
+        readUrl(url, function(text) {
+            done(importHeartText(text));
+        });
+    }
+
+    function importHeartText(text) {
         var document;
         try {
             document = JSON.parse(text.replace(/^﻿/, ""));

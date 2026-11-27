@@ -92,13 +92,10 @@ for (const file of files) {
         break;
     }
 
-    // 4. synchronous XMLHttpRequest: open(method, url, false). A local file read may be synchronous:
-    // mark its line with "// sync-ok".
-    for (const x of raw.matchAll(/\.open\s*\(([^()]*(?:\([^()]*\))?[^()]*)\)[^\n]*/g)) {
-        const args = x[1].split(",");
-        if (args.length >= 3 && args[2].trim() === "false" && x[0].indexOf("sync-ok") === -1)
-            errors.push(at(x.index) + ": synchronous XMLHttpRequest (open(..., false)) freezes SAO Utils");
-    }
+    // 4. synchronous XMLHttpRequest: open(method, url, false) on one line, whatever the url's
+    // parentheses. None at all, local files too (a slow disk or a virus scan held SAO Utils).
+    for (const x of code.matchAll(/\.open\s*\([^\n]*,\s*false\s*\)/g))
+        errors.push(at(x.index) + ": synchronous XMLHttpRequest (open(..., false)) freezes SAO Utils; read asynchronously");
 }
 
 // 5. names gone since the last commit but still used
