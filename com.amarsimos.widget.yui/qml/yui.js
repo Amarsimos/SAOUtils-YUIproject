@@ -2556,27 +2556,16 @@ function seedlingChatLine(kind, title) {
     }[kind] || "呜……这次没能做好 (T_T)";
 }
 
-// What the code writer said it could not do (its "// SEEDLING-NOTE:" line), "" when nothing.
-function seedlingNoteOf(code) {
-    var m = /\/\/\s*SEEDLING-NOTE:\s*(.+)/.exec(String(code || ""));
-    return m ? m[1].trim() : "";
-}
-
-// Whether the code goes online (asks the Internet for something).
-function seedlingGoesOnline(code) {
-    var text = String(code || "").replace(/\/\/.*$/gm, "");
-    return /\bXMLHttpRequest\b|\bWebSocket\b|["']https?:\/\//i.test(text);
-}
-
-// What Yui adds to her last words: that it goes online, and what it could not do (the writer's note).
-function seedlingExtra(code, title) {
+// What Yui adds to her last words, from what Seedling made of the code (write's onDone info, Link
+// section 12.3; Seedling's code is never read here): that it goes online, and what the writer could
+// not do.
+function seedlingExtra(info, title) {
     var parts = [];
-    if (seedlingGoesOnline(code))
+    if (info && info.online)
         parts.push("它会联网获取数据哦。");
 
-    var note = seedlingNoteOf(code);
-    if (note)
-        parts.push("不过有一点要告诉" + (title || "你") + "：" + note);
+    if (info && info.note)
+        parts.push("不过有一点要告诉" + (title || "你") + "：" + info.note);
 
     return parts.join("");
 }

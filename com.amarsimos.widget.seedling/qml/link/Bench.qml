@@ -505,8 +505,13 @@ QtObject {
             var ok = kind === "done" || kind === "edited";
             endWriting(ok, message);
             console.log("Seedling: " + kind + ", " + message);
+            // info: what Seedling makes of the code for whoever asked (MHCP-YUI says it), so nobody
+            // else reads Seedling's code: {online: it goes online, note: what the writer could not do}.
             if (!current_job.silent)
-                onDone(kind, message, code || "");
+                onDone(kind, message, code || "", {
+                "online": ok && Writer.goesOnline(code),
+                "note": ok ? Writer.noteOf(code) : ""
+            });
 
         };
         current_job.finish = finish;

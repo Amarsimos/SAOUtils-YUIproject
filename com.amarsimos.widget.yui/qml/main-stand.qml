@@ -3898,11 +3898,12 @@ T.Widget {
             if (onProgress)
                 onProgress(state);
 
-        }, function(kind, message, code) {
+        }, function(kind, message, code, info) {
             seedlingJob = null;
             var ok = kind === "done" || kind === "edited";
             diag("seedling: " + kind + ", " + message);
-            onDone(message, ok, kind, ok ? Yui.seedlingExtra(code, userTitle()) : "");
+            // What Seedling made of the code (info), never read from the code here.
+            onDone(message, ok, kind, ok ? Yui.seedlingExtra(info, userTitle()) : "");
         });
     }
 

@@ -503,7 +503,7 @@ R1 `writer.js`（从 yui.js 搬纯函数 + 测试）→ R2 全局设置（LocalS
 | `attach(port)` / `detach(port)` | 结衣启动 / 关闭时交出 / 收回 Port。`attach` 返回是否接上（版本不同为 false）。`detach` 时正在写的挂件立刻停下，不再回调结衣 |
 | `attached()` | 是否已有结衣接上。已有时新来的结衣不抢，等之前的走了再接上 |
 | `widgets` / `widgetsChanged` | 桌面上的 Seedling 挂件（结衣只看有没有） |
-| `write(request, onProgress, onDone)` | 写或改挂件（进度和结果由结衣在聊天里说）。`onDone(kind, message, code)`，kind：done、edited、failed、stopped、offline、busy、missing、unset、declined（没有同意免责声明） |
+| `write(request, onProgress, onDone)` | 写或改挂件（进度和结果由结衣在聊天里说）。`onDone(kind, message, code, info)`，kind：done、edited、failed、stopped、offline、busy、missing、unset、declined（没有同意免责声明）；info：`{online, note}`，Seedling 自己从代码里看出的「会联网」和写代码的模型留下的说明（结衣照着说，不读代码） |
 | `stop()` | 停下正在写的 |
 | `ownSetup()` | Seedling 自己配好的连接（含密钥，供后装的结衣直接用，API 只配一次）；没配好为 null |
 

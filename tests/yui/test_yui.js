@@ -819,11 +819,12 @@ test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/
     assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("只回复") !== -1 && Yui.SEEDLING_INSTRUCTION.indexOf("不要写任何话") !== -1);
     assert.ok(Yui.SEEDLING_INSTRUCTION.indexOf("<<seedling:修好这些问题") !== -1);
     assert.strictEqual(Yui.SEEDLING_FIX_PREFIX, "帮我修好这个挂件：");
-    assert.strictEqual(Yui.seedlingNoteOf("// SEEDLING-NOTE: 拿不到实时汇率\nimport QtQuick 2.12"), "拿不到实时汇率");
-    assert.ok(Yui.seedlingGoesOnline("var r = new XMLHttpRequest();"));
-    assert.ok(!Yui.seedlingGoesOnline("// https://example.com in a comment\nItem {}"));
-    assert.strictEqual(Yui.seedlingExtra("import QtQuick 2.12\nItem {}", "爸爸"), "");
-    assert.ok(Yui.seedlingExtra("// SEEDLING-NOTE: 拿不到\nvar r = new XMLHttpRequest();", "爸爸").indexOf("联网") !== -1);
+    // from what Seedling tells (write's onDone info), never from the code
+    assert.strictEqual(Yui.seedlingExtra({ online: false, note: "" }, "爸爸"), "");
+    assert.strictEqual(Yui.seedlingExtra(undefined, "爸爸"), "");
+    const extra = Yui.seedlingExtra({ online: true, note: "拿不到实时汇率" }, "爸爸");
+    assert.ok(extra.indexOf("联网") !== -1 && extra.indexOf("爸爸：拿不到实时汇率") !== -1);
+    assert.ok(typeof Yui.seedlingNoteOf === "undefined" && typeof Yui.seedlingGoesOnline === "undefined", "Yui no longer reads Seedling's code");
     assert.ok(Yui.seedlingChatLine("offline", "爸爸").indexOf("没有允许联网") !== -1);
 });
 
