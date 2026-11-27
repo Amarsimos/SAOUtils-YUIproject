@@ -14,7 +14,7 @@ QtObject {
 
     property var widgets: []
     // The Link interface (section 12 of "Seedling Development Plan.md"): what MHCP-YUI may call here
-    // (linkVersion, attach, detach, widgets, write, stop, ownSetup) and what Seedling may call of her
+    // (linkVersion, attach, attached, detach, widgets, write, stop, ownSetup) and what Seedling may call of her
     // (her YuiPort). Goes up when it changes in a way that breaks the other side.
     readonly property int linkVersion: 1
     // MHCP-YUI's YuiPort while she is running (attach): her connection can be borrowed (ask), her data
@@ -38,6 +38,11 @@ QtObject {
     // What a widget may read of MHCP-YUI (@yui): her port's dataKeys(), null without her.
     function yuiKeys() {
         return yui ? yui.dataKeys() : null;
+    }
+
+    // Link: whether a MHCP-YUI is attached (another one that went may be replaced).
+    function attached() {
+        return port !== null;
     }
 
     // Link: MHCP-YUI is going.

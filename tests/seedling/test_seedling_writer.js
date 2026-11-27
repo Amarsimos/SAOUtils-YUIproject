@@ -1,15 +1,15 @@
 // How Seedling has a widget written (com.amarsimos.widget.seedling/qml/writer.js), section 11 of
 // "Seedling Development Plan.md": the prompt, the request, the code out of a reply, SEARCH / REPLACE
-// edits, and what is told to the model when they do not fit. Run: node tests/test_seedling_writer.js
+// edits, and what is told to the model when they do not fit. Run: node tests/seedling/test_seedling_writer.js
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
-const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
+const KEYS = require("./yui_port.js").dataKeys; // MHCP-YUI's @yui data (her port's dataKeys)
 
 const load = (file) => {
     const box = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
     return box;
 };
 const W = load("writer.js");

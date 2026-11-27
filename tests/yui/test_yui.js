@@ -3,7 +3,7 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 
-const src = fs.readFileSync(process.argv[2] || require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, "");
+const src = fs.readFileSync(process.argv[2] || require("path").join(__dirname, "..", "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, "");
 const Yui = {};
 vm.runInNewContext(src, Yui);
 
@@ -515,7 +515,7 @@ test("Quest Log notes", () => {
 // A QML file with two functions or properties of the same name does not load at all (the widget
 // shows as unknown), and qmllint does not catch it.
 test("No duplicate members in the QML files", () => {
-    const dir = require("path").join(__dirname, "..", "com.amarsimos.widget.yui", "qml");
+    const dir = require("path").join(__dirname, "..", "..", "com.amarsimos.widget.yui", "qml");
     fs.readdirSync(dir).filter((name) => name.endsWith(".qml")).forEach((name) => {
         const names = [...fs.readFileSync(require("path").join(dir, name), "utf8").matchAll(/^    (?:function (\w+)|(?:readonly )?property \w+ (\w+))/gm)].map((m) => m[1] || m[2]);
         const twice = names.filter((n, i) => names.indexOf(n) !== i);
@@ -785,7 +785,7 @@ test("Follow-ups", () => {
     same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
 });
 
-test("Seedling in Yui's words (the writing itself is Seedling's: tests/test_seedling_writer.js)", () => {
+test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
     // the chat line: thinking until something is written, no numbers
     assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);
     const writing = Yui.seedlingNoteLine({ "stage": "writing", "lines": 24, "edits": 0, "seconds": 9 }, "爸爸");

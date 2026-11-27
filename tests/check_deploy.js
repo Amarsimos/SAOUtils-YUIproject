@@ -5,7 +5,10 @@
 //  3. what Qt 5.13 (SAO Utils) does not have: newer imports, WheelHandler, ?? and ?. ,
 //  4. synchronous XMLHttpRequest (open(..., false) froze SAO Utils),
 //  5. a function / property that is gone since the last commit but still used,
-//  6. the test suites.
+//  6. each package's test suites (tests/yui, tests/seedling),
+//  7. the Link interface between them (section 12 of "Seedling Development Plan.md"): each side calls
+//     only what the other lists, both say the same version, and Seedling's stand-in of Yui
+//     (tests/seedling/yui_port.js) says what her yui.js says.
 // Usage: node tests/check_deploy.js   (from anywhere; paths are relative to the repo)
 const fs = require("fs");
 const path = require("path");
@@ -131,16 +134,59 @@ for (const rel of compared) {
     }
 }
 
-// 6. tests
-for (const test of ["test_yui.js", "test_seedling_safety.js", "test_seedling_props.js", "test_seedling_writer.js"]) {
-    if (!fs.existsSync(path.join(root, "tests", test)))
-        continue;
-    try {
-        execFileSync(process.execPath, [path.join(root, "tests", test)], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
-    } catch (e) {
-        const out = String(e.stdout || "") + String(e.stderr || "");
-        errors.push("tests/" + test + " failed:\n    " + out.trim().split("\n").filter((l) => /FAIL|Error|failed/i.test(l)).slice(0, 8).join("\n    "));
+// 6. tests, each package its own
+const suites = {
+    "com.amarsimos.widget.yui": ["yui/test_yui.js"],
+    "com.amarsimos.widget.seedling": ["seedling/test_seedling_safety.js", "seedling/test_seedling_props.js", "seedling/test_seedling_writer.js"]
+};
+for (const pkg of packages) {
+    for (const test of suites[pkg] || []) {
+        if (!fs.existsSync(path.join(root, "tests", test)))
+            continue;
+        try {
+            execFileSync(process.execPath, [path.join(root, "tests", test)], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+        } catch (e) {
+            const out = String(e.stdout || "") + String(e.stderr || "");
+            errors.push("tests/" + test + " failed:\n    " + out.trim().split("\n").filter((l) => /FAIL|Error|failed/i.test(l)).slice(0, 8).join("\n    "));
+        }
     }
+}
+
+// 7. the Link interface (only when both packages are here)
+if (packages.length === 2) {
+    const vm = require("vm");
+    const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
+    const yuiDir = "com.amarsimos.widget.yui/qml";
+    const seedDir = "com.amarsimos.widget.seedling/qml";
+    const port = read(yuiDir + "/SeedlingPort.qml");
+    const bench = read(seedDir + "/link/Bench.qml");
+    const members = (text) => new Set((text.match(/(?:function|property(?:\s+\w+)?)\s+([a-zA-Z_]\w*)/g) || []).map((m) => m.split(/\s+/).pop()));
+    // What Yui may call of Bench: its Link list (the comment above linkVersion).
+    const listed = (bench.match(/what MHCP-YUI may call here\s*\/\/\s*\(([^)]*)\)/) || [])[1];
+    const benchLink = new Set(String(listed || "").split(/,\s*/).concat(["widgetsChanged"]));
+    const benchMembers = members(bench);
+    const portMembers = members(port);
+    const yuiCode = filesOf(path.join(root, yuiDir)).map((f) => fs.readFileSync(f, "utf8")).join("\n");
+    const seedCode = filesOf(path.join(root, seedDir)).filter((f) => !/[\\/](props|writer)\.js$/.test(f)).map((f) => fs.readFileSync(f, "utf8")).join("\n");
+    for (const name of new Set((yuiCode.match(/\bbench\.([a-zA-Z_]\w*)/g) || []).map((m) => m.slice(6)))) {
+        if (!benchLink.has(name))
+            errors.push("Link: MHCP-YUI calls bench." + name + ", which is not in Bench's Link interface");
+        else if (name !== "widgetsChanged" && !benchMembers.has(name))
+            errors.push("Link: bench." + name + " is listed but Bench has no such member");
+    }
+    for (const name of new Set((seedCode.match(/(?:Bench\.yui|[^\w.]yui)\.([a-zA-Z_]\w*)/g) || []).map((m) => m.split(".").pop()))) {
+        if (name !== "js" && !portMembers.has(name))
+            errors.push("Link: Seedling calls yui." + name + ", which MHCP-YUI's SeedlingPort does not have");
+    }
+    const version = (text) => (text.match(/linkVersion:\s*(\d+)/) || [])[1];
+    const yuiVersion = (read(yuiDir + "/main-stand.qml").match(/seedlingLinkVersion:\s*(\d+)/) || [])[1];
+    if (version(bench) !== version(port) || version(bench) !== yuiVersion)
+        errors.push("Link: versions differ (Bench " + version(bench) + ", SeedlingPort " + version(port) + ", main-stand " + yuiVersion + ")");
+    const box = {};
+    vm.runInNewContext(read(yuiDir + "/yui.js").replace(/^\.pragma library\s*$/m, ""), box);
+    const standIn = require(path.join(root, "tests/seedling/yui_port.js"));
+    if (JSON.stringify(box.SEEDLING_DATA) !== JSON.stringify(standIn.dataKeys) || String(standIn.linkVersion) !== version(port))
+        errors.push("Link: tests/seedling/yui_port.js no longer says what MHCP-YUI says (SEEDLING_DATA / linkVersion); copy hers");
 }
 
 for (const note of notes)

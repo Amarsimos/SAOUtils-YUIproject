@@ -5,7 +5,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const path = require("path");
-const root = path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml") + "/";
+const root = path.join(__dirname, "..", "..", "com.amarsimos.widget.yui", "qml") + "/";
 // Ollama's address (OLLAMA_URL to change it); results go to tests/results/.
 const ollama = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 const results = path.join(__dirname, "results");

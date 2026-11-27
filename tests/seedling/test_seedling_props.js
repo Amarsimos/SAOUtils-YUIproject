@@ -1,17 +1,17 @@
 // Seedling's @setting / @keep / @name (com.amarsimos.widget.seedling/qml/props.js), section 9 of
 // "Seedling Development Plan.md": what is read, what does not take effect (and says why), how values
-// are made to fit, and what stays when the code changes. Run: node tests/test_seedling_props.js
+// are made to fit, and what stays when the code changes. Run: node tests/seedling/test_seedling_props.js
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
-const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
+const KEYS = require("./yui_port.js").dataKeys; // MHCP-YUI's @yui data (her port's dataKeys)
 
 const box = { console };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "props.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "props.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
 const P = box;
 const S = {};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "safety.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), S);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "safety.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), S);
 
 let passed = 0;
 let failed = 0;
@@ -205,7 +205,7 @@ test("declarations are only comments: the safety check is the same with or witho
 
 test("Yui's code prompt (rule 13) says the same as props.js: its examples are read", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
     const rule = Y.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("13. ") === 0);
     assert.ok(rule, "rule 13 is in the prompt");
     const r = P.parse(`import QtQuick 2.12
@@ -228,7 +228,7 @@ Item {
 
 test("templates (templates.js): each passes the safety check (Weather only for going online) and all its declarations take effect", () => {
     const T = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
     assert.ok(T.TEMPLATES.length >= 7);
     T.TEMPLATES.forEach((t) => {
         const problems = S.check(t.code, false);
@@ -247,7 +247,7 @@ test("templates (templates.js): each passes the safety check (Weather only for g
 
 test("templates: a request finds the template of its kind; Widget Style has a default", () => {
     const T = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "templates.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), T);
     assert.strictEqual(T.match("帮我做一个考研倒计时").key, "countdown");
     assert.strictEqual(T.match("想要一个每天喝水打卡的").key, "habit");
     assert.strictEqual(T.match("番茄钟").key, "pomodoro");
@@ -329,7 +329,7 @@ Item {
 
 test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
     const rule = Y.codePrompt(false, false, KEYS).split("\n").find((l) => l.indexOf("15. ") === 0);
     assert.ok(rule, "rule 15 is in the prompt");
     const named = (rule.match(/[a-z_]+（/g) || []).map((m) => m.slice(0, -1));
@@ -339,7 +339,7 @@ test("Yui's code prompt (rule 15) names exactly the @yui keys props.js reads", (
 
 test("Yui's code prompt: Widget Style and the template are added only when there are some", () => {
     const Y = {};
-    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
     assert.strictEqual(Y.styleNote(""), "");
     assert.strictEqual(Y.templateNote("  "), "");
     assert.ok(Y.styleNote("极简黑白").indexOf("极简黑白") !== -1);

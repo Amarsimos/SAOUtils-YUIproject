@@ -3794,7 +3794,7 @@ T.Widget {
     function seedlingBench() {
         if (seedlingProbe) {
             // Another Yui that was attached is gone: this one takes over.
-            if (!seedlingProbe.bench.port)
+            if (!seedlingProbe.bench.attached())
                 seedlingProbe.bench.attach(seedlingPort);
 
             return seedlingProbe.bench;

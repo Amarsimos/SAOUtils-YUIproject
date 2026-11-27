@@ -1,13 +1,13 @@
 // Seedling's safety check (com.amarsimos.widget.seedling/qml/safety.js), S3 of "Seedling Development
 // Plan.md": what must be refused (S1's probes and ways round), what goes only with Network on, and what
-// normal widgets must still be able to do. Run: node tests/test_seedling_safety.js
+// normal widgets must still be able to do. Run: node tests/seedling/test_seedling_safety.js
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 const assert = require("assert");
-const KEYS = (() => { const b = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.yui", "qml", "yui.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), b); return b.SEEDLING_DATA; })(); // MHCP-YUI's @yui data (her port's dataKeys)
+const KEYS = require("./yui_port.js").dataKeys; // MHCP-YUI's @yui data (her port's dataKeys)
 
-const root = path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml");
+const root = path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml");
 const load = (file) => {
     const box = {};
     vm.runInNewContext(fs.readFileSync(path.join(root, file), "utf8").replace(/^\.pragma library\s*$/m, ""), box);
@@ -181,7 +181,7 @@ Object.keys(allow).forEach((name) => expect(name, allow[name], false, "pass"));
 // ---- The code prompt (Seedling's writer.js, codePrompt) says the same as the check (S6): the modules it
 // allows are exactly the check's, the Qt functions it names are allowed, and its examples pass.
 const Y = {};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "com.amarsimos.widget.seedling", "qml", "writer.js"), "utf8").replace(/^\.pragma library\s*$/m, ""), Y);
 const prompt = Y.codePrompt(false, false, KEYS);
 const importRule = prompt.split("\n").find((line) => line.indexOf("1. 模块：只能 import") === 0);
 const promptModules = importRule.split("。")[0].replace("1. 模块：只能 import ", "").split("、").map((m) => m.trim().split(" ")[0]);
