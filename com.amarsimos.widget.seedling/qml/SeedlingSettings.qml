@@ -472,18 +472,22 @@ NVG.Window {
                                 if (JSON.stringify(next) === JSON.stringify(models))
                                     return ;
 
-                                // The list swap moves the selection by itself: not a choice to save.
+                                // The list swap moves the selection by itself, maybe later: not a choice
+                                // to save, until followModels has put the saved one back.
                                 refreshing = true;
                                 models = next;
-                                refreshing = false;
                                 Qt.callLater(followModels);
                             }
 
                             property bool refreshing: false
 
                             readonly property string key: settingsWindow.ownConnection ? "model" : "yui_model"
-                            // The other connection's choice is shown at once (the list may be the same).
-                            onKeyChanged: Qt.callLater(followModels)
+                            // The other connection's choice is shown at once (the list may be the same);
+                            // nothing is saved under the new key before that.
+                            onKeyChanged: {
+                                refreshing = true;
+                                Qt.callLater(followModels);
+                            }
 
                             visible: models.length > 0
                             label: "Core Program"
@@ -524,10 +528,11 @@ NVG.Window {
 
                                 var current = String(Link.Bench.setting(key, ""));
                                 var at = !settingsWindow.ownConnection && current === "" ? 0 : models.indexOf(current);
+                                refreshing = true;
                                 value = Math.max(0, at);
-                                if (at === -1 && models.length > 0)
-                                    Link.Bench.setSetting(key, stored(0));
-
+                                refreshing = false;
+                                // A saved core missing from the list is kept (the list may be another
+                                // server's for a moment, or not scanned yet): only shown as the first.
                             }
                         }
 
@@ -809,6 +814,10 @@ NVG.Window {
         var own = Link.Bench.ownSetup();
         lines.push("Own AI: " + (own ? own.title + " · " + own.model : "not set up"));
         lines.push("Writing uses: " + (Link.Bench.connectionKind() === "yui" ? "MHCP-YUI's AI" : "Seedling's own AI") + (Link.Bench.cannotWrite() ? " (" + Link.Bench.cannotWrite() + ")" : ""));
+        // The model widgets are written with: with her, Seedling's own choice for her server
+        // (yui_custom_model / yui_model, "" = her chat's); alone, its own (custom_model / model).
+        lines.push("Writing model: " + (Link.Bench.connectionKind() === "yui" ? (Link.Bench.writingModel() || "same as her chat (" + (yui ? yui.connection().model : "") + ")") : Api.modelOf(Link.Bench.ownConfig())));
+        lines.push("Saved: with Yui " + JSON.stringify(Link.Bench.setting("yui_model", "")) + " / " + JSON.stringify(Link.Bench.setting("yui_custom_model", "")) + ", alone " + JSON.stringify(Link.Bench.setting("model", "")) + " / " + JSON.stringify(Link.Bench.setting("custom_model", "")));
         testResult = lines.join("\n");
         console.log("Seedling test: " + lines.join(" | "));
     }
