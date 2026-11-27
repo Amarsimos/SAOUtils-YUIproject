@@ -40,7 +40,7 @@ NVG.Window {
         onSettingChanged: {
             if (key === "scanned_models")
                 settingsWindow.scannedRevision++;
-            else if (["provider", "endpoint", "api_key", "custom_model", "connection"].indexOf(key) !== -1)
+            else if (["provider", "endpoint", "api_key", "custom_model"].indexOf(key) !== -1)
                 settingsWindow.linkRevision++;
         }
     }
@@ -344,32 +344,6 @@ NVG.Window {
                     P.PreferenceGroup {
                         Layout.fillWidth: true
                         spacing: 10
-
-                        // With MHCP-YUI: write through her AI (default) or Seedling's own.
-                        P.SelectPreference {
-                            id: connectionPreference
-
-                            property bool ready: false
-
-                            visible: Link.Bench.yui !== null
-                            label: "Connection"
-                            model: ["MHCP-YUI's AI", "Seedling's own AI"]
-                            Component.onCompleted: {
-                                value = Link.Bench.setting("connection", "yui") === "own" ? 1 : 0;
-                                ready = true;
-                            }
-                            onValueChanged: {
-                                if (ready)
-                                    Link.Bench.setSetting("connection", value === 1 ? "own" : "yui");
-
-                            }
-                        }
-
-                        SettingNote {
-                            visible: settingsWindow.help && connectionPreference.visible
-                            besidePreferences: true
-                            text: qsTr("Which AI writes the widgets while MHCP-YUI is there. Seedling's own AI uses the server, key and core set below; without MHCP-YUI it is always used.")
-                        }
 
                         // With MHCP-YUI her server and key are used (nothing to set twice).
                         SettingNote {
