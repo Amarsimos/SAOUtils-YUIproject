@@ -1068,6 +1068,8 @@ T.Widget {
         // temperature is set.
         var regenerate = regenerating;
         regenerating = false;
+        // As asked, before the notes below: what is sent again when the server refuses tools.
+        var asAsked = messages;
         var temperatureNow = temperature >= 0 && regenerate ? Math.min(2, temperature + 0.3) : temperature;
         // config.rawSystem: a request of the program's own (Seedling's code) with just this system
         // prompt: no personality, feature instructions, reminders or notes.
@@ -1283,7 +1285,9 @@ T.Widget {
                     var tagConfig = JSON.parse(JSON.stringify(config));
                     tagConfig.provider = config.provider;
                     tagConfig.noTools = true;
-                    retry = requestCompletion(messages, onFinished, tagConfig, onDelta);
+                    // The messages as asked (the notes are added again) and still a regeneration.
+                    regenerating = regenerate;
+                    retry = requestCompletion(asAsked, onFinished, tagConfig, onDelta);
                 } else {
                     finish(httpErrorHint(http.status) + "\n[Error: " + http.status + " " + http.statusText + (http.responseText ? ": " + http.responseText : "") + "]", true);
                 }
