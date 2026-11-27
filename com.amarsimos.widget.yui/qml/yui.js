@@ -1980,6 +1980,8 @@ function featureInstructions(title, core, allowed, mode) {
 
     if (allowed.seedling === true)
         lines.push(withTitle(SEEDLING_INSTRUCTION, title));
+    else if (allowed.seedling === false)
+        lines.push(withTitle(SEEDLING_MISSING, title));
 
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
@@ -2487,6 +2489,9 @@ var SEEDLING_DATA = {
     "col_ledger": { "type": "real", "text": "本月用掉的 k token", "fast": false },
     "latest_report": { "type": "string", "text": "最新周报", "fast": false }
 };
+
+// Seedling not installed: asked for a widget, Yui points to the plugin instead of saying she cannot.
+var SEEDLING_MISSING = "- 桌面小挂件：{t}请你做桌面小挂件（时钟、倒计时、小面板之类）时，告诉{t}这要先装上结衣的伙伴插件 Seedling：装好后在挂件库里把 Seedling 拖到桌面上，再叫你一声，你就能帮{t}把挂件做出来。不要说你做不到、也不要让{t}自己动手写，更不要在聊天里写代码。";
 
 var SEEDLING_INSTRUCTION ="- 桌面小挂件（Seedling）：当{t}明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，用你自己的口吻简短回应，并在回复最后加上 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>>。代码由程序另外去写，你不要在回复里写代码，也不要说已经做好了；只是聊到挂件、没有要做或要改的时候不要加。挂件要用网上的实时数据（天气、汇率、新闻之类）时，在回复里告诉{t}它需要联网，待会儿程序会问{t}是否允许。{t}请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要在聊天里猜原因，简短回应后加上 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。";
 

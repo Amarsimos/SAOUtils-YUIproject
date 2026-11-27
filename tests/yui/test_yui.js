@@ -785,6 +785,14 @@ test("Follow-ups", () => {
     same(Yui.followups([{ id: 6, text: "2月10日旅行", created: written }], at(10, 25), {}), []);
 });
 
+test("Seedling not installed: asked for a widget, Yui points to the plugin", () => {
+    const allowed = { seedling: false };
+    const text = Yui.featureInstructions("爸爸", [], allowed, "tags");
+    assert.ok(text.indexOf("伙伴插件 Seedling") !== -1);
+    assert.ok(text.indexOf("<<seedling:") === -1);
+    assert.ok(Yui.featureInstructions("爸爸", [], { seedling: true }, "tags").indexOf("伙伴插件 Seedling") === -1);
+});
+
 test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/test_seedling_writer.js)", () => {
     // the chat line: thinking until something is written, no numbers
     assert.ok(Yui.seedlingNoteLine({ "stage": "writing", "lines": 0, "edits": 0, "seconds": 3 }, "爸爸").indexOf("在想") !== -1);
