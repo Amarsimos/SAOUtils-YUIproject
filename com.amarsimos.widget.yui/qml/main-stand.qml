@@ -437,7 +437,7 @@ T.Widget {
     // How Yui addresses the user; settings.user_title is "papa" (default) or "mama".
     // Also substituted for {{user_title}} in the system prompt.
     function userTitle() {
-        return widget.settings.user_title === "mama" ? "妈妈" : "爸爸";
+        return Yui.titleOf(widget.settings.user_title);
     }
 
     // A feature switch from the Cardinal System dialog (CardinalSystem.qml); all are on unless turned off.
@@ -1105,7 +1105,7 @@ T.Widget {
         var mode = config.textOnly ? "text" : tools.length > 0 ? "tools" : "tags";
         var title = config.userTitle || userTitle();
         // The priority rules first, then the personality, then the feature instructions and memories.
-        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + (systemPrompt || "你是ai助手").replace(/\{\{user_title\}\}/g, title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
+        systemPrompt = raw ? config.rawSystem : Yui.priorityRules(title, allowedActions(), mode) + Yui.withTitle(systemPrompt || "你是ai助手", title) + systemExtras(title, lastUser ? lastUser.content : "", mode);
         if (!raw && mode !== "text" && smallModelMode && messages.length > 0 && messages[messages.length - 1].role === "user") {
             messages = messages.slice();
             var latest = messages[messages.length - 1];

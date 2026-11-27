@@ -1968,7 +1968,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 专注（Boss Raid）：当" + title + "请你陪着专注、开始番茄钟或计时学习工作时，在回复最后加上 <<focus:分钟数>>（没说时长就写 <<focus:25>>）；要提前结束时加 <<focus:stop>>。");
 
     if (allowed.alarm !== false)
-        lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒他时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
+        lines.push("- 提醒（Alarm）：当" + title + "请你在某个时间提醒" + title + "时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。");
 
     if (allowed.suggest)
         lines.push("- 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替" + title + "想 2～3 个" + title + "接下来可能说的简短回复（用" + title + "的口吻，每个不超过 12 个字；只想聊天的话，不要想请结衣操作电脑、设提醒之类的）。不需要时就不加。");
@@ -1977,7 +1977,7 @@ function featureInstructions(title, core, allowed, mode) {
         lines.push("- 音乐：当" + title + "请你暂停、继续播放、切歌、调音量或静音时，在回复最后加上 <<media:命令>>，命令是 pause（播放 / 暂停）、next（下一首）、prev（上一首）、vol+、vol-、mute（静音）、stop 之一；音量要多调几格就写几个标签。不用确认，程序会直接执行。");
 
     if (allowed.seedling === true)
-        lines.push(SEEDLING_INSTRUCTION.replace(/\{t\}/g, title));
+        lines.push(withTitle(SEEDLING_INSTRUCTION, title));
 
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
@@ -2029,6 +2029,17 @@ function featureInstructions(title, core, allowed, mode) {
         });
     }
     return lines.join("\n");
+}
+
+// How Yui calls the user: settings.user_title "mama" or "papa" (the default). The only place of this.
+function titleOf(id) {
+    return id === "mama" ? "妈妈" : "爸爸";
+}
+
+// A prompt text with the user's title put in: {t} in Yui's own texts, {{user_title}} in the
+// personality the user edits (one way to write it, one function for both).
+function withTitle(text, title) {
+    return String(text || "").replace(/\{\{user_title\}\}|\{t\}/g, title);
 }
 
 // The most important rules, put before the personality (whatever the user wrote there) so that small

@@ -290,6 +290,9 @@ test("tools mode instructions and the emotion guess", () => {
 });
 
 test("priority rules and the small model reminder", () => {
+    assert.strictEqual(Yui.titleOf("mama") + Yui.titleOf("papa") + Yui.titleOf(undefined), "妈妈爸爸爸爸");
+    assert.strictEqual(Yui.withTitle("{t}和{{user_title}}", "妈妈"), "妈妈和妈妈");
+    assert.ok(!/[他她]/.test(Yui.featureInstructions("妈妈", [], {}, "tags").replace(/其他/g, "")), "no 他 / 她, the title");
     assert.strictEqual(Yui.priorityRules("爸爸", {}, "text"), "", "a text-only request (weekly report, portrait) has no tag rules");
     const tools = Yui.priorityRules("爸爸", {}, "tools");
     assert.ok(tools.startsWith("【最重要的规则】") && tools.includes("必须调用提供的工具") && tools.includes("记住、忘记事情时，必须在回复里写对应的标签") && tools.includes("必须搜索"));
