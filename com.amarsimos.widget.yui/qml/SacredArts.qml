@@ -19,7 +19,9 @@ Item {
     readonly property real k: height / Engine.H
     // Where the stage starts in the view (without the shake); the canvas, the dimming and the flash cover
     // the whole view, so nothing reaching past the stage is cut off.
-    readonly property real baseX: centreX - Engine.W * k / 2
+    readonly property real baseX: (centred ? width / 2 : centreX) - Engine.W * k / 2
+    // The sword skills are centred on the whole view.
+    property bool centred: false
     property bool yuiHidden: false
     property real aura: 0
     property real yuiShake: 0
@@ -40,6 +42,7 @@ Item {
             return ;
         }
         Engine.play(kind, arg);
+        sync();
         ticker.start();
     }
 
@@ -47,6 +50,7 @@ Item {
     function sync() {
         var s = Engine.state;
         yuiHidden = s.yuiHidden;
+        centred = s.centred;
         aura = s.aura;
         yuiShake = s.yuiShake;
         stageShake = s.stageShake;

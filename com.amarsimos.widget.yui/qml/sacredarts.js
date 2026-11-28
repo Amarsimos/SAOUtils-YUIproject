@@ -20,6 +20,8 @@ var state = {
     "flash": 0,
     "dim": 0,
     "yuiHidden": false,
+    // A sword skill plays: the stage is centred on the whole view instead of on Yui.
+    "centred": false,
     "aura": 0,
     "yuiShake": 0,
     "stageShake": 0,
@@ -519,6 +521,7 @@ function swingBig(rot, dir, c) {
 function starburst() {
     edgeGlowC = "rgba(41,182,246,";
     state.yuiHidden = true;
+    state.centred = true;
     boss.target = 1;
     boss.hp = 1;
     boss.shown = 1;
@@ -577,6 +580,7 @@ function starburst() {
     });
     later(t + 3200, function() {
         state.yuiHidden = false;
+        state.centred = false;
         sparks(cx, cy, "#ffffff", 30, 2.5);
     });
 }
@@ -652,6 +656,7 @@ function stab(px, py, big) {
 // faster; a beat; the eleventh through the middle. No foe: Yui is hidden meanwhile.
 function rosario() {
     state.yuiHidden = true;
+    state.centred = true;
     boss.target = 0;
     var mx = cx, my = cy, pts = [], i;
     for (i = 0; i < 5; i++)
@@ -678,6 +683,7 @@ function rosario() {
     });
     later(t + 3000, function() {
         state.yuiHidden = false;
+        state.centred = false;
         marks = [];
     });
 }
@@ -688,6 +694,7 @@ function settle() {
     state.flash = 0;
     state.dim = 0;
     state.yuiHidden = false;
+    state.centred = false;
     state.aura = 0;
     state.yuiShake = 0;
     state.stageShake = 0;
