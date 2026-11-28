@@ -35,9 +35,13 @@ NVG.View {
     property real panelOpacity: 0
     property real reveal: 0
     property real contentOpacity: 0
-    // The pages, in the order of the buttons: [title, theme icon (main menu group)].
-    readonly property var pages: [[qsTr("Status"), "System/HW_info"], [qsTr("Records"), "Communicate/calendar"], [qsTr("Memories"), "Other/Favs1"], [qsTr("Quests"), "Communicate/tasks"], [qsTr("Operations"), "Communicate/clock1"]]
-    property int page: Math.max(0, Math.min(pages.length - 1, settings.console_page || 0))
+    // The pages, in the order of the buttons: [title, theme icon (main menu group), one of the small tools
+    // (Quests: shown only while they are not set aside, see toolsEnabled)].
+    readonly property var pages: [[qsTr("Status"), "System/HW_info"], [qsTr("Records"), "Communicate/calendar"], [qsTr("Memories"), "Other/Favs1"], [qsTr("Quests"), "Communicate/tasks", true], [qsTr("Operations"), "Communicate/clock1"]]
+    property int page: {
+        var saved = Math.max(0, Math.min(pages.length - 1, settings.console_page || 0));
+        return pages[saved][2] && !targetWidget.toolsEnabled ? 0 : saved;
+    }
     // ---- Placed and layered as the workbench: where its widget is (desktop or launcher), at its z.
     readonly property var hostView: targetWidget.NVG.View.view
     readonly property bool inLauncher: compositor === NVG.LauncherCompositor
@@ -395,6 +399,7 @@ NVG.View {
                                 model: consoleView.pages
 
                                 ConsoleNavButton {
+                                    visible: !modelData[2] || consoleView.targetWidget.toolsEnabled
                                     icon: modelData[1]
                                     caption: modelData[0]
                                     checked: consoleView.page === index
