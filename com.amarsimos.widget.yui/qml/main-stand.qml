@@ -368,6 +368,11 @@ T.Widget {
     }
 
     // bubble_font_family is a font name; older versions stored an index into Qt.fontFamilies().
+    // The Message Font for hand-drawn text (Yui.messageFont, see Yui.fontFor).
+    readonly property string messageFontFamily: fontFamilyOf(styles.bubble_font_family)
+
+    onMessageFontFamilyChanged: Yui.messageFont = messageFontFamily
+
     function fontFamilyOf(value) {
         if (typeof value === "string" && value)
             return value;
@@ -5054,6 +5059,7 @@ T.Widget {
         }
     }
     Component.onCompleted: {
+        Yui.messageFont = messageFontFamily;
         Qt.callLater(function() {
             widget.previousForm = widget.collapsedForm;
             widget.formChosen = true;

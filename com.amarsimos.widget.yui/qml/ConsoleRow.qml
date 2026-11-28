@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // A list row of System Console (as the preview's lists): a grey SAO UI key at the left (a time, a kind,
 // a date), the text, and at the right what is put in it (chips, tags); a thin line under it unless last.
@@ -22,7 +23,7 @@ Item {
         width: row.keyWidth
         visible: row.key !== ""
         text: row.key
-        font.family: "SAO UI"
+        font.family: Yui.fontFor(text)
         font.pixelSize: 14
         color: "#7A7A7A"
     }
@@ -30,6 +31,7 @@ Item {
     Text {
         id: label
 
+        font.family: Yui.fontFor(text)
         anchors.left: parent.left
         anchors.leftMargin: row.key !== "" ? row.keyWidth + 10 : 0
         anchors.right: actionRow.left

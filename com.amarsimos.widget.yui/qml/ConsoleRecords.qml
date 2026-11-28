@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // System Console, Records (as the preview; moved from Mental Health Counseling): Mood · 30 days, a
 // square a day colored by the mood Yui recorded (hover: the day and its note; click: delete it), and
@@ -123,6 +124,7 @@ ConsolePage {
                     }
 
                     Text {
+                        font.family: Yui.fontFor(text)
                         text: modelData[0]
                         font.pixelSize: 12
                         color: "#7A7A7A"
@@ -151,6 +153,7 @@ ConsolePage {
         ]
 
         Text {
+            font.family: Yui.fontFor(text)
             Layout.fillWidth: true
             visible: records.reportError !== ""
             text: records.reportError
@@ -160,6 +163,7 @@ ConsolePage {
         }
 
         Text {
+            font.family: Yui.fontFor(text)
             visible: records.reports.length === 0
             text: qsTr("No reports yet.")
             font.pixelSize: 13
@@ -179,7 +183,7 @@ ConsolePage {
                     Text {
                         Layout.fillWidth: true
                         text: modelData.week
-                        font.family: "SAO UI"
+                        font.family: Yui.fontFor(text)
                         font.pixelSize: 15
                         color: "#4D4D4D"
                     }
@@ -196,6 +200,7 @@ ConsolePage {
 
                 // Read-only but selectable, so a part can be copied.
                 TextEdit {
+                    font.family: Yui.messageFont
                     Layout.fillWidth: true
                     readOnly: true
                     selectByMouse: true

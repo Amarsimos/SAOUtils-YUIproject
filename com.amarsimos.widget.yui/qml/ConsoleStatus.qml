@@ -74,7 +74,7 @@ ConsolePage {
                 Text {
                     Layout.preferredWidth: 48
                     text: modelData[0]
-                    font.family: "SAO UI"
+                    font.family: Yui.fontFor(text)
                     font.pixelSize: 15
                     color: "#4D4D4D"
                 }
@@ -89,7 +89,7 @@ ConsolePage {
                     Layout.preferredWidth: 52
                     horizontalAlignment: Text.AlignRight
                     text: isNaN(parent.value) ? "--" : Math.round(parent.value) + "%"
-                    font.family: "SAO UI"
+                    font.family: Yui.fontFor(text)
                     font.pixelSize: 15
                     color: "#4D4D4D"
                 }
@@ -111,6 +111,7 @@ ConsolePage {
             }
 
             Text {
+                font.family: Yui.fontFor(text)
                 text: status.yui.raidActive ? qsTr("Yui's Heart: violet (Boss Raid)") : status.yui.crystalLevel === 0 ? qsTr("Yui's Heart: green") : qsTr("Yui's Heart: %1 (%2)").arg(status.yui.crystalLevel === 2 ? qsTr("red") : qsTr("yellow")).arg(status.yui.crystalStatus)
                 font.pixelSize: 12
                 color: "#7A7A7A"

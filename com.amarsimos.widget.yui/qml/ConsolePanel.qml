@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // A panel of System Console (as the preview): a light paper card over the code wall with a header
 // band (white to #EFEFEF) holding its title in SAO UI and a small note at the right (or tools, put in
@@ -32,7 +33,7 @@ Rectangle {
             anchors.leftMargin: 15
             anchors.verticalCenter: parent.verticalCenter
             text: panel.title
-            font.family: "SAO UI"
+            font.family: Yui.fontFor(text)
             font.pixelSize: 17
             color: "#4D4D4D"
         }
@@ -49,7 +50,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: panel.note !== ""
                 text: panel.note
-                font.family: "SAO UI"
+                font.family: Yui.fontFor(text)
                 font.pixelSize: 12
                 color: "#7A7A7A"
             }

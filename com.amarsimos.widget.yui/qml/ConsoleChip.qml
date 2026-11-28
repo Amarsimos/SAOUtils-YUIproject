@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import "yui.js" as Yui
 
 // A small button of System Console (the preview's chip): paper with a light shadow, SAO UI text; SAO
 // orange with white text while hovered or checked.
@@ -23,7 +24,7 @@ Rectangle {
 
         anchors.centerIn: parent
         text: chip.text
-        font.family: "SAO UI"
+        font.family: Yui.fontFor(text)
         font.pixelSize: chip.small ? 12 : 14
         color: chip.lit ? "#FFFFFF" : "#4D4D4D"
     }

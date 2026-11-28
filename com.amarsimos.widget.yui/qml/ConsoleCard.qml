@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // A card of System Console (as the preview): a panel with one big SAO UI value, an optional tag, a
 // small line under it and an optional thin meter (0-1; -1 hides it).
@@ -23,7 +24,7 @@ ConsolePanel {
 
         Text {
             text: card.big
-            font.family: "SAO UI"
+            font.family: Yui.fontFor(text)
             font.pixelSize: 30
             color: "#4D4D4D"
         }
@@ -38,6 +39,7 @@ ConsolePanel {
             }
 
             Text {
+                font.family: Yui.fontFor(text)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: card.sub !== ""
                 text: card.sub

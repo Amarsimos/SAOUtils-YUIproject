@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import "yui.js" as Yui
 
 // A result tag of System Console: white SAO UI text on a colored block.
 Rectangle {
@@ -12,7 +13,7 @@ Rectangle {
         id: label
 
         anchors.centerIn: parent
-        font.family: "SAO UI"
+        font.family: Yui.fontFor(text)
         font.pixelSize: 12
         color: "#FFFFFF"
     }

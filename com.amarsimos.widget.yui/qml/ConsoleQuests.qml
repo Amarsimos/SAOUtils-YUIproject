@@ -135,6 +135,7 @@ ConsolePage {
             TextField {
                 id: alarmTimeField
 
+                font.family: Yui.messageFont
                 Layout.preferredWidth: 110
                 placeholderText: qsTr("HH:mm / +30")
                 selectByMouse: true
@@ -143,12 +144,14 @@ ConsolePage {
             CheckBox {
                 id: dailyBox
 
+                font.family: Yui.messageFont
                 text: qsTr("Daily")
             }
 
             TextField {
                 id: alarmTextField
 
+                font.family: Yui.messageFont
                 Layout.fillWidth: true
                 placeholderText: qsTr("Remind me of…")
                 selectByMouse: true
@@ -163,6 +166,7 @@ ConsolePage {
         }
 
         Text {
+            font.family: Yui.fontFor(text)
             Layout.fillWidth: true
             visible: quests.alarmError !== ""
             text: quests.alarmError
@@ -215,6 +219,7 @@ ConsolePage {
             TextField {
                 id: noteField
 
+                font.family: Yui.messageFont
                 Layout.fillWidth: true
                 placeholderText: qsTr("Something to note down")
                 selectByMouse: true
@@ -229,6 +234,7 @@ ConsolePage {
         }
 
         Text {
+            font.family: Yui.fontFor(text)
             Layout.fillWidth: true
             visible: quests.notesMessage !== ""
             text: quests.notesMessage

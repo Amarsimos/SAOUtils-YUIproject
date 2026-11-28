@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
 // System Console, Operations (as the preview's Recent Operations): what Yui did on the desktop (opening
 // pages, searching, starting and closing programs, finding files, media, sword skills, Seedling
@@ -51,6 +52,7 @@ ConsolePage {
         ]
 
         Text {
+            font.family: Yui.fontFor(text)
             visible: operations.entries.length === 0
             text: qsTr("Nothing done on the computer yet.")
             font.pixelSize: 13

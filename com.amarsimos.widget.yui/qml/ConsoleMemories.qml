@@ -96,6 +96,7 @@ ColumnLayout {
                 note: qsTr("days to come")
 
                 Text {
+                    font.family: Yui.fontFor(text)
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font.pixelSize: 12
@@ -104,6 +105,7 @@ ColumnLayout {
                 }
 
                 Text {
+                    font.family: Yui.fontFor(text)
                     visible: memories.followupItems.length === 0
                     font.pixelSize: 13
                     color: "#7A7A7A"
@@ -120,6 +122,7 @@ ColumnLayout {
                         last: index === memories.followupItems.length - 1
 
                         Text {
+                            font.family: Yui.fontFor(text)
                             anchors.verticalCenter: parent.verticalCenter
                             text: memories.followupState(modelData)
                             font.pixelSize: 12
@@ -148,6 +151,7 @@ ColumnLayout {
                 note: qsTr("%1 messages").arg(memories.logSize)
 
                 Text {
+                    font.family: Yui.fontFor(text)
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font.pixelSize: 12
@@ -159,6 +163,7 @@ ColumnLayout {
                 TextField {
                     id: logSearchField
 
+                    font.family: Yui.messageFont
                     Layout.fillWidth: true
                     selectByMouse: true
                     placeholderText: qsTr("Search the log")
@@ -174,6 +179,7 @@ ColumnLayout {
                 }
 
                 Text {
+                    font.family: Yui.fontFor(text)
                     visible: memories.logQuery !== ""
                     font.pixelSize: 12
                     color: "#7A7A7A"
@@ -184,6 +190,7 @@ ColumnLayout {
                     model: memories.logResults
 
                     Text {
+                        font.family: Yui.fontFor(text)
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText

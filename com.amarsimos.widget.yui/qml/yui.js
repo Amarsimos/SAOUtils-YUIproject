@@ -84,6 +84,15 @@ function loadStep(state, value, pair) {
 // data. Their code and stored data are kept; set this to true to bring them back.
 var TOOLS_ENABLED = false;
 
+// Fonts of hand-drawn text (System Console): SAO UI has no Chinese, and a text without a font falls
+// back to any system font. messageFont is the Message Font of Equipment (kept up to date by
+// main-stand.qml); fontFor gives SAO UI to text without Chinese or Japanese, the Message Font otherwise.
+var messageFont = "Source Han Sans SC";
+
+function fontFor(text) {
+    return /[\u3000-\u30FF\u3400-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/.test(String(text || "")) ? messageFont : "SAO UI";
+}
+
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》|[>＞》](?=\s|$|<|＜|《))/g;
 }

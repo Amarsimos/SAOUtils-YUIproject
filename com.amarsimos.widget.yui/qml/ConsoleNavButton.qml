@@ -1,5 +1,6 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
+import "yui.js" as Yui
 
 // A page button of System Console, as the SAO main menu's: an icon of SAO Utils' SAO theme (item group,
 // e.g. "System/HW_info"), the theme's -hovered (white) icon while hovered or checked, an orange ring
@@ -64,7 +65,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: 58
         text: button.caption
-        font.family: "SAO UI"
+        font.family: Yui.fontFor(text)
         font.pixelSize: 13
         color: "#FFFFFF"
         style: Text.Raised
