@@ -2447,7 +2447,9 @@ function systemCall(text, title, loads) {
     if (skill) {
         var starburst = /starburst|スターバースト|星爆/i.test(skill[1]);
         return {
-            "reply": starburst ? "Starburst Stream——！！✧ 二刀流十六连击……不，这是爸爸的三十连击！结衣在旁边看得好清楚，好帅！(≧▽≦)".replace("爸爸", title) : "Mother's Rosario——！✧ 有纪姐姐的十一连击……一下一下都刻在心里了呢。" + title + "，这份剑技要好好珍惜哦 (｡•́︿•̀｡)",
+            // Starburst Stream: the fight with The Gleam Eyes on the 74th floor (before Yui met them, so she
+            // saw it in Cardinal's records).
+            "reply": starburst ? "Starburst Stream——！！✧ 二刀流的十六连击！第 74 层的 Boss 房间里，" + title + "就是用这招一个人打倒了 The Gleam Eyes 的吧？结衣在 Cardinal 的战斗记录里看过好多遍……果然好帅！(≧▽≦)" :"Mother's Rosario——！✧ 有纪姐姐的十一连击……一下一下都刻在心里了呢。" + title + "，这份剑技要好好珍惜哦 (｡•́︿•̀｡)",
             "effect": {
                 "kind": starburst ? "starburst" : "rosario"
             }
