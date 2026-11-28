@@ -866,16 +866,6 @@
     </message>
     <message>
         <location line="+28"/>
-        <source>System Authority, Network Link</source>
-        <translation>System Authority → Network Link</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>No traffic for two minutes</source>
-        <translation>两分钟没有流量</translation>
-    </message>
-    <message>
-        <location line="+15"/>
         <source>Not available</source>
         <translation>无法读取</translation>
     </message>

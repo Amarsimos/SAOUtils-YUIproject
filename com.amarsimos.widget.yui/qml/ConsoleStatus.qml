@@ -4,7 +4,7 @@ import "yui.js" as Yui
 
 // System Console, Status (as the preview): Cardinal Load (CPU, GPU, RAM and the battery as SAO HUD
 // bars, colored with the crystal's thresholds; the same data sources as SAO Utils' HP bar widgets)
-// with what colors the crystal now, then three cards: Link (network), Storage (system drive) and
+// with what colors the crystal now, then two cards: Storage (system drive) and
 // Total Tokens (this month's tokens, used and left of the Monthly Budget, as the Storage bar), then
 // Links: the plugins and tools Yui works with (Seedling, Media Player, the weather source, Everything).
 ConsolePage {
@@ -132,27 +132,12 @@ ConsolePage {
 
     }
 
-    // Three cards in a row (one under another when narrow).
+    // Two cards in a row (one under another when narrow).
     GridLayout {
         Layout.fillWidth: true
-        columns: status.width > 520 ? 3 : 1
+        columns: status.width > 420 ? 2 : 1
         columnSpacing: 14
         rowSpacing: 14
-
-        ConsoleCard {
-            // The same width for every card whatever its text (a long line widened one; from the page's
-            // width, as the grid's own width follows its cards), and the
-            // same height as the others in its row.
-            Layout.preferredWidth: (status.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
-            Layout.maximumWidth: Layout.preferredWidth
-            Layout.fillHeight: true
-            title: "Link"
-            note: "Network"
-            big: status.yui.settings.network_watch === false ? "--" : status.yui.networkLost ? "Offline" : "Online"
-            tag: status.yui.settings.network_watch === false ? "Not Watched" : status.yui.networkLost ? "Offline" : "Online"
-            tagColor: status.yui.settings.network_watch === false ? "#9A9A9A" : status.yui.networkLost ? "#C82864" : "#7CC63E"
-            sub: status.yui.settings.network_watch === false ? qsTr("System Authority, Network Link") : status.yui.networkLost ? qsTr("No traffic for two minutes") : ""
-        }
 
         ConsoleCard {
             readonly property real minimum: status.yui.settings.storage_free_min !== undefined ? status.yui.settings.storage_free_min : 10
