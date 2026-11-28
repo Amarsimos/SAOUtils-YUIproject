@@ -5814,12 +5814,13 @@ T.Widget {
             }
             // The glow is drawn only while it is shown.
             layer.enabled: aura > 0
+            // The effect draws Yui too: only the glow's color fades with aura (fading the effect's opacity
+            // faded Yui herself away with the glow).
             layer.effect: Glow {
-                color: "#FFD54F"
+                color: Qt.rgba(1, 0.835, 0.31, Math.min(1, characterImage.aura))
                 radius: 24
                 samples: 49
                 spread: 0.35
-                opacity: characterImage.aura
             }
 
             anchors.left: parent.left
