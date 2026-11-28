@@ -5806,10 +5806,12 @@ T.Widget {
             readonly property real aura: sacredArts.aura
             readonly property real shake: sacredArts.yuiShake
 
-            opacity: (sacredArts.yuiHidden ? 0 : 1) * dim * widget.characterReveal
-            scale: 0.8 + 0.2 * widget.characterReveal
+            opacity: (sacredArts.yuiHidden ? 0 : 1) * sacredArts.yuiTeleport * dim * widget.characterReveal
+            scale: (0.8 + 0.2 * widget.characterReveal) * (0.4 + 0.6 * sacredArts.yuiTeleport)
+            // In the middle of the view for a Sacred Art (SacredArts.qml), above the chat panel.
+            z: sacredArts.yuiShift !== 0 ? 40 : 0
             transform: Translate {
-                x: characterImage.shake
+                x: characterImage.shake + sacredArts.yuiShift
                 y: characterImage.hover
             }
             // The glow is drawn only while it is shown.
@@ -5908,7 +5910,7 @@ T.Widget {
 
         }
 
-        // The easter egg's effects (System Call, the sword skills) over the view, centred on Yui.
+        // The easter egg's effects (System Call, the sword skills) over the view, in its middle.
         SacredArts {
             id: sacredArts
 

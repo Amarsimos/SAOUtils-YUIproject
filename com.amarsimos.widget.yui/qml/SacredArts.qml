@@ -6,22 +6,29 @@ import "yui.js" as Yui
 // The effects of the System Call easter egg (the elements, Discharge, Burst Element, Enhance Armament,
 // Release Recollection, Transfer Durability) and the two sword skills (Starburst Stream, Mother's
 // Rosario), over Yui's expanded view. The drawing is sacredarts.js on a 420 x 520 stage (Yui in its
-// middle), scaled to the view's height and centred on her; the boss of Starburst Stream (The Gleam Eyes),
+// middle), scaled to the view's height and set in its middle; the boss of Starburst Stream (The Gleam Eyes),
 // the dimming and the flash are items here. It paints only while an effect plays.
 // Yui herself is told through yuiHidden, aura (her golden glow) and yuiShake (px), bound by main-stand.
+// Every effect plays in the middle of the view: for a Sacred Art Yui teleports there first (scattering
+// into light, appearing in a burst) and back home once nothing plays any more; for a sword skill she is
+// hidden anyway.
 // Inspect Entire Command List opens Stacia's window (the translucent violet system window) with every
 // easter egg (Yui.COMMAND_LIST); a click or 10 s closes it.
 Item {
     id: arts
 
-    // The point of the view the stage is centred on horizontally (Yui's middle).
+    // Yui's own place in the view (her middle, horizontally): where she teleports from and back to.
     property real centreX: width / 2
     readonly property real k: height / Engine.H
     // Where the stage starts in the view (without the shake); the canvas, the dimming and the flash cover
     // the whole view, so nothing reaching past the stage is cut off.
-    readonly property real baseX: (centred ? width / 2 : centreX) - Engine.W * k / 2
-    // The sword skills are centred on the whole view.
-    property bool centred: false
+    readonly property real baseX: width / 2 - Engine.W * k / 2
+    // Yui moved to the middle for a Sacred Art (px to add to her place) and how much of her shows while
+    // she teleports (0 … 1); main-stand binds both. Her home is centreX.
+    property real yuiShift: 0
+    property real yuiTeleport: 1
+    property var queued: null
+    property bool teleToCentre: true
     property bool yuiHidden: false
     property real aura: 0
     property real yuiShake: 0
@@ -41,16 +48,85 @@ Item {
             staciaTimer.restart();
             return ;
         }
+        var sword = kind === "starburst" || kind === "rosario";
+        if (sword || (yuiShift !== 0 && !teleport.running)) {
+            start(kind, arg);
+            return ;
+        }
+        queued = [kind, arg];
+        if (!teleport.running)
+            hop(true);
+    }
+
+    function start(kind, arg) {
         Engine.play(kind, arg);
         sync();
         ticker.start();
+    }
+
+    // Yui's place in stage units: home (her own place) or the middle.
+    function yuiStage(centre) {
+        return centre ? Engine.W / 2 : (centreX - baseX) / k;
+    }
+
+    function hop(toCentre) {
+        teleToCentre = toCentre;
+        teleport.restart();
+    }
+
+    // Halfway through the teleport: gone from one place, appearing at the other.
+    function moveYui() {
+        Engine.sparkle(yuiStage(!teleToCentre), Engine.cy, true);
+        yuiShift = teleToCentre ? width / 2 - centreX : 0;
+        Engine.sparkle(yuiStage(teleToCentre), Engine.cy, false);
+        ticker.start();
+    }
+
+    function arrived() {
+        if (teleToCentre && queued) {
+            var q = queued;
+            queued = null;
+            start(q[0], q[1]);
+        }
+    }
+
+    SequentialAnimation {
+        id: teleport
+
+        NumberAnimation {
+            target: arts
+            property: "yuiTeleport"
+            to: 0
+            duration: 180
+            easing.type: Easing.InQuad
+        }
+
+        ScriptAction {
+            script: arts.moveYui()
+        }
+
+        PauseAnimation {
+            duration: 180
+        }
+
+        NumberAnimation {
+            target: arts
+            property: "yuiTeleport"
+            to: 1
+            duration: 240
+            easing.type: Easing.OutBack
+        }
+
+        ScriptAction {
+            script: arts.arrived()
+        }
+
     }
 
     // The state the engine left after a frame, onto the items.
     function sync() {
         var s = Engine.state;
         yuiHidden = s.yuiHidden;
-        centred = s.centred;
         aura = s.aura;
         yuiShake = s.yuiShake;
         stageShake = s.stageShake;
@@ -136,6 +212,9 @@ Item {
                     ticker.stop();
                     Engine.settle();
                     arts.sync();
+                    // Nothing plays any more: Yui goes home.
+                    if (arts.yuiShift !== 0 && !teleport.running)
+                        arts.hop(false);
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                     ctx.clearRect(0, 0, width, height);
                 }
@@ -161,7 +240,7 @@ Item {
 
         width: 300 * arts.k
         height: staciaColumn.implicitHeight + 24 * arts.k
-        x: Math.max(8, Math.min(arts.width - width - 8, arts.centreX - width / 2))
+        x: (arts.width - width) / 2
         y: 60 * arts.k
         transformOrigin: Item.Top
         scale: open ? 1 : 0.6

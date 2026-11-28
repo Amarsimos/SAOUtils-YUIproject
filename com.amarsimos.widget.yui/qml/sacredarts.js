@@ -20,8 +20,6 @@ var state = {
     "flash": 0,
     "dim": 0,
     "yuiHidden": false,
-    // A sword skill plays: the stage is centred on the whole view instead of on Yui.
-    "centred": false,
     "aura": 0,
     "yuiShake": 0,
     "stageShake": 0,
@@ -447,6 +445,29 @@ function godRays(px, py, c) {
     } });
 }
 
+// Yui's teleport to the middle and back: light scattering where she leaves (out) or gathering into a
+// burst where she appears.
+function sparkle(px, py, out) {
+    for (var i = 0; i < 40; i++) {
+        var a = Math.random() * 6.28, d = out ? 0 : 60 + Math.random() * 40, v = out ? 1.5 + Math.random() * 3 : 0;
+        if (out)
+            add({ "x": px + (Math.random() - 0.5) * 50, "y": py + (Math.random() - 0.5) * 160, "vx": Math.cos(a) * v, "vy": Math.sin(a) * v - 1, "r": 1.5 + Math.random() * 1.5, "c": Math.random() < 0.5 ? "#E1F5FE" : "#FFFFFF", "life": 30 + Math.random() * 20, "drag": 0.93, "glow": 1, "star": Math.random() < 0.3 });
+        else
+            add({ "x": px + Math.cos(a) * d, "y": py + Math.sin(a) * d * 1.6, "tx": px, "ty": py, "r": 1.5 + Math.random() * 1.5, "c": Math.random() < 0.5 ? "#E1F5FE" : "#FFFFFF", "life": 18, "seek": 1, "rate": 0.2, "glow": 1 });
+    }
+    if (!out)
+        later(200, function() {
+            sparks(px, py, "#FFFFFF", 30, 4);
+            hitGlowAt(px, py);
+        });
+}
+
+function hitGlowAt(px, py) {
+    atk.x = px;
+    atk.y = py;
+    hitGlow = 1;
+}
+
 // ---------------------------------------------------------------- Starburst Stream
 // The Gleam Eyes: fading in, flinching when struck, shattering at the end.
 function bossHit(big) {
@@ -521,7 +542,6 @@ function swingBig(rot, dir, c) {
 function starburst() {
     edgeGlowC = "rgba(41,182,246,";
     state.yuiHidden = true;
-    state.centred = true;
     boss.target = 1;
     boss.hp = 1;
     boss.shown = 1;
@@ -580,7 +600,6 @@ function starburst() {
     });
     later(t + 3200, function() {
         state.yuiHidden = false;
-        state.centred = false;
         sparks(cx, cy, "#ffffff", 30, 2.5);
     });
 }
@@ -656,7 +675,6 @@ function stab(px, py, big) {
 // faster; a beat; the eleventh through the middle. No foe: Yui is hidden meanwhile.
 function rosario() {
     state.yuiHidden = true;
-    state.centred = true;
     boss.target = 0;
     var mx = cx, my = cy, pts = [], i;
     for (i = 0; i < 5; i++)
@@ -683,7 +701,6 @@ function rosario() {
     });
     later(t + 3000, function() {
         state.yuiHidden = false;
-        state.centred = false;
         marks = [];
     });
 }
@@ -694,7 +711,6 @@ function settle() {
     state.flash = 0;
     state.dim = 0;
     state.yuiHidden = false;
-    state.centred = false;
     state.aura = 0;
     state.yuiShake = 0;
     state.stageShake = 0;
