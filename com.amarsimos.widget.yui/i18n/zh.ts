@@ -659,32 +659,7 @@
 <context>
     <name>ConsoleOperations</name>
     <message>
-        <location filename="../qml/ConsoleOperations.qml" line="+16"/>
-        <source>Done</source>
-        <translation>已执行</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Cancelled</source>
-        <translation>已取消</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Blocked: Immortal Object</source>
-        <translation>已拦截：Immortal Object</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Turned off in System Authority</source>
-        <translation>已在 System Authority 中关闭</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>Failed</source>
-        <translation>失败</translation>
-    </message>
-    <message>
-        <location line="+37"/>
+        <location filename="../qml/ConsoleOperations.qml" line="+57"/>
         <source>Nothing done on the computer yet.</source>
         <translation>结衣还没有在电脑上做过操作。</translation>
     </message>
@@ -890,17 +865,7 @@
         <translation>黄色</translation>
     </message>
     <message>
-        <location line="+22"/>
-        <source>Not watched</source>
-        <translation>未监视</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Offline</source>
-        <translation>离线</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="+24"/>
         <source>System Authority, Network Link</source>
         <translation>System Authority → Network Link</translation>
     </message>
@@ -935,12 +900,7 @@
         <translation>%1 次回复</translation>
     </message>
     <message>
-        <location line="-24"/>
-        <source>Online</source>
-        <translation>在线</translation>
-    </message>
-    <message>
-        <location line="+24"/>
+        <location line="+0"/>
         <source>No replies counted yet this month.</source>
         <translation>这个月还没有统计到回复。</translation>
     </message>

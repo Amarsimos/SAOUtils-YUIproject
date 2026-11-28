@@ -11,13 +11,13 @@ ConsolePage {
 
     property var yui
     property var entries: []
-    // Result: [text, tag color].
+    // Result: [tag text (English, as the buttons), tag color].
     readonly property var results: {
-        "done": [qsTr("Done"), "#7CC63E"],
-        "cancelled": [qsTr("Cancelled"), "#9A9A9A"],
-        "blocked": [qsTr("Blocked: Immortal Object"), "#C82864"],
-        "disabled": [qsTr("Turned off in System Authority"), "#9A9A9A"],
-        "failed": [qsTr("Failed"), "#C82864"]
+        "done": ["Done", "#7CC63E"],
+        "cancelled": ["Cancelled", "#9A9A9A"],
+        "blocked": ["Blocked: Immortal Object", "#C82864"],
+        "disabled": ["Turned Off: System Authority", "#9A9A9A"],
+        "failed": ["Failed", "#C82864"]
     }
 
     function refresh() {

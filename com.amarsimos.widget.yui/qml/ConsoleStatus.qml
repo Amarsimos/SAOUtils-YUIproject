@@ -134,7 +134,7 @@ ConsolePage {
             title: "Link"
             note: "Network"
             big: status.yui.settings.network_watch === false ? "--" : status.yui.networkLost ? "Offline" : "Online"
-            tag: status.yui.settings.network_watch === false ? qsTr("Not watched") : status.yui.networkLost ? qsTr("Offline") : qsTr("Online")
+            tag: status.yui.settings.network_watch === false ? "Not Watched" : status.yui.networkLost ? "Offline" : "Online"
             tagColor: status.yui.settings.network_watch === false ? "#9A9A9A" : status.yui.networkLost ? "#C82864" : "#7CC63E"
             sub: status.yui.settings.network_watch === false ? qsTr("System Authority, Network Link") : status.yui.networkLost ? qsTr("No traffic for two minutes") : ""
         }
