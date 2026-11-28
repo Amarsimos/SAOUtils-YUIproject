@@ -829,3 +829,14 @@ test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/
 });
 
 console.log(passed + " tests passed");
+
+test("System Console: <<console:>> names a page, offered unless turned off; /help lists the commands", () => {
+    assert.strictEqual(Yui.parseReply("好的～<<console:memories>><<emotion:happy>>", [], {}).console, "memories");
+    assert.strictEqual(Yui.parseReply("<<console:心情>>", [], {}).console, "status");
+    assert.strictEqual(Yui.parseReply("<<console:2>>", [], {}).console, "records");
+    assert.strictEqual(Yui.parseReply("<<console:log>>", [], {}).console, "operations");
+    assert.strictEqual(Yui.parseReply("<<console:memories>>", [], { "allowed": { "console": false } }).console, "");
+    assert.ok(Yui.featureInstructions("爸爸", [], { "console": true }, "tags").indexOf("<<console:页面>>") !== -1);
+    assert.ok(Yui.featureInstructions("爸爸", [], { "console": false }, "tags").indexOf("<<console:") === -1);
+    assert.ok(Yui.commandHelp().indexOf("/console") !== -1 && Yui.commandHelp().indexOf("/help") !== -1);
+});

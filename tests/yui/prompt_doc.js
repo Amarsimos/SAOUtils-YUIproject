@@ -16,7 +16,7 @@ const END = "<!-- yui/prompt_doc.js: end -->";
 const fence = (text) => ["````", String(text).trim(), "````", ""];
 const title = "爸爸";
 // The widget's defaults (main-stand allowedActions): Authority Level Full, settings untouched.
-const allowed = { web: true, launch: true, find: false, kill: false, memory: true, focus: true, alarm: true, notes: true, suggest: true, media: false, seedling: true, skills: [] };
+const allowed = { web: true, launch: true, find: false, kill: false, memory: true, focus: true, alarm: true, notes: true, suggest: true, media: false, seedling: true, console: true, skills: [] };
 
 const out = [START, "",
     "## 附录：提示词原文（由 `tests/yui/prompt_doc.js` 从代码生成，不要手改）", "",

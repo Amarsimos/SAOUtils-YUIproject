@@ -104,7 +104,7 @@ function bareTagPattern() {
 
 function tagPattern() {
     // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling|console)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
@@ -304,6 +304,38 @@ function searchUrl(engine, custom, query) {
         template = custom;
 
     return template.split("%s").join(encodeURIComponent(query));
+}
+
+// System Console's pages, in the order of its buttons (main-stand.qml openConsole takes the index).
+var CONSOLE_PAGES = ["status", "records", "memories", "quests", "operations"];
+
+// The page a <<console:>> tag or a /console command names (a page name, its number, or a few other
+// words), "status" when it names none.
+function consolePage(value) {
+    var word = String(value || "").trim().toLowerCase();
+    if (/^\d+$/.test(word) && Number(word) >= 1 && Number(word) <= CONSOLE_PAGES.length)
+        return CONSOLE_PAGES[Number(word) - 1];
+
+    if (CONSOLE_PAGES.indexOf(word) !== -1)
+        return word;
+
+    var other = {
+        "mood": "records",
+        "moods": "records",
+        "report": "records",
+        "reports": "records",
+        "memory": "memories",
+        "heart": "memories",
+        "log": "operations",
+        "operation": "operations",
+        "quest": "quests"
+    };
+    return other[word] || "status";
+}
+
+// What the input commands are, for /help.
+function commandHelp() {
+    return ["输入框命令（不会发给结衣）：", "/console：打开 System Console", "/console 页面：打开到某一页，页面是 status、records、memories、operations（也可以写序号 1–5）", "/help：显示这份说明"].join("\n");
 }
 
 // The desktop actions the user can allow or forbid (System Authority), and the tags of each.
@@ -751,7 +783,9 @@ function parseReply(text, userProtected, options) {
         // <<media:>> (System Authority, Media): the media commands to run (see mediaCommand), in order.
         "media": [],
         // <<seedling:>> (Seedling installed): what the widget should be or how to change it, "" when none.
-        "seedling": ""
+        "seedling": "",
+        // <<console:>> (System Console): the page to open it at (see CONSOLE_PAGES), "" when none.
+        "console": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -801,6 +835,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "seedling") {
             if (allowed.seedling === true)
                 result.seedling = value;
+
+        } else if (kind === "console") {
+            if (allowed.console !== false)
+                result.console = consolePage(value);
 
         } else if (kind === "media") {
             var command = mediaCommand(value);
@@ -1989,6 +2027,9 @@ function featureInstructions(title, core, allowed, mode) {
 
     if (allowed.seedling === true)
         lines.push(withTitle(SEEDLING_INSTRUCTION, title));
+
+    if (allowed.console !== false)
+        lines.push("- 控制台（System Console）：当" + title + "请你打开控制台，或想看看系统状态、心情记录、你记得的事、你在电脑上做过的操作时，在回复最后加上 <<console:页面>>，页面是 status（系统状态）、records（心情和周报）、memories（记忆）、operations（操作记录）之一。不用确认，程序会直接打开。" + title + "自己也可以在输入框里输入 /console 打开。");
 
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");

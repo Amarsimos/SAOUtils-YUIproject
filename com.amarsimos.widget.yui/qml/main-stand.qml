@@ -546,6 +546,8 @@ T.Widget {
             "suggest": widget.settings.quick_replies !== false,
             // Media (System Authority, Authority): only with Media Player installed.
             "media": full && mediaReady,
+            // System Console (<<console:>>): always offered, it only shows Yui's own panel.
+            "console": true,
             // Seedling: always offered; whether it is there (installed, a widget on the desktop, not
             // busy) is checked only when her reply asks for a widget (seedlingStart), and she says so.
             "seedling": true,
@@ -1699,6 +1701,14 @@ T.Widget {
                     });
                 }
 
+                // <<console:>>: System Console opens at the page she named, without asking.
+                if (reply.console) {
+                    var consoleAt = Yui.CONSOLE_PAGES.indexOf(reply.console);
+                    Qt.callLater(function() {
+                        openConsole(reply.console === "quests" && !toolsEnabled ? -1 : consoleAt);
+                    });
+                }
+
                 if (reply.focus !== null) {
                     if (reply.focus === 0)
                         stopRaid();
@@ -1714,7 +1724,7 @@ T.Widget {
                 }
 
                 // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
-                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && !reply.seedling && Yui.claimsDone(text)) {
+                if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && !reply.seedling && !reply.console && Yui.claimsDone(text)) {
                     note = (note ? note + "\n" : "") + "⚠ 结衣说做了，但这次什么都没有执行";
                     diag("claimed an action, none carried out");
                 }
@@ -5070,19 +5080,24 @@ T.Widget {
         widget.implicitHeight = 60;
     }
 
-    // Input commands: "/console" opens System Console, "/console memories" (or status, records,
-    // quests, operations, or the page's number) at that page. True when the text was a command.
+    // Input commands, never sent to the AI: "/console" opens System Console, "/console memories" (a
+    // page, see Yui.consolePage) at that page; "/help" lists them in the chat (a message of the program,
+    // as the local lines). True when the text was a command.
     function runInputCommand(text) {
-        var m = /^\s*\/console(?:\s+(\S+))?\s*$/i.exec(String(text || ""));
+        var line = String(text || "").trim();
+        if (/^\/help$/i.test(line)) {
+            diag("command: /help");
+            appendMessage("ai", Yui.commandHelp(), false, true);
+            return true;
+        }
+        var m = /^\/console(?:\s+(\S+))?$/i.exec(line);
         if (!m)
             return false;
 
-        var pages = ["status", "records", "memories", "quests", "operations"];
-        var wanted = String(m[1] || "").toLowerCase();
-        var page = /^\d+$/.test(wanted) ? Number(wanted) - 1 : pages.indexOf(wanted);
-        diag("command: /console" + (wanted ? " " + wanted : ""));
+        diag("command: " + line);
+        var page = m[1] ? Yui.consolePage(m[1]) : "";
         // Quests only while the small tools are not set aside.
-        openConsole(page >= 0 && page < pages.length && (pages[page] !== "quests" || toolsEnabled) ? page : -1);
+        openConsole(!page || (page === "quests" && !toolsEnabled) ? -1 : Yui.CONSOLE_PAGES.indexOf(page));
         return true;
     }
 
@@ -6813,10 +6828,8 @@ T.Widget {
             onTriggered: showDialog(widget.systemAuthorityDialog, "systemAuthorityDialogInstance")
         }
 
-        Action {
-            text: qsTr("System Console") + "..."
-            onTriggered: showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance")
-        }
+        // System Console has no menu entry: it opens with /console in the input field or when Yui
+        // opens it (<<console:>>).
 
     }
 

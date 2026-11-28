@@ -19,9 +19,6 @@ YuiActionBase {
             "id": "authority",
             "name": qsTr("System Authority")
         }, {
-            "id": "console",
-            "name": qsTr("System Console")
-        }, {
             "id": "skills",
             "name": qsTr("Skill Slots"),
             "tool": true
