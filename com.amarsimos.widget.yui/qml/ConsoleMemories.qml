@@ -320,13 +320,16 @@ ColumnLayout {
 
                         readonly property var memory: modelData
                         readonly property bool isCore: memory.kind === "core"
-                        readonly property bool editing: memories.editingId === memory.id
+                        readonly property bool editing: !!memory && memories.editingId === memory.id
 
+                        // Editing ends first: the change rebuilds the list, and this row with it, so nothing
+                        // of the row is used after it.
                         function save() {
-                            memories.change(memory.id, {
-                                "text": editor.text
+                            var id = memory.id, text = editor.text, page = memories;
+                            page.editingId = -1;
+                            page.change(id, {
+                                "text": text
                             });
-                            memories.editingId = -1;
                         }
 
                         Layout.fillWidth: true

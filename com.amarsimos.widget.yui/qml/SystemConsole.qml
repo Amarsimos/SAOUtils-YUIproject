@@ -319,7 +319,7 @@ NVG.View {
                     // columns are not made again as it grows.
                     anchors.centerIn: parent
                     width: parent.width
-                    height: shadowArea.height - consoleView.titleHeight - consoleView.bottomHeight
+                    height: Math.max(0, shadowArea.height - consoleView.titleHeight - consoleView.bottomHeight)
                     running: consoleView.visible && !aniClose.running
                 }
 

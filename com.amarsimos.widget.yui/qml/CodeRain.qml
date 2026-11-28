@@ -13,7 +13,8 @@ Item {
     readonly property int cellWidth: 11
     readonly property int cellHeight: 14
     readonly property string glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@*+=<>?"
-    readonly property int rows: Math.ceil(height / cellHeight) + 1
+    // At least one (the height is 0 or less for a moment while System Console opens).
+    readonly property int rows: Math.max(1, Math.ceil(height / cellHeight) + 1)
 
     // A column of letters, one a line, about one in six a gap.
     function columnText() {
