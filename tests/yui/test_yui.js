@@ -840,3 +840,12 @@ test("System Console: <<console:>> names a page, offered unless turned off; /hel
     assert.ok(Yui.featureInstructions("爸爸", [], { "console": false }, "tags").indexOf("<<console:") === -1);
     assert.ok(Yui.commandHelp().indexOf("/console") !== -1 && Yui.commandHelp().indexOf("/help") !== -1);
 });
+
+test("Spontaneous Talk hints of System Call as a topic, never the spell itself", () => {
+    const hooks = Yui.chatHooks({ "now": new Date(2026, 10, 28, 15, 0).getTime(), "tip": Yui.chatTip(0, "爸爸"), "chattedToday": true }, "爸爸");
+    assert.ok(hooks.some((hook) => hook.key === "tip" && hook.text.indexOf("System Call") !== -1));
+    for (let i = 0; i < 3; i++)
+        assert.ok(Yui.chatTip(i, "爸爸").indexOf("Generate") === -1 && Yui.chatTip(i, "爸爸").indexOf("Inspect") === -1 && Yui.chatTip(i, "爸爸").indexOf("爸爸") !== -1);
+    assert.strictEqual(Yui.chatTip(3, "爸爸"), Yui.chatTip(0, "爸爸"));
+    assert.ok(!Yui.chatHooks({ "now": Date.now(), "chattedToday": true }, "爸爸").some((hook) => hook.key === "tip"));
+});

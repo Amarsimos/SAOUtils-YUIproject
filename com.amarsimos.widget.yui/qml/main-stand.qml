@@ -4511,7 +4511,9 @@ T.Widget {
             "bondSoon": bondSoon(now, title),
             "memory": older.length > 0 ? older[Math.floor(Math.random() * older.length)].text : "",
             "yearAgo": yearAgo ? yearAgo.text : "",
-            "chattedToday": Qt.formatDate(new Date(widget.settings.last_active || 0), "yyyy-MM-dd") === today
+            "chattedToday": Qt.formatDate(new Date(widget.settings.last_active || 0), "yyyy-MM-dd") === today,
+            // A tip (Yui.chatTip) at most every 3 days, and then only one time in four.
+            "tip": now - (widget.settings.chat_tip_last || 0) >= 3 * 86400000 && Math.random() < 0.25 ? Yui.chatTip(widget.settings.chat_tip_index || 0, title) : ""
         }, title);
         var used = widget.settings.chat_hooks_used && widget.settings.chat_hooks_used.day === today ? widget.settings.chat_hooks_used.keys : [];
         var hook = Yui.pickChatHook(hooks, used, Math.random());
@@ -4520,6 +4522,11 @@ T.Widget {
             "day": today,
             "keys": used.concat([hook.key])
         };
+
+        if (hook && hook.key === "tip") {
+            widget.settings.chat_tip_last = now;
+            widget.settings.chat_tip_index = (widget.settings.chat_tip_index || 0) + 1;
+        }
 
         return hook;
     }

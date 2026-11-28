@@ -1537,7 +1537,17 @@ function chatHooks(facts, title) {
     add("good_mood", !!facts.mood && facts.mood.score >= 4, title + "今天心情不错，问问有什么好事");
     add("memory", !!facts.memory, "结衣想起了以前记下的一件事：「" + facts.memory + "」，可以自然地聊起来");
     add("first_today", !facts.chattedToday && hour >= 10, "今天" + title + "还没和结衣说过话，打个招呼，问问今天过得怎么样");
+    add("tip", !!facts.tip, facts.tip || "");
     return hooks;
+}
+
+// Hints of the System Call easter egg Yui slips into Spontaneous Talk now and then (the "tip" hook, at
+// most every few days, in turn): never the spell itself, so it is still found by trying.
+var CHAT_TIPS = ["结衣忽然想起 Underworld 里的神圣术，都是用「System Call」开头念的，可以不经意地聊起来，好奇{t}在这里念的话会发生什么（不要说出完整的咒语）", "结衣在想，要是{t}也会念神圣术就好了，「System Call」开头的那种，可以随口提一句，像是在分享一个小秘密（不要说出完整的咒语）", "结衣想起念神圣术时，不知道念什么的话可以让系统把全部指令列出来，可以随口提起，像是在给{t}出一个小谜题（不要说出那句咒语）"];
+
+// The tip to use the index-th time (they come round in turn).
+function chatTip(index, title) {
+    return withTitle(CHAT_TIPS[Math.abs(Math.floor(index || 0)) % CHAT_TIPS.length], title);
 }
 
 // One hook for now, not one used today (used: keys); special ones first, then at random (rnd 0 - 1).
