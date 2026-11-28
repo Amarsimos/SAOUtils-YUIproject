@@ -338,7 +338,7 @@ NVG.Window {
 
         // Three tabs, the AI itself: Link (the server), Core Tuning (how the model answers),
         // Personality. The last tab shown is remembered. (Standby Mode is in Mental Health Counseling,
-        // the browser and search engine in System Console.)
+        // the browser and search engine in System Authority.)
         ColumnLayout {
             anchors.fill: parent
             // Little room at the sides: the settings have their own 16 px padding.
@@ -825,7 +825,7 @@ NVG.Window {
                         SettingNote {
                             visible: targetWidget.settingsHelp
                             besidePreferences: true
-                            text: qsTr("Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Console, for large models.")
+                            text: qsTr("Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Authority, for large models.")
                         }
                     }
 

@@ -16,6 +16,9 @@ T.Widget {
     property Component cardinalSystemDialog: Qt.createComponent("CardinalSystem.qml")
     property Component equipmentDialog: Qt.createComponent("Equipment.qml")
     property var equipmentDialogInstance: null
+    property Component systemAuthorityDialog: Qt.createComponent("SystemAuthority.qml")
+    property var systemAuthorityDialogInstance: null
+    // Yui's status panel (System Console): a view of its own in the SAO window, no settings.
     property Component systemConsoleDialog: Qt.createComponent("SystemConsole.qml")
     property var systemConsoleDialogInstance: null
     property Component yuisHeartDialog: Qt.createComponent("YuisHeart.qml")
@@ -198,7 +201,7 @@ T.Widget {
     }
 
     // Load shown by the crystal: CPU, GPU and memory, each with its own thresholds (Yui.loadThresholds,
-    // editable in System Console), sampled once a second while the crystal is shown. loadStates holds each
+    // editable in System Authority), sampled once a second while the crystal is shown. loadStates holds each
     // metric's Yui.loadStep state, loadValues the last percentages; the crystal shows the worst level.
     readonly property var loadMetrics: ["cpu", "gpu", "ram"]
     readonly property var levelColors: ["#2CE67C", "#FFCC00", "#FF3B30"]
@@ -303,7 +306,7 @@ T.Widget {
     // Yui's Heart, kept in a local SQLite database (QtQuick.LocalStorage); heartCache mirrors the
     // memories table (entries as described in yui.js) so bindings and requests do not query it.
     property var database: null
-    // Diagnostics log shown live in the System Console (newest last, at most 200 lines).
+    // Diagnostics log shown live in the System Authority (newest last, at most 200 lines).
     property var diagLog: []
     property var heartCache: []
     property bool applyingFrameSize: false
@@ -519,7 +522,7 @@ T.Widget {
         };
     }
 
-    // The desktop actions Yui may do (System Console, Authority; all by default).
+    // The desktop actions Yui may do (System Authority, Authority; all by default).
     // Authority Level Limited (Cardinal System, small models): none of them.
     function allowedActions() {
         var full = !smallModelMode;
@@ -536,7 +539,7 @@ T.Widget {
             "notes": toolsEnabled && widget.settings.notes_enabled !== false,
             // Quick Replies (Cardinal System, Personality).
             "suggest": widget.settings.quick_replies !== false,
-            // Media (System Console, Authority): only with Media Player installed.
+            // Media (System Authority, Authority): only with Media Player installed.
             "media": full && mediaReady,
             // Seedling: always offered; whether it is there (installed, a widget on the desktop, not
             // busy) is checked only when her reply asks for a widget (seedlingStart), and she says so.
@@ -646,22 +649,24 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Media
-    // System Console, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
+    // System Authority, Authority: the music and videos playing, through Media Player's (com.gpbeta.media)
     // System Media Control action and System Media Data, not reimplemented here.
     readonly property var mediaCommands: ["pause", "next", "prev", "vol+", "vol-", "mute", "stop"]
     // Media Player loaded (it is loaded while Now Playing or Control Media is on).
     readonly property bool mediaLoaded: mediaData.status === Loader.Ready
-    // Control Media (System Console, off by default); Now Playing is read in mediaExtras.
+    // Control Media (System Authority, off by default); Now Playing is read in mediaExtras.
     readonly property bool mediaReady: widget.settings.media_control === true && mediaLoaded
 
     function runMedia(command) {
         var source = mediaActions.objectAt(mediaCommands.indexOf(command));
         if (!mediaReady || !source) {
             diag("media " + command + ": not available");
+            logOperation("media", Yui.MEDIA_LABELS[command] || command, "failed");
             return false;
         }
         diag("media " + command);
         source.trigger();
+        logOperation("media", Yui.MEDIA_LABELS[command] || command, "done");
         return true;
     }
 
@@ -719,7 +724,7 @@ T.Widget {
         return info;
     }
 
-    // System Console: what Media Player reads now, then Play / Pause.
+    // System Authority: what Media Player reads now, then Play / Pause.
     function testMedia() {
         if (!mediaLoaded) {
             diag("test media: Media Player (com.gpbeta.media) not found, or Now Playing and Control Media both off");
@@ -771,7 +776,9 @@ T.Widget {
 
         var skill = skills[index];
         askConfirm(qsTr("Sword Skills"), qsTr("Run the sword skill \"%1\"?").arg(skill.name), function() {
-            runSwordSkill(skill.slot);
+            logOperation("skill", skill.name, runSwordSkill(skill.slot) ? "done" : "failed");
+        }, false, function() {
+            logOperation("skill", skill.name, "cancelled");
         });
         return skill.name;
     }
@@ -1696,8 +1703,10 @@ T.Widget {
                 if (reply.action)
                     action = JSON.stringify(reply.action);
 
-                if (reply.disabled)
-                    note = (note ? note + "\n" : "") + "🚫 已在 System Console 中关闭这类代行，没有执行";
+                if (reply.disabled) {
+                    note = (note ? note + "\n" : "") + "🚫 已在 System Authority 中关闭这类代行，没有执行";
+                    logOperation(reply.disabled, "", "disabled");
+                }
 
                 // Said she did something, but nothing was carried out (no tag, or a thing she cannot do).
                 if (!reply.action && reply.media.length === 0 && !reply.skill && reply.focus === null && reply.reminders.length === 0 && !reply.disabled && !reply.blocked && !reply.seedling && Yui.claimsDone(text)) {
@@ -1713,6 +1722,7 @@ T.Widget {
                 if (reply.blocked) {
                     note = (note ? note + "\n" : "") + "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭";
                     Qt.callLater(showImmortalObject, reply.blocked);
+                    logOperation("kill", reply.blocked, "blocked");
                 }
 
             }
@@ -2012,7 +2022,7 @@ T.Widget {
         }
     }
 
-    // Requests in the System Console log: a summary line always, the full body (system prompt and
+    // Requests in the System Authority log: a summary line always, the full body (system prompt and
     // messages; the access key is only in a header and never logged) and the raw reply with its tags
     // while "Log Requests" is on.
     readonly property bool logRequests: widget.settings.log_requests !== false
@@ -2102,7 +2112,7 @@ T.Widget {
     // Lines written by diag since the start (diagLog keeps only the last 200).
     property int diagTotal: 0
 
-    // Diagnostics (System Console, SystemConsole.qml): run a desktop action without the AI, through the same
+    // Diagnostics (System Authority, SystemAuthority.qml): run a desktop action without the AI, through the same
     // message, confirmation box and execution as a real one. A protected <<kill:>> shows the
     // "blocked" note instead of asking.
     function testAction(tag) {
@@ -2115,7 +2125,7 @@ T.Widget {
             "pending": false,
             "isError": true,
             "local": true,
-            "note": reply.disabled ? "🚫 已在 System Console 中关闭这类代行，没有执行" : reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
+            "note": reply.disabled ? "🚫 已在 System Authority 中关闭这类代行，没有执行" : reply.blocked ? "🛡 已拦截：" + reply.blocked + " 是受保护的系统进程，不能关闭" : "",
             "action": reply.action ? JSON.stringify(reply.action) : "",
             "actionState": reply.action ? "pending" : "",
             "suggestions": ""
@@ -2151,7 +2161,36 @@ T.Widget {
 
     function cancelAction(index) {
         diag("cancelled");
+        try {
+            var cancelled = JSON.parse(chatModel.get(index).action);
+            logOperation(cancelled.type, cancelled.target, "cancelled");
+        } catch (e) {
+        }
         chatModel.setProperty(index, "actionState", "cancelled");
+    }
+
+    // ---------------------------------------------------------------- Operations (System Console)
+    // What Yui did on the desktop and how it ended, newest first, at most 50 (settings.operation_log):
+    // {time, kind (open, search, launch, kill, find, media, skill, seedling), target, result (done,
+    // cancelled, blocked, disabled, failed)}. Memories, moods, reminders and notes are not kept here:
+    // they have pages of their own.
+    property int operationRevision: 0
+
+    function logOperation(kind, target, result) {
+        var list = (widget.settings.operation_log || []).slice(0, 49);
+        list.unshift({
+            "time": Date.now(),
+            "kind": String(kind || ""),
+            "target": String(target || "").slice(0, 80),
+            "result": result
+        });
+        widget.settings.operation_log = list;
+        operationRevision++;
+    }
+
+    function clearOperations() {
+        widget.settings.operation_log = [];
+        operationRevision++;
     }
 
     // Open the link / search the AI offered, after the user confirmed it.
@@ -2165,11 +2204,15 @@ T.Widget {
                 if (!opened)
                     addNote(index, "⚠ 内置浏览器打开失败，已改用系统浏览器");
 
+                logOperation(action.type, action.target, "done");
+
             } else if (action.type === "launch") {
                 var launched = NVG.SystemCall.execute(action.target);
                 diag("execute(\"" + action.target + "\") -> " + launched);
                 if (!launched)
                     addNote(index, "⚠ 无法启动：" + action.target);
+
+                logOperation("launch", action.target, launched ? "done" : "failed");
 
             } else if (action.type === "kill") {
                 var killCommand = Yui.actionCommand(action);
@@ -2177,21 +2220,24 @@ T.Widget {
                 // so it is only logged.
                 var killed = NVG.SystemCall.command(killCommand);
                 diag("command(" + killCommand + ") -> " + killed + " (not used)");
+                logOperation("kill", action.target, "done");
                 askWhitelist(action.target);
 
             } else if (action.type === "find") {
+                logOperation("find", action.target, "done");
                 runFind(action);
             }
         } catch (e) {
             diag("action failed: " + e);
+            logOperation("action", "", "failed");
         }
         chatModel.setProperty(index, "actionState", "done");
     }
 
     // After the first confirmed close of a program, ask once whether Yui may close it without asking
     // from now on: OK adds it to the whitelist; Cancel is remembered, so only the close itself is
-    // confirmed next time. Both lists can be edited in the System Console.
-    // Bumped when Yui changes a setting shown in the System Console (whitelist, es.exe path), so the
+    // confirmed next time. Both lists can be edited in the System Authority.
+    // Bumped when Yui changes a setting shown in the System Authority (whitelist, es.exe path), so the
     // window shows it at once.
     property int settingsRevision: 0
 
@@ -2209,7 +2255,7 @@ T.Widget {
         try {
             NVG.SystemCall.messageBox({
                 "title": qsTr("Whitelist"),
-                "text": qsTr("Close %1 without asking from now on?\nYou can change this in System Console.").arg(name),
+                "text": qsTr("Close %1 without asking from now on?\nYou can change this in System Authority.").arg(name),
                 "modal": true
             }).then(function(result) {
                 remember(!(result === false || result === 0));
@@ -2294,14 +2340,14 @@ T.Widget {
         if (status && status.es && !esSetting && status.code !== "missing") {
             widget.settings.es_path = status.es;
             widget.settingsRevision++;
-            found = "\n（结衣自动找到了 es.exe：" + status.es + "，已经帮你填进「System Console」啦）";
+            found = "\n（结衣自动找到了 es.exe：" + status.es + "，已经帮你填进「System Authority」啦）";
             diag("es.exe found and saved: " + status.es);
         }
         var text;
         if (!status)
-            text = "数据检索失败……检索程序没有启动 (T_T)\n请打开「System Console」看看日志，或者把日志发给开发者哦。";
+            text = "数据检索失败……检索程序没有启动 (T_T)\n请打开「System Authority」看看日志，或者把日志发给开发者哦。";
         else if (status.code === "missing")
-            text = (esSetting ? "数据检索失败……「System Console」里填写的 es.exe 不存在：" + esSetting + "\n请确认路径是否正确哦。" : "数据检索失败……结衣找不到 Everything 的命令行工具 es.exe (T_T)\n请在「System Console」里填写 es.exe 的完整路径，或者把它加入系统 PATH。") + "\n还没有安装的话，可以从这里下载 Everything 和 ES 命令行工具：\n" + download;
+            text = (esSetting ? "数据检索失败……「System Authority」里填写的 es.exe 不存在：" + esSetting + "\n请确认路径是否正确哦。" : "数据检索失败……结衣找不到 Everything 的命令行工具 es.exe (T_T)\n请在「System Authority」里填写 es.exe 的完整路径，或者把它加入系统 PATH。") + "\n还没有安装的话，可以从这里下载 Everything 和 ES 命令行工具：\n" + download;
         else if (status.code === "8")
             text = "数据检索失败……Everything 好像没有在运行 (T_T)\n请先启动 Everything，再让结衣查找一次吧！";
         else if (status.code !== "0")
@@ -2313,14 +2359,14 @@ T.Widget {
         appendMessage("ai", text + found, false, true);
     }
 
-    // A link clicked in a chat message (see Yui.linkify): a path opens File Explorer, 「System Console」 opens
-    // the System Console, a web link opens in the browser.
+    // A link clicked in a chat message (see Yui.linkify): a path opens File Explorer, 「System Authority」 opens
+    // the System Authority, a web link opens in the browser.
     function openMessageLink(link) {
         diag("link clicked: " + link);
         if (link.indexOf("yui-path:") === 0)
             showInExplorer(Yui.linkedPath(link));
         else if (link === "yui-option:")
-            showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance");
+            showDialog(widget.systemAuthorityDialog, "systemAuthorityDialogInstance");
         else if (/^https?:\/\//i.test(link))
             openLink(link);
     }
@@ -2670,7 +2716,7 @@ T.Widget {
         var name = "结衣之心-forgotten-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".json";
         writeHeartFile(name, heartDocument(false), function(path) {
             if (!path) {
-                onDone(qsTr("The backup could not be written, so nothing was deleted. See the log in System Console."));
+                onDone(qsTr("The backup could not be written, so nothing was deleted. See the log in System Authority."));
                 return ;
             }
             diag("forgot everything, backup " + path);
@@ -2896,7 +2942,7 @@ T.Widget {
         return JSON.stringify(document, null, 2);
     }
 
-    // System Console "Export": writes 结衣之心-<date>.json and shows it in File Explorer.
+    // System Authority "Export": writes 结衣之心-<date>.json and shows it in File Explorer.
     // onDone(path), optional: the path written, or "" when it failed.
     function exportHeart(withMessages, onDone) {
         writeHeartFile("结衣之心-" + Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss") + ".json", heartDocument(withMessages), function(path) {
@@ -2965,7 +3011,7 @@ T.Widget {
         onTriggered: removeOldBackups()
     }
 
-    // System Console "Import": adds the memories of an exported file (and its chat history, if it has
+    // System Authority "Import": adds the memories of an exported file (and its chat history, if it has
     // one) to Yui's Heart; nothing is replaced. done(message for the user), once the file is read.
     function importHeart(url, done) {
         readUrl(url, function(text) {
@@ -3084,7 +3130,7 @@ T.Widget {
         }
     }
 
-    // Storage Capacity (System Console): the system drive's free space below this many % is reported, at
+    // Storage Capacity (System Authority): the system drive's free space below this many % is reported, at
     // most once a day (0: off). The hdd "space" value is the used space in %.
     function checkStorage(now, title) {
         var minimum = widget.settings.storage_free_min !== undefined ? widget.settings.storage_free_min : 10;
@@ -3096,7 +3142,7 @@ T.Widget {
         statusWarning("警告！" + systemDrive.replace(/\\$/, "") + " 盘只剩下 " + Math.max(0, Math.round(100 - used)) + "% 的空间了……" + title + "，要不要清理一下呢？(・_・;)");
     }
 
-    // Network Link (System Console): no traffic at all for two minutes counts as the network lost, and
+    // Network Link (System Authority): no traffic at all for two minutes counts as the network lost, and
     // traffic again as it back; both are reported once.
     function checkNetwork(title) {
         if (widget.settings.network_watch === false)
@@ -3148,7 +3194,7 @@ T.Widget {
         }
         checkStorage(now, title);
         checkNetwork(title);
-        // CPU, GPU and memory, with the crystal's red thresholds (System Console): reported once a load
+        // CPU, GPU and memory, with the crystal's red thresholds (System Authority): reported once a load
         // stays at or above it for these many checks (one every 30 s).
         var sources = {
             "cpu": cpuLoad,
@@ -3172,7 +3218,7 @@ T.Widget {
         highLoadChecks = checks;
     }
 
-    // At most one report per load in this many hours (System Console, default 1).
+    // At most one report per load in this many hours (System Authority, default 1).
     readonly property int loadReportHours: widget.settings.load_report_hours > 0 ? widget.settings.load_report_hours : 1
 
     // Whether a load may be reported now (once per loadReportHours per metric); marks it reported.
@@ -3197,7 +3243,7 @@ T.Widget {
         return "警告！内存使用率已经达到 " + percent + " 了！" + title + "，关掉一些不用的程序会比较好哦 (｀・ω・´)";
     }
 
-    // Col Ledger (System Console): the tokens of this month's replies; past the Monthly Budget (in
+    // Col Ledger (System Authority): the tokens of this month's replies; past the Monthly Budget (in
     // thousands of tokens, 0: none) Yui says so, once a month.
     readonly property var colLedger: widget.settings.col_ledger || null
 
@@ -3230,6 +3276,7 @@ T.Widget {
             "heart": [yuisHeartDialog, "yuisHeartDialogInstance"],
             "counseling": [counselingDialog, "counselingDialogInstance"],
             "skills": [skillSlotsDialog, "skillSlotsDialogInstance"],
+            "authority": [systemAuthorityDialog, "systemAuthorityDialogInstance"],
             "console": [systemConsoleDialog, "systemConsoleDialogInstance"]
         };
         if (windows[command]) {
@@ -3595,7 +3642,7 @@ T.Widget {
                 reportRevision++;
 
             if (announceIt) {
-                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 Mental Health Counseling 的 Records 里，有空看看哦 (｡･ω･｡)", false, true);
+                appendMessage("ai", "📊 " + userTitle() + "，这周的小结写好啦～在 System Console 的 Records 里，有空看看哦 (｡･ω･｡)", false, true);
                 announce(qsTr("Weekly Report"), "📊 这周的小结写好啦～");
             }
             onDone("");
@@ -3949,6 +3996,7 @@ T.Widget {
             seedlingJob = null;
             var ok = kind === "done" || kind === "edited";
             diag("seedling: " + kind + ", " + message);
+            logOperation("seedling", request, ok ? "done" : "failed");
             // What Seedling made of the code (info), never read from the code here.
             onDone(message, ok, kind, ok ? Yui.seedlingExtra(info, userTitle()) : "");
         });
@@ -4033,7 +4081,7 @@ T.Widget {
 
     // Seedling borrows Yui's connection (while she is there): one request with its own system text, the
     // Seedling Model when set, room for a whole widget and 4 minutes before giving up (thinking models
-    // say nothing while they think). System Console's Seedling tests are answered here (no API).
+    // say nothing while they think). System Authority's Seedling tests are answered here (no API).
     function seedlingConnection(system, user, model, onDelta, onFinished) {
         var config = Object.assign({}, activeConfig());
         if (model)
@@ -4056,7 +4104,7 @@ T.Widget {
     // that places a widget); the request waits, and once a Seedling widget is placed she goes on.
     property var seedlingWaiting: null
 
-    // test: from System Console's Test Place Seedling; once a widget is placed nothing is written.
+    // test: from System Authority's Test Place Seedling; once a widget is placed nothing is written.
     function seedlingAskPlace(request, onDone, onProgress, test) {
         var title = userTitle();
         seedlingWaiting = {
@@ -4123,7 +4171,7 @@ T.Widget {
         seedlingWrite(waiting.request, waiting.onDone, waiting.onProgress);
     }
 
-    // Test Seedling Link (System Console): what this Yui knows of Seedling, in the log and in
+    // Test Seedling Link (System Authority): what this Yui knows of Seedling, in the log and in
     // Storages\yui\seedling-link.txt (each line written at once, steps 0.5 s apart).
     function testSeedlingLink() {
         var lines = [];
@@ -4167,7 +4215,7 @@ T.Widget {
         timer.start();
     }
 
-    // Test Place Seedling (System Console): the question shown when no Seedling widget is on the
+    // Test Place Seedling (System Authority): the question shown when no Seedling widget is on the
     // desktop (asked even when one is), with what follows written in the log.
     function testSeedlingPlace() {
         if (!seedlingBench()) {
@@ -4182,7 +4230,7 @@ T.Widget {
     }
 
     // A Seedling widget written for request: Yui's thinking message saying the steps, ending with her
-    // last words (the reply's <<seedling:>>, and System Console's tests).
+    // last words (the reply's <<seedling:>>, and System Authority's tests).
     // Seedling's state is checked here, when a widget is asked for: still growing the last one ("busy"),
     // not installed ("missing", in seedlingWrite), no widget on the desktop (seedlingAskPlace).
     // Why a widget cannot be grown now ("" when it can): "busy" (one is growing, or a widget is waited
@@ -4407,7 +4455,7 @@ T.Widget {
         return hook;
     }
 
-    // System Console tests: said at once (an example when there is nothing real).
+    // System Authority tests: said at once (an example when there is nothing real).
     function testMoodCare() {
         var entries = Yui.moodLow(moodsSince(7), Date.now()) || [{
             "day": Yui.dayKey(Date.now() - 2 * 86400000),
@@ -4477,7 +4525,7 @@ T.Widget {
 
     signal followupsChanged()
 
-    // System Console "Follow-up: Today / After": Yui says it now as if the first follow-up (or an
+    // System Authority "Follow-up: Today / After": Yui says it now as if the first follow-up (or an
     // example exam) were today ("cheer") or yesterday ("ask"); nothing is marked as said.
     function testFollowup(kind) {
         var list = followupList(Date.now());
@@ -4733,7 +4781,7 @@ T.Widget {
 
     }
 
-    // System Console "Care Tick": the scheduler at once, leaving out the gap, today's number, being told
+    // System Authority "Care Tick": the scheduler at once, leaving out the gap, today's number, being told
     // to be quiet, Quiet Hours and the hours she is seldom answered in (a test should say something).
     function testCareTick() {
         diag("test care tick");
@@ -4983,7 +5031,8 @@ T.Widget {
             return ;
         }
         widget[instanceProperty] = dialog;
-        dialog.closing.connect(function() {
+        // A settings window says closing; System Console (a view of its own) says dismissed.
+        (dialog.closing || dialog.dismissed).connect(function() {
             widget[instanceProperty] = null;
         });
     }
@@ -6676,6 +6725,11 @@ T.Widget {
 
         // Skill Slots (set aside, see toolsEnabled): its menu entry goes back here, after Mental Health
         // Counseling.
+
+        Action {
+            text: qsTr("System Authority") + "..."
+            onTriggered: showDialog(widget.systemAuthorityDialog, "systemAuthorityDialogInstance")
+        }
 
         Action {
             text: qsTr("System Console") + "..."

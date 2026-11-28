@@ -215,7 +215,12 @@
         <translation>结衣操作电脑的方式。Tags（默认）把操作写在回复里，本地模型执行得最好；Tools 使用服务器的工具调用（function calling），适合擅长工具调用的大模型（目前只对 OpenAI 兼容的服务器生效，其他服务器仍用 Tags）。记忆始终使用标签。服务器不接受工具时，会自动改用 Tags。</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+17"/>
+        <source>Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Authority, for large models.</source>
+        <translation>Limited：适合本地小模型。结衣只负责陪伴（聊天、记忆、关怀），不操作电脑，因为小模型常常说做了却没有执行；每条消息还会附一句表情标签的简短提醒。Full：适合大模型，代行按 System Authority 的设置执行。</translation>
+    </message>
+    <message>
+        <location line="+76"/>
         <source>Yui&apos;s personality. MHCP001 is the built-in one; edit the prompt below and keep it with Save As…, then switch between your profiles here.</source>
         <translation>结衣的人格。MHCP001 是内置人格；修改下面的提示词后用 Save As… 保存，之后就可以在这里切换你的人格。</translation>
     </message>
@@ -420,12 +425,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Limited, for small local models: Yui only keeps you company (talk, memories, care) and does nothing on the computer, as small models often say they did something without doing it; every message also carries a short reminder of the expression tag. Full: the actions as set in System Console, for large models.</source>
-        <translation>Limited：适合本地小模型。结衣只负责陪伴（聊天、记忆、关怀），不操作电脑，因为小模型常常说做了却没有执行；每条消息还会附一句表情标签的简短提醒。Full：适合大模型，代行按 System Console 的设置执行。</translation>
-    </message>
-    <message>
-        <location line="+26"/>
+        <location line="+32"/>
         <source>Identity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -540,6 +540,428 @@
         <location line="+7"/>
         <source>Under her latest message Yui offers two or three short replies you might say next; click one to send it.</source>
         <translation>结衣会在最新一条消息下面给出两三个你可能想说的简短回复，点一下就会发送。</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleMemories</name>
+    <message>
+        <location filename="../qml/ConsoleMemories.qml" line="+28"/>
+        <source>Tomorrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In %1 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Today, cheered on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Asked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>To ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Memories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Follow-ups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Recollection Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.</source>
+        <translation>结衣记下的、带有将来日期的事。她会在当天给你打气，之后一周内问问结果。在这里移除只是不再跟进，记忆本身会保留。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing to follow up</source>
+        <translation>暂时没有需要跟进的事</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Follow-ups are off (Mental Health Counseling, Care)</source>
+        <translation>跟进已关闭（Mental Health Counseling → Care）</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI. Exporting and clearing it are in Yui&apos;s Heart, Local Memory.</source>
+        <translation>每条聊天消息都保存在这里，只用于导出和搜索，不会发给 AI。导出和清空在 Yui's Heart → Local Memory。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Search the log</source>
+        <translation>搜索回忆日志</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>The latest 50 messages found</source>
+        <translation>只显示找到的最近 50 条</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 messages found</source>
+        <translation>找到 %1 条</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleOperations</name>
+    <message>
+        <location filename="../qml/ConsoleOperations.qml" line="+27"/>
+        <source>Done</source>
+        <translation>已执行</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancelled</source>
+        <translation>已取消</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Blocked: Immortal Object</source>
+        <translation>已拦截：Immortal Object</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Turned off in System Authority</source>
+        <translation>已在 System Authority 中关闭</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Failed</source>
+        <translation>失败</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Recent Operations</source>
+        <translation>Recent Operations</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>What Yui did on the computer and how it ended, the last 50. Memories, moods, reminders and notes have pages of their own.</source>
+        <translation>结衣在电脑上做过的操作和结果，保留最近 50 条。记忆、心情、提醒和笔记在各自的页面里。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing done on the computer yet.</source>
+        <translation>结衣还没有在电脑上做过操作。</translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <source>Clear</source>
+        <translation>清空</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>System Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Clear the list of recent operations?</source>
+        <translation>清空最近的操作记录吗？</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleQuests</name>
+    <message>
+        <location filename="../qml/ConsoleQuests.qml" line="+34"/>
+        <source>Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.</source>
+        <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>In a raid: %1 min left</source>
+        <translation>专注中：还剩 %1 分钟</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Resting: %1 min left</source>
+        <translation>休息中：还剩 %1 分钟</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No raid now.</source>
+        <translation>当前没有 Boss Raid。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Show Raid Banner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>End Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start Boss Raid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Reminders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Alarm is off (Skill Slots, Alarm).</source>
+        <translation>提醒功能已关闭（Skill Slots → Alarm）。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>HH:mm / +30</source>
+        <translation>HH:mm / +30</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Daily</source>
+        <translation>每天</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remind me of…</source>
+        <translation>提醒内容…</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+80"/>
+        <source>Add</source>
+        <translation type="unfinished">添加</translation>
+    </message>
+    <message>
+        <location line="-59"/>
+        <source>No reminders.</source>
+        <translation>没有提醒。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Daily %1</source>
+        <translation>每天 %1</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Quest Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Quest Log is off (Skill Slots, Quest Log).</source>
+        <translation>Quest Log 已关闭（Skill Slots → Quest Log）。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Something to note down</source>
+        <translation>要记下的事</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Exported to %1</source>
+        <translation>已导出到 %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>The export could not be written. See the log in System Authority.</source>
+        <translation>导出失败，请查看 System Authority 的日志。</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>No notes.</source>
+        <translation>没有笔记。</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleRecords</name>
+    <message>
+        <location filename="../qml/ConsoleRecords.qml" line="+38"/>
+        <source>Mental Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check (Mental Health Counseling, Care) turns it on or off.</source>
+        <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更关心你。在 Mental Health Counseling → Care 的 Daily Mood Check 里开关。</translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>30 days ago</source>
+        <translation>30 天前</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>today</source>
+        <translation>今天</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>No moods recorded in the last 30 days.</source>
+        <translation>最近 30 天还没有心情记录。</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <location line="+64"/>
+        <source>System Console</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-64"/>
+        <source>Delete the mood of %1?</source>
+        <translation>删除 %1 的心情记录吗？</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Weekly Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Writing...</source>
+        <translation>正在写……</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Write This Week&apos;s Report</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>No reports yet.</source>
+        <translation>还没有小结。</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Delete the report of %1?</source>
+        <translation>删除 %1 的小结吗？</translation>
+    </message>
+</context>
+<context>
+    <name>ConsoleStatus</name>
+    <message>
+        <location filename="../qml/ConsoleStatus.qml" line="+32"/>
+        <source>Load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Yui&apos;s Heart: violet (Boss Raid)</source>
+        <translation>结衣之心：紫色（Boss Raid）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Yui&apos;s Heart: green</source>
+        <translation>结衣之心：绿色</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Yui&apos;s Heart: %1 (%2)</source>
+        <translation>结衣之心：%1（%2）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>red</source>
+        <translation>红色</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>yellow</source>
+        <translation>黄色</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Not watched (System Authority, Network Link)</source>
+        <translation>未监视（System Authority → Network Link）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Offline: no traffic for two minutes</source>
+        <translation>离线：两分钟没有任何流量</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Online</source>
+        <translation>在线</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Storage</source>
+        <translation>Storage</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 not available</source>
+        <translation>%1 无法读取</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 %2% used, %3% free</source>
+        <translation>%1 已用 %2%，剩余 %3%</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Col Ledger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1: %2 tokens sent, %3 received, %4 replies</source>
+        <translation>%1：发送 %2 tokens，接收 %3，共 %4 次回复</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No replies counted yet this month.</source>
+        <translation>这个月还没有统计到回复。</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Monthly Budget: %1k tokens</source>
+        <translation>每月预算：%1k tokens</translation>
     </message>
 </context>
 <context>
@@ -802,30 +1224,18 @@
 <context>
     <name>MentalHealthCounseling</name>
     <message>
-        <location filename="../qml/MentalHealthCounseling.qml" line="+37"/>
-        <location line="+525"/>
-        <location line="+64"/>
+        <location filename="../qml/MentalHealthCounseling.qml" line="+25"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
     <message>
-        <location line="-168"/>
-        <source>Mental Record</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-387"/>
+        <location line="+24"/>
         <location line="+376"/>
         <source>Bond</source>
         <translation>Bond</translation>
     </message>
     <message>
-        <location line="+125"/>
-        <source>Weekly Report</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-312"/>
+        <location line="-187"/>
         <source>Login Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -836,12 +1246,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-325"/>
-        <source>Records</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+181"/>
+        <location line="-144"/>
         <source>Greeting</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1002,27 +1407,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+386"/>
-        <source>30 days ago</source>
-        <translation>30 天前</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>today</source>
-        <translation>今天</translation>
-    </message>
-    <message>
-        <location line="+27"/>
-        <source>No moods recorded in the last 30 days.</source>
-        <translation>最近 30 天还没有心情记录。</translation>
-    </message>
-    <message>
-        <location line="+29"/>
-        <source>Delete the mood of %1?</source>
-        <translation>删除 %1 的心情记录吗？</translation>
-    </message>
-    <message>
-        <location line="-146"/>
+        <location line="+297"/>
         <source>Player Birthday</source>
         <translation>Player Birthday</translation>
     </message>
@@ -1101,31 +1486,6 @@
         <location line="+14"/>
         <source>Yui looks back on the last seven days (chats, moods, Boss Raids, finished to-dos) and writes you a few words about your week (one request to the AI). Sunday Report writes it by itself on Sunday evenings.</source>
         <translation>结衣回顾最近七天（聊天、心情、Boss Raid、完成的待办），给你写几段这一周的小结（调用一次 AI）。打开 Sunday Report 后，每周日晚上会自动写。</translation>
-    </message>
-    <message>
-        <location line="+76"/>
-        <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check on the Care tab turns it on or off.</source>
-        <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更加关心你。可以在 Care 标签的 Daily Mood Check 中开关。</translation>
-    </message>
-    <message>
-        <location line="+115"/>
-        <source>Writing...</source>
-        <translation>正在写……</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Write This Week&apos;s Report</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+24"/>
-        <source>No reports yet.</source>
-        <translation>还没有小结。</translation>
-    </message>
-    <message>
-        <location line="+23"/>
-        <source>Delete the report of %1?</source>
-        <translation>删除 %1 的小结吗？</translation>
     </message>
 </context>
 <context>
@@ -1243,68 +1603,38 @@
 <context>
     <name>SkillSlots</name>
     <message>
-        <location filename="../qml/SkillSlots.qml" line="+42"/>
-        <source>Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.</source>
-        <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
-    </message>
-    <message>
-        <location line="+17"/>
+        <location filename="../qml/SkillSlots.qml" line="+25"/>
         <source>Skill Slots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+41"/>
-        <location line="+108"/>
+        <location line="+24"/>
+        <location line="+68"/>
         <source>Boss Raid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-108"/>
-        <location line="+128"/>
-        <location line="+103"/>
+        <location line="-68"/>
+        <location line="+88"/>
+        <location line="+15"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-231"/>
-        <location line="+251"/>
-        <location line="+100"/>
+        <location line="-103"/>
+        <location line="+123"/>
+        <location line="+15"/>
         <source>Quest Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-351"/>
-        <location line="+478"/>
+        <location line="-138"/>
+        <location line="+265"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-401"/>
-        <source>In a raid: %1 min left</source>
-        <translation>专注中：还剩 %1 分钟</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Resting: %1 min left</source>
-        <translation>休息中：还剩 %1 分钟</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>No raid now.</source>
-        <translation>当前没有 Boss Raid。</translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <source>End Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Start Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-73"/>
+        <location line="-243"/>
         <source>Raid Duration</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1329,93 +1659,17 @@
         <translation>屏幕最上层显示一条横幅倒计时（可以拖到任意位置）；专注结束时，像原作打倒楼层 Boss 那样，在屏幕上显示大大的「Congratulations!」。</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+21"/>
-        <source>Show Raid Banner</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+46"/>
+        <location line="+35"/>
         <source>Ask Yui to remind you (&quot;remind me of the meeting in 30 minutes&quot;, &quot;every day at 23:00, time to sleep&quot;) or add a reminder here. She tells you when it is time, and missed ones when SAO Utils starts again.</source>
         <translation>让结衣提醒你（「30 分钟后提醒我开会」「每天晚上 11 点提醒我睡觉」），或在这里手动添加。到时间她会告诉你；SAO Utils 关闭期间错过的提醒，下次启动时补上。</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Reminders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <source>HH:mm / +30</source>
-        <translation>HH:mm / +30</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Daily</source>
-        <translation>每天</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Remind me of…</source>
-        <translation>提醒内容…</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <location line="+109"/>
-        <source>Add</source>
-        <translation type="unfinished">添加</translation>
-    </message>
-    <message>
-        <location line="-88"/>
-        <source>No reminders.</source>
-        <translation>没有提醒。</translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <source>Daily %1</source>
-        <translation>每天 %1</translation>
-    </message>
-    <message>
-        <location line="+48"/>
+        <location line="+35"/>
         <source>Ask Yui to note something down (&quot;note that I need milk&quot;) and tell her when it is done. The notes are kept apart from Yui&apos;s Heart and are sent to her only when you ask about them.</source>
         <translation>让结衣帮你记下事情（「帮我记一下，要买牛奶」），办完了告诉她就行。笔记和结衣之心分开保存，只有你问起时才发给她。</translation>
     </message>
     <message>
-        <location line="+8"/>
-        <source>Notes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+13"/>
-        <source>Something to note down</source>
-        <translation>要记下的事</translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>Export</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Exported to %1</source>
-        <translation>已导出到 %1</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>The export could not be written. See the log in System Console.</source>
-        <translation>导出失败，请查看 System Console 的日志。</translation>
-    </message>
-    <message>
-        <location line="+21"/>
-        <source>No notes.</source>
-        <translation>没有笔记。</translation>
-    </message>
-    <message>
-        <location line="+55"/>
+        <location line="+26"/>
         <source>Give a name and a SAO Utils action to a slot; when you tell Yui to do it (&quot;start work&quot;), she runs it after you confirm. To chain several steps (open programs, close a game, start a Boss Raid...), choose a Script Action and put them in its Input Actions.</source>
         <translation>给槽位起个名字并选一个 SAO Utils 动作；你跟结衣说要做这件事时（「开始工作」），她会在你确认后执行。想串起多个步骤（打开程序、关闭游戏、开始 Boss Raid……），就选 Script Action，把这些步骤放进它的 Input Actions。</translation>
     </message>
@@ -1527,116 +1781,42 @@
     </message>
 </context>
 <context>
-    <name>SystemConsole</name>
+    <name>SystemAuthority</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+496"/>
-        <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
-        <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
+        <location filename="../qml/SystemAuthority.qml" line="+88"/>
+        <source>System Authority</source>
+        <translation>System Authority</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <source>Where the searches Yui offers are opened.</source>
-        <translation>结衣提供的搜索在哪个搜索引擎中打开。</translation>
-    </message>
-    <message>
-        <location line="+18"/>
-        <source>%s is replaced by the search words.</source>
-        <translation>%s 会被替换为搜索词。</translation>
-    </message>
-    <message>
-        <location line="+25"/>
-        <source>es.exe Path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+21"/>
-        <source>File search uses Everything&apos;s command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.</source>
-        <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
-    </message>
-    <message>
-        <location line="-489"/>
-        <source>System Console</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+52"/>
-        <source>The crystal turns yellow or red when a load stays at or above these values (in %) for 5 seconds, and back once it drops 5 points below them. It shows the worst of the three.</source>
-        <translation>当负荷持续 5 秒达到或超过这些数值（%）时，水晶会变成黄色或红色；回落到数值以下 5 个百分点后恢复。水晶显示三项中最严重的状态。</translation>
-    </message>
-    <message>
-        <location line="+68"/>
-        <source>Yellow</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Red</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-60"/>
-        <source>Computing Load (CPU)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Visual Engine (GPU)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Memory Capacity (RAM)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+99"/>
-        <source>Report Interval (h)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+181"/>
-        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.</source>
-        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。想让结衣知道正在放什么歌，请在 Mental Health Counseling 里打开 Now Playing。</translation>
-    </message>
-    <message>
-        <location line="+143"/>
-        <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
-        <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>No programs yet.</source>
-        <translation>暂无程序。</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Immortal Objects</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Yui never closes these programs. The locked system processes cannot be removed; you can protect more.</source>
-        <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
-    </message>
-    <message>
-        <location line="-502"/>
-        <location line="+252"/>
+        <location line="+26"/>
+        <location line="+233"/>
         <source>Monitor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-252"/>
-        <location line="+517"/>
+        <location line="-233"/>
+        <location line="+498"/>
         <source>Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-502"/>
+        <location line="-498"/>
+        <location line="+577"/>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-561"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+6"/>
+        <source>The crystal turns yellow or red when a load stays at or above these values (in %) for 5 seconds, and back once it drops 5 points below them. It shows the worst of the three.</source>
+        <translation>当负荷持续 5 秒达到或超过这些数值（%）时，水晶会变成黄色或红色；回落到数值以下 5 个百分点后恢复。水晶显示三项中最严重的状态。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Crystal Thresholds</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1651,7 +1831,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+84"/>
+        <location line="+7"/>
+        <source>Computing Load (CPU)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Visual Engine (GPU)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Memory Capacity (RAM)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+42"/>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <location line="+15"/>
         <source>Navigation Reports</source>
         <translation type="unfinished"></translation>
@@ -1662,7 +1867,12 @@
         <translation>电量低、CPU 或内存占用过高时，结衣会提醒你。</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+7"/>
+        <source>Report Interval (h)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Each load is reported at most once in this time.</source>
         <translation>每项负载在这段时间内最多提醒一次。</translation>
     </message>
@@ -1687,24 +1897,9 @@
         <translation>网络好像断开时（两分钟完全没有流量）以及恢复连接时，结衣会告诉你。</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Col Ledger</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>%1: %2 tokens sent, %3 received, %4 replies</source>
-        <translation>%1：发送 %2 tokens，接收 %3，共 %4 次回复</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>No replies counted yet this month.</source>
-        <translation>这个月还没有统计到回复。</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Counted from what the servers report with each reply (not every server does), and started afresh each month. Tokens only: prices differ between servers.</source>
-        <translation>按服务器随每次回复报告的数量统计（并非所有服务器都会报告），每月重新开始。只统计 token，不换算金额，因为各家价格不同。</translation>
     </message>
     <message>
         <location line="+15"/>
@@ -1758,7 +1953,12 @@
         <translation>Authority Level 为 Limited（Cardinal System → Core Tuning），结衣不会执行这里的任何代行。</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+6"/>
+        <source>Control Media: Yui plays, pauses, skips tracks and changes the volume without asking. It uses the Media Player package (com.gpbeta.media); without it this does nothing. For Yui to know what is playing, see Now Playing in Mental Health Counseling.</source>
+        <translation>Control Media：结衣直接（不用确认）播放、暂停、切歌、调音量。依靠 Media Player 插件（com.gpbeta.media），没有安装时不起作用。想让结衣知道正在放什么歌，请在 Mental Health Counseling 里打开 Now Playing。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Browsing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1768,7 +1968,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+7"/>
+        <source>Open the links and searches Yui offers in the system&apos;s default browser instead of SAO Utils&apos; built-in browser.</source>
+        <translation>用系统默认浏览器打开结衣提供的链接和搜索，而不是 SAO Utils 内置浏览器。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Search Engine</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1783,22 +1988,62 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+7"/>
+        <source>Where the searches Yui offers are opened.</source>
+        <translation>结衣提供的搜索在哪个搜索引擎中打开。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Custom Search Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+9"/>
+        <source>%s is replaced by the search words.</source>
+        <translation>%s 会被替换为搜索词。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>File Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+19"/>
+        <source>es.exe Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>File search uses Everything&apos;s command line tool es.exe. When this is empty, Yui looks for it in PATH and the usual install folders and fills it in once found. Everything itself must be running.</source>
+        <translation>文件检索使用 Everything 的命令行工具 es.exe。留空时，结衣会在 PATH 和常见安装位置中查找，找到后自动填入。Everything 本身必须正在运行。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Delete Authority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+6"/>
+        <source>Yui closes these programs without asking. After closing a program for the first time, Yui asks whether to add it here.</source>
+        <translation>结衣会直接关闭这些程序，不再询问。第一次关闭某个程序后，结衣会询问是否把它加入这里。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>No programs yet.</source>
+        <translation>暂无程序。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Immortal Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Yui never closes these programs. The locked system processes cannot be removed; you can protect more.</source>
+        <translation>结衣永远不会关闭这些程序。带锁的系统进程不能移除，你可以添加更多需要保护的程序。</translation>
+    </message>
+    <message>
+        <location line="+28"/>
         <source>Test Call</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1808,7 +2053,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+8"/>
+        <source>Actions try each desktop action: every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking. Care has Yui say what she would say by herself, at once. Display shows the bubble, a streamed reply and the startup effect without asking the AI.</source>
+        <translation>Actions 测试各个桌面代行：每个按钮都会发一条测试消息，并像真正的操作一样请求确认；受保护进程应当不经询问直接拒绝。Care 让结衣立刻说出她会主动说的话。Display 展示气泡、流式回复和启动特效，不会请求 AI。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Launch Notepad</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1833,29 +2083,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-553"/>
-        <location line="+596"/>
-        <source>Log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-43"/>
+        <location line="+0"/>
         <source>Test Media</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-7"/>
-        <source>Actions try each desktop action: every button posts a test message and asks for confirmation like a real action; the protected process must be refused without asking. Care has Yui say what she would say by herself, at once. Display shows the bubble, a streamed reply and the startup effect without asking the AI.</source>
-        <translation>Actions 测试各个桌面代行：每个按钮都会发一条测试消息，并像真正的操作一样请求确认；受保护进程应当不经询问直接拒绝。Care 让结衣立刻说出她会主动说的话。Display 展示气泡、流式回复和启动特效，不会请求 AI。</translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>Test Place Seedling</source>
+        <location line="+3"/>
+        <source>Test Seedling Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+0"/>
-        <source>Test Seedling Link</source>
+        <source>Test Place Seedling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1910,6 +2149,34 @@
     </message>
 </context>
 <context>
+    <name>SystemConsole</name>
+    <message>
+        <location filename="../qml/SystemConsole.qml" line="+37"/>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Memories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Quests</source>
+        <translation>Quests</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Operations</source>
+        <translation>Operations</translation>
+    </message>
+</context>
+<context>
     <name>WindowAction</name>
     <message>
         <location filename="../qml/action/WindowAction.qml" line="+5"/>
@@ -1934,7 +2201,12 @@
     <message>
         <location line="+3"/>
         <source>Mental Health Counseling</source>
-        <translation type="unfinished">Mental Health Counseling</translation>
+        <translation>Mental Health Counseling</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>System Authority</source>
+        <translation>System Authority</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2069,51 +2341,21 @@
 <context>
     <name>YuisHeart</name>
     <message>
-        <location filename="../qml/YuisHeart.qml" line="+60"/>
-        <location line="+343"/>
-        <location line="+78"/>
+        <location filename="../qml/YuisHeart.qml" line="+29"/>
+        <location line="+288"/>
+        <location line="+32"/>
         <location line="+1"/>
         <source>Yui&apos;s Heart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-390"/>
-        <source>Memories</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <location line="+199"/>
+        <location line="-292"/>
+        <location line="+143"/>
         <source>Recall</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-199"/>
-        <source>Follow-ups</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+17"/>
-        <source>Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.</source>
-        <translation>结衣记下的、带有将来日期的事。她会在当天给你打气，之后一周内问问结果。在这里移除只是不再跟进，记忆本身会保留。</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Nothing to follow up</source>
-        <translation>暂时没有需要跟进的事</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Follow-ups are off (Mental Health Counseling, Care)</source>
-        <translation>跟进已关闭（Mental Health Counseling → Care）</translation>
-    </message>
-    <message>
-        <location line="+30"/>
-        <source>Remove</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+21"/>
+        <location line="-124"/>
         <source>Memory</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2198,7 +2440,18 @@
         <translation>把结衣的记忆导出为文件，用于保存或迁移到另一台电脑；导入会把文件中的记忆加进来。每天还会自动备份一次。</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+14"/>
+        <location line="+97"/>
+        <source>The export could not be written. See the log in System Authority.</source>
+        <translation>导出失败，请查看 System Authority 的日志。</translation>
+    </message>
+    <message>
+        <location line="-87"/>
+        <source>The file picker is not available. See the log in System Authority.</source>
+        <translation>无法打开文件选择框，请查看 System Authority 的日志。</translation>
+    </message>
+    <message>
+        <location line="+23"/>
         <source>Backup</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2228,67 +2481,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+24"/>
-        <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui&apos;s memories stay when it is cleared.</source>
-        <translation>每条聊天消息都保存在这里，只用于导出和搜索，从不发送给 AI；清除它不会影响结衣的记忆。</translation>
+        <location line="+23"/>
+        <source>Every chat message is kept here, only for exports and searching (System Console, Memories). It is never sent to the AI, and Yui&apos;s memories stay when it is cleared.</source>
+        <translation>每条聊天消息都保存在这里，只用于导出和搜索（System Console → Memories），不会发给 AI；清空后结衣的记忆仍会保留。</translation>
     </message>
     <message>
-        <location line="+14"/>
-        <source>Search the log</source>
-        <translation>搜索回忆日志</translation>
-    </message>
-    <message>
-        <location line="-26"/>
+        <location line="-12"/>
         <source>Export Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-370"/>
-        <source>Tomorrow</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>In %1 days</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Today, cheered on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Today</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Asked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>To ask</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+355"/>
+        <location line="-9"/>
         <source>Delete the whole chat history kept in the recollection log, and clear the chat window? This cannot be undone.</source>
         <translation>删除回忆日志里保存的全部聊天记录，并清空聊天窗口吗？此操作无法撤销。</translation>
     </message>
     <message>
-        <location line="+53"/>
-        <source>The latest 50 messages found</source>
-        <translation>只显示找到的最近 50 条</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>%1 messages found</source>
-        <translation>找到 %1 条</translation>
-    </message>
-    <message>
-        <location line="+18"/>
+        <location line="+25"/>
         <location line="+5"/>
         <source>Forget Everything</source>
         <translation type="unfinished"></translation>
@@ -2309,13 +2517,13 @@
         <translation>删除全部记忆（心核和碎片），回忆日志保留。删除前会先写一份备份，之后可以重新导入。</translation>
     </message>
     <message>
-        <location line="-401"/>
-        <location line="+417"/>
+        <location line="-303"/>
+        <location line="+319"/>
         <source>Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-194"/>
+        <location line="-152"/>
         <source>Include the chat history (private conversations)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2326,28 +2534,17 @@
     </message>
     <message>
         <location line="+2"/>
-        <location line="+94"/>
+        <location line="+97"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
     <message>
-        <location line="-94"/>
-        <location line="+94"/>
-        <source>The export could not be written. See the log in System Console.</source>
-        <translation>导出文件无法写入，请查看 System Console 中的日志。</translation>
-    </message>
-    <message>
-        <location line="-89"/>
+        <location line="-92"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>The file picker is not available. See the log in System Console.</source>
-        <translation>无法打开文件选择框，请查看 System Console 中的日志。</translation>
-    </message>
-    <message>
-        <location line="+24"/>
+        <location line="+33"/>
         <source>Open Backup Folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2437,7 +2634,7 @@
     <message>
         <location line="+20"/>
         <source>Writing...</source>
-        <translation type="unfinished">正在写……</translation>
+        <translation>正在写……</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -2523,7 +2720,7 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1929"/>
+        <location filename="../qml/main-stand.qml" line="+1939"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2533,19 +2730,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3004"/>
+        <location line="+3102"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2987"/>
-        <location line="+2076"/>
-        <location line="+1024"/>
+        <location line="-3085"/>
+        <location line="+2171"/>
+        <location line="+1027"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4272"/>
+        <location line="-4375"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2555,14 +2752,14 @@
         <translation>发动剑技「%1」吗？</translation>
     </message>
     <message>
-        <location line="+71"/>
-        <location line="+2402"/>
+        <location line="+73"/>
+        <location line="+2463"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1365"/>
+        <location line="-1423"/>
         <source>Yui will start this program:</source>
         <translation>结衣将为你启动这个程序：</translation>
     </message>
@@ -2597,29 +2794,17 @@
         <translation>%1 是受保护的系统进程，结衣不能关闭它。</translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+98"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Close %1 without asking from now on?
-You can change this in System Console.</source>
-        <translation>以后关闭 %1 时不再询问，直接关闭吗？
-可以在 System Console 中修改。</translation>
-    </message>
-    <message>
-        <location line="+439"/>
-        <source>The backup could not be written, so nothing was deleted. See the log in System Console.</source>
-        <translation>备份文件无法写入，所以没有删除任何记忆。请查看 System Console 中的日志。</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+467"/>
         <source>All memories were deleted. Backup: %1</source>
         <translation>已删除全部记忆。备份：%1</translation>
     </message>
     <message>
-        <location line="+304"/>
+        <location line="+303"/>
         <source>This file could not be read as Yui&apos;s Heart.</source>
         <translation>无法把这个文件读取为结衣之心。</translation>
     </message>
@@ -2634,7 +2819,7 @@ You can change this in System Console.</source>
         <translation>已导入 %1 条新记忆和 %2 条聊天记录。</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+277"/>
         <location line="+49"/>
         <source>Quest Log</source>
         <translation type="unfinished"></translation>
@@ -2660,12 +2845,12 @@ You can change this in System Console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+277"/>
+        <location line="+314"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2324"/>
+        <location line="+2327"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2686,11 +2871,16 @@ You can change this in System Console.</source>
     </message>
     <message>
         <location line="+121"/>
+        <source>System Authority</source>
+        <translation>System Authority</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2254"/>
+        <location line="-2262"/>
         <location line="+10"/>
         <location line="+61"/>
         <location line="+204"/>
@@ -2698,7 +2888,7 @@ You can change this in System Console.</source>
         <location line="+11"/>
         <location line="+2"/>
         <location line="+5"/>
-        <location line="+1948"/>
+        <location line="+1951"/>
         <source>Mental Health Counseling</source>
         <translation>Mental Health Counseling</translation>
     </message>
@@ -2708,19 +2898,31 @@ You can change this in System Console.</source>
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6178"/>
-        <location line="+6212"/>
+        <location line="-6283"/>
+        <location line="+6317"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6219"/>
-        <location line="+6219"/>
+        <location line="-6324"/>
+        <location line="+6324"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="-4351"/>
+        <source>Close %1 without asking from now on?
+You can change this in System Authority.</source>
+        <translation>以后关闭 %1 时不再询问吗？
+可以在 System Authority 中修改。</translation>
+    </message>
+    <message>
+        <location line="+461"/>
+        <source>The backup could not be written, so nothing was deleted. See the log in System Authority.</source>
+        <translation>备份写入失败，所以没有删除任何内容。请查看 System Authority 的日志。</translation>
+    </message>
+    <message>
+        <location line="+3909"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

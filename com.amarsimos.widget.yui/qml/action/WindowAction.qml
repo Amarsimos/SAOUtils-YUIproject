@@ -16,6 +16,9 @@ YuiActionBase {
             "id": "counseling",
             "name": qsTr("Mental Health Counseling")
         }, {
+            "id": "authority",
+            "name": qsTr("System Authority")
+        }, {
             "id": "console",
             "name": qsTr("System Console")
         }, {

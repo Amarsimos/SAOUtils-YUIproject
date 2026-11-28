@@ -6,11 +6,10 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// "Yui's Heart" window (next to Cardinal System, Equipment, Mental Health Counseling and System Console),
-// in pages: Memories (view, add and edit them, YuisHeartPage.qml), Follow-ups (memories about a day to
-// come, which Yui brings up), Recall (what is remembered and sent
-// with each request) and Local Memory (export, import, backups, the recollection log, forgetting all;
-// always the last page).
+// "Yui's Heart" window (next to Cardinal System, Equipment, Mental Health Counseling and System Authority),
+// in pages: Recall (what is remembered and sent with each request) and Local Memory (export, import,
+// backups, the recollection log, forgetting all; always the last page). The memories themselves, the
+// follow-ups and searching the log are in System Console, Memories.
 // The settings are SAO Utils' own preferences synced with the widget's settings (ObjectPreferenceGroup),
 // taking effect at once; Reset restores the settings only, never memories or the log.
 NVG.Window {
@@ -19,39 +18,9 @@ NVG.Window {
     property var targetWidget
     // Chat messages kept in the recollection log (refreshed when the Local Memory page opens).
     property int logSize: 0
-    // Recollection Log search: the messages found (newest first, at most 50) for logQuery.
-    property var logResults: []
-    property string logQuery: ""
-
-    function searchLog() {
-        logQuery = logSearchField.text.trim();
-        logResults = logQuery ? targetWidget.searchMessageLog(logQuery, 50) : [];
-    }
     // The settings of each tab, for Reset This Tab and the title bar's Reset.
     readonly property var recallPreferences: [autoMemoryPreference, coreCapacity, recalled, logRecallPreference, conversation, savedChat]
     readonly property var localPreferences: [backupDays]
-
-    // Follow-ups page: the memories about a day to come, soonest first.
-    property var followupItems: []
-
-    function refreshFollowups() {
-        followupItems = targetWidget.followupList(Date.now());
-    }
-
-    function followupState(item) {
-        if (item.phase === "ahead")
-            return item.days === 1 ? qsTr("Tomorrow") : qsTr("In %1 days").arg(item.days);
-
-        if (item.phase === "today")
-            return item.stage ? qsTr("Today, cheered on") : qsTr("Today");
-
-        return item.stage === "asked" ? qsTr("Asked") : qsTr("To ask");
-    }
-
-    Connections {
-        target: heartWindow.targetWidget
-        onFollowupsChanged: heartWindow.refreshFollowups()
-    }
 
     function refreshLogSize() {
         logSize = targetWidget.messageLogCount();
@@ -82,76 +51,17 @@ NVG.Window {
                 id: tabs
 
                 onShownIndexChanged: {
-                    if (shownIndex === 1)
-                        heartWindow.refreshFollowups();
-
                     if (shownIndex === model.length - 1)
                         heartWindow.refreshLogSize();
 
                 }
-                model: [qsTr("Memories"), qsTr("Follow-ups"), qsTr("Recall"), qsTr("Local Memory")]
+                model: [qsTr("Recall"), qsTr("Local Memory")]
             }
 
             StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 currentIndex: tabs.shownIndex
-
-                // ---------------------------------------------------------------- Memories
-                YuisHeartPage {
-                    yui: heartWindow.targetWidget
-                }
-
-                // ---------------------------------------------------------------- Follow-ups
-                SettingsPage {
-                    SettingNote {
-                        besidePreferences: true
-                        text: qsTr("Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.")
-                    }
-
-                    Label {
-                        visible: heartWindow.followupItems.length === 0
-                        Layout.alignment: Qt.AlignHCenter
-                        opacity: 0.7
-                        text: heartWindow.targetWidget.featureEnabled("followups") ? qsTr("Nothing to follow up") : qsTr("Follow-ups are off (Mental Health Counseling, Care)")
-                    }
-
-                    Repeater {
-                        model: heartWindow.followupItems
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
-                            spacing: 10
-
-                            Label {
-                                text: modelData.due.slice(5).replace("-", "/")
-                                font.bold: true
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                wrapMode: Text.Wrap
-                                textFormat: Text.PlainText
-                                text: modelData.text
-                            }
-
-                            Label {
-                                opacity: 0.7
-                                text: heartWindow.followupState(modelData)
-                            }
-
-                            Button {
-                                text: qsTr("Remove")
-                                onClicked: heartWindow.targetWidget.dismissFollowup(modelData.key)
-                            }
-
-                        }
-
-                    }
-
-                }
 
                 // ---------------------------------------------------------------- Recall
                 // Under headings: Memory, Context (sent with each request), Chat History.
@@ -319,7 +229,7 @@ NVG.Window {
                         Button {
                             text: qsTr("Export")
                             onClicked: heartWindow.targetWidget.exportHeart(withMessages.checked, function(path) {
-                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
+                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Authority.");
                             })
                         }
 
@@ -329,7 +239,7 @@ NVG.Window {
                                 var component = Qt.createComponent("YuisHeartImportDialog.qml");
                                 if (component.status !== Component.Ready) {
                                     heartWindow.targetWidget.diag("import dialog unavailable: " + component.errorString());
-                                    heartMessage.text = qsTr("The file picker is not available. See the log in System Console.");
+                                    heartMessage.text = qsTr("The file picker is not available. See the log in System Authority.");
                                     return ;
                                 }
                                 var dialog = component.createObject(heartWindow);
@@ -409,7 +319,6 @@ NVG.Window {
                                 // The chat window too, or Yui keeps the cleared talk in her context.
                                 heartWindow.targetWidget.clearChat();
                                 heartWindow.refreshLogSize();
-                                heartWindow.searchLog();
                             }, true)
                         }
 
@@ -417,7 +326,7 @@ NVG.Window {
                             text: qsTr("Export Log")
                             enabled: heartWindow.logSize > 0
                             onClicked: heartWindow.targetWidget.exportMessageLog(function(path) {
-                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Console.");
+                                heartMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Authority.");
                             })
                         }
 
@@ -426,52 +335,7 @@ NVG.Window {
                     SettingNote {
                         visible: heartWindow.targetWidget.settingsHelp
                         besidePreferences: true
-                        text: qsTr("Every chat message is kept here, only for exports and searching. It is never sent to the AI, and Yui's memories stay when it is cleared.")
-                    }
-
-                    // Searching the log (as you type) and exporting all of it as text.
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 16
-                        Layout.rightMargin: 16
-
-                        TextField {
-                            id: logSearchField
-
-                            Layout.fillWidth: true
-                            selectByMouse: true
-                            placeholderText: qsTr("Search the log")
-                            onTextChanged: logSearchTimer.restart()
-                        }
-
-                        Timer {
-                            id: logSearchTimer
-
-                            interval: 300
-                            onTriggered: heartWindow.searchLog()
-                        }
-
-                    }
-
-                    Label {
-                        Layout.leftMargin: 16
-                        visible: heartWindow.logQuery !== ""
-                        opacity: 0.7
-                        text: heartWindow.logResults.length >= 50 ? qsTr("The latest 50 messages found") : qsTr("%1 messages found").arg(heartWindow.logResults.length)
-                    }
-
-                    Repeater {
-                        model: heartWindow.logResults
-
-                        Label {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 16
-                            Layout.rightMargin: 16
-                            wrapMode: Text.Wrap
-                            textFormat: Text.PlainText
-                            text: Yui.logLine(modelData, heartWindow.targetWidget.userTitle())
-                        }
-
+                        text: qsTr("Every chat message is kept here, only for exports and searching (System Console, Memories). It is never sent to the AI, and Yui's memories stay when it is cleared.")
                     }
 
                     Heading {

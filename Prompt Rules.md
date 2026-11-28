@@ -124,7 +124,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 ## 七、回复的处理（`Yui.parseReply` / `cleanReply`）
 
 * **标签**：`emotion memory core forget open search launch find kill focus mood remind note done skill suggest media`。允许单个 `>` 收尾（小模型），其后只能是空白、行尾或下一个标签。
-* 关掉的功能：标签被丢弃且不执行，聊天显示「🚫 已在 System Console 中关闭这类代行，没有执行」。
+* 关掉的功能：标签被丢弃且不执行，聊天显示「🚫 已在 System Authority 中关闭这类代行，没有执行」。
 * 拼错 / 全角括号的标签：从文字中去掉，记进 Log（`tags not understood`）。
 * `cleanReply`：只保留最后一个 `</think>` 之后的内容，去掉 `<think>…</think>`，同一段落只留一次。
 * **只说不做**：回复声称做了（`Yui.claimsDone`：「已经 / 这就 / 帮你 + 动作动词 + 了 / 好了」、「音乐已经重新动起来」，问句和说用户做的不算），但这一轮没有执行任何动作、媒体、剑技、专注、提醒，也没有被关闭或拦截时，消息下加「⚠ 结衣说做了，但这次什么都没有执行」，Log 记 `claimed an action, none carried out`。不改她的原话。
@@ -162,7 +162,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 15. 本文档和代码一起改；提示词原文不手抄：改完提示词跑 `node tests/yui/prompt_doc.js`，重新生成文末的附录。
 
 **排查**
-16. System Console → Log 打开 **Log Requests**，看完整的 system 和消息；先确认信息有没有进请求，再判断是模型没用上还是没发出去。Seedling 的请求和结果在 SAO Utils 日志里以 `Seedling:` 开头。
+16. System Authority → Log 打开 **Log Requests**，看完整的 system 和消息；先确认信息有没有进请求，再判断是模型没用上还是没发出去。Seedling 的请求和结果在 SAO Utils 日志里以 `Seedling:` 开头。
 
 ---
 

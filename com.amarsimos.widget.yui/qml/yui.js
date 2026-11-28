@@ -23,7 +23,7 @@ var SAME_MEMORY = 0.8;
 
 // Load levels of the crystal and the Cardinal bars: 0 green (normal), 1 yellow (notice), 2 red (high).
 // Default [yellow, red] thresholds in percent; GPU is higher because games and video keep it busy,
-// memory lower because a full memory slows the whole computer. Editable in the System Console.
+// memory lower because a full memory slows the whole computer. Editable in the System Authority.
 var LOAD_THRESHOLDS = {
     "cpu": [70, 90],
     "gpu": [85, 97],
@@ -99,7 +99,7 @@ function tagPattern() {
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
-// Utils itself. Users can protect more in the System Console, but cannot remove these.
+// Utils itself. Users can protect more in the System Authority, but cannot remove these.
 var PROTECTED_PROCESSES = ["system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe", "lsass.exe", "svchost.exe", "dwm.exe", "explorer.exe", "fontdrvhost.exe", "registry", "sao utils.exe", "nervlaunch.exe", "nervservice.exe", "nervstartup.exe", "nervsteam.exe", "nervwebkit.exe"];
 
 // Process name for taskkill ("chrome" -> "chrome.exe"), or "" when it is not a plain name.
@@ -111,7 +111,7 @@ function processName(value) {
     return /\.exe$/i.test(name) ? name : name + ".exe";
 }
 
-// userProtected: extra names the user protected (System Console).
+// userProtected: extra names the user protected (System Authority).
 function isProtectedProcess(name, userProtected) {
     name = String(name).toLowerCase();
     return PROTECTED_PROCESSES.indexOf(name) !== -1 || processListHas(userProtected, name);
@@ -134,7 +134,7 @@ function processListHas(names, name) {
 }
 
 // Command lines run with NVG.SystemCall.command(). kill asks the program to close (no /F). find runs
-// the package's scripts/find.bat (scriptFile): it uses esPath (System Console) or looks for es.exe in
+// the package's scripts/find.bat (scriptFile): it uses esPath (System Authority) or looks for es.exe in
 // PATH and the usual install folders, writes up to 20 results as UTF-8 text to resultFile and its exit
 // code and the es.exe it used to statusFile (see parseFindStatus).
 function actionCommand(action, resultFile, esPath, statusFile, scriptFile) {
@@ -163,10 +163,10 @@ function parseFindStatus(text) {
     };
 }
 
-// What can be clicked in a chat message: web links, the words 「System Console」 (or 「Option」 in older chats; they open the System Console) and
+// What can be clicked in a chat message: web links, the words 「System Authority」 (or 「Option」 in older chats; they open the System Authority) and
 // Windows paths such as D:\Tools\a b.txt — a drive letter, then anything up to the end of the line, a
 // quote or bracket, or Chinese text / punctuation (so "文件在 D:\a.txt 里" links only the path).
-var LINK_PATTERN = /(https?:\/\/[^\s"'<>「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]+)|(「System Console」|「Option」)|([A-Za-z]:[\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*)/g;
+var LINK_PATTERN = /(https?:\/\/[^\s"'<>「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]+)|(「System Authority」|「System Console」|「Option」)|([A-Za-z]:[\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*)/g;
 
 function escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -229,7 +229,7 @@ function formatLines(text, linkColor) {
 }
 
 // One line with its links (see LINK_PATTERN) made clickable: web links as themselves, paths as
-// "yui-path:", 「System Console」 as "yui-option:". Escaped for rich text.
+// "yui-path:", 「System Authority」 as "yui-option:". Escaped for rich text.
 function linkLine(text, linkColor) {
     var html = "";
     var last = 0;
@@ -297,7 +297,7 @@ function searchUrl(engine, custom, query) {
     return template.split("%s").join(encodeURIComponent(query));
 }
 
-// The desktop actions the user can allow or forbid (System Console), and the tags of each.
+// The desktop actions the user can allow or forbid (System Authority), and the tags of each.
 var ACTION_KINDS = {
     "open": "web",
     "search": "web",
@@ -366,7 +366,7 @@ function actionFrom(kind, value, userProtected, options) {
 // Tools (Action Mode "Tools"): the desktop actions and Yui's Heart as function calls, in a neutral
 // form (name, description, JSON schema parameters) that the request turns into each API's format.
 // kind: the action (see actionFrom) or "remember" / "forget"; allow: the switch that offers it
-// (System Console's actions, Yui's Heart's Auto Memory); arg: the argument holding the value.
+// (System Authority's actions, Yui's Heart's Auto Memory); arg: the argument holding the value.
 var TOOLS = [{
     "name": "open_url",
     "kind": "open",
@@ -739,7 +739,7 @@ function parseReply(text, userProtected, options) {
         "skill": "",
         // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
         "suggestions": [],
-        // <<media:>> (System Console, Media): the media commands to run (see mediaCommand), in order.
+        // <<media:>> (System Authority, Media): the media commands to run (see mediaCommand), in order.
         "media": [],
         // <<seedling:>> (Seedling installed): what the widget should be or how to change it, "" when none.
         "seedling": ""
@@ -1049,7 +1049,7 @@ function swordSkillIndex(name, names) {
     return -1;
 }
 
-// Media (System Console): the commands of Media Player's System Media Control action, and the words
+// Media (System Authority): the commands of Media Player's System Media Control action, and the words
 // a model may write for them instead.
 var MEDIA_COMMANDS = {
     "pause": ["pause", "play", "toggle", "resume", "播放", "暂停", "继续"],

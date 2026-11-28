@@ -3,7 +3,7 @@ import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
-// The title bar of every settings window (Cardinal System, Equipment, System Console, Yui's Heart):
+// The title bar of every settings window (Cardinal System, Equipment, System Authority, Yui's Heart):
 // the light title bar of SAO Utils' own dialogs, and in English, left to right, Advanced (when the
 // window has advanced settings), Help and Reset. All three have one role, so they keep this order.
 // Help and Advanced are shared by all the windows (the widget's settingsHelp / settingsAdvanced);
