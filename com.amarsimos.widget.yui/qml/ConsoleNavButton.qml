@@ -2,24 +2,25 @@ import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import "yui.js" as Yui
 
-// A page button of System Console, as the SAO main menu's: an icon of SAO Utils' SAO theme (item group,
-// e.g. "System/HW_info") large on a white disc, orange with the theme's -hovered icon while checked,
-// its caption under it.
+// A page button of System Console, as SAO Utils' SAO main menu button (the theme's MainButton): a
+// white disc, SAO orange while hovered or on the page shown, with an icon of the theme's main menu
+// set ("SAO Main Menu Icons", /icon/main, 42 px, e.g. "System/HW_info"): grey, white on orange; its
+// caption under it.
 Item {
     id: button
 
     property string icon
     property string caption
     property bool checked: false
-    readonly property string base: "nvg://sao.theme.gpbeta.com/icon/item#" + icon
+    readonly property bool lit: checked || area.containsMouse
+    readonly property string base: "nvg://sao.theme.gpbeta.com/icon/main#" + icon
 
     signal clicked()
 
     width: 80
     height: 68 + label.implicitHeight + 4
 
-    // A white disc (orange on the page shown) with the theme's round icon large inside it, so it reads
-    // on the code wall.
+    // The disc as the theme's btn.png (white, 90 %) and btn-hovered.png (#F1AA03, 80 %), 64 px.
     Rectangle {
         id: disc
 
@@ -27,16 +28,14 @@ Item {
         width: 64
         height: 64
         radius: 32
-        color: button.checked ? "#F1AA03" : "#FFFFFF"
-        border.width: button.checked ? 3 : 0
-        border.color: "#66F1AA03"
-        scale: area.containsMouse && !button.checked ? 1.06 : 1
+        color: button.lit ? "#CCF1AA03" : "#E6FFFFFF"
 
         NVG.IconSource {
             anchors.centerIn: parent
-            width: 54
-            height: 54
-            hovered: button.checked
+            // At the icons' own size, so they stay sharp.
+            width: 42
+            height: 42
+            hovered: button.lit
             pressed: area.pressed
             defaultIcon {
                 normal: button.base + ".png"
@@ -45,12 +44,6 @@ Item {
             }
         }
 
-        Behavior on scale {
-            NumberAnimation {
-                duration: 120
-            }
-
-        }
 
     }
 
@@ -73,6 +66,7 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        onPressed: NVG.SystemCall.playSound(NVG.SFX.FeedbackClick)
         onClicked: button.clicked()
     }
 
