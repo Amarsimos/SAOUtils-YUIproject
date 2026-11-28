@@ -17,6 +17,9 @@ Item {
     // The point of the view the stage is centred on horizontally (Yui's middle).
     property real centreX: width / 2
     readonly property real k: height / Engine.H
+    // Where the stage starts in the view (without the shake); the canvas, the dimming and the flash cover
+    // the whole view, so nothing reaching past the stage is cut off.
+    readonly property real baseX: centreX - Engine.W * k / 2
     property bool yuiHidden: false
     property real aura: 0
     property real yuiShake: 0
@@ -68,7 +71,7 @@ Item {
 
         width: Engine.W * arts.k
         height: Engine.H * arts.k
-        x: arts.centreX - width / 2 + (Math.random() - 0.5) * 14 * arts.stageShake * arts.k
+        x: arts.baseX + (Math.random() - 0.5) * 14 * arts.stageShake * arts.k
         y: (Math.random() - 0.5) * 14 * arts.stageShake * arts.k
         scale: arts.zoom
         visible: ticker.running
@@ -105,7 +108,9 @@ Item {
 
         // The dimming of a wind-up, under the effects.
         Rectangle {
-            anchors.fill: parent
+            x: -arts.baseX
+            width: arts.width
+            height: arts.height
             color: "black"
             opacity: arts.dim
         }
@@ -113,15 +118,20 @@ Item {
         Canvas {
             id: canvas
 
-            anchors.fill: parent
+            x: -arts.baseX
+            width: arts.width
+            height: arts.height
             renderTarget: Canvas.FramebufferObject
             onPaint: {
                 var ctx = getContext("2d");
-                ctx.setTransform(arts.k, 0, 0, arts.k, 0, 0);
+                ctx.setTransform(arts.k, 0, 0, arts.k, arts.baseX, 0);
+                Engine.view = { "x0": -arts.baseX / arts.k, "y0": 0, "x1": (arts.width - arts.baseX) / arts.k, "y1": arts.height / arts.k };
                 Engine.frame(ctx);
                 arts.sync();
                 if (!Engine.busy()) {
                     ticker.stop();
+                    Engine.settle();
+                    arts.sync();
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                     ctx.clearRect(0, 0, width, height);
                 }
@@ -129,7 +139,9 @@ Item {
         }
 
         Rectangle {
-            anchors.fill: parent
+            x: -arts.baseX
+            width: arts.width
+            height: arts.height
             color: "#FFFBE6"
             opacity: arts.flash
         }

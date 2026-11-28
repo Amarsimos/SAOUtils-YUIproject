@@ -28,6 +28,8 @@ var state = {
 };
 
 var x = null; // the context of the frame being painted
+// The whole view in stage units (set by SacredArts each frame): the edge glow covers it, not just the stage.
+var view = { "x0": 0, "y0": 0, "x1": W, "y1": H };
 var P = [], FX = [], roses = [], marks = [], timers = [];
 var orb = null, freeze = 0, hitGlow = 0, zoomTo = 1, edgeGlow = 0, edgeGlowC = "rgba(41,182,246,";
 var shakeLeft = 0;
@@ -680,6 +682,19 @@ function rosario() {
     });
 }
 
+// Everything shown on the QML side back to rest (when nothing plays any more: values that faded to
+// almost nothing must not stay, e.g. Yui's glow layer would stay on).
+function settle() {
+    state.flash = 0;
+    state.dim = 0;
+    state.yuiHidden = false;
+    state.aura = 0;
+    state.yuiShake = 0;
+    state.stageShake = 0;
+    state.zoom = 1;
+    state.boss = { "show": 0, "flinch": 0, "white": 0 };
+}
+
 // ---------------------------------------------------------------- one frame
 // Advances everything one frame and draws it on ctx (the stage's 2D context); state is updated.
 function frame(ctx) {
@@ -698,7 +713,8 @@ function frame(ctx) {
         freeze--;
         return;
     }
-    x.clearRect(0, 0, W, H);
+    // The canvas reaches past the stage on every side (the trails and rays go beyond it).
+    x.clearRect(-W * 3, -H, W * 7, H * 3);
     x.globalCompositeOperation = "lighter";
     if (state.flash > 0)
         state.flash = Math.max(0, state.flash - 0.04);
@@ -877,9 +893,9 @@ function frame(ctx) {
     // The edges glowing in the color of the move: four bands fading inwards, filled as paths (Qt's
     // fillRect / strokeRect ignored the alpha when adding light, and filled the whole stage).
     if (edgeGlow > 0) {
-        var ea = (Math.min(1, edgeGlow) * 0.55).toFixed(3), eb = 0.3;
+        var ea = (Math.min(1, edgeGlow) * 0.55).toFixed(3), vx0 = view.x0, vy0 = view.y0, vw = view.x1 - view.x0, vh = view.y1 - view.y0, bx = Math.min(vw, vh) * 0.3;
         x.globalCompositeOperation = "lighter";
-        [[0, 0, 0, H * eb, 0, 0, W, H * eb], [0, H, 0, H * (1 - eb), 0, H * (1 - eb), W, H * eb], [0, 0, W * eb, 0, 0, 0, W * eb, H], [W, 0, W * (1 - eb), 0, W * (1 - eb), 0, W * eb, H]].forEach(function(band) {
+        [[vx0, vy0, vx0, vy0 + bx, vx0, vy0, vw, bx], [vx0, vy0 + vh, vx0, vy0 + vh - bx, vx0, vy0 + vh - bx, vw, bx], [vx0, vy0, vx0 + bx, vy0, vx0, vy0, bx, vh], [vx0 + vw, vy0, vx0 + vw - bx, vy0, vx0 + vw - bx, vy0, bx, vh]].forEach(function(band) {
             var lg = x.createLinearGradient(band[0], band[1], band[2], band[3]);
             lg.addColorStop(0, edgeGlowC + ea + ")");
             lg.addColorStop(1, edgeGlowC + "0)");
