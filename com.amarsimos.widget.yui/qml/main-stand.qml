@@ -1480,7 +1480,8 @@ T.Widget {
             var item = chatModel.get(i);
             // A reply still on its way is left out; her Seedling progress (pending, local) is kept, so
             // a message sent while a widget grows comes after it, not merged with the request.
-            if ((item.pending && !item.local) || item.isError)
+            // Cardinal System's notes (author "system", e.g. /help) are the program's, not the talk.
+            if ((item.pending && !item.local) || item.isError || item.author === "system")
                 continue;
 
             var role = item.author === "user" ? "user" : "assistant";
@@ -1507,8 +1508,10 @@ T.Widget {
     // to regenerate, but they stay in the conversation so the next reply follows on from them.
     // Yui's messages written without the AI (wake lines, System Call, reports, setup hints) look like
     // a reply too: "..." first, the text after a random 0.6 - 1.6 s.
+    // author "system": a note of Cardinal System (the program, e.g. /help), titled so, shown at once and
+    // never sent to the AI.
     function appendMessage(author, message, isError, local) {
-        var fromYui = author !== "user";
+        var fromYui = author === "ai";
         var index = chatModel.count;
         var session = widget.chatSession;
         chatModel.append({
@@ -1525,7 +1528,10 @@ T.Widget {
         chatView.stickToBottom = true;
         if (!fromYui) {
             scheduleSave();
-            logMessage(author, message);
+            // Cardinal System's notes stay out of the recollection log (they are not the talk).
+            if (author === "user")
+                logMessage(author, message);
+
             return ;
         }
         var timer = Qt.createQmlObject("import QtQuick 2.12; Timer {}", widget);
@@ -1576,7 +1582,7 @@ T.Widget {
         for (var i = 0; i < saved.messages.length; i++) {
             var item = saved.messages[i];
             chatModel.append({
-                "author": item.author === "user" ? "user" : "ai",
+                "author": item.author === "user" || item.author === "system" ? item.author : "ai",
                 "message": String(item.message || ""),
                 "pending": false,
                 "isError": !!item.isError,
@@ -5081,13 +5087,13 @@ T.Widget {
     }
 
     // Input commands, never sent to the AI: "/console" opens System Console, "/console memories" (a
-    // page, see Yui.consolePage) at that page; "/help" lists them in the chat (a message of the program,
-    // as the local lines). True when the text was a command.
+    // page, see Yui.consolePage) at that page; "/help" lists them in the chat (a note of Cardinal System,
+    // not part of the conversation). True when the text was a command.
     function runInputCommand(text) {
         var line = String(text || "").trim();
         if (/^\/help$/i.test(line)) {
             diag("command: /help");
-            appendMessage("ai", Yui.commandHelp(), false, true);
+            appendMessage("system", Yui.commandHelp(), false, true);
             return true;
         }
         var m = /^\/console(?:\s+(\S+))?$/i.exec(line);
@@ -6504,7 +6510,7 @@ T.Widget {
                         maximumWidth: Math.min(chatView.width - 48, Math.max(260, widget.chatMinimumWidth))
                         tailSide: messageItem.fromUser ? "right" : "left"
                         // Names in the title bars are English, like "Yui": "Papa" or "Mama".
-                        sender: messageItem.fromUser ? (widget.settings.user_title === "mama" ? "Mama" : "Papa") : "Yui"
+                        sender: messageItem.fromUser ? (widget.settings.user_title === "mama" ? "Mama" : "Papa") : (model.author === "system" ? "Cardinal System" : "Yui")
                         text: model.message
                         linkedText: Yui.linkify(model.message, "#1565C0")
                         note: model.note
