@@ -8,6 +8,7 @@ ConsolePanel {
     id: card
 
     property string big
+    property color bigColor: "#4D4D4D"
     property string sub
     property string tag
     property color tagColor: "#7CC63E"
@@ -26,7 +27,7 @@ ConsolePanel {
             text: card.big
             font.family: Yui.fontFor(text)
             font.pixelSize: 30
-            color: "#4D4D4D"
+            color: card.bigColor
         }
 
         RowLayout {

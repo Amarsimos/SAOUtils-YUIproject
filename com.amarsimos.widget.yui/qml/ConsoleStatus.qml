@@ -191,42 +191,33 @@ ConsolePage {
     }
 
 
-    // Links: a card each, as the Link card (the state large, its tag, what it is about under it), in two
-    // columns, the right one set lower so the cards stand staggered.
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 14
+    // Links: a card each, as the Link card, the state large in its color and what it is about under it.
+    // Two rows of two, wide and narrow swapped from one row to the next (3 : 2, then 2 : 3), so the
+    // cards stand offset while every edge lines up.
+    Repeater {
+        model: Math.ceil(status.links.length / 2)
 
-        Repeater {
-            model: 2
+        RowLayout {
+            readonly property int row: index
 
-            ColumnLayout {
-                readonly property int column: index
+            Layout.fillWidth: true
+            spacing: 14
 
-                Layout.fillWidth: true
-                Layout.preferredWidth: (status.width - 12 - 14) / 2
-                Layout.maximumWidth: Layout.preferredWidth
-                Layout.alignment: Qt.AlignTop
-                Layout.topMargin: column === 1 ? 48 : 0
-                spacing: 14
+            Repeater {
+                model: status.links.slice(row * 2, row * 2 + 2)
 
-                Repeater {
-                    model: status.links.filter(function(link, i) {
-                        return i % 2 === column;
-                    })
+                ConsoleCard {
+                    readonly property var stateTag: status.linkTags[modelData.state] || [modelData.state, "#9A9A9A"]
+                    readonly property bool wide: (index === 0) === (row % 2 === 0)
 
-                    ConsoleCard {
-                        readonly property var stateTag: status.linkTags[modelData.state] || [modelData.state, "#9A9A9A"]
-
-                        Layout.fillWidth: true
-                        title: modelData.name
-                        note: modelData.kind
-                        big: stateTag[0]
-                        tag: stateTag[0]
-                        tagColor: stateTag[1]
-                        sub: modelData.detail
-                    }
-
+                    Layout.preferredWidth: (status.width - 12 - 14) * (wide ? 0.6 : 0.4)
+                    Layout.maximumWidth: Layout.preferredWidth
+                    Layout.fillHeight: true
+                    title: modelData.name
+                    note: modelData.kind
+                    big: stateTag[0]
+                    bigColor: stateTag[1]
+                    sub: modelData.detail
                 }
 
             }
