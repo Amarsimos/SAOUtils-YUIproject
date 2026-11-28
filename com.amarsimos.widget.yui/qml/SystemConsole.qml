@@ -393,15 +393,10 @@ NVG.View {
 
                     }
 
-                    // The page on a light panel.
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        color: "#EBF9F9F9"
-
+                    // The page, its panels straight on the code wall.
                         StackLayout {
-                            anchors.fill: parent
-                            anchors.margins: 10
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
                             currentIndex: consoleView.page
 
                             ConsoleStatus {
@@ -426,8 +421,6 @@ NVG.View {
                             }
 
                         }
-
-                    }
 
                 }
 

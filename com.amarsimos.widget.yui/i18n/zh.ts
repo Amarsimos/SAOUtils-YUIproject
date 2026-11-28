@@ -575,7 +575,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+27"/>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
@@ -590,7 +590,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+36"/>
+        <source>days to come</source>
+        <translation>将来的日子</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Things Yui remembered with a date to come. She cheers you on that day and asks how it went in the week after. Removing one here keeps the memory.</source>
         <translation>结衣记下的、带有将来日期的事。她会在当天给你打气，之后一周内问问结果。在这里移除只是不再跟进，记忆本身会保留。</translation>
     </message>
@@ -605,22 +610,22 @@
         <translation>跟进已关闭（Mental Health Counseling → Care）</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+21"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+24"/>
         <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI. Exporting and clearing it are in Yui&apos;s Heart, Local Memory.</source>
-        <translation>每条聊天消息都保存在这里，只用于导出和搜索，不会发给 AI。导出和清空在 Yui's Heart → Local Memory。</translation>
+        <translation>每条聊天消息都保存在这里，只用于导出和搜索，不会发给 AI。导出和清空在 Yui&apos;s Heart → Local Memory。</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-7"/>
         <source>%1 messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+16"/>
         <source>Search the log</source>
         <translation>搜索回忆日志</translation>
     </message>
@@ -638,7 +643,7 @@
 <context>
     <name>ConsoleOperations</name>
     <message>
-        <location filename="../qml/ConsoleOperations.qml" line="+27"/>
+        <location filename="../qml/ConsoleOperations.qml" line="+15"/>
         <source>Done</source>
         <translation>已执行</translation>
     </message>
@@ -663,27 +668,22 @@
         <translation>失败</translation>
     </message>
     <message>
-        <location line="+15"/>
-        <source>Recent Operations</source>
-        <translation>Recent Operations</translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>What Yui did on the computer and how it ended, the last 50. Memories, moods, reminders and notes have pages of their own.</source>
-        <translation>结衣在电脑上做过的操作和结果，保留最近 50 条。记忆、心情、提醒和笔记在各自的页面里。</translation>
-    </message>
-    <message>
-        <location line="+7"/>
+        <location line="+36"/>
         <source>Nothing done on the computer yet.</source>
         <translation>结衣还没有在电脑上做过操作。</translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="-9"/>
         <source>Clear</source>
         <translation>清空</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-5"/>
+        <source>last 50 · read only</source>
+        <translation>最近 50 条 · 只读</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
@@ -696,57 +696,22 @@
 <context>
     <name>ConsoleQuests</name>
     <message>
-        <location filename="../qml/ConsoleQuests.qml" line="+34"/>
+        <location filename="../qml/ConsoleQuests.qml" line="+44"/>
         <source>Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.</source>
         <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
     </message>
     <message>
-        <location line="+37"/>
-        <source>Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+9"/>
-        <source>In a raid: %1 min left</source>
-        <translation>专注中：还剩 %1 分钟</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Resting: %1 min left</source>
-        <translation>休息中：还剩 %1 分钟</translation>
-    </message>
-    <message>
-        <location line="+2"/>
+        <location line="+47"/>
         <source>No raid now.</source>
         <translation>当前没有 Boss Raid。</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Show Raid Banner</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>End Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Start Boss Raid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+14"/>
-        <source>Reminders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+7"/>
+        <location line="+30"/>
         <source>Alarm is off (Skill Slots, Alarm).</source>
         <translation>提醒功能已关闭（Skill Slots → Alarm）。</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+18"/>
         <source>HH:mm / +30</source>
         <translation>HH:mm / +30</translation>
     </message>
@@ -762,42 +727,78 @@
     </message>
     <message>
         <location line="+6"/>
-        <location line="+80"/>
+        <location line="+66"/>
         <source>Add</source>
         <translation type="unfinished">添加</translation>
     </message>
     <message>
-        <location line="-59"/>
+        <location line="-104"/>
         <source>No reminders.</source>
         <translation>没有提醒。</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="-85"/>
         <source>Daily %1</source>
         <translation>每天 %1</translation>
     </message>
     <message>
-        <location line="+20"/>
-        <source>Quest Log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Quest Log is off (Skill Slots, Quest Log).</source>
-        <translation>Quest Log 已关闭（Skill Slots → Quest Log）。</translation>
-    </message>
-    <message>
-        <location line="+13"/>
+        <location line="+183"/>
         <source>Something to note down</source>
         <translation>要记下的事</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-15"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-115"/>
+        <source>in a raid</source>
+        <translation>专注中</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>resting</source>
+        <translation>休息中</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>left</source>
+        <translation>剩余</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Banner</source>
+        <translation>横幅</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>End</source>
+        <translation>结束</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start</source>
+        <translation>开始</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>next reminder</source>
+        <translation>下一个提醒</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <location line="+70"/>
+        <source>off in Skill Slots</source>
+        <translation>已在 Skill Slots 中关闭</translation>
+    </message>
+    <message>
+        <location line="-13"/>
+        <source>Dismiss</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <location line="+20"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
@@ -807,71 +808,81 @@
         <translation>导出失败，请查看 System Authority 的日志。</translation>
     </message>
     <message>
-        <location line="+21"/>
-        <source>No notes.</source>
-        <translation>没有笔记。</translation>
+        <location line="+48"/>
+        <source>Undo</source>
+        <translation>撤销</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Done</source>
+        <translation>已执行</translation>
     </message>
 </context>
 <context>
     <name>ConsoleRecords</name>
     <message>
-        <location filename="../qml/ConsoleRecords.qml" line="+38"/>
-        <source>Mental Record</source>
-        <translation type="unfinished"></translation>
+        <location filename="../qml/ConsoleRecords.qml" line="+57"/>
+        <source>recorded by Yui</source>
+        <translation>结衣记录</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check (Mental Health Counseling, Care) turns it on or off.</source>
-        <translation>结衣每天问一次你的心情并记在这里（5 最好，1 最差）；连续几天心情低落时，她会更关心你。在 Mental Health Counseling → Care 的 Daily Mood Check 里开关。</translation>
-    </message>
-    <message>
-        <location line="+41"/>
-        <source>30 days ago</source>
-        <translation>30 天前</translation>
-    </message>
-    <message>
-        <location line="+1"/>
-        <source>today</source>
-        <translation>今天</translation>
-    </message>
-    <message>
-        <location line="+27"/>
-        <source>No moods recorded in the last 30 days.</source>
-        <translation>最近 30 天还没有心情记录。</translation>
-    </message>
-    <message>
-        <location line="+29"/>
-        <location line="+64"/>
+        <location line="+30"/>
+        <location line="+99"/>
         <source>System Console</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-64"/>
+        <location line="-99"/>
         <source>Delete the mood of %1?</source>
         <translation>删除 %1 的心情记录吗？</translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Weekly Report</source>
-        <translation type="unfinished"></translation>
+        <location line="+8"/>
+        <source>not recorded</source>
+        <translation>没有记录</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+13"/>
+        <source>Good</source>
+        <translation>好</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Calm</source>
+        <translation>平静</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Tired</source>
+        <translation>累</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Low</source>
+        <translation>低落</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not recorded</source>
+        <translation>没有记录</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Write This Week&apos;s</source>
+        <translation>写本周小结</translation>
+    </message>
+    <message>
+        <location line="+0"/>
         <source>Writing...</source>
         <translation>正在写……</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>Write This Week&apos;s Report</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+24"/>
+        <location line="+18"/>
         <source>No reports yet.</source>
         <translation>还没有小结。</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+26"/>
         <source>Delete the report of %1?</source>
         <translation>删除 %1 的小结吗？</translation>
     </message>
@@ -879,12 +890,12 @@
 <context>
     <name>ConsoleStatus</name>
     <message>
-        <location filename="../qml/ConsoleStatus.qml" line="+32"/>
-        <source>Load</source>
-        <translation type="unfinished"></translation>
+        <location filename="../qml/ConsoleStatus.qml" line="+62"/>
+        <source>refresh 2 s</source>
+        <translation>每 2 秒刷新</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+52"/>
         <source>Yui&apos;s Heart: violet (Boss Raid)</source>
         <translation>结衣之心：紫色（Boss Raid）</translation>
     </message>
@@ -909,59 +920,59 @@
         <translation>黄色</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <source>Link</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Not watched (System Authority, Network Link)</source>
-        <translation>未监视（System Authority → Network Link）</translation>
+        <location line="+22"/>
+        <source>Not watched</source>
+        <translation>未监视</translation>
     </message>
     <message>
         <location line="+0"/>
-        <source>Offline: no traffic for two minutes</source>
-        <translation>离线：两分钟没有任何流量</translation>
+        <source>Offline</source>
+        <translation>离线</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>System Authority, Network Link</source>
+        <translation>System Authority → Network Link</translation>
     </message>
     <message>
         <location line="+0"/>
+        <source>No traffic for two minutes</source>
+        <translation>两分钟没有流量</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Not available</source>
+        <translation>无法读取</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1% free · warns below %2%</source>
+        <translation>剩余 %1% · 低于 %2% 时提醒</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1% free</source>
+        <translation>剩余 %1%</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Budget %1 · %2 replies</source>
+        <translation>预算 %1 · %2 次回复</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 replies</source>
+        <translation>%1 次回复</translation>
+    </message>
+    <message>
+        <location line="-24"/>
         <source>Online</source>
         <translation>在线</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>Storage</source>
-        <translation>Storage</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>%1 not available</source>
-        <translation>%1 无法读取</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>%1 %2% used, %3% free</source>
-        <translation>%1 已用 %2%，剩余 %3%</translation>
-    </message>
-    <message>
-        <location line="+15"/>
-        <source>Col Ledger</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+10"/>
-        <source>%1: %2 tokens sent, %3 received, %4 replies</source>
-        <translation>%1：发送 %2 tokens，接收 %3，共 %4 次回复</translation>
-    </message>
-    <message>
-        <location line="+0"/>
+        <location line="+24"/>
         <source>No replies counted yet this month.</source>
         <translation>这个月还没有统计到回复。</translation>
-    </message>
-    <message>
-        <location line="+24"/>
-        <source>Monthly Budget: %1k tokens</source>
-        <translation>每月预算：%1k tokens</translation>
     </message>
 </context>
 <context>

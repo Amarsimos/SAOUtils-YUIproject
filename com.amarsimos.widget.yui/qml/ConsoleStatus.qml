@@ -1,22 +1,50 @@
-import NERvGear.Controls 1.0
 import QtQuick 2.12
-import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import "yui.js" as Yui
 
-// System Console, Status: the loads as HP bars (LoadBars.qml, the same data sources as SAO Utils' own
-// HP bar widgets), what colors the crystal, the network, the system drive and this month's Col.
-SettingsPage {
+// System Console, Status (as the preview): Cardinal Load (CPU, GPU, RAM and the battery as SAO HUD
+// bars, colored with the crystal's thresholds; the same data sources as SAO Utils' HP bar widgets)
+// with what colors the crystal now, then three cards: Link (network), Storage (system drive) and
+// Col Ledger (this month's tokens against the budget).
+ConsolePage {
     id: status
 
     property var yui
     // Refreshed every 2 s while the page is shown.
     property bool active: true
+    // Percentages, NaN when unavailable.
+    property real cpu: NaN
+    property real gpu: NaN
+    property real ram: NaN
+    property real battery: NaN
     property real diskUsed: NaN
-    property double now: Date.now()
+    readonly property var ledger: yui.colLedger
+    readonly property real budget: (yui.settings.col_budget || 0) * 1000
+    readonly property real spent: ledger ? ledger.input + ledger.output : 0
 
     function refresh() {
+        cpu = yui.readData(yui.cpuLoad);
+        gpu = yui.readData(yui.gpuLoad);
+        ram = yui.readData(yui.ramUsage);
+        // Battery flag 128 means "no system battery".
+        var flags = yui.readData(yui.batteryStatus);
+        battery = !isNaN(flags) && flags < 128 ? yui.readData(yui.batteryLevel) : NaN;
         diskUsed = yui.readData(yui.diskSpace, yui.systemDrive);
-        now = Date.now();
+    }
+
+    function level(value, metric) {
+        if (isNaN(value))
+            return 0;
+
+        if (metric === "battery")
+            return Yui.loadLevel(100 - value, [70, 90], 0);
+
+        return Yui.loadLevel(value, Yui.loadThresholds(yui.settings.load_thresholds, metric), 0);
+    }
+
+    // Tokens as "502k".
+    function kilo(count) {
+        return count >= 1000 ? Math.round(count / 1000) + "k" : String(count);
     }
 
     Component.onCompleted: refresh()
@@ -28,110 +56,112 @@ SettingsPage {
         onTriggered: status.refresh()
     }
 
-    Heading {
-        text: qsTr("Load")
-    }
-
-    LoadBars {
+    ConsolePanel {
         Layout.fillWidth: true
-        yui: status.yui
-    }
+        title: "Cardinal Load"
+        note: qsTr("refresh 2 s")
 
-    // What colors the crystal now.
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        spacing: 8
+        Repeater {
+            model: [["CPU", "cpu"], ["GPU", "gpu"], ["RAM", "ram"], ["HP", "battery"]]
 
-        Rectangle {
-            width: 10
-            height: 10
-            radius: 5
-            color: status.yui.crystalColor
+            RowLayout {
+                readonly property real value: status[modelData[1]]
+
+                Layout.fillWidth: true
+                spacing: 10
+                visible: modelData[1] !== "battery" || !isNaN(value)
+
+                Text {
+                    Layout.preferredWidth: 48
+                    text: modelData[0]
+                    font.family: "SAO UI"
+                    font.pixelSize: 15
+                    color: "#4D4D4D"
+                }
+
+                ConsoleHpBar {
+                    Layout.fillWidth: true
+                    value: parent.value
+                    level: status.level(parent.value, modelData[1])
+                }
+
+                Text {
+                    Layout.preferredWidth: 52
+                    horizontalAlignment: Text.AlignRight
+                    text: isNaN(parent.value) ? "--" : Math.round(parent.value) + "%"
+                    font.family: "SAO UI"
+                    font.pixelSize: 15
+                    color: "#4D4D4D"
+                }
+
+            }
+
         }
 
-        Label {
+        // What colors the crystal now.
+        RowLayout {
+            Layout.topMargin: 2
+            spacing: 8
+
+            Rectangle {
+                width: 10
+                height: 10
+                radius: 5
+                color: status.yui.crystalColor
+            }
+
+            Text {
+                text: status.yui.raidActive ? qsTr("Yui's Heart: violet (Boss Raid)") : status.yui.crystalLevel === 0 ? qsTr("Yui's Heart: green") : qsTr("Yui's Heart: %1 (%2)").arg(status.yui.crystalLevel === 2 ? qsTr("red") : qsTr("yellow")).arg(status.yui.crystalStatus)
+                font.pixelSize: 12
+                color: "#7A7A7A"
+            }
+
+        }
+
+    }
+
+    // Three cards in a row (one under another when narrow).
+    GridLayout {
+        Layout.fillWidth: true
+        columns: status.width > 520 ? 3 : 1
+        columnSpacing: 14
+        rowSpacing: 14
+
+        ConsoleCard {
             Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            opacity: 0.8
-            text: status.yui.raidActive ? qsTr("Yui's Heart: violet (Boss Raid)") : status.yui.crystalLevel === 0 ? qsTr("Yui's Heart: green") : qsTr("Yui's Heart: %1 (%2)").arg(status.yui.crystalLevel === 2 ? qsTr("red") : qsTr("yellow")).arg(status.yui.crystalStatus)
+            Layout.preferredWidth: 1
+            title: "Link"
+            note: "Network"
+            big: status.yui.settings.network_watch === false ? "--" : status.yui.networkLost ? "Offline" : "Online"
+            tag: status.yui.settings.network_watch === false ? qsTr("Not watched") : status.yui.networkLost ? qsTr("Offline") : qsTr("Online")
+            tagColor: status.yui.settings.network_watch === false ? "#9A9A9A" : status.yui.networkLost ? "#C82864" : "#7CC63E"
+            sub: status.yui.settings.network_watch === false ? qsTr("System Authority, Network Link") : status.yui.networkLost ? qsTr("No traffic for two minutes") : ""
         }
 
-    }
+        ConsoleCard {
+            readonly property real minimum: status.yui.settings.storage_free_min !== undefined ? status.yui.settings.storage_free_min : 10
 
-    Heading {
-        text: qsTr("Link")
-    }
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            title: "Storage"
+            note: status.yui.systemDrive.replace(/\\$/, "")
+            big: isNaN(status.diskUsed) ? "--" : Math.round(status.diskUsed) + "%"
+            sub: isNaN(status.diskUsed) ? qsTr("Not available") : (minimum > 0 ? qsTr("%1% free · warns below %2%").arg(Math.max(0, Math.round(100 - status.diskUsed))).arg(minimum) : qsTr("%1% free").arg(Math.max(0, Math.round(100 - status.diskUsed))))
+            meter: isNaN(status.diskUsed) ? -1 : status.diskUsed / 100
+            meterColor: !isNaN(status.diskUsed) && minimum > 0 && 100 - status.diskUsed < minimum ? "#C82864" : "#4BB4EC"
+        }
 
-    Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        wrapMode: Text.Wrap
-        text: status.yui.settings.network_watch === false ? qsTr("Not watched (System Authority, Network Link)") : status.yui.networkLost ? qsTr("Offline: no traffic for two minutes") : qsTr("Online")
-        color: status.yui.networkLost ? "#C82864" : palette.text
-    }
+        ConsoleCard {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            title: "Col Ledger"
+            note: "this month"
+            big: status.kilo(status.spent)
+            sub: status.ledger ? (status.budget > 0 ? qsTr("Budget %1 · %2 replies").arg(status.kilo(status.budget)).arg(status.ledger.requests) : qsTr("%1 replies").arg(status.ledger.requests)) : qsTr("No replies counted yet this month.")
+            meter: status.budget > 0 ? Math.min(1, status.spent / status.budget) : -1
+            meterColor: status.budget > 0 && status.spent > status.budget ? "#C82864" : "#4BB4EC"
+        }
 
-    Heading {
-        text: qsTr("Storage")
-    }
-
-    Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        wrapMode: Text.Wrap
-        text: isNaN(status.diskUsed) ? qsTr("%1 not available").arg(status.yui.systemDrive) : qsTr("%1 %2% used, %3% free").arg(status.yui.systemDrive.replace(/\\$/, "")).arg(Math.round(status.diskUsed)).arg(Math.max(0, Math.round(100 - status.diskUsed)))
-    }
-
-    ProgressBar {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: !isNaN(status.diskUsed)
-        from: 0
-        to: 100
-        value: isNaN(status.diskUsed) ? 0 : status.diskUsed
-    }
-
-    // Col Ledger: the tokens of this month's replies, as the servers report them.
-    Heading {
-        text: qsTr("Col Ledger")
-    }
-
-    Label {
-        readonly property var ledger: status.yui.colLedger
-
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        wrapMode: Text.Wrap
-        text: ledger ? qsTr("%1: %2 tokens sent, %3 received, %4 replies").arg(ledger.month).arg(ledger.input.toLocaleString(Qt.locale(), "f", 0)).arg(ledger.output.toLocaleString(Qt.locale(), "f", 0)).arg(ledger.requests) : qsTr("No replies counted yet this month.")
-    }
-
-    // Against the Monthly Budget (System Authority), when there is one.
-    ProgressBar {
-        readonly property var ledger: status.yui.colLedger
-        readonly property real budget: (status.yui.settings.col_budget || 0) * 1000
-
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: budget > 0
-        from: 0
-        to: Math.max(1, budget)
-        value: ledger ? Math.min(budget, ledger.input + ledger.output) : 0
-    }
-
-    Label {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: (status.yui.settings.col_budget || 0) > 0
-        opacity: 0.7
-        wrapMode: Text.Wrap
-        text: qsTr("Monthly Budget: %1k tokens").arg(status.yui.settings.col_budget || 0)
     }
 
 }

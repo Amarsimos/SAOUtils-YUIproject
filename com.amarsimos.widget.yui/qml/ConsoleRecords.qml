@@ -1,26 +1,47 @@
-import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
-// System Console, Records (moved from Mental Health Counseling): what Yui recorded (the daily moods of
-// the last 30 days) and wrote (weekly reports). Daily Mood Check and Weekly Report are set in Mental
-// Health Counseling, Care.
-SettingsPage {
+// System Console, Records (as the preview; moved from Mental Health Counseling): Mood · 30 days, a
+// square a day colored by the mood Yui recorded (hover: the day and its note; click: delete it), and
+// the Weekly Reports Yui wrote. Daily Mood Check and Weekly Report are set in Mental Health
+// Counseling, Care.
+ConsolePage {
     id: records
 
     property var yui
-    // The moods of the last 30 days, oldest first (refreshed when one is recorded), and the reports
-    // written, newest first.
+    // The moods recorded in the last 30 days, oldest first, also by day ("yyyy-MM-dd": entry), and
+    // the reports, newest first.
     property var moods: []
+    readonly property var moodByDay: {
+        var byDay = {};
+        moods.forEach(function(entry) {
+            byDay[entry.day] = entry;
+        });
+        return byDay;
+    }
     property var reports: []
+    property string reportError: ""
+    // Score 1-5 to color: low, tired, calm, good, good.
+    readonly property var moodColors: ["#C82864", "#F1AA03", "#4BB4EC", "#7CC63E", "#7CC63E"]
+
+    function refreshMoods() {
+        moods = yui.moodsSince(30);
+    }
 
     function refreshReports() {
         reports = yui.reportsList();
     }
 
-    function refreshMoods() {
-        moods = yui.moodsSince(30);
+    // The last 30 days, oldest first, as "yyyy-MM-dd".
+    function days() {
+        var list = [];
+        var day = new Date();
+        day.setHours(12, 0, 0, 0);
+        for (var i = 29; i >= 0; i--)
+            list.push(Qt.formatDate(new Date(day.getTime() - i * 86400000), "yyyy-MM-dd"));
+
+        return list;
     }
 
     Component.onCompleted: {
@@ -34,190 +55,165 @@ SettingsPage {
         onReportRevisionChanged: records.refreshReports()
     }
 
-    Heading {
-        text: qsTr("Mental Record")
-    }
-
-    SettingNote {
-        visible: records.yui.settingsHelp
-        besidePreferences: true
-        text: qsTr("Yui asks how you feel once a day and keeps it here (5 best, 1 worst); after a few low days she cares more. Daily Mood Check (Mental Health Counseling, Care) turns it on or off.")
-    }
-
-    // The last 30 days: one point a recorded day (score 1–5), joined day by day.
-    Canvas {
-        id: moodChart
-
-        readonly property var moods: records.moods
-
+    ConsolePanel {
         Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        Layout.preferredHeight: 140
-        onMoodsChanged: requestPaint()
-        onWidthChanged: requestPaint()
-        onPaint: {
-            var ctx = getContext("2d");
-            ctx.reset();
-            var left = 18, top = 8, right = width - 4, bottom = height - 18;
-            var y = function(score) {
-                return bottom - (score - 1) / 4 * (bottom - top);
-            };
-            var day0 = new Date();
-            day0.setHours(0, 0, 0, 0);
-            var x = function(day) {
-                var parts = day.split("-");
-                var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-                var back = Math.round((day0 - date) / 86400000);
-                return right - back / 29 * (right - left);
-            };
-            ctx.font = "10px sans-serif";
-            ctx.fillStyle = "#88888888";
-            ctx.strokeStyle = "#33888888";
-            ctx.lineWidth = 1;
-            for (var score = 1; score <= 5; score++) {
-                ctx.beginPath();
-                ctx.moveTo(left, y(score));
-                ctx.lineTo(right, y(score));
-                ctx.stroke();
-                ctx.fillText(String(score), 4, y(score) + 3);
-            }
-            ctx.fillText(qsTr("30 days ago"), left, height - 4);
-            ctx.fillText(qsTr("today"), right - 26, height - 4);
-            if (moods.length === 0)
-                return ;
+        title: "Mood · 30 days"
+        note: qsTr("recorded by Yui")
 
-            ctx.strokeStyle = "#F59B00";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            moods.forEach(function(entry, i) {
-                if (i === 0)
-                    ctx.moveTo(x(entry.day), y(entry.score));
-                else
-                    ctx.lineTo(x(entry.day), y(entry.score));
-            });
-            ctx.stroke();
-            ctx.fillStyle = "#F59B00";
-            moods.forEach(function(entry) {
-                ctx.beginPath();
-                ctx.arc(x(entry.day), y(entry.score), 3, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-    }
+        GridLayout {
+            id: moodGrid
 
-    Label {
-        Layout.leftMargin: 16
-        visible: records.moods.length === 0
-        opacity: 0.7
-        text: qsTr("No moods recorded in the last 30 days.")
-    }
-
-    // Newest first; ✕ deletes a day's record.
-    Repeater {
-        model: records.moods.slice().reverse()
-
-        RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            columns: 15
+            columnSpacing: 5
+            rowSpacing: 5
 
-            Label {
-                text: modelData.day
-            }
+            Repeater {
+                model: records.days()
 
-            Label {
-                color: "#F59B00"
-                text: "★★★★★".slice(0, modelData.score) + "☆☆☆☆☆".slice(0, 5 - modelData.score)
-            }
+                Rectangle {
+                    readonly property var entry: records.moodByDay[modelData] || null
 
-            Label {
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-                text: modelData.note || ""
-            }
-
-            ToolButton {
-                text: "✕"
-                onClicked: records.yui.askConfirm(qsTr("System Console"), qsTr("Delete the mood of %1?").arg(modelData.day), function() {
-                    records.yui.deleteMood(modelData.day);
-                }, true)
-            }
-
-        }
-
-    }
-
-    Heading {
-        text: qsTr("Weekly Report")
-    }
-
-    RowLayout {
-        Layout.alignment: Qt.AlignHCenter
-
-        Button {
-            text: records.yui.writingReport ? qsTr("Writing...") : qsTr("Write This Week's Report")
-            enabled: !records.yui.writingReport
-            onClicked: records.yui.writeWeeklyReport(false, function(error) {
-                reportMessage.text = error;
-            })
-        }
-
-    }
-
-    Label {
-        id: reportMessage
-
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: text !== ""
-        wrapMode: Text.Wrap
-        color: "#E53935"
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        visible: records.reports.length === 0
-        opacity: 0.7
-        text: qsTr("No reports yet.")
-    }
-
-    Repeater {
-        model: records.reports
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
-            spacing: 4
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Label {
                     Layout.fillWidth: true
-                    font.bold: true
-                    text: modelData.week
-                }
+                    Layout.preferredHeight: width
+                    color: entry ? records.moodColors[Math.max(1, Math.min(5, entry.score)) - 1] : "#DDDDDD"
+                    border.color: dayArea.containsMouse ? "#4D4D4D" : "transparent"
 
-                ToolButton {
-                    text: "✕"
-                    onClicked: records.yui.askConfirm(qsTr("System Console"), qsTr("Delete the report of %1?").arg(modelData.week), function() {
-                        records.yui.deleteReport(modelData.id);
-                    }, true)
+                    MouseArea {
+                        id: dayArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: parent.entry ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            var entry = parent.entry;
+                            if (entry)
+                                records.yui.askConfirm(qsTr("System Console"), qsTr("Delete the mood of %1?").arg(entry.day), function() {
+                                    records.yui.deleteMood(entry.day);
+                                }, true);
+
+                        }
+                    }
+
+                    ToolTip.visible: dayArea.containsMouse
+                    ToolTip.text: modelData.slice(5).replace("-", "/") + (entry ? "  " + "★★★★★".slice(0, entry.score) + (entry.note ? "\n" + entry.note : "") : "  " + qsTr("not recorded"))
                 }
 
             }
 
-            // Read-only but selectable, so a part can be copied.
-            TextArea {
+        }
+
+        // The legend.
+        Row {
+            Layout.topMargin: 4
+            spacing: 12
+
+            Repeater {
+                model: [[qsTr("Good"), "#7CC63E"], [qsTr("Calm"), "#4BB4EC"], [qsTr("Tired"), "#F1AA03"], [qsTr("Low"), "#C82864"], [qsTr("Not recorded"), "#DDDDDD"]]
+
+                Row {
+                    spacing: 4
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 10
+                        height: 10
+                        radius: 5
+                        color: modelData[1]
+                    }
+
+                    Text {
+                        text: modelData[0]
+                        font.pixelSize: 12
+                        color: "#7A7A7A"
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    ConsolePanel {
+        Layout.fillWidth: true
+        title: "Weekly Reports"
+        tools: [
+            ConsoleChip {
+                small: true
+                enabled: !records.yui.writingReport
+                text: records.yui.writingReport ? qsTr("Writing...") : qsTr("Write This Week's")
+                onClicked: records.yui.writeWeeklyReport(false, function(error) {
+                    records.reportError = error;
+                })
+            }
+        ]
+
+        Text {
+            Layout.fillWidth: true
+            visible: records.reportError !== ""
+            text: records.reportError
+            wrapMode: Text.Wrap
+            font.pixelSize: 12
+            color: "#C82864"
+        }
+
+        Text {
+            visible: records.reports.length === 0
+            text: qsTr("No reports yet.")
+            font.pixelSize: 13
+            color: "#7A7A7A"
+        }
+
+        Repeater {
+            model: records.reports
+
+            ColumnLayout {
                 Layout.fillWidth: true
-                readOnly: true
-                selectByMouse: true
-                wrapMode: Text.Wrap
-                background: null
-                text: modelData.text
+                spacing: 3
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: modelData.week
+                        font.family: "SAO UI"
+                        font.pixelSize: 15
+                        color: "#4D4D4D"
+                    }
+
+                    ConsoleChip {
+                        small: true
+                        text: "✕"
+                        onClicked: records.yui.askConfirm(qsTr("System Console"), qsTr("Delete the report of %1?").arg(modelData.week), function() {
+                            records.yui.deleteReport(modelData.id);
+                        }, true)
+                    }
+
+                }
+
+                // Read-only but selectable, so a part can be copied.
+                TextEdit {
+                    Layout.fillWidth: true
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: Text.Wrap
+                    selectionColor: "#F59B00"
+                    font.pixelSize: 13
+                    color: "#333333"
+                    text: modelData.text
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    height: 1
+                    color: "#E9E9E9"
+                    visible: index < records.reports.length - 1
+                }
+
             }
 
         }

@@ -1,105 +1,120 @@
 import QtQuick 2.12
 
 // The code wall behind System Console (as the wall of Cardinal's code in the series): a black ground,
-// columns of letters scrolling down at their own speed, white for most of them (brighter ones with a
-// glow), a few grey, some gaps; behind them six soft colored tiles in two rows (pink, dark, amber /
-// violet, cyan, green). Painted 12 times a second while running.
-Canvas {
+// six soft colored tiles in two rows (pink, dark, amber / violet, cyan, green), and columns of letters
+// scrolling down, each at its own speed and brightness, with gaps.
+// Cheap to run: the tiles are painted once; each column is a Text drawn twice, one above the other,
+// moved by an animation (the GPU only moves it, nothing is painted again); a few columns get new
+// letters every half second.
+Item {
     id: rain
 
     property bool running: visible
     readonly property int cellWidth: 11
     readonly property int cellHeight: 14
     readonly property string glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@*+=<>?"
-    // [x, y, width, height] as parts of the canvas, and the tile's color.
-    readonly property var tiles: [[0.06, 0.04, 0.34, 0.46, "232,96,150"], [0.40, 0.0, 0.18, 0.5, "40,40,48"], [0.58, 0.06, 0.38, 0.44, "240,190,90"], [0.06, 0.52, 0.36, 0.44, "130,120,235"], [0.42, 0.48, 0.18, 0.48, "90,210,235"], [0.60, 0.5, 0.36, 0.46, "130,225,110"]]
-    // Per column: its cells ({ch, v (brightness 0-1), gap}), top first, its offset and speed (px a frame).
-    property var columns: []
+    readonly property int rows: Math.ceil(height / cellHeight) + 1
 
-    function glyph() {
-        return glyphs.charAt(Math.floor(Math.random() * glyphs.length));
+    // A column of letters, one a line, about one in six a gap.
+    function columnText() {
+        var lines = [];
+        for (var i = 0; i < rows; i++)
+            lines.push(Math.random() < 0.17 ? " " : glyphs.charAt(Math.floor(Math.random() * glyphs.length)));
+
+        return lines.join("\n");
     }
 
-    function cell() {
-        return {
-            "ch": glyph(),
-            "v": Math.random(),
-            "gap": Math.random() < 0.18
-        };
+    clip: true
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#060608"
     }
 
-    function build() {
-        var count = Math.ceil(width / cellWidth), rows = Math.ceil(height / cellHeight) + 2, list = [];
-        for (var i = 0; i < count; i++) {
-            var cells = [];
-            for (var j = 0; j < rows; j++)
-                cells.push(cell());
+    // The tiles: ten faint fills growing outwards make a soft edge (Canvas has no blur in Qt 5.13).
+    Canvas {
+        readonly property var tiles: [[0.06, 0.04, 0.34, 0.46, "232,96,150"], [0.40, 0.0, 0.18, 0.5, "40,40,48"], [0.58, 0.06, 0.38, 0.44, "240,190,90"], [0.06, 0.52, 0.36, 0.44, "130,120,235"], [0.42, 0.48, 0.18, 0.48, "90,210,235"], [0.60, 0.5, 0.36, 0.46, "130,225,110"]]
 
-            list.push({
-                "cells": cells,
-                "offset": Math.random() * cellHeight,
-                "speed": 1 + Math.random() * 3
-            });
-        }
-        columns = list;
-    }
-
-    renderTarget: Canvas.FramebufferObject
-    onWidthChanged: build()
-    onHeightChanged: build()
-    onPaint: {
-        var ctx = getContext("2d");
-        ctx.fillStyle = "#060608";
-        ctx.fillRect(0, 0, width, height);
-        // The tiles: ten faint fills growing outwards make a soft edge (Canvas has no blur in Qt 5.13).
-        for (var t = 0; t < tiles.length; t++) {
-            var tile = tiles[t];
-            ctx.fillStyle = "rgba(" + tile[4] + ",0.05)";
-            for (var k = 0; k < 10; k++) {
-                var e = k * 4;
-                ctx.fillRect(tile[0] * width - e + 20, tile[1] * height - e + 20, tile[2] * width + 2 * e - 40, tile[3] * height + 2 * e - 40);
-            }
-        }
-        ctx.font = "bold 13px Consolas";
-        ctx.textBaseline = "top";
-        for (var i = 0; i < columns.length; i++) {
-            var column = columns[i];
-            column.offset += column.speed;
-            if (column.offset >= cellHeight) {
-                column.offset -= cellHeight;
-                column.cells.pop();
-                column.cells.unshift(cell());
-            }
-            for (var j = 0; j < column.cells.length; j++) {
-                var c = column.cells[j];
-                if (c.gap)
-                    continue;
-
-                if (Math.random() < 0.05)
-                    c.ch = glyph();
-
-                if (Math.random() < 0.02)
-                    c.v = Math.random();
-
-                if (c.v < 0.25) {
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = "rgba(110,112,120,0.5)";
-                } else {
-                    ctx.shadowBlur = c.v > 0.8 ? 5 : 0;
-                    ctx.shadowColor = "#ffffff";
-                    ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.65 * c.v) + ")";
+        anchors.fill: parent
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onPaint: {
+            var ctx = getContext("2d");
+            ctx.reset();
+            for (var t = 0; t < tiles.length; t++) {
+                var tile = tiles[t];
+                ctx.fillStyle = "rgba(" + tile[4] + ",0.06)";
+                for (var k = 0; k < 10; k++) {
+                    var e = k * 4;
+                    ctx.fillRect(tile[0] * width - e + 20, tile[1] * height - e + 20, tile[2] * width + 2 * e - 40, tile[3] * height + 2 * e - 40);
                 }
-                ctx.fillText(c.ch, i * cellWidth, (j - 1) * cellHeight + column.offset);
             }
         }
-        ctx.shadowBlur = 0;
     }
 
+    Repeater {
+        id: columns
+
+        model: Math.ceil(rain.width / rain.cellWidth)
+
+        // Two copies of the column, one above the other, sliding down by one column height and
+        // starting again: seamless.
+        Item {
+            id: column
+
+            readonly property real brightness: Math.random()
+            property string letters: rain.columnText()
+            readonly property real span: rain.rows * rain.cellHeight
+
+            x: index * rain.cellWidth
+            width: rain.cellWidth
+            height: span * 2
+            opacity: brightness < 0.22 ? 0.35 : 0.4 + 0.6 * brightness
+
+            Repeater {
+                model: 2
+
+                Text {
+                    y: index * column.span
+                    width: rain.cellWidth
+                    text: column.letters
+                    color: column.brightness < 0.22 ? "#8A8C94" : "#FFFFFF"
+                    font.family: "Consolas"
+                    font.pixelSize: 13
+                    font.bold: true
+                    lineHeightMode: Text.FixedHeight
+                    lineHeight: rain.cellHeight
+                    horizontalAlignment: Text.AlignHCenter
+                    renderType: Text.QtRendering
+                }
+
+            }
+
+            NumberAnimation on y {
+                from: -column.span
+                to: 0
+                duration: column.span / (14 + Math.random() * 40) * 1000
+                loops: Animation.Infinite
+                running: rain.running
+            }
+
+        }
+
+    }
+
+    // Now and then some columns change their letters.
     Timer {
-        interval: 83
+        interval: 500
         repeat: true
-        running: rain.running && rain.width > 0
-        onTriggered: rain.requestPaint()
+        running: rain.running && columns.count > 0
+        onTriggered: {
+            for (var i = 0; i < 3; i++) {
+                var column = columns.itemAt(Math.floor(Math.random() * columns.count));
+                if (column)
+                    column.letters = rain.columnText();
+
+            }
+        }
     }
 
 }

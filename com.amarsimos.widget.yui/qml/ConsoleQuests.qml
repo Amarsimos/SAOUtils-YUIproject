@@ -1,22 +1,28 @@
-import NERvGear.Controls 1.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import "yui.js" as Yui
 
-// System Console, Quests (moved from Skill Slots): the Boss Raid now, the reminders (Alarm) and the
-// notes (Quest Log). Their settings stay in Skill Slots; a list whose skill is off there cannot be
-// added to.
-SettingsPage {
+// System Console, Quests (as the preview; moved from Skill Slots): two cards (the Boss Raid now, the next
+// reminder), then the Alarm and Quest Log lists, each with a row to add one. Their settings stay in
+// Skill Slots; a list whose skill is off there cannot be added to.
+ConsolePage {
     id: quests
 
     property var yui
     property var reminders: []
     property var notes: []
-    // The time now, for the Boss Raid status (ticks while shown).
+    property string alarmError: ""
+    property string notesMessage: ""
+    // The time now, for the Boss Raid (ticks while shown).
     property double now: Date.now()
     readonly property bool alarmOn: yui.settings.alarm_enabled !== false
     readonly property bool notesOn: yui.settings.notes_enabled !== false
+    readonly property bool raiding: yui.raidActive || yui.resting
+    readonly property double raidLeft: Math.max(0, (yui.raidActive ? yui.raidEnd : yui.restEnd) - now)
+    readonly property var nextReminder: reminders.length > 0 ? reminders.slice().sort(function(a, b) {
+        return a.due - b.due;
+    })[0] : null
 
     function refreshReminders() {
         reminders = yui.remindersList();
@@ -26,16 +32,20 @@ SettingsPage {
         notes = yui.notesList(true);
     }
 
+    function when(reminder) {
+        return reminder.daily ? qsTr("Daily %1").arg(Qt.formatDateTime(new Date(reminder.due), "HH:mm")) : Qt.formatDateTime(new Date(reminder.due), "MM-dd HH:mm");
+    }
+
     // Adds the reminder typed in; its time as for <<remind:>> (Yui.remindFrom).
     function addTypedReminder() {
         var time = (dailyBox.checked ? "每天 " : "") + alarmTimeField.text.trim();
         var reminder = Yui.remindFrom(time + "|" + alarmTextField.text.trim(), Date.now());
         if (!reminder) {
-            alarmMessage.text = qsTr("Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.");
+            alarmError = qsTr("Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.");
             return ;
         }
         yui.addReminder(reminder);
-        alarmMessage.text = "";
+        alarmError = "";
         alarmTimeField.text = "";
         alarmTextField.text = "";
     }
@@ -66,225 +76,191 @@ SettingsPage {
         onTriggered: quests.now = Date.now()
     }
 
-    // ---------------------------------------------------------------- Boss Raid
-    Heading {
-        text: qsTr("Boss Raid")
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        font.pixelSize: 16
-        text: {
-            var yui = quests.yui;
-            if (yui.raidActive)
-                return qsTr("In a raid: %1 min left").arg(Math.max(0, Math.ceil((yui.raidEnd - quests.now) / 60000)));
-
-            if (yui.resting)
-                return qsTr("Resting: %1 min left").arg(Math.max(0, Math.ceil((yui.restEnd - quests.now) / 60000)));
-
-            return qsTr("No raid now.");
-        }
-    }
-
-    CenteredFlow {
-        Button {
-            visible: quests.yui.raidActive || quests.yui.resting
-            text: qsTr("Show Raid Banner")
-            onClicked: quests.yui.showRaidBanner()
-        }
-
-        Button {
-            text: quests.yui.raidActive || quests.yui.resting ? qsTr("End Boss Raid") : qsTr("Start Boss Raid")
-            onClicked: {
-                var yui = quests.yui;
-                if (yui.raidActive || yui.resting)
-                    yui.stopRaid();
-                else
-                    yui.startRaid(yui.raidMinutes, true);
-            }
-        }
-
-    }
-
-    // ---------------------------------------------------------------- Alarm
-    Heading {
-        text: qsTr("Reminders")
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        visible: !quests.alarmOn
-        opacity: 0.7
-        text: qsTr("Alarm is off (Skill Slots, Alarm).")
-    }
-
-    RowLayout {
+    GridLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        enabled: quests.alarmOn
+        columns: quests.width > 420 ? 2 : 1
+        columnSpacing: 14
+        rowSpacing: 14
 
-        TextField {
-            id: alarmTimeField
-
-            Layout.preferredWidth: 120
-            placeholderText: qsTr("HH:mm / +30")
-            selectByMouse: true
-        }
-
-        CheckBox {
-            id: dailyBox
-
-            text: qsTr("Daily")
-        }
-
-        TextField {
-            id: alarmTextField
-
+        ConsoleCard {
             Layout.fillWidth: true
-            placeholderText: qsTr("Remind me of…")
-            selectByMouse: true
-            onAccepted: quests.addTypedReminder()
+            Layout.preferredWidth: 1
+            title: "Boss Raid"
+            note: quests.yui.raidActive ? qsTr("in a raid") : quests.yui.resting ? qsTr("resting") : ""
+            big: quests.raiding ? Math.floor(quests.raidLeft / 60000) + ":" + ("0" + Math.floor(quests.raidLeft % 60000 / 1000)).slice(-2) : "--:--"
+            sub: quests.raiding ? qsTr("left") : qsTr("No raid now.")
+            meter: quests.yui.raidActive ? quests.raidLeft / (quests.yui.raidMinutes * 60000) : quests.yui.resting ? quests.raidLeft / (quests.yui.restMinutes * 60000) : -1
+            meterColor: "#F1AA03"
+            tools: [
+                ConsoleChip {
+                    small: true
+                    visible: quests.raiding
+                    text: qsTr("Banner")
+                    onClicked: quests.yui.showRaidBanner()
+                },
+                ConsoleChip {
+                    small: true
+                    text: quests.raiding ? qsTr("End") : qsTr("Start")
+                    onClicked: {
+                        var yui = quests.yui;
+                        if (quests.raiding)
+                            yui.stopRaid();
+                        else
+                            yui.startRaid(yui.raidMinutes, true);
+                    }
+                }
+            ]
         }
 
-        Button {
-            text: qsTr("Add")
-            onClicked: quests.addTypedReminder()
+        ConsoleCard {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            title: "Alarm"
+            note: qsTr("next reminder")
+            big: quests.nextReminder ? Qt.formatDateTime(new Date(quests.nextReminder.due), "HH:mm") : "--:--"
+            sub: quests.nextReminder ? quests.nextReminder.text : (quests.alarmOn ? qsTr("No reminders.") : qsTr("Alarm is off (Skill Slots, Alarm)."))
         }
 
     }
 
-    Label {
-        id: alarmMessage
-
+    ConsolePanel {
         Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: text !== ""
-        wrapMode: Text.Wrap
-        color: "#E53935"
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        visible: quests.reminders.length === 0
-        opacity: 0.7
-        text: qsTr("No reminders.")
-    }
-
-    Repeater {
-        model: quests.reminders
+        title: "Alarm"
+        note: quests.alarmOn ? "" : qsTr("off in Skill Slots")
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
+            enabled: quests.alarmOn
 
-            Label {
+            TextField {
+                id: alarmTimeField
+
                 Layout.preferredWidth: 110
-                text: modelData.daily ? qsTr("Daily %1").arg(Qt.formatDateTime(new Date(modelData.due), "HH:mm")) : Qt.formatDateTime(new Date(modelData.due), "MM-dd HH:mm")
+                placeholderText: qsTr("HH:mm / +30")
+                selectByMouse: true
             }
-
-            Label {
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-                text: modelData.text
-            }
-
-            ToolButton {
-                text: "✕"
-                onClicked: quests.yui.deleteReminder(modelData.id)
-            }
-
-        }
-
-    }
-
-    // ---------------------------------------------------------------- Quest Log
-    Heading {
-        text: qsTr("Quest Log")
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        visible: !quests.notesOn
-        opacity: 0.7
-        text: qsTr("Quest Log is off (Skill Slots, Quest Log).")
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        enabled: quests.notesOn
-
-        TextField {
-            id: noteField
-
-            Layout.fillWidth: true
-            placeholderText: qsTr("Something to note down")
-            selectByMouse: true
-            onAccepted: quests.addTypedNote()
-        }
-
-        Button {
-            text: qsTr("Add")
-            onClicked: quests.addTypedNote()
-        }
-
-        Button {
-            text: qsTr("Export")
-            enabled: quests.notes.length > 0
-            onClicked: quests.yui.exportNotes(function(path) {
-                notesMessage.text = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Authority.");
-            })
-        }
-
-    }
-
-    Label {
-        id: notesMessage
-
-        Layout.fillWidth: true
-        Layout.leftMargin: 16
-        Layout.rightMargin: 16
-        visible: text !== ""
-        wrapMode: Text.Wrap
-        opacity: 0.7
-    }
-
-    Label {
-        Layout.leftMargin: 16
-        visible: quests.notes.length === 0
-        opacity: 0.7
-        text: qsTr("No notes.")
-    }
-
-    // Open notes first, then the done ones; the check box marks a note done.
-    Repeater {
-        model: quests.notes
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
 
             CheckBox {
-                checked: !!modelData.done
-                onToggled: quests.yui.editNote(modelData.id, modelData.text, checked)
+                id: dailyBox
+
+                text: qsTr("Daily")
             }
 
-            Label {
+            TextField {
+                id: alarmTextField
+
                 Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                opacity: modelData.done ? 0.5 : 1
-                font.strikeout: !!modelData.done
-                text: modelData.text
+                placeholderText: qsTr("Remind me of…")
+                selectByMouse: true
+                onAccepted: quests.addTypedReminder()
             }
 
-            ToolButton {
-                text: "✕"
-                onClicked: quests.yui.deleteNote(modelData.id)
+            ConsoleChip {
+                text: "＋ " + qsTr("Add")
+                onClicked: quests.addTypedReminder()
+            }
+
+        }
+
+        Text {
+            Layout.fillWidth: true
+            visible: quests.alarmError !== ""
+            text: quests.alarmError
+            wrapMode: Text.Wrap
+            font.pixelSize: 12
+            color: "#C82864"
+        }
+
+        Repeater {
+            model: quests.reminders
+
+            ConsoleRow {
+                Layout.fillWidth: true
+                keyWidth: 96
+                key: quests.when(modelData)
+                text: modelData.text
+                last: index === quests.reminders.length - 1
+
+                ConsoleChip {
+                    small: true
+                    text: qsTr("Dismiss")
+                    onClicked: quests.yui.deleteReminder(modelData.id)
+                }
+
+            }
+
+        }
+
+    }
+
+    ConsolePanel {
+        Layout.fillWidth: true
+        title: "Quest Log"
+        note: quests.notesOn ? "" : qsTr("off in Skill Slots")
+        tools: [
+            ConsoleChip {
+                small: true
+                enabled: quests.notes.length > 0
+                text: qsTr("Export")
+                onClicked: quests.yui.exportNotes(function(path) {
+                    quests.notesMessage = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Authority.");
+                })
+            }
+        ]
+
+        RowLayout {
+            Layout.fillWidth: true
+            enabled: quests.notesOn
+
+            TextField {
+                id: noteField
+
+                Layout.fillWidth: true
+                placeholderText: qsTr("Something to note down")
+                selectByMouse: true
+                onAccepted: quests.addTypedNote()
+            }
+
+            ConsoleChip {
+                text: "＋ " + qsTr("Add")
+                onClicked: quests.addTypedNote()
+            }
+
+        }
+
+        Text {
+            Layout.fillWidth: true
+            visible: quests.notesMessage !== ""
+            text: quests.notesMessage
+            wrapMode: Text.Wrap
+            font.pixelSize: 12
+            color: "#7A7A7A"
+        }
+
+        // Open notes first, then the done ones.
+        Repeater {
+            model: quests.notes
+
+            ConsoleRow {
+                Layout.fillWidth: true
+                keyWidth: 24
+                key: modelData.done ? "☑" : "☐"
+                text: modelData.text
+                done: !!modelData.done
+                last: index === quests.notes.length - 1
+
+                ConsoleChip {
+                    small: true
+                    text: modelData.done ? qsTr("Undo") : qsTr("Done")
+                    onClicked: quests.yui.editNote(modelData.id, modelData.text, !modelData.done)
+                }
+
+                ConsoleChip {
+                    small: true
+                    text: "✕"
+                    onClicked: quests.yui.deleteNote(modelData.id)
+                }
+
             }
 
         }
