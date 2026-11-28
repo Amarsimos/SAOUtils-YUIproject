@@ -1858,6 +1858,11 @@ T.Widget {
     }
 
     function sendMessage(text) {
+        // Commands typed in the input field ("/console"): done here, never sent to the AI (also while
+        // Yui is occupied).
+        if (runInputCommand(text))
+            return true;
+
         // A reply on its way, or a widget growing: not sent (the text stays in the input field).
         if (!text.trim() || widget.occupied)
             return false;
@@ -5063,6 +5068,34 @@ T.Widget {
         // The widget only shows a collapsed form: it can be made quite small.
         widget.implicitWidth = 40;
         widget.implicitHeight = 60;
+    }
+
+    // Input commands: "/console" opens System Console, "/console memories" (or status, records,
+    // quests, operations, or the page's number) at that page. True when the text was a command.
+    function runInputCommand(text) {
+        var m = /^\s*\/console(?:\s+(\S+))?\s*$/i.exec(String(text || ""));
+        if (!m)
+            return false;
+
+        var pages = ["status", "records", "memories", "quests", "operations"];
+        var wanted = String(m[1] || "").toLowerCase();
+        var page = /^\d+$/.test(wanted) ? Number(wanted) - 1 : pages.indexOf(wanted);
+        diag("command: /console" + (wanted ? " " + wanted : ""));
+        // Quests only while the small tools are not set aside.
+        openConsole(page >= 0 && page < pages.length && (pages[page] !== "quests" || toolsEnabled) ? page : -1);
+        return true;
+    }
+
+    // Opens System Console (or brings it to the front), at a page when one is given (-1: as it was).
+    function openConsole(page) {
+        if (page >= 0)
+            widget.settings.console_page = page;
+
+        var open = widget.systemConsoleDialogInstance;
+        if (open && page >= 0)
+            open.page = page;
+
+        showDialog(widget.systemConsoleDialog, "systemConsoleDialogInstance");
     }
 
     function showDialog(component, instanceProperty) {
