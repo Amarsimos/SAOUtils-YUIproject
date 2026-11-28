@@ -16,8 +16,9 @@ ConsolePage {
     property string notesMessage: ""
     // The time now, for the Boss Raid (ticks while shown).
     property double now: Date.now()
-    readonly property bool alarmOn: yui.settings.alarm_enabled !== false
-    readonly property bool notesOn: yui.settings.notes_enabled !== false
+    // Off while the small tools are set aside (Yui.TOOLS_ENABLED) or the skill is off in Skill Slots.
+    readonly property bool alarmOn: yui.toolsEnabled && yui.settings.alarm_enabled !== false
+    readonly property bool notesOn: yui.toolsEnabled && yui.settings.notes_enabled !== false
     readonly property bool raiding: yui.raidActive || yui.resting
     readonly property double raidLeft: Math.max(0, (yui.raidActive ? yui.raidEnd : yui.restEnd) - now)
     readonly property var nextReminder: reminders.length > 0 ? reminders.slice().sort(function(a, b) {
@@ -76,6 +77,24 @@ ConsolePage {
         onTriggered: quests.now = Date.now()
     }
 
+    // While the small tools are set aside, the lists are kept and shown, but nothing is added or run.
+    ConsolePanel {
+        Layout.fillWidth: true
+        visible: !quests.yui.toolsEnabled
+        title: "Skill Slots"
+        note: qsTr("set aside")
+
+        Text {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            font.family: Yui.fontFor(text)
+            font.pixelSize: 12
+            color: "#7A7A7A"
+            text: qsTr("Boss Raid, Alarm and Quest Log are set aside for now: what was kept is shown here, but Yui does not remind you or take notes, and nothing can be added.")
+        }
+
+    }
+
     GridLayout {
         Layout.fillWidth: true
         columns: quests.width > 420 ? 2 : 1
@@ -100,6 +119,8 @@ ConsolePage {
                 },
                 ConsoleChip {
                     small: true
+                    // Ending a raid always works; starting one only with the small tools.
+                    enabled: quests.raiding || quests.yui.toolsEnabled
                     text: quests.raiding ? "End" : "Start"
                     onClicked: {
                         var yui = quests.yui;

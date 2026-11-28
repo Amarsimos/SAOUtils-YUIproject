@@ -620,7 +620,7 @@
         <translation>还没有记忆碎片：和结衣聊天，她会自己记下来。</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location line="+150"/>
         <source>Ctrl+Enter saves · Esc cancels</source>
         <translation>Ctrl+Enter 保存 · Esc 取消</translation>
     </message>
@@ -660,7 +660,7 @@
         <translation>%1 条消息</translation>
     </message>
     <message>
-        <location line="-647"/>
+        <location line="-636"/>
         <location line="+10"/>
         <source>The heart core is full (%1). Move a memory out of it first.</source>
         <translation>心核已满（%1 条）。请先把一条记忆移出心核。</translation>
@@ -686,7 +686,7 @@
         <translation>想起过 %1 次</translation>
     </message>
     <message>
-        <location line="+636"/>
+        <location line="+625"/>
         <source>Search the log</source>
         <translation>搜索回忆日志</translation>
     </message>
@@ -752,17 +752,17 @@
 <context>
     <name>ConsoleQuests</name>
     <message>
-        <location filename="../qml/ConsoleQuests.qml" line="+44"/>
+        <location filename="../qml/ConsoleQuests.qml" line="+45"/>
         <source>Write the time as HH:mm, yyyy-MM-dd HH:mm or +minutes, in the future, and what to remind of.</source>
         <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+65"/>
         <source>No raid now.</source>
         <translation>当前没有 Boss Raid。</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+32"/>
         <source>Alarm is off (Skill Slots, Alarm).</source>
         <translation>提醒功能已关闭（Skill Slots → Alarm）。</translation>
     </message>
@@ -787,22 +787,32 @@
         <translation>没有提醒。</translation>
     </message>
     <message>
-        <location line="-85"/>
+        <location line="-105"/>
         <source>Daily %1</source>
         <translation>每天 %1</translation>
     </message>
     <message>
-        <location line="+188"/>
+        <location line="+208"/>
         <source>Something to note down</source>
         <translation>要记下的事</translation>
     </message>
     <message>
-        <location line="-135"/>
+        <location line="-137"/>
         <source>in a raid</source>
         <translation>专注中</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-23"/>
+        <source>set aside</source>
+        <translation>暂时搁置</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Boss Raid, Alarm and Quest Log are set aside for now: what was kept is shown here, but Yui does not remind you or take notes, and nothing can be added.</source>
+        <translation>Boss Raid、Alarm 和 Quest Log 目前暂时搁置：这里显示已经保存的内容，但结衣不会提醒你，也不会帮你记笔记，暂时不能添加。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>resting</source>
         <translation>休息中</translation>
     </message>
@@ -812,7 +822,7 @@
         <translation>剩余</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+30"/>
         <source>next reminder</source>
         <translation>下一个提醒</translation>
     </message>
@@ -2167,7 +2177,7 @@
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+40"/>
+        <location filename="../qml/SystemConsole.qml" line="+39"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>

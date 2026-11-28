@@ -331,14 +331,12 @@ ColumnLayout {
 
                         Layout.fillWidth: true
                         implicitHeight: (editing ? editColumn.implicitHeight : textColumn.implicitHeight) + 16
-                        color: hover.containsMouse || editing ? "#FFF8E6" : "transparent"
+                        color: hover.hovered || editing ? "#FFF8E6" : "transparent"
 
-                        MouseArea {
+                        // Hovering the row (a handler: it takes nothing from the buttons over it, which
+                        // light up on hover themselves).
+                        HoverHandler {
                             id: hover
-
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            acceptedButtons: Qt.NoButton
                         }
 
                         // Core: orange, fragment: grey.
@@ -388,7 +386,7 @@ ColumnLayout {
                             anchors.rightMargin: 4
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 5
-                            opacity: hover.containsMouse || actionsHover.containsMouse ? 1 : 0
+                            opacity: hover.hovered ? 1 : 0
 
                             ConsoleChip {
                                 small: true
@@ -423,15 +421,6 @@ ColumnLayout {
                                 onClicked: memories.remove(item.memory)
                             }
 
-                        }
-
-                        MouseArea {
-                            id: actionsHover
-
-                            anchors.fill: actions
-                            visible: actions.visible
-                            hoverEnabled: true
-                            acceptedButtons: Qt.NoButton
                         }
 
                         // Editing in place: Ctrl+Enter saves, Esc cancels.
