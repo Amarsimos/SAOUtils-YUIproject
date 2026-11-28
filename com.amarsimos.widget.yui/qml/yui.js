@@ -333,9 +333,9 @@ function consolePage(value) {
     return other[word] || "status";
 }
 
-// What the input commands are, for /help.
+// What the input commands are, for /help, and how to find the System Call easter egg (systemCall).
 function commandHelp() {
-    return ["输入框命令（不会发给结衣）：", "/console：打开 System Console", "/console 页面：打开到某一页，页面是 status、records、memories、operations（也可以写序号 1–5）", "/help：显示这份说明"].join("\n");
+    return ["输入框命令（不会发给结衣）：", "/console：打开 System Console", "/console 页面：打开到某一页，页面是 status、records、memories、operations（也可以写序号 1–5）", "/help：显示这份说明", "", "神圣术（彩蛋，结衣会回应）：", "System Call, Inspect Entire Command List：查看全部系统指令", "例如 System Call, Generate Luminous Element"].join("\n");
 }
 
 // The desktop actions the user can allow or forbid (System Authority), and the tags of each.
