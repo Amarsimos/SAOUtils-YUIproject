@@ -2586,7 +2586,7 @@ T.Widget {
         saveHeart(entries);
     }
 
-    // Edits from the Yui's Heart page (YuisHeartPage.qml) on the memory with this id. changes may set
+    // Edits from System Console's Memories page (ConsoleMemories.qml) on the memory with this id. changes may set
     // text, kind ("core" / "fragment") and pinned. Returns false when it would overfill the core.
     function changeMemory(id, changes) {
         var entries = Yui.copyEntries(heartCache);

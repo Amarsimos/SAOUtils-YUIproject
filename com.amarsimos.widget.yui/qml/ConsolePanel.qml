@@ -12,6 +12,8 @@ Rectangle {
     property string note
     default property alias content: body.data
     property alias tools: toolSlot.data
+    // Put at the header's left in place of the title (e.g. a ConsoleSwitch).
+    property alias leading: leadSlot.data
     property int padding: 12
 
     implicitHeight: (header.visible ? header.y + header.height : 0) + body.implicitHeight + padding * 2
@@ -25,9 +27,19 @@ Rectangle {
         y: 1
         width: parent.width - 2
         height: 33
-        visible: panel.title !== ""
+        visible: panel.title !== "" || leadSlot.children.length > 0
+
+        Row {
+            id: leadSlot
+
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+        }
 
         Text {
+            visible: leadSlot.children.length === 0
             anchors.left: parent.left
             // Lined up with the body (16 px from the panel's edge).
             anchors.leftMargin: 15
