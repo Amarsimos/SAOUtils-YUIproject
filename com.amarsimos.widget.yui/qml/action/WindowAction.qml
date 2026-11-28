@@ -16,8 +16,8 @@ YuiActionBase {
             "id": "counseling",
             "name": qsTr("Mental Health Counseling")
         }, {
-            "id": "console",
-            "name": qsTr("System Console")
+            "id": "authority",
+            "name": qsTr("System Authority")
         }, {
             "id": "skills",
             "name": qsTr("Skill Slots"),

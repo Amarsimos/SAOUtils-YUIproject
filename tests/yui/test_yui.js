@@ -121,11 +121,17 @@ test("formatDuration", () => {
 test("systemCall recognises commands", () => {
     assert.strictEqual(Yui.systemCall("你好", "爸爸"), null);
     const lum = Yui.systemCall("System Call, Generate Luminous Element.", "爸爸");
-    assert.strictEqual(lum.effect.color, "#FFF59D");
+    assert.strictEqual(lum.effect.kind, "element");
+    assert.strictEqual(lum.effect.element, "luminous");
     assert.ok(lum.reply.includes("光素"));
-    assert.strictEqual(Yui.systemCall("system call discharge", "爸爸").effect.burst, true);
-    assert.strictEqual(Yui.systemCall("システムコール、generate thermal element", "爸爸").effect.color, "#FF7043");
-    assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Discharge"));
+    assert.strictEqual(Yui.systemCall("system call discharge", "爸爸").effect.kind, "discharge");
+    assert.strictEqual(Yui.systemCall("System Call, Burst Element", "爸爸").effect.kind, "burst");
+    assert.strictEqual(Yui.systemCall("システムコール、generate thermal element", "爸爸").effect.element, "thermal");
+    assert.strictEqual(Yui.systemCall("System Call,Generate  Thermal", "爸爸").effect.element, "thermal");
+    assert.strictEqual(Yui.systemCall("system call generate umbra elements!", "爸爸").effect.element, "umbra");
+    assert.strictEqual(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").effect.kind, "inspect");
+    const list = JSON.stringify(Yui.COMMAND_LIST);
+    ["Discharge", "Burst Element", "Enhance Armament", "Release Recollection", "Transfer Durability", "Starburst Stream", "Mother's Rosario"].forEach((name) => assert.ok(list.includes(name), name));
     assert.strictEqual(Yui.systemCall("System Call", "爸爸").effect, null);
     assert.ok(Yui.systemCall("System Call, do something", "爸爸").reply.includes("无法识别"));
 });
@@ -347,14 +353,19 @@ test("settings differ from their defaults", () => {
 });
 
 test("more system calls", () => {
-    const armament = Yui.systemCall("System Call, Enhance Armament!", "爸爸");
-    assert.strictEqual(armament.effect.aura, true);
-    const recollection = Yui.systemCall("system call release recollection", "爸爸");
-    assert.ok(recollection.effect.burst && recollection.effect.shake);
+    assert.strictEqual(Yui.systemCall("System Call, Enhance Armament!", "爸爸").effect.kind, "enhance");
+    assert.strictEqual(Yui.systemCall("system call release recollection", "爸爸").effect.kind, "release");
+    assert.strictEqual(Yui.systemCall("System Call, Transfer Durability", "爸爸").effect.kind, "transfer");
+    // The sword skills: said alone (any case, a "!" after) or after System Call; not inside a sentence.
+    assert.strictEqual(Yui.systemCall("Starburst Stream!", "妈妈").effect.kind, "starburst");
+    assert.ok(Yui.systemCall("starburst stream", "妈妈").reply.includes("妈妈"));
+    assert.strictEqual(Yui.systemCall("System Call, Mother's Rosario", "爸爸").effect.kind, "rosario");
+    assert.strictEqual(Yui.systemCall("Mothers Rosario", "爸爸").effect.kind, "rosario");
+    assert.strictEqual(Yui.systemCall("我好喜欢 Starburst Stream 这招", "爸爸"), null);
     const durability = Yui.systemCall("System Call, Transfer Durability", "爸爸", { cpu: 41.6, gpu: NaN, ram: 70 });
     assert.ok(durability.reply.includes("CPU 42%") && durability.reply.includes("内存 70%") && !durability.reply.includes("GPU"));
     assert.ok(!Yui.systemCall("System Call, Transfer Durability", "爸爸").reply.includes("消耗"));
-    assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Release Recollection"));
+    assert.ok(JSON.stringify(Yui.COMMAND_LIST).includes("Release Recollection"));
 });
 
 test("login greeting kinds", () => {
@@ -829,3 +840,23 @@ test("Seedling in Yui's words (the writing itself is Seedling's: tests/seedling/
 });
 
 console.log(passed + " tests passed");
+
+test("System Console: <<console:>> names a page, offered unless turned off; /help lists the commands", () => {
+    assert.strictEqual(Yui.parseReply("好的～<<console:memories>><<emotion:happy>>", [], {}).console, "memories");
+    assert.strictEqual(Yui.parseReply("<<console:心情>>", [], {}).console, "status");
+    assert.strictEqual(Yui.parseReply("<<console:2>>", [], {}).console, "records");
+    assert.strictEqual(Yui.parseReply("<<console:log>>", [], {}).console, "operations");
+    assert.strictEqual(Yui.parseReply("<<console:memories>>", [], { "allowed": { "console": false } }).console, "");
+    assert.ok(Yui.featureInstructions("爸爸", [], { "console": true }, "tags").indexOf("<<console:页面>>") !== -1);
+    assert.ok(Yui.featureInstructions("爸爸", [], { "console": false }, "tags").indexOf("<<console:") === -1);
+    assert.ok(Yui.commandHelp().indexOf("/console") !== -1 && Yui.commandHelp().indexOf("/help") !== -1);
+});
+
+test("Spontaneous Talk hints of System Call as a topic, never the spell itself", () => {
+    const hooks = Yui.chatHooks({ "now": new Date(2026, 10, 28, 15, 0).getTime(), "tip": Yui.chatTip(0, "爸爸"), "chattedToday": true }, "爸爸");
+    assert.ok(hooks.some((hook) => hook.key === "tip" && hook.text.indexOf("System Call") !== -1));
+    for (let i = 0; i < 3; i++)
+        assert.ok(Yui.chatTip(i, "爸爸").indexOf("Generate") === -1 && Yui.chatTip(i, "爸爸").indexOf("Inspect") === -1 && Yui.chatTip(i, "爸爸").indexOf("爸爸") !== -1);
+    assert.strictEqual(Yui.chatTip(3, "爸爸"), Yui.chatTip(0, "爸爸"));
+    assert.ok(!Yui.chatHooks({ "now": Date.now(), "chattedToday": true }, "爸爸").some((hook) => hook.key === "tip"));
+});

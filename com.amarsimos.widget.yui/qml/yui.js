@@ -23,7 +23,7 @@ var SAME_MEMORY = 0.8;
 
 // Load levels of the crystal and the Cardinal bars: 0 green (normal), 1 yellow (notice), 2 red (high).
 // Default [yellow, red] thresholds in percent; GPU is higher because games and video keep it busy,
-// memory lower because a full memory slows the whole computer. Editable in the System Console.
+// memory lower because a full memory slows the whole computer. Editable in the System Authority.
 var LOAD_THRESHOLDS = {
     "cpu": [70, 90],
     "gpu": [85, 97],
@@ -84,6 +84,15 @@ function loadStep(state, value, pair) {
 // data. Their code and stored data are kept; set this to true to bring them back.
 var TOOLS_ENABLED = false;
 
+// Fonts of hand-drawn text (System Console): SAO UI has no Chinese, and a text without a font falls
+// back to any system font. messageFont is the Message Font of Equipment (kept up to date by
+// main-stand.qml); fontFor gives SAO UI to text without Chinese or Japanese, the Message Font otherwise.
+var messageFont = "Source Han Sans SC";
+
+function fontFor(text) {
+    return /[\u3000-\u30FF\u3400-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/.test(String(text || "")) ? messageFont : "SAO UI";
+}
+
 function anyTagPattern() {
     return /(?:<<|＜＜|《《)\s*([A-Za-z_]+)\s*[:：]\s*([^<>＜＞《》]*?)\s*(?:>>|＞＞|》》|[>＞》](?=\s|$|<|＜|《))/g;
 }
@@ -95,11 +104,11 @@ function bareTagPattern() {
 
 function tagPattern() {
     // Closed by ">>", or by a single ">" when nothing but space or the next tag follows (small models).
-    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
+    return /<<\s*(emotion|memory|core|forget|open|search|launch|find|kill|focus|mood|remind|note|done|skill|suggest|media|seedling|console)\s*[:：]\s*([^<>]*?)\s*(?:>>|>(?=\s|$|<))/gi;
 }
 
 // Processes <<kill:>> always refuses to close (Immortal Object): core Windows processes and SAO
-// Utils itself. Users can protect more in the System Console, but cannot remove these.
+// Utils itself. Users can protect more in the System Authority, but cannot remove these.
 var PROTECTED_PROCESSES = ["system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe", "lsass.exe", "svchost.exe", "dwm.exe", "explorer.exe", "fontdrvhost.exe", "registry", "sao utils.exe", "nervlaunch.exe", "nervservice.exe", "nervstartup.exe", "nervsteam.exe", "nervwebkit.exe"];
 
 // Process name for taskkill ("chrome" -> "chrome.exe"), or "" when it is not a plain name.
@@ -111,7 +120,7 @@ function processName(value) {
     return /\.exe$/i.test(name) ? name : name + ".exe";
 }
 
-// userProtected: extra names the user protected (System Console).
+// userProtected: extra names the user protected (System Authority).
 function isProtectedProcess(name, userProtected) {
     name = String(name).toLowerCase();
     return PROTECTED_PROCESSES.indexOf(name) !== -1 || processListHas(userProtected, name);
@@ -134,7 +143,7 @@ function processListHas(names, name) {
 }
 
 // Command lines run with NVG.SystemCall.command(). kill asks the program to close (no /F). find runs
-// the package's scripts/find.bat (scriptFile): it uses esPath (System Console) or looks for es.exe in
+// the package's scripts/find.bat (scriptFile): it uses esPath (System Authority) or looks for es.exe in
 // PATH and the usual install folders, writes up to 20 results as UTF-8 text to resultFile and its exit
 // code and the es.exe it used to statusFile (see parseFindStatus).
 function actionCommand(action, resultFile, esPath, statusFile, scriptFile) {
@@ -163,10 +172,10 @@ function parseFindStatus(text) {
     };
 }
 
-// What can be clicked in a chat message: web links, the words 「System Console」 (or 「Option」 in older chats; they open the System Console) and
+// What can be clicked in a chat message: web links, the words 「System Authority」 (or 「Option」 in older chats; they open the System Authority) and
 // Windows paths such as D:\Tools\a b.txt — a drive letter, then anything up to the end of the line, a
 // quote or bracket, or Chinese text / punctuation (so "文件在 D:\a.txt 里" links only the path).
-var LINK_PATTERN = /(https?:\/\/[^\s"'<>「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]+)|(「System Console」|「Option」)|([A-Za-z]:[\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*)/g;
+var LINK_PATTERN = /(https?:\/\/[^\s"'<>「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]+)|(「System Authority」|「System Console」|「Option」)|([A-Za-z]:[\\/][^\r\n"'<>|*?「」『』（）()\u3000-\u303F\u4E00-\u9FFF\uFF00-\uFFEF]*)/g;
 
 function escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -229,7 +238,7 @@ function formatLines(text, linkColor) {
 }
 
 // One line with its links (see LINK_PATTERN) made clickable: web links as themselves, paths as
-// "yui-path:", 「System Console」 as "yui-option:". Escaped for rich text.
+// "yui-path:", 「System Authority」 as "yui-option:". Escaped for rich text.
 function linkLine(text, linkColor) {
     var html = "";
     var last = 0;
@@ -297,7 +306,39 @@ function searchUrl(engine, custom, query) {
     return template.split("%s").join(encodeURIComponent(query));
 }
 
-// The desktop actions the user can allow or forbid (System Console), and the tags of each.
+// System Console's pages, in the order of its buttons (main-stand.qml openConsole takes the index).
+var CONSOLE_PAGES = ["status", "records", "memories", "quests", "operations"];
+
+// The page a <<console:>> tag or a /console command names (a page name, its number, or a few other
+// words), "status" when it names none.
+function consolePage(value) {
+    var word = String(value || "").trim().toLowerCase();
+    if (/^\d+$/.test(word) && Number(word) >= 1 && Number(word) <= CONSOLE_PAGES.length)
+        return CONSOLE_PAGES[Number(word) - 1];
+
+    if (CONSOLE_PAGES.indexOf(word) !== -1)
+        return word;
+
+    var other = {
+        "mood": "records",
+        "moods": "records",
+        "report": "records",
+        "reports": "records",
+        "memory": "memories",
+        "heart": "memories",
+        "log": "operations",
+        "operation": "operations",
+        "quest": "quests"
+    };
+    return other[word] || "status";
+}
+
+// What the input commands are, for /help, and how to find the System Call easter egg (systemCall).
+function commandHelp() {
+    return ["输入框命令（不会发给结衣）：", "/console：打开 System Console", "/console 页面：打开到某一页，页面是 status、records、memories、operations（也可以写序号 1–5）", "/help：显示这份说明", "", "神圣术（彩蛋，结衣会回应）：", "System Call, Inspect Entire Command List：查看全部系统指令", "例如 System Call, Generate Luminous Element"].join("\n");
+}
+
+// The desktop actions the user can allow or forbid (System Authority), and the tags of each.
 var ACTION_KINDS = {
     "open": "web",
     "search": "web",
@@ -366,7 +407,7 @@ function actionFrom(kind, value, userProtected, options) {
 // Tools (Action Mode "Tools"): the desktop actions and Yui's Heart as function calls, in a neutral
 // form (name, description, JSON schema parameters) that the request turns into each API's format.
 // kind: the action (see actionFrom) or "remember" / "forget"; allow: the switch that offers it
-// (System Console's actions, Yui's Heart's Auto Memory); arg: the argument holding the value.
+// (System Authority's actions, Yui's Heart's Auto Memory); arg: the argument holding the value.
 var TOOLS = [{
     "name": "open_url",
     "kind": "open",
@@ -739,10 +780,12 @@ function parseReply(text, userProtected, options) {
         "skill": "",
         // <<suggest:a|b|c>> (Quick Replies): up to three short replies offered under the message.
         "suggestions": [],
-        // <<media:>> (System Console, Media): the media commands to run (see mediaCommand), in order.
+        // <<media:>> (System Authority, Media): the media commands to run (see mediaCommand), in order.
         "media": [],
         // <<seedling:>> (Seedling installed): what the widget should be or how to change it, "" when none.
-        "seedling": ""
+        "seedling": "",
+        // <<console:>> (System Console): the page to open it at (see CONSOLE_PAGES), "" when none.
+        "console": ""
     };
     result.text = String(text).replace(tagPattern(), function(all, kind, value) {
         kind = kind.toLowerCase();
@@ -792,6 +835,10 @@ function parseReply(text, userProtected, options) {
         } else if (kind === "seedling") {
             if (allowed.seedling === true)
                 result.seedling = value;
+
+        } else if (kind === "console") {
+            if (allowed.console !== false)
+                result.console = consolePage(value);
 
         } else if (kind === "media") {
             var command = mediaCommand(value);
@@ -1049,7 +1096,7 @@ function swordSkillIndex(name, names) {
     return -1;
 }
 
-// Media (System Console): the commands of Media Player's System Media Control action, and the words
+// Media (System Authority): the commands of Media Player's System Media Control action, and the words
 // a model may write for them instead.
 var MEDIA_COMMANDS = {
     "pause": ["pause", "play", "toggle", "resume", "播放", "暂停", "继续"],
@@ -1490,7 +1537,17 @@ function chatHooks(facts, title) {
     add("good_mood", !!facts.mood && facts.mood.score >= 4, title + "今天心情不错，问问有什么好事");
     add("memory", !!facts.memory, "结衣想起了以前记下的一件事：「" + facts.memory + "」，可以自然地聊起来");
     add("first_today", !facts.chattedToday && hour >= 10, "今天" + title + "还没和结衣说过话，打个招呼，问问今天过得怎么样");
+    add("tip", !!facts.tip, facts.tip || "");
     return hooks;
+}
+
+// Hints of the System Call easter egg Yui slips into Spontaneous Talk now and then (the "tip" hook, at
+// most every few days, in turn): never the spell itself, so it is still found by trying.
+var CHAT_TIPS = ["结衣忽然想起 Underworld 里的神圣术，都是用「System Call」开头念的，可以不经意地聊起来，好奇{t}在这里念的话会发生什么（不要说出完整的咒语）", "结衣在想，要是{t}也会念神圣术就好了，「System Call」开头的那种，可以随口提一句，像是在分享一个小秘密（不要说出完整的咒语）", "结衣想起念神圣术时，不知道念什么的话可以让系统把全部指令列出来，可以随口提起，像是在给{t}出一个小谜题（不要说出那句咒语）"];
+
+// The tip to use the index-th time (they come round in turn).
+function chatTip(index, title) {
+    return withTitle(CHAT_TIPS[Math.abs(Math.floor(index || 0)) % CHAT_TIPS.length], title);
 }
 
 // One hook for now, not one used today (used: keys); special ones first, then at random (rnd 0 - 1).
@@ -1981,6 +2038,9 @@ function featureInstructions(title, core, allowed, mode) {
     if (allowed.seedling === true)
         lines.push(withTitle(SEEDLING_INSTRUCTION, title));
 
+    if (allowed.console !== false)
+        lines.push("- 控制台（System Console）：当" + title + "请你打开控制台，或想看看系统状态、心情记录、你记得的事、你在电脑上做过的操作时，在回复最后加上 <<console:页面>>，页面是 status（系统状态）、records（心情和周报）、memories（记忆）、operations（操作记录）之一。不用确认，程序会直接打开。" + title + "自己也可以在输入框里输入 /console 打开。");
+
     if (allowed.skills && allowed.skills.length > 0)
         lines.push("- 剑技（Sword Skills）：" + title + "设好了这些一键操作：" + allowed.skills.join("、") + "。当" + title + "说要开始其中某一个时（例如「" + allowed.skills[0] + "」），在回复最后加上 <<skill:名字>>，程序会先请" + title + "确认再执行。没有说到的不要用。");
 
@@ -2373,12 +2433,29 @@ var ELEMENTS = {
     "umbra": ["暗素", "#9575CD"]
 };
 
-// The "System Call" easter egg (Sacred Arts of Alicization). Returns null when the text is not a
-// system call, otherwise { reply, effect } where effect is { color, burst, aura, shake } or null:
-// burst a burst instead of a floating element, aura a glow around Yui, shake Yui shaking.
-// loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
+// Every easter egg command, for Inspect Entire Command List's window: [section, its lines].
+var COMMAND_LIST = [["神圣术 · System Call, …", ["Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element", "Discharge", "Burst Element", "Enhance Armament", "Release Recollection", "Transfer Durability", "Inspect Entire Command List"]], ["剑技 · 直接念招式名", ["Starburst Stream", "Mother's Rosario"]]];
+
+// The "System Call" easter egg (Sacred Arts of Alicization) and the two signature sword skills (Starburst
+// Stream, Mother's Rosario, said alone or after System Call). Returns null when the text is neither,
+// otherwise { reply, effect } where effect is { kind, element } for SacredArts.qml (kind: element,
+// discharge, burst, enhance, release, transfer, starburst, rosario; element: the element generated) or
+// null. loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
 function systemCall(text, title, loads) {
-    var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(String(text));
+    var said = String(text).trim();
+    var skill = /^(?:(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*)?(starburst\s*stream|mother'?s\s*rosario|スターバースト・?ストリーム|マザーズ・?ロザリオ|星爆气流斩|圣母圣咏)\s*[.。!！]*$/i.exec(said);
+    if (skill) {
+        var starburst = /starburst|スターバースト|星爆/i.test(skill[1]);
+        return {
+            // Starburst Stream: the fight with The Gleam Eyes on the 74th floor (before Yui met them, so she
+            // saw it in Cardinal's records).
+            "reply": starburst ? "Starburst Stream——！！✧ 二刀流的十六连击！第 74 层的 Boss 房间里，" + title + "就是用这招一个人打倒了 The Gleam Eyes 的吧？结衣在 Cardinal 的战斗记录里看过好多遍……果然好帅！(≧▽≦)" :"Mother's Rosario——！✧ 有纪姐姐的十一连击……一下一下都刻在心里了呢。" + title + "，这份剑技要好好珍惜哦 (｡•́︿•̀｡)",
+            "effect": {
+                "kind": starburst ? "starburst" : "rosario"
+            }
+        };
+    }
+    var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(said);
     if (!match)
         return null;
 
@@ -2389,51 +2466,57 @@ function systemCall(text, title, loads) {
             "effect": null
         };
 
+    // The list itself opens in a system window (Stacia's window, SacredArts.qml, from COMMAND_LIST).
     if (/inspect\s+entire\s+command\s+list/.test(command))
         return {
-            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n格式：System Call, Generate Luminous Element",
-            "effect": null
-        };
-
-    var generate = /generate\s+(\w+)\s+element/.exec(command);
-    if (generate && ELEMENTS[generate[1]]) {
-        var element = ELEMENTS[generate[1]];
-        return {
-            "reply": "哔——！" + element[0] + "因子生成成功！✧ " + title + "的神圣术好厉害！(≧◡≦)",
+            "reply": "系统指令一览，展开——！✧ 全部的咒语和剑技都在窗口里了，" + title + "慢慢看～ (๑•̀ㅂ•́)و",
             "effect": {
-                "color": element[1],
-                "burst": false
+                "kind": "inspect"
             }
         };
-    }
-    if (/^(discharge|burst\s+element)/.test(command))
+
+    // "Element" may be left out ("System Call, Generate Thermal").
+    var generate = /^generate\s+(\w+)(?:\s+elements?)?$/.exec(command);
+    if (generate && ELEMENTS[generate[1]])
+        return {
+            "reply": "哔——！" + ELEMENTS[generate[1]][0] + "因子生成成功！✧ " + title + "的神圣术好厉害！(≧◡≦)",
+            "effect": {
+                "kind": "element",
+                "element": generate[1]
+            }
+        };
+
+    if (/^discharge/.test(command))
         return {
             "reply": "发射——！！✧✧ 呼……" + title + "，要小心不要伤到自己哦～ (｀・ω・´)",
             "effect": {
-                "color": "#FFFFFF",
-                "burst": true
+                "kind": "discharge"
             }
         };
 
-    // Incarnation of the armament (武装完全支配术): a golden element and a glow around Yui.
+    if (/^burst\s+element/.test(command))
+        return {
+            "reply": "Burst Element——！✧ 砰！好、好亮……" + title + "，结衣的眼睛都花了啦 (>_<)",
+            "effect": {
+                "kind": "burst"
+            }
+        };
+
+    // Incarnation of the armament (武装完全支配术): golden petals round Yui, and her glow.
     if (/^enhance\s+armament/.test(command))
         return {
             "reply": "Enhance Armament——！✧ 武装完全支配术，发动！结衣感觉全身都充满了力量～ (ง •̀_•́)ง",
             "effect": {
-                "color": "#FFD54F",
-                "burst": false,
-                "aura": true
+                "kind": "enhance"
             }
         };
 
-    // Release Recollection (记忆解放术): a violet burst, and Yui shakes with it.
+    // Release Recollection (记忆解放术): a storm of petals, ice roses, and Yui shakes with it.
     if (/^release\s+recollection/.test(command))
         return {
             "reply": "Release Recollection——！！✧✧ 记忆解放术！呜哇，好、好强的力量……" + title + "，结衣快要站不稳了啦 (>_<)",
             "effect": {
-                "color": "#B388FF",
-                "burst": true,
-                "shake": true
+                "kind": "release"
             }
         };
 
@@ -2449,8 +2532,7 @@ function systemCall(text, title, loads) {
         return {
             "reply": "天命转移——！✧ " + (parts.length > 0 ? "这台电脑的天命消耗：" + parts.join("、") + "。" : "") + "结衣把天命分给" + title + "一点点，要好好休息哦～ (｡･ω･｡)",
             "effect": {
-                "color": "#69F0AE",
-                "burst": false
+                "kind": "transfer"
             }
         };
     }

@@ -96,7 +96,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 | :-- | :-- | :-- |
 | 开机问候 | `getInitialMessage`（main-stand.qml 约 1751 行） | 启动时没有保存的对话：「（系统提示：{t}刚刚打开电脑……打招呼，不要提起这条提示）」 |
 | Login Greeting | `welcomeBack` | 启动时，以及点醒待机的结衣时（2026-11-26 起，代替本地唤醒语；不需要问候时仍用本地唤醒语）。早安（带天气）/ 欢迎回来（≥ 30 分钟）/ 好久不见（≥ 2 天，原 3 天）三种；「一两句话即可，不要提起这条提示」 |
-| Spontaneous Talk | `careTick` → `idleChat` | 告诉她现在的样子（水晶 / 妖精 / 立绘）和位置（只作背景，叫她不要说起自己的样子或位置），请她主动说一句；有由头时加「可以从这个由头说起：…」（`Yui.chatHooks` 20 种：节日、去年今天、快到的跟进 / 生日、正在听的歌、深夜听歌、电脑一直很忙、周五晚上、周末早上、周一早上、午饭、晚饭、月末、下雨下雪、冷、热、陪了很久、心情不错、一条较早的记忆、今天还没说过话；特别的日子优先，其余随机，同一个由头当天只用一次） |
+| Spontaneous Talk | `careTick` → `idleChat` | 告诉她现在的样子（水晶 / 妖精 / 立绘）和位置（只作背景，叫她不要说起自己的样子或位置），请她主动说一句；有由头时加「可以从这个由头说起：…」（`Yui.chatHooks` 21 种：节日、去年今天、快到的跟进 / 生日、正在听的歌、深夜听歌、电脑一直很忙、周五晚上、周末早上、周一早上、午饭、晚饭、月末、下雨下雪、冷、热、陪了很久、心情不错、一条较早的记忆、今天还没说过话、彩蛋暗示（`Yui.chatTip`：只暗示 System Call 神圣术、不说咒语，轮流用；最多每 3 天一次，到时也只有四分之一的机会）；特别的日子优先，其余随机，同一个由头当天只用一次） |
 | Mood Care | `careTick` → `Yui.moodCareInstruction` | 中优先级，09–22 点；最近 3 次心情平均 ≤ 2 且最近一次在 3 天内；带这几天的记录，「温柔地问问要不要说说，不要说教，也不要列一串建议」 |
 | Weather Changes | `careTick` → `Yui.weatherChangeInstruction` | 中优先级，07–22 点，变化后 1 小时内；开始下雨 / 下雪（带之前和现在的天气）→ 提醒带伞；3 小时内降温 ≥ 5° → 提醒保暖 |
 | 深夜关怀 / 休息提醒 | `careTick` | 带具体时刻或连续使用时长 |
@@ -117,6 +117,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 | 代行（网页、启动、找文件、关闭、音乐） | 标签 `<<open:>> <<search:>> <<launch:>> <<find:>> <<kill:>> <<media:>>` | 工具 `open_url web_search launch_program find_file close_program media_control`（`Yui.TOOLS`） |
 | 记忆 | 标签 `<<core:>> <<memory:>> <<forget:>>` | 两种模式都用标签（remember / forget 工具已删掉：测试里没有模型调用过） |
 | 表情、心情、快捷回复 | 标签 | 标签 |
+| 打开 System Console | 标签 `<<console:页面>>`（status / records / memories / operations，不用确认；`Yui.consolePage`） | 标签 |
 | 服务器拒绝 tools | — | 自动退回 Tags 并记住（`toolsRejected`） |
 
 ---
@@ -124,7 +125,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 ## 七、回复的处理（`Yui.parseReply` / `cleanReply`）
 
 * **标签**：`emotion memory core forget open search launch find kill focus mood remind note done skill suggest media`。允许单个 `>` 收尾（小模型），其后只能是空白、行尾或下一个标签。
-* 关掉的功能：标签被丢弃且不执行，聊天显示「🚫 已在 System Console 中关闭这类代行，没有执行」。
+* 关掉的功能：标签被丢弃且不执行，聊天显示「🚫 已在 System Authority 中关闭这类代行，没有执行」。
 * 拼错 / 全角括号的标签：从文字中去掉，记进 Log（`tags not understood`）。
 * `cleanReply`：只保留最后一个 `</think>` 之后的内容，去掉 `<think>…</think>`，同一段落只留一次。
 * **只说不做**：回复声称做了（`Yui.claimsDone`：「已经 / 这就 / 帮你 + 动作动词 + 了 / 好了」、「音乐已经重新动起来」，问句和说用户做的不算），但这一轮没有执行任何动作、媒体、剑技、专注、提醒，也没有被关闭或拦截时，消息下加「⚠ 结衣说做了，但这次什么都没有执行」，Log 记 `claimed an action, none carried out`。不改她的原话。
@@ -162,7 +163,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 15. 本文档和代码一起改；提示词原文不手抄：改完提示词跑 `node tests/yui/prompt_doc.js`，重新生成文末的附录。
 
 **排查**
-16. System Console → Log 打开 **Log Requests**，看完整的 system 和消息；先确认信息有没有进请求，再判断是模型没用上还是没发出去。Seedling 的请求和结果在 SAO Utils 日志里以 `Seedling:` 开头。
+16. System Authority → Log 打开 **Log Requests**，看完整的 system 和消息；先确认信息有没有进请求，再判断是模型没用上还是没发出去。Seedling 的请求和结果在 SAO Utils 日志里以 `Seedling:` 开头。
 
 ---
 
@@ -241,6 +242,7 @@ tools                         只在 Tools 模式（toolDefinitions）
 - 提醒（Alarm）：当爸爸请你在某个时间提醒爸爸时，在回复最后加上 <<remind:时间|提醒内容>>。时间用当前时间推算成 yyyy-MM-dd HH:mm，或写 +分钟数（多少分钟后）；每天都要提醒时写 每天 HH:mm。例如 <<remind:2026-10-27 08:00|交作业>>、<<remind:+30|去开会>>、<<remind:每天 23:00|该睡觉了>>。到时间程序会自动提醒。
 - 快捷回复：在可以自然地接着聊的时候（比如你问了问题），在回复最后加上 <<suggest:回复1|回复2|回复3>>，替爸爸想 2～3 个爸爸接下来可能说的简短回复（用爸爸的口吻，每个不超过 12 个字；只想聊天的话，不要想请结衣操作电脑、设提醒之类的）。不需要时就不加。
 - 桌面小挂件（Seedling）：当爸爸明确请你做一个桌面小挂件（时钟、倒计时、小面板、装饰之类），或请你修改刚做的挂件时，这一次只回复 <<seedling:挂件要做成什么样 / 要怎么改，写清楚尺寸、颜色、内容>> 这一个标签，标签前后不要写任何话：能不能马上开始、进度和结果，都由程序以你的口吻告诉爸爸。代码由程序另外去写，不要在回复里写代码；只是聊到挂件、没有要做或要改的时候不要加。爸爸请你检查或修好挂件的问题（比如发来工作台的错误信息）时，你看不到挂件的代码，不要猜原因，同样只回复 <<seedling:修好这些问题：（把错误信息照抄进来）>>，程序会带上现有代码去改。
+- 控制台（System Console）：当爸爸请你打开控制台，或想看看系统状态、心情记录、你记得的事、你在电脑上做过的操作时，在回复最后加上 <<console:页面>>，页面是 status（系统状态）、records（心情和周报）、memories（记忆）、operations（操作记录）之一。不用确认，程序会直接打开。爸爸自己也可以在输入框里输入 /console 打开。
 - 笔记（Quest Log）：当爸爸请你帮忙记下某件事、待办或备忘时，在回复最后加上 <<note:要记的事>>（和结衣之心分开，不要再用 memory 记一遍）；爸爸说某件记下的事已经办完时，加 <<done:那件事>>。
 ````
 
