@@ -127,7 +127,10 @@ test("systemCall recognises commands", () => {
     assert.strictEqual(Yui.systemCall("system call discharge", "爸爸").effect.kind, "discharge");
     assert.strictEqual(Yui.systemCall("System Call, Burst Element", "爸爸").effect.kind, "burst");
     assert.strictEqual(Yui.systemCall("システムコール、generate thermal element", "爸爸").effect.element, "thermal");
-    const list = Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply;
+    assert.strictEqual(Yui.systemCall("System Call,Generate  Thermal", "爸爸").effect.element, "thermal");
+    assert.strictEqual(Yui.systemCall("system call generate umbra elements!", "爸爸").effect.element, "umbra");
+    assert.strictEqual(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").effect.kind, "inspect");
+    const list = JSON.stringify(Yui.COMMAND_LIST);
     ["Discharge", "Burst Element", "Enhance Armament", "Release Recollection", "Transfer Durability", "Starburst Stream", "Mother's Rosario"].forEach((name) => assert.ok(list.includes(name), name));
     assert.strictEqual(Yui.systemCall("System Call", "爸爸").effect, null);
     assert.ok(Yui.systemCall("System Call, do something", "爸爸").reply.includes("无法识别"));
@@ -362,7 +365,7 @@ test("more system calls", () => {
     const durability = Yui.systemCall("System Call, Transfer Durability", "爸爸", { cpu: 41.6, gpu: NaN, ram: 70 });
     assert.ok(durability.reply.includes("CPU 42%") && durability.reply.includes("内存 70%") && !durability.reply.includes("GPU"));
     assert.ok(!Yui.systemCall("System Call, Transfer Durability", "爸爸").reply.includes("消耗"));
-    assert.ok(Yui.systemCall("System Call, Inspect Entire Command List", "爸爸").reply.includes("Release Recollection"));
+    assert.ok(JSON.stringify(Yui.COMMAND_LIST).includes("Release Recollection"));
 });
 
 test("login greeting kinds", () => {

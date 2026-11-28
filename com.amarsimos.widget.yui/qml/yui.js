@@ -2433,6 +2433,9 @@ var ELEMENTS = {
     "umbra": ["暗素", "#9575CD"]
 };
 
+// Every easter egg command, for Inspect Entire Command List's window: [section, its lines].
+var COMMAND_LIST = [["神圣术 · System Call, …", ["Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element", "Discharge", "Burst Element", "Enhance Armament", "Release Recollection", "Transfer Durability", "Inspect Entire Command List"]], ["剑技 · 直接念招式名", ["Starburst Stream", "Mother's Rosario"]]];
+
 // The "System Call" easter egg (Sacred Arts of Alicization) and the two signature sword skills (Starburst
 // Stream, Mother's Rosario, said alone or after System Call). Returns null when the text is neither,
 // otherwise { reply, effect } where effect is { kind, element } for SacredArts.qml (kind: element,
@@ -2461,13 +2464,17 @@ function systemCall(text, title, loads) {
             "effect": null
         };
 
+    // The list itself opens in a system window (Stacia's window, SacredArts.qml, from COMMAND_LIST).
     if (/inspect\s+entire\s+command\s+list/.test(command))
         return {
-            "reply": "系统指令一览 ✧\n【神圣术】（System Call, …）\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n· Inspect Entire Command List\n【剑技】（直接念招式名）\n· Starburst Stream\n· Mother's Rosario\n格式：System Call, Generate Luminous Element",
-            "effect": null
+            "reply": "系统指令一览，展开——！✧ 全部的咒语和剑技都在窗口里了，" + title + "慢慢看～ (๑•̀ㅂ•́)و",
+            "effect": {
+                "kind": "inspect"
+            }
         };
 
-    var generate = /generate\s+(\w+)\s+element/.exec(command);
+    // "Element" may be left out ("System Call, Generate Thermal").
+    var generate = /^generate\s+(\w+)(?:\s+elements?)?$/.exec(command);
     if (generate && ELEMENTS[generate[1]])
         return {
             "reply": "哔——！" + ELEMENTS[generate[1]][0] + "因子生成成功！✧ " + title + "的神圣术好厉害！(≧◡≦)",
