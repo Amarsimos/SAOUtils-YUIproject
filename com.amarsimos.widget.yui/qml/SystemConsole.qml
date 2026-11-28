@@ -28,9 +28,12 @@ NVG.View {
     readonly property int bottomHeight: 40
     // Room around the panel for its shadow (the view is this much larger on every side).
     readonly property int shadowMargin: 10
-    // Open / close animation, as Yui's chat: the panel widens from 10 % and fades in, then its content.
+    // Open / close animation, as Yui's chat and Seedling's workbench: the panel widens from 10 %
+    // (scaleX) and fades in (panelOpacity), the message sound, the code wall unfolds between the title
+    // and bottom bands (reveal), then its content fades in (contentOpacity).
     property real scaleX: 0.1
     property real panelOpacity: 0
+    property real reveal: 0
     property real contentOpacity: 0
     // The pages, in the order of the buttons: [title, theme icon (item group), one of the small tools
     // (Quests: shown only while they are not set aside, see toolsEnabled)].
@@ -132,19 +135,19 @@ NVG.View {
         onActivated: consoleView.dismiss()
     }
 
-    SequentialAnimation {
+    ParallelAnimation {
         id: aniOpen
 
-        ParallelAnimation {
-            NumberAnimation {
-                target: consoleView
-                property: "scaleX"
-                from: 0.1
-                to: 1
-                duration: 200
-                easing.type: Easing.OutQuad
-            }
+        NumberAnimation {
+            target: consoleView
+            property: "scaleX"
+            from: 0.1
+            to: 1
+            duration: 200
+            easing.type: Easing.OutQuad
+        }
 
+        SequentialAnimation {
             NumberAnimation {
                 target: consoleView
                 property: "panelOpacity"
@@ -153,18 +156,27 @@ NVG.View {
                 duration: 250
             }
 
-        }
+            ScriptAction {
+                script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
+            }
 
-        ScriptAction {
-            script: NVG.SystemCall.playSound(NVG.SFX.PopupMessage)
-        }
+            NumberAnimation {
+                target: consoleView
+                property: "reveal"
+                from: 0
+                to: 1
+                duration: 250
+                easing.type: Easing.OutQuad
+            }
 
-        NumberAnimation {
-            target: consoleView
-            property: "contentOpacity"
-            from: 0
-            to: 1
-            duration: 250
+            NumberAnimation {
+                target: consoleView
+                property: "contentOpacity"
+                from: 0
+                to: 1
+                duration: 250
+            }
+
         }
 
     }
@@ -223,7 +235,10 @@ NVG.View {
     Item {
         id: panel
 
-        anchors.fill: shadowArea
+        // The title and bottom bands keep their size and move apart as the code wall unfolds.
+        anchors.centerIn: shadowArea
+        width: shadowArea.width
+        height: consoleView.titleHeight + consoleView.bottomHeight + (shadowArea.height - consoleView.titleHeight - consoleView.bottomHeight) * consoleView.reveal
         opacity: consoleView.panelOpacity
         clip: true
 
@@ -304,7 +319,11 @@ NVG.View {
                 Layout.fillHeight: true
 
                 CodeRain {
-                    anchors.fill: parent
+                    // At its full height from the start, centered (the panel clips it while it unfolds), so its
+                    // columns are not made again as it grows.
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: shadowArea.height - consoleView.titleHeight - consoleView.bottomHeight
                     running: consoleView.visible && !aniClose.running
                 }
 
