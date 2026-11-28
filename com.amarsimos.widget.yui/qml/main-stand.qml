@@ -1896,15 +1896,9 @@ T.Widget {
             appendMessage("user", text, false, true);
             afterUserMessage(function() {
                 appendMessage("ai", call.reply, false, true);
-                if (call.effect) {
-                    elementEffect.play(call.effect.color, call.effect.burst);
-                    if (call.effect.aura)
-                        auraAnimation.restart();
+                if (call.effect)
+                    sacredArts.play(call.effect.kind, call.effect.element);
 
-                    if (call.effect.shake)
-                        shakeAnimation.restart();
-
-                }
 
                 setEmotion(call.effect ? "surprised" : "normal");
             });
@@ -5807,11 +5801,12 @@ T.Widget {
             // Like the navigation pixie: she floats gently up and down while awake (only upward, so the
             // bottom of the image is never cut off), and grows in from 80 % as the view opens.
             property real hover: 0
-            // System Call effects: Enhance Armament's glow (0 … 1) and Release Recollection's shaking (px).
-            property real aura: 0
-            property real shake: 0
+            // The easter egg's effects (SacredArts.qml): Enhance Armament's glow (0 … 1), Release
+            // Recollection's shaking (px), and hidden while a sword skill plays.
+            readonly property real aura: sacredArts.aura
+            readonly property real shake: sacredArts.yuiShake
 
-            opacity: dim * widget.characterReveal
+            opacity: (sacredArts.yuiHidden ? 0 : 1) * dim * widget.characterReveal
             scale: 0.8 + 0.2 * widget.characterReveal
             transform: Translate {
                 x: characterImage.shake
@@ -5827,79 +5822,6 @@ T.Widget {
                 opacity: characterImage.aura
             }
 
-            // Enhance Armament: the glow rises, stays a moment and fades.
-            SequentialAnimation {
-                id: auraAnimation
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "aura"
-                    to: 1
-                    duration: 400
-                    easing.type: Easing.OutQuad
-                }
-
-                PauseAnimation {
-                    duration: 1200
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "aura"
-                    to: 0
-                    duration: 900
-                    easing.type: Easing.InQuad
-                }
-
-            }
-
-            // Release Recollection: a short shaking that dies down.
-            SequentialAnimation {
-                id: shakeAnimation
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: -8
-                    duration: 45
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: 8
-                    duration: 90
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: -6
-                    duration: 80
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: 6
-                    duration: 80
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: -3
-                    duration: 70
-                }
-
-                NumberAnimation {
-                    target: characterImage
-                    property: "shake"
-                    to: 0
-                    duration: 70
-                }
-
-            }
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             // Room above her for floating (hover goes up to -10), so her head is never cut off.
@@ -5985,131 +5907,13 @@ T.Widget {
 
         }
 
-        // Sacred Arts element conjured by the "System Call" easter egg (Alicization).
-        Item {
-            id: elementEffect
+        // The easter egg's effects (System Call, the sword skills) over the view, centred on Yui.
+        SacredArts {
+            id: sacredArts
 
-            property color color: "white"
-
-            function play(newColor, burst) {
-                color = newColor;
-                burstAnimation.stop();
-                conjureAnimation.stop();
-                (burst ? burstAnimation : conjureAnimation).restart();
-            }
-
+            anchors.fill: parent
             z: 50
-            width: 60
-            height: 60
-            x: characterImage.x + characterImage.width / 2 - width / 2
-            y: characterImage.y + characterImage.height * 0.45 - height / 2
-            scale: 0
-            opacity: 0
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width * 1.8
-                height: width
-                radius: width / 2
-                color: elementEffect.color
-                opacity: 0.25
-            }
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width
-                height: width
-                radius: width / 2
-                color: elementEffect.color
-                opacity: 0.6
-                border.color: "white"
-                border.width: 2
-            }
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width * 0.4
-                height: width
-                radius: width / 2
-                color: "white"
-            }
-
-            SequentialAnimation {
-                id: conjureAnimation
-
-                ParallelAnimation {
-                    NumberAnimation {
-                        target: elementEffect
-                        property: "scale"
-                        from: 0
-                        to: 1
-                        duration: 400
-                        easing.type: Easing.OutBack
-                    }
-
-                    NumberAnimation {
-                        target: elementEffect
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: 300
-                    }
-
-                }
-
-                SequentialAnimation {
-                    loops: 3
-
-                    NumberAnimation {
-                        target: elementEffect
-                        property: "scale"
-                        to: 1.15
-                        duration: 350
-                        easing.type: Easing.InOutSine
-                    }
-
-                    NumberAnimation {
-                        target: elementEffect
-                        property: "scale"
-                        to: 1
-                        duration: 350
-                        easing.type: Easing.InOutSine
-                    }
-
-                }
-
-                NumberAnimation {
-                    target: elementEffect
-                    property: "opacity"
-                    to: 0
-                    duration: 600
-                }
-
-            }
-
-            ParallelAnimation {
-                id: burstAnimation
-
-                NumberAnimation {
-                    target: elementEffect
-                    property: "scale"
-                    from: 0.5
-                    to: 6
-                    duration: 700
-                    easing.type: Easing.OutQuad
-                }
-
-                NumberAnimation {
-                    target: elementEffect
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                    duration: 700
-                    easing.type: Easing.InQuad
-                }
-
-            }
-
+            centreX: characterImage.x + characterImage.width / 2
         }
 
         // The chat panel, in the three parts of the SAO mail box message panel (panel.9.png): a white

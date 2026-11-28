@@ -2433,12 +2433,24 @@ var ELEMENTS = {
     "umbra": ["暗素", "#9575CD"]
 };
 
-// The "System Call" easter egg (Sacred Arts of Alicization). Returns null when the text is not a
-// system call, otherwise { reply, effect } where effect is { color, burst, aura, shake } or null:
-// burst a burst instead of a floating element, aura a glow around Yui, shake Yui shaking.
-// loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
+// The "System Call" easter egg (Sacred Arts of Alicization) and the two signature sword skills (Starburst
+// Stream, Mother's Rosario, said alone or after System Call). Returns null when the text is neither,
+// otherwise { reply, effect } where effect is { kind, element } for SacredArts.qml (kind: element,
+// discharge, burst, enhance, release, transfer, starburst, rosario; element: the element generated) or
+// null. loads: the current loads in % ({cpu, gpu, ram}, some may be missing), for Transfer Durability.
 function systemCall(text, title, loads) {
-    var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(String(text));
+    var said = String(text).trim();
+    var skill = /^(?:(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*)?(starburst\s*stream|mother'?s\s*rosario|スターバースト・?ストリーム|マザーズ・?ロザリオ|星爆气流斩|圣母圣咏)\s*[.。!！]*$/i.exec(said);
+    if (skill) {
+        var starburst = /starburst|スターバースト|星爆/i.test(skill[1]);
+        return {
+            "reply": starburst ? "Starburst Stream——！！✧ 二刀流十六连击……不，这是爸爸的三十连击！结衣在旁边看得好清楚，好帅！(≧▽≦)".replace("爸爸", title) : "Mother's Rosario——！✧ 有纪姐姐的十一连击……一下一下都刻在心里了呢。" + title + "，这份剑技要好好珍惜哦 (｡•́︿•̀｡)",
+            "effect": {
+                "kind": starburst ? "starburst" : "rosario"
+            }
+        };
+    }
+    var match = /^\s*(?:system\s*call|システムコール|系统呼叫)\s*[,，、.。!！]?\s*(.*)$/i.exec(said);
     if (!match)
         return null;
 
@@ -2451,49 +2463,51 @@ function systemCall(text, title, loads) {
 
     if (/inspect\s+entire\s+command\s+list/.test(command))
         return {
-            "reply": "系统指令一览 ✧\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n格式：System Call, Generate Luminous Element",
+            "reply": "系统指令一览 ✧\n【神圣术】（System Call, …）\n· Generate Luminous / Thermal / Cryogenic / Aerial / Aqueous / Metallic / Umbra Element\n· Discharge\n· Burst Element\n· Enhance Armament\n· Release Recollection\n· Transfer Durability\n· Inspect Entire Command List\n【剑技】（直接念招式名）\n· Starburst Stream\n· Mother's Rosario\n格式：System Call, Generate Luminous Element",
             "effect": null
         };
 
     var generate = /generate\s+(\w+)\s+element/.exec(command);
-    if (generate && ELEMENTS[generate[1]]) {
-        var element = ELEMENTS[generate[1]];
+    if (generate && ELEMENTS[generate[1]])
         return {
-            "reply": "哔——！" + element[0] + "因子生成成功！✧ " + title + "的神圣术好厉害！(≧◡≦)",
+            "reply": "哔——！" + ELEMENTS[generate[1]][0] + "因子生成成功！✧ " + title + "的神圣术好厉害！(≧◡≦)",
             "effect": {
-                "color": element[1],
-                "burst": false
-            }
-        };
-    }
-    if (/^(discharge|burst\s+element)/.test(command))
-        return {
-            "reply": "发射——！！✧✧ 呼……" + title + "，要小心不要伤到自己哦～ (｀・ω・´)",
-            "effect": {
-                "color": "#FFFFFF",
-                "burst": true
+                "kind": "element",
+                "element": generate[1]
             }
         };
 
-    // Incarnation of the armament (武装完全支配术): a golden element and a glow around Yui.
+    if (/^discharge/.test(command))
+        return {
+            "reply": "发射——！！✧✧ 呼……" + title + "，要小心不要伤到自己哦～ (｀・ω・´)",
+            "effect": {
+                "kind": "discharge"
+            }
+        };
+
+    if (/^burst\s+element/.test(command))
+        return {
+            "reply": "Burst Element——！✧ 砰！好、好亮……" + title + "，结衣的眼睛都花了啦 (>_<)",
+            "effect": {
+                "kind": "burst"
+            }
+        };
+
+    // Incarnation of the armament (武装完全支配术): golden petals round Yui, and her glow.
     if (/^enhance\s+armament/.test(command))
         return {
             "reply": "Enhance Armament——！✧ 武装完全支配术，发动！结衣感觉全身都充满了力量～ (ง •̀_•́)ง",
             "effect": {
-                "color": "#FFD54F",
-                "burst": false,
-                "aura": true
+                "kind": "enhance"
             }
         };
 
-    // Release Recollection (记忆解放术): a violet burst, and Yui shakes with it.
+    // Release Recollection (记忆解放术): a storm of petals, ice roses, and Yui shakes with it.
     if (/^release\s+recollection/.test(command))
         return {
             "reply": "Release Recollection——！！✧✧ 记忆解放术！呜哇，好、好强的力量……" + title + "，结衣快要站不稳了啦 (>_<)",
             "effect": {
-                "color": "#B388FF",
-                "burst": true,
-                "shake": true
+                "kind": "release"
             }
         };
 
@@ -2509,8 +2523,7 @@ function systemCall(text, title, loads) {
         return {
             "reply": "天命转移——！✧ " + (parts.length > 0 ? "这台电脑的天命消耗：" + parts.join("、") + "。" : "") + "结衣把天命分给" + title + "一点点，要好好休息哦～ (｡･ω･｡)",
             "effect": {
-                "color": "#69F0AE",
-                "burst": false
+                "kind": "transfer"
             }
         };
     }
