@@ -13,20 +13,23 @@ Rectangle {
     property alias tools: toolSlot.data
     property int padding: 12
 
-    implicitHeight: (header.visible ? header.height : 0) + body.implicitHeight + padding * 2
+    implicitHeight: (header.visible ? header.y + header.height : 0) + body.implicitHeight + padding * 2
     color: "#F2F9F9F9"
-    border.color: "#22000000"
 
     Rectangle {
         id: header
 
-        width: parent.width
-        height: 34
+        // Inside the outline (drawn last, over it), so the band and the body share the same edges.
+        x: 1
+        y: 1
+        width: parent.width - 2
+        height: 33
         visible: panel.title !== ""
 
         Text {
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            // Lined up with the body (16 px from the panel's edge).
+            anchors.leftMargin: 15
             anchors.verticalCenter: parent.verticalCenter
             text: panel.title
             font.family: "SAO UI"
@@ -38,7 +41,7 @@ Rectangle {
             id: toolRow
 
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: 15
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
 
@@ -86,9 +89,16 @@ Rectangle {
         id: body
 
         x: 16
-        y: (header.visible ? header.height : 0) + panel.padding
+        y: (header.visible ? header.y + header.height : 0) + panel.padding
         width: parent.width - 32
         spacing: 6
+    }
+
+    // The outline, over the header band.
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: "#22000000"
     }
 
 }
