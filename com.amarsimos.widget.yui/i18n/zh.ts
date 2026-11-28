@@ -904,11 +904,6 @@
         <source>No replies counted yet this month.</source>
         <translation>这个月还没有统计到回复。</translation>
     </message>
-    <message>
-        <location line="+11"/>
-        <source>plugins and tools</source>
-        <translation>插件与工具</translation>
-    </message>
 </context>
 <context>
     <name>Equipment</name>
@@ -2521,19 +2516,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3141"/>
+        <location line="+3145"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3124"/>
-        <location line="+2210"/>
+        <location line="-3128"/>
+        <location line="+2214"/>
         <location line="+1028"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4415"/>
+        <location line="-4419"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2636,7 +2631,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+134"/>
         <source>%1 widgets growing</source>
         <translation>%1 个挂件在培育中</translation>
     </message>
@@ -2646,7 +2641,7 @@
         <translation>未安装：结衣培育挂件需要它</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Now Playing and Control Media are off</source>
         <translation>Now Playing 和 Control Media 都已关闭</translation>
     </message>
@@ -2661,7 +2656,7 @@
         <translation>没有在播放</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Weather Report is off</source>
         <translation>Weather Report 已关闭</translation>
     </message>
@@ -2676,7 +2671,7 @@
         <translation>还没有读到数据</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Search Files is off (System Authority)</source>
         <translation>Search Files 已关闭（System Authority）</translation>
     </message>
@@ -2739,19 +2734,19 @@
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6328"/>
-        <location line="+6362"/>
+        <location line="-6332"/>
+        <location line="+6366"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6369"/>
-        <location line="+6369"/>
+        <location line="-6373"/>
+        <location line="+6373"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4391"/>
+        <location line="-4395"/>
         <source>Close %1 without asking from now on?
 You can change this in System Authority.</source>
         <translation>以后关闭 %1 时不再询问吗？
@@ -2763,7 +2758,7 @@ You can change this in System Authority.</source>
         <translation>备份写入失败，所以没有删除任何内容。请查看 System Authority 的日志。</translation>
     </message>
     <message>
-        <location line="+3949"/>
+        <location line="+3953"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

@@ -191,26 +191,42 @@ ConsolePage {
     }
 
 
-    ConsolePanel {
+    // Links: a card each, as the Link card (the state large, its tag, what it is about under it), in two
+    // columns, the right one set lower so the cards stand staggered.
+    RowLayout {
         Layout.fillWidth: true
-        title: "Links"
-        note: qsTr("plugins and tools")
+        spacing: 14
 
         Repeater {
-            model: status.links
+            model: 2
 
-            ConsoleRow {
-                readonly property var tag: status.linkTags[modelData.state] || [modelData.state, "#9A9A9A"]
+            ColumnLayout {
+                readonly property int column: index
 
                 Layout.fillWidth: true
-                keyWidth: 110
-                key: modelData.name
-                text: modelData.detail
-                last: index === status.links.length - 1
+                Layout.preferredWidth: (status.width - 12 - 14) / 2
+                Layout.maximumWidth: Layout.preferredWidth
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: column === 1 ? 48 : 0
+                spacing: 14
 
-                ConsoleTag {
-                    text: parent.parent.tag[0]
-                    color: parent.parent.tag[1]
+                Repeater {
+                    model: status.links.filter(function(link, i) {
+                        return i % 2 === column;
+                    })
+
+                    ConsoleCard {
+                        readonly property var stateTag: status.linkTags[modelData.state] || [modelData.state, "#9A9A9A"]
+
+                        Layout.fillWidth: true
+                        title: modelData.name
+                        note: modelData.kind
+                        big: stateTag[0]
+                        tag: stateTag[0]
+                        tagColor: stateTag[1]
+                        sub: modelData.detail
+                    }
+
                 }
 
             }

@@ -3852,7 +3852,7 @@ T.Widget {
     }
 
     // ---------------------------------------------------------------- Links (System Console, Status)
-    // What Yui works with besides herself, now: [{name, state, detail}]. state: "linked" (there and
+    // What Yui works with besides herself, now: [{name, kind, state, detail}]. state: "linked" (there and
     // used), "off" (turned off in the settings), "missing" (wanted but not there) or "waiting" (set,
     // nothing read yet). Seedling is looked up afresh (seedlingBench), as SAO Utils may add or remove it.
     function linkStatus() {
@@ -3861,6 +3861,7 @@ T.Widget {
         var bench = seedlingBench();
         list.push({
             "name": "Seedling",
+            "kind": "Plugin",
             "state": bench ? "linked" : "missing",
             "detail": bench ? qsTr("%1 widgets growing").arg(bench.widgets.length) : qsTr("Not installed: the widgets Yui grows need it")
         });
@@ -3868,6 +3869,7 @@ T.Widget {
         var track = mediaWanted && mediaLoaded ? mediaInfo() : null;
         list.push({
             "name": "Media Player",
+            "kind": "Plugin",
             "state": !mediaWanted ? "off" : mediaLoaded ? "linked" : "missing",
             "detail": !mediaWanted ? qsTr("Now Playing and Control Media are off") : !mediaLoaded ? qsTr("Not installed (com.gpbeta.media)") : track ? (track.artist ? track.artist + " - " : "") + track.title : qsTr("Nothing playing")
         });
@@ -3878,12 +3880,14 @@ T.Widget {
         }).join("  ") : "";
         list.push({
             "name": "Weather",
+            "kind": "Data Source",
             "state": settings.weather_report === false ? "off" : !weatherSet ? "missing" : weatherShown ? "linked" : "waiting",
             "detail": settings.weather_report === false ? qsTr("Weather Report is off") : !weatherSet ? qsTr("No weather source chosen (Mental Health Counseling, Perception)") : weatherShown || qsTr("Nothing read yet")
         });
         var esPath = String(settings.es_path || "").replace(/"/g, "").trim();
         list.push({
             "name": "Everything",
+            "kind": "Tool",
             "state": settings.action_find !== true ? "off" : esPath ? "linked" : "waiting",
             "detail": settings.action_find !== true ? qsTr("Search Files is off (System Authority)") : esPath || qsTr("es.exe not found yet: looked for on the first search")
         });
