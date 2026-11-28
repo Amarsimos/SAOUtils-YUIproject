@@ -79,27 +79,27 @@ ColumnLayout {
         followupItems = yui.followupList(Date.now());
     }
 
-    // Under the date: how far the day is.
+    // Under the date: how far the day is (English, as the date box and the buttons).
     function followupWhen(item) {
         if (item.phase === "ahead")
-            return item.days === 1 ? qsTr("Tomorrow") : qsTr("In %1 days").arg(item.days);
+            return item.days === 1 ? "Tomorrow" : "In %1 days".arg(item.days);
 
         if (item.phase === "today")
-            return qsTr("Today");
+            return "Today";
 
-        return item.days === -1 ? qsTr("Yesterday") : qsTr("%1 days ago").arg(-item.days);
+        return item.days === -1 ? "Yesterday" : "%1 days ago".arg(-item.days);
     }
 
-    // What Yui does about it: [tag text, color]. Before and on the day she cheers you on, after it she
+    // What Yui does about it: [tag text (English, as the buttons beside it), color]. Before and on the day she cheers you on, after it she
     // asks how it went.
     function followupStage(item) {
         if (item.phase === "after")
-            return item.stage === "asked" ? [qsTr("Asked"), "#9A9A9A"] : [qsTr("To ask"), "#C82864"];
+            return item.stage === "asked" ? ["Asked", "#9A9A9A"] : ["To Ask", "#C82864"];
 
         if (item.phase === "today" && item.stage)
-            return [qsTr("Cheered on"), "#F1AA03"];
+            return ["Cheered On", "#F1AA03"];
 
-        return [qsTr("To cheer on"), "#4BB4EC"];
+        return ["To Cheer On", "#4BB4EC"];
     }
 
     function searchLog(text) {

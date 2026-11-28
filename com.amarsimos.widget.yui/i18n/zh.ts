@@ -545,52 +545,7 @@
 <context>
     <name>ConsoleMemories</name>
     <message>
-        <location filename="../qml/ConsoleMemories.qml" line="+85"/>
-        <source>Tomorrow</source>
-        <translation>明天</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>In %1 days</source>
-        <translation>%1 天后</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Today</source>
-        <translation>今天</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>Yesterday</source>
-        <translation>昨天</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>%1 days ago</source>
-        <translation>%1 天前</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Asked</source>
-        <translation>已询问</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>To ask</source>
-        <translation>待询问</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>Cheered on</source>
-        <translation>已打气</translation>
-    </message>
-    <message>
-        <location line="+2"/>
-        <source>To cheer on</source>
-        <translation>待打气</translation>
-    </message>
-    <message>
-        <location line="+106"/>
+        <location filename="../qml/ConsoleMemories.qml" line="+208"/>
         <source>Ask Yui what she makes of you from her memories.</source>
         <translation>问问结衣，从她的记忆里看，你是个怎样的人。</translation>
     </message>
@@ -620,7 +575,7 @@
         <translation>还没有记忆碎片：和结衣聊天，她会自己记下来。</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location line="+153"/>
         <source>Ctrl+Enter saves · Esc cancels</source>
         <translation>Ctrl+Enter 保存 · Esc 取消</translation>
     </message>
@@ -660,7 +615,7 @@
         <translation>%1 条消息</translation>
     </message>
     <message>
-        <location line="-636"/>
+        <location line="-639"/>
         <location line="+10"/>
         <source>The heart core is full (%1). Move a memory out of it first.</source>
         <translation>心核已满（%1 条）。请先把一条记忆移出心核。</translation>
@@ -686,7 +641,7 @@
         <translation>想起过 %1 次</translation>
     </message>
     <message>
-        <location line="+625"/>
+        <location line="+628"/>
         <source>Search the log</source>
         <translation>搜索回忆日志</translation>
     </message>
@@ -2177,7 +2132,7 @@
 <context>
     <name>SystemConsole</name>
     <message>
-        <location filename="../qml/SystemConsole.qml" line="+39"/>
+        <location filename="../qml/SystemConsole.qml" line="+40"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>
