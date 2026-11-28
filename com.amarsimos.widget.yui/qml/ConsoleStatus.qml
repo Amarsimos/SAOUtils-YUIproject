@@ -5,7 +5,8 @@ import "yui.js" as Yui
 // System Console, Status (as the preview): Cardinal Load (CPU, GPU, RAM and the battery as SAO HUD
 // bars, colored with the crystal's thresholds; the same data sources as SAO Utils' HP bar widgets)
 // with what colors the crystal now, then three cards: Link (network), Storage (system drive) and
-// Total Tokens (this month's tokens, used and left of the Monthly Budget, as the Storage bar).
+// Total Tokens (this month's tokens, used and left of the Monthly Budget, as the Storage bar), then
+// Links: the plugins and tools Yui works with (Seedling, Media Player, the weather source, Everything).
 ConsolePage {
     id: status
 
@@ -18,6 +19,15 @@ ConsolePage {
     property real ram: NaN
     property real battery: NaN
     property real diskUsed: NaN
+    // The plugins and tools Yui works with (main-stand.qml, linkStatus).
+    property var links: []
+    // State to [tag (English, as the buttons), color].
+    readonly property var linkTags: {
+        "linked": ["Linked", "#7CC63E"],
+        "off": ["Off", "#9A9A9A"],
+        "missing": ["Missing", "#C82864"],
+        "waiting": ["Waiting", "#4BB4EC"]
+    }
     readonly property var ledger: yui.colLedger
     readonly property real budget: (yui.settings.col_budget || 0) * 1000
     readonly property real spent: ledger ? ledger.input + ledger.output : 0
@@ -30,6 +40,7 @@ ConsolePage {
         var flags = yui.readData(yui.batteryStatus);
         battery = !isNaN(flags) && flags < 128 ? yui.readData(yui.batteryLevel) : NaN;
         diskUsed = yui.readData(yui.diskSpace, yui.systemDrive);
+        links = yui.linkStatus();
     }
 
     function level(value, metric) {
@@ -175,6 +186,35 @@ ConsolePage {
             sub: status.budget > 0 ? qsTr("%1 used · %2 left of %3").arg(status.kilo(status.spent)).arg(status.kilo(Math.max(0, status.budget - status.spent))).arg(status.kilo(status.budget)) : (status.ledger ? qsTr("No budget (System Authority) · %1 replies").arg(status.ledger.requests) : qsTr("No replies counted yet this month."))
             meter: status.budget > 0 ? Math.min(1, status.spent / status.budget) : -1
             meterColor: status.budget > 0 && status.spent > status.budget ? "#C82864" : "#4BB4EC"
+        }
+
+    }
+
+
+    ConsolePanel {
+        Layout.fillWidth: true
+        title: "Links"
+        note: qsTr("plugins and tools")
+
+        Repeater {
+            model: status.links
+
+            ConsoleRow {
+                readonly property var tag: status.linkTags[modelData.state] || [modelData.state, "#9A9A9A"]
+
+                Layout.fillWidth: true
+                keyWidth: 110
+                key: modelData.name
+                text: modelData.detail
+                last: index === status.links.length - 1
+
+                ConsoleTag {
+                    text: parent.parent.tag[0]
+                    color: parent.parent.tag[1]
+                }
+
+            }
+
         }
 
     }

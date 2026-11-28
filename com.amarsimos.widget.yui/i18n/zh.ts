@@ -835,7 +835,7 @@
 <context>
     <name>ConsoleStatus</name>
     <message>
-        <location filename="../qml/ConsoleStatus.qml" line="+62"/>
+        <location filename="../qml/ConsoleStatus.qml" line="+73"/>
         <source>refresh 2 s</source>
         <translation>每 2 秒刷新</translation>
     </message>
@@ -903,6 +903,11 @@
         <location line="+0"/>
         <source>No replies counted yet this month.</source>
         <translation>这个月还没有统计到回复。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>plugins and tools</source>
+        <translation>插件与工具</translation>
     </message>
 </context>
 <context>
@@ -2516,19 +2521,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3102"/>
+        <location line="+3141"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3085"/>
-        <location line="+2171"/>
+        <location line="-3124"/>
+        <location line="+2210"/>
         <location line="+1028"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4376"/>
+        <location line="-4415"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2631,7 +2636,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+314"/>
+        <location line="+133"/>
+        <source>%1 widgets growing</source>
+        <translation>%1 个挂件在培育中</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not installed: the widgets Yui grows need it</source>
+        <translation>未安装：结衣培育挂件需要它</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Now Playing and Control Media are off</source>
+        <translation>Now Playing 和 Control Media 都已关闭</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not installed (com.gpbeta.media)</source>
+        <translation>未安装（com.gpbeta.media）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Nothing playing</source>
+        <translation>没有在播放</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Weather Report is off</source>
+        <translation>Weather Report 已关闭</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No weather source chosen (Mental Health Counseling, Perception)</source>
+        <translation>没有选择天气数据源（Mental Health Counseling → Perception）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Nothing read yet</source>
+        <translation>还没有读到数据</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Search Files is off (System Authority)</source>
+        <translation>Search Files 已关闭（System Authority）</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>es.exe not found yet: looked for on the first search</source>
+        <translation>还没找到 es.exe：第一次检索时会自动查找</translation>
+    </message>
+    <message>
+        <location line="+197"/>
         <source>Seedling</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2684,19 +2739,19 @@
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6289"/>
-        <location line="+6323"/>
+        <location line="-6328"/>
+        <location line="+6362"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6330"/>
-        <location line="+6330"/>
+        <location line="-6369"/>
+        <location line="+6369"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4352"/>
+        <location line="-4391"/>
         <source>Close %1 without asking from now on?
 You can change this in System Authority.</source>
         <translation>以后关闭 %1 时不再询问吗？
@@ -2708,7 +2763,7 @@ You can change this in System Authority.</source>
         <translation>备份写入失败，所以没有删除任何内容。请查看 System Authority 的日志。</translation>
     </message>
     <message>
-        <location line="+3910"/>
+        <location line="+3949"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>
