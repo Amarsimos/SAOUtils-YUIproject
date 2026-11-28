@@ -1,9 +1,9 @@
 import NERvGear 1.0 as NVG
 import QtQuick 2.12
 
-// A page button of System Console, as the SAO main menu's: a white disc with an icon of SAO Utils'
-// SAO theme (item group, e.g. "System/HW_info"), orange with the theme's -hovered (white) icon while
-// checked, its caption under it.
+// A page button of System Console, as the SAO main menu's: an icon of SAO Utils' SAO theme (item group,
+// e.g. "System/HW_info"), the theme's -hovered (white) icon while hovered or checked, an orange ring
+// while checked, its caption under it.
 Item {
     id: button
 
@@ -17,23 +17,30 @@ Item {
     width: 72
     height: 58 + label.implicitHeight + 4
 
-    Rectangle {
+    // The theme's icon is a disc of its own (grey, white while hovered): shown large, no disc around
+    // it; the page shown has an orange ring.
+    Item {
         id: disc
 
         anchors.horizontalCenter: parent.horizontalCenter
         width: 54
         height: 54
-        radius: 27
-        color: button.checked ? "#F1AA03" : "#FFFFFF"
-        border.width: button.checked ? 4 : 0
-        border.color: "#55F1AA03"
         scale: area.containsMouse && !button.checked ? 1.06 : 1
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: 3
+            border.color: "#F1AA03"
+            visible: button.checked
+        }
 
         NVG.IconSource {
             anchors.centerIn: parent
-            width: 34
-            height: 34
-            hovered: button.checked
+            width: 46
+            height: 46
+            hovered: button.checked || area.containsMouse
             pressed: area.pressed
             defaultIcon {
                 normal: button.base + ".png"
