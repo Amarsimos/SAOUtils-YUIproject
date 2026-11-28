@@ -4391,7 +4391,8 @@ T.Widget {
 
     // Yui says something by herself (idle chatter) while the chat is closed; its reply shows in the
     // bubble next to her collapsed form.
-    function idleChat() {
+    // forcedHook: a hook to start from instead of picking one (System Authority's tests).
+    function idleChat(forcedHook) {
         var title = userTitle();
         var form = {
             "crystal": "水晶",
@@ -4400,7 +4401,7 @@ T.Widget {
         }[collapsedForm] || "小小的立绘";
         var place = hostView && hostView.compositor === NVG.LauncherCompositor ? "的启动器里" : "的桌面上";
         var now = Date.now();
-        var hook = widget.busy ? null : chatHook(now, title);
+        var hook = forcedHook || (widget.busy ? null : chatHook(now, title));
         var start = hook ? "可以从这个由头说起：" + hook.text + "。" : "闲聊、问候，或者结合时间和之前聊过的事关心一下。";
         var started = yuiSpeaks("（系统提示：结衣现在以" + form + "的样子待在" + title + place + "，这只是背景，不要说起自己的样子或待在哪里。请结衣主动对" + title + "说一句简短的话。" + start + "一两句话即可，不要提起这条提示。）");
         diag("idle chatter" + (hook ? " (" + hook.key + ")" : "") + ": " + (started ? "requested" : "not now (busy or no API key)"));
@@ -4529,6 +4530,18 @@ T.Widget {
         }
 
         return hook;
+    }
+
+    // System Authority "Test Easter Egg Hint": Spontaneous Talk at once from the next System Call hint
+    // (Yui.chatTip), whatever the 3 days and the chance; each press takes the next one.
+    function testChatTip() {
+        var index = widget.settings.chat_tip_index || 0;
+        widget.settings.chat_tip_index = index + 1;
+        diag("test easter egg hint " + (index % 3 + 1));
+        idleChat({
+            "key": "tip",
+            "text": Yui.chatTip(index, userTitle())
+        });
     }
 
     // System Authority tests: said at once (an example when there is nothing real).

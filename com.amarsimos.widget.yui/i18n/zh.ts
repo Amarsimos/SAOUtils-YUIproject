@@ -1714,7 +1714,7 @@
 <context>
     <name>SystemAuthority</name>
     <message>
-        <location filename="../qml/SystemAuthority.qml" line="+88"/>
+        <location filename="../qml/SystemAuthority.qml" line="+90"/>
         <source>System Authority</source>
         <translation>System Authority</translation>
     </message>
@@ -2057,6 +2057,11 @@
         <location line="+0"/>
         <source>Test Weather Change</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Test Easter Egg Hint</source>
+        <translation>测试彩蛋暗示</translation>
     </message>
     <message>
         <location line="+44"/>
@@ -2491,7 +2496,7 @@
 <context>
     <name>main-stand</name>
     <message>
-        <location filename="../qml/main-stand.qml" line="+1959"/>
+        <location filename="../qml/main-stand.qml" line="+1965"/>
         <source>Yui will search for:</source>
         <translation>结衣将为你搜索：</translation>
     </message>
@@ -2501,19 +2506,19 @@
         <translation>结衣将为你打开这个页面：</translation>
     </message>
     <message>
-        <location line="+3178"/>
+        <location line="+3198"/>
         <source>MHCP-YUI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3161"/>
+        <location line="-3181"/>
         <location line="+2214"/>
-        <location line="+1061"/>
+        <location line="+1081"/>
         <source>Navigation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4465"/>
+        <location line="-4491"/>
         <source>Sword Skills</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2524,7 +2529,7 @@
     </message>
     <message>
         <location line="+73"/>
-        <location line="+2476"/>
+        <location line="+2482"/>
         <location line="+49"/>
         <source>Alarm</source>
         <translation type="unfinished"></translation>
@@ -2671,7 +2676,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2361"/>
+        <location line="+2381"/>
         <source>New messages</source>
         <translation>以下是新消息</translation>
     </message>
@@ -2714,19 +2719,19 @@
         <translation>对结衣说点什么……</translation>
     </message>
     <message>
-        <location line="-6380"/>
-        <location line="+6414"/>
+        <location line="-6406"/>
+        <location line="+6440"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6421"/>
-        <location line="+6421"/>
+        <location line="-6447"/>
+        <location line="+6447"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4428"/>
+        <location line="-4448"/>
         <source>Close %1 without asking from now on?
 You can change this in System Authority.</source>
         <translation>以后关闭 %1 时不再询问吗？
@@ -2738,7 +2743,7 @@ You can change this in System Authority.</source>
         <translation>备份写入失败，所以没有删除任何内容。请查看 System Authority 的日志。</translation>
     </message>
     <message>
-        <location line="+3986"/>
+        <location line="+4006"/>
         <source>Reset Log</source>
         <translation type="unfinished"></translation>
     </message>

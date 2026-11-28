@@ -79,6 +79,8 @@ NVG.Window {
             yui.testFollowup(tag.slice(9));
         else if (tag === "moodcare")
             yui.testMoodCare();
+        else if (tag === "chattip")
+            yui.testChatTip();
         else if (tag === "weatherchange")
             yui.testWeatherChange();
         else
@@ -651,7 +653,7 @@ NVG.Window {
                                     "tests": [[qsTr("Test Seedling Link"), "seedling_link"], [qsTr("Test Place Seedling"), "seedling_place"]]
                                 }, {
                                     "title": qsTr("Care"),
-                                    "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"]]
+                                    "tests": [[qsTr("Care Tick"), "care"], [qsTr("Follow-up: Today"), "followup_cheer"], [qsTr("Follow-up: After"), "followup_ask"], [qsTr("Test Mood Care"), "moodcare"], [qsTr("Test Weather Change"), "weatherchange"], [qsTr("Test Easter Egg Hint"), "chattip"]]
                                 }]
 
                                 ColumnLayout {
