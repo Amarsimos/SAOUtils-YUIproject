@@ -5,7 +5,7 @@ import "yui.js" as Yui
 // System Console, Status (as the preview): Cardinal Load (CPU, GPU, RAM and the battery as SAO HUD
 // bars, colored with the crystal's thresholds; the same data sources as SAO Utils' HP bar widgets)
 // with what colors the crystal now, then three cards: Link (network), Storage (system drive) and
-// Col Ledger (this month's tokens against the budget).
+// Total Tokens (this month's tokens, used and left of the Monthly Budget, as the Storage bar).
 ConsolePage {
     id: status
 
@@ -167,10 +167,12 @@ ConsolePage {
             Layout.preferredWidth: (status.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
             Layout.maximumWidth: Layout.preferredWidth
             Layout.fillHeight: true
-            title: "Col Ledger"
+            // With a Monthly Budget (System Authority): the part used in %, used and left, and the bar
+            // (red once past it); without one, the tokens alone.
+            title: "Total Tokens"
             note: "this month"
-            big: status.kilo(status.spent)
-            sub: status.ledger ? (status.budget > 0 ? qsTr("Budget %1 · %2 replies").arg(status.kilo(status.budget)).arg(status.ledger.requests) : qsTr("%1 replies").arg(status.ledger.requests)) : qsTr("No replies counted yet this month.")
+            big: status.budget > 0 ? Math.round(status.spent / status.budget * 100) + "%" : status.kilo(status.spent)
+            sub: status.budget > 0 ? qsTr("%1 used · %2 left of %3").arg(status.kilo(status.spent)).arg(status.kilo(Math.max(0, status.budget - status.spent))).arg(status.kilo(status.budget)) : (status.ledger ? qsTr("No budget (System Authority) · %1 replies").arg(status.ledger.requests) : qsTr("No replies counted yet this month."))
             meter: status.budget > 0 ? Math.min(1, status.spent / status.budget) : -1
             meterColor: status.budget > 0 && status.spent > status.budget ? "#C82864" : "#4BB4EC"
         }

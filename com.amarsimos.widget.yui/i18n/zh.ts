@@ -687,12 +687,12 @@
         <translation>时间请写成 HH:mm、yyyy-MM-dd HH:mm 或 +分钟数（必须是将来的时间），并填写提醒内容。</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+69"/>
         <source>No raid now.</source>
         <translation>当前没有 Boss Raid。</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+36"/>
         <source>Alarm is off (Skill Slots, Alarm).</source>
         <translation>提醒功能已关闭（Skill Slots → Alarm）。</translation>
     </message>
@@ -717,22 +717,22 @@
         <translation>没有提醒。</translation>
     </message>
     <message>
-        <location line="-105"/>
+        <location line="-113"/>
         <source>Daily %1</source>
         <translation>每天 %1</translation>
     </message>
     <message>
-        <location line="+208"/>
+        <location line="+216"/>
         <source>Something to note down</source>
         <translation>要记下的事</translation>
     </message>
     <message>
-        <location line="-137"/>
+        <location line="-141"/>
         <source>in a raid</source>
         <translation>专注中</translation>
     </message>
     <message>
-        <location line="-23"/>
+        <location line="-27"/>
         <source>set aside</source>
         <translation>暂时搁置</translation>
     </message>
@@ -742,7 +742,7 @@
         <translation>Boss Raid、Alarm 和 Quest Log 目前暂时搁置：这里显示已经保存的内容，但结衣不会提醒你，也不会帮你记笔记，暂时不能添加。</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+19"/>
         <source>resting</source>
         <translation>休息中</translation>
     </message>
@@ -752,7 +752,7 @@
         <translation>剩余</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+34"/>
         <source>next reminder</source>
         <translation>下一个提醒</translation>
     </message>
@@ -865,7 +865,7 @@
         <translation>黄色</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+28"/>
         <source>System Authority, Network Link</source>
         <translation>System Authority → Network Link</translation>
     </message>
@@ -875,7 +875,7 @@
         <translation>两分钟没有流量</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+15"/>
         <source>Not available</source>
         <translation>无法读取</translation>
     </message>
@@ -890,14 +890,14 @@
         <translation>剩余 %1%</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>Budget %1 · %2 replies</source>
-        <translation>预算 %1 · %2 次回复</translation>
+        <location line="+17"/>
+        <source>%1 used · %2 left of %3</source>
+        <translation>已用 %1 · 剩余 %2 / 共 %3</translation>
     </message>
     <message>
         <location line="+0"/>
-        <source>%1 replies</source>
-        <translation>%1 次回复</translation>
+        <source>No budget (System Authority) · %1 replies</source>
+        <translation>未设预算（System Authority）· %1 次回复</translation>
     </message>
     <message>
         <location line="+0"/>
