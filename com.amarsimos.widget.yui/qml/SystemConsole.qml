@@ -23,7 +23,7 @@ NVG.View {
     // Translucent as her chat (Chat Opacity in Equipment).
     readonly property real panelAlpha: targetWidget.chatOpacity !== undefined ? targetWidget.chatOpacity : 0.8
     readonly property int leastWidth: 560
-    readonly property int leastHeight: 600
+    readonly property int leastHeight: 680
     readonly property int titleHeight: 64
     readonly property int bottomHeight: 40
     // Room around the panel for its shadow (the view is this much larger on every side).
@@ -92,7 +92,7 @@ NVG.View {
         anchorRect = anchor;
         var saved = settings.console_offset;
         width = Math.max(leastWidth, saved ? saved.width : 760);
-        height = Math.max(leastHeight, saved ? saved.height : 600);
+        height = Math.max(leastHeight, saved ? saved.height : 700);
         var area = areaAt(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2) || areaAt(0, 0) || Qt.application.screens[0];
         var left = area.virtualX, top = area.virtualY, right = left + area.width, bottom = top + area.height;
         if (saved) {
@@ -393,7 +393,7 @@ NVG.View {
 
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: 6
-                            spacing: 8
+                            spacing: 4
 
                             Repeater {
                                 model: consoleView.pages

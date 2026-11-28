@@ -2,10 +2,9 @@ import NERvGear 1.0 as NVG
 import QtQuick 2.12
 import "yui.js" as Yui
 
-// A page button of System Console, as SAO Utils' SAO main menu button (the theme's MainButton): a
-// white disc, SAO orange while hovered or on the page shown, with an icon of the theme's main menu
-// set ("SAO Main Menu Icons", /icon/main, 42 px, e.g. "System/HW_info"): grey, white on orange; its
-// caption under it.
+// A page button of System Console, as the ringed SAO menu icon (see the disc below), with an icon of
+// SAO Utils' SAO theme main menu set ("SAO Main Menu Icons", /icon/main, e.g. "System/HW_info"):
+// grey, white on orange; its caption under it.
 Item {
     id: button
 
@@ -18,21 +17,37 @@ Item {
     signal clicked()
 
     width: 80
-    height: 68 + label.implicitHeight + 4
+    height: 76 + label.implicitHeight + 4
 
-    // The disc as the theme's btn.png (white, 90 %) and btn-hovered.png (#F1AA03, 80 %), 64 px.
-    Rectangle {
+    // As the ringed SAO menu icons (sao-assets, SAO_Icons 2_Menu-1_Ringed, 120 px): a disc (100) inside a
+    // thin ring (outer 120, 2.5 wide, a 7.5 gap between), both #FBFBFB with a grey icon, or both
+    // #EBA601 with a white icon while hovered or on the page shown. Here 72 px across.
+    Item {
         id: disc
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 64
-        height: 64
-        radius: 32
-        color: button.lit ? "#CCF1AA03" : "#E6FFFFFF"
+        width: 72
+        height: 72
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: 1.5
+            border.color: button.lit ? "#EBA601" : "#FBFBFB"
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: 60
+            height: 60
+            radius: 30
+            color: button.lit ? "#EBA601" : "#FBFBFB"
+        }
 
         NVG.IconSource {
             anchors.centerIn: parent
-            // At the icons' own size, so they stay sharp.
+            // The theme's main menu icons at their own size, so they stay sharp.
             width: 42
             height: 42
             hovered: button.lit
@@ -44,14 +59,13 @@ Item {
             }
         }
 
-
     }
 
     Text {
         id: label
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 68
+        y: 76
         text: button.caption
         font.family: Yui.fontFor(text)
         font.pixelSize: 13
