@@ -145,7 +145,7 @@ ConsolePage {
             ConsoleChip {
                 small: true
                 enabled: !records.yui.writingReport
-                text: records.yui.writingReport ? qsTr("Writing...") : qsTr("Write This Week's")
+                text: records.yui.writingReport ? "Writing..." : "Write This Week's"
                 onClicked: records.yui.writeWeeklyReport(false, function(error) {
                     records.reportError = error;
                 })

@@ -545,52 +545,52 @@
 <context>
     <name>ConsoleMemories</name>
     <message>
-        <location filename="../qml/ConsoleMemories.qml" line="+84"/>
+        <location filename="../qml/ConsoleMemories.qml" line="+85"/>
         <source>Tomorrow</source>
-        <translation type="unfinished"></translation>
+        <translation>明天</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>In %1 days</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 天后</translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>Today, cheered on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
         <source>Today</source>
-        <translation type="unfinished"></translation>
+        <translation>今天</translation>
     </message>
     <message>
         <location line="+2"/>
+        <source>Yesterday</source>
+        <translation>昨天</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>%1 days ago</source>
+        <translation>%1 天前</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Asked</source>
-        <translation type="unfinished"></translation>
+        <translation>已询问</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>To ask</source>
-        <translation type="unfinished"></translation>
+        <translation>待询问</translation>
     </message>
     <message>
-        <location line="+43"/>
-        <source>Memories</source>
-        <translation type="unfinished"></translation>
+        <location line="+3"/>
+        <source>Cheered on</source>
+        <translation>已打气</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>Follow-ups</source>
-        <translation type="unfinished"></translation>
+        <location line="+2"/>
+        <source>To cheer on</source>
+        <translation>待打气</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <source>Recollection Log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+63"/>
+        <location line="+106"/>
         <source>Ask Yui what she makes of you from her memories.</source>
         <translation>问问结衣，从她的记忆里看，你是个怎样的人。</translation>
     </message>
@@ -600,42 +600,7 @@
         <translation>还没有记忆，先和结衣多聊聊吧。</translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Fold</source>
-        <translation>收起</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Unfold</source>
-        <translation>展开</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <source>Writing...</source>
-        <translation>正在写……</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Ask Again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Hear from Yui</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+18"/>
-        <source>Heart Core</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Fragments</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+14"/>
+        <location line="+49"/>
         <source>Search memories</source>
         <translation>搜索记忆</translation>
     </message>
@@ -655,72 +620,17 @@
         <translation>还没有记忆碎片：和结衣聊天，她会自己记下来。</translation>
     </message>
     <message>
-        <location line="+84"/>
-        <source>Edit</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+11"/>
-        <source>Unpin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Pin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>To Fragments</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>To Core</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Forget</source>
-        <translation>忘记</translation>
-    </message>
-    <message>
-        <location line="+50"/>
+        <location line="+161"/>
         <source>Ctrl+Enter saves · Esc cancels</source>
         <translation>Ctrl+Enter 保存 · Esc 取消</translation>
     </message>
     <message>
-        <location line="+5"/>
-        <source>Save</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+6"/>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+50"/>
+        <location line="+61"/>
         <source>Something Yui should remember</source>
         <translation>想让结衣记住的事</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <source>Core</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Fragment</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>Add</source>
-        <translation type="unfinished">添加</translation>
-    </message>
-    <message>
-        <location line="+20"/>
+        <location line="+36"/>
         <source>days to come</source>
         <translation>将来的日子</translation>
     </message>
@@ -740,22 +650,17 @@
         <translation>跟进已关闭（Mental Health Counseling → Care）</translation>
     </message>
     <message>
-        <location line="+69"/>
-        <source>Remove</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+33"/>
+        <location line="+114"/>
         <source>Every chat message is kept here, only for exports and searching. It is never sent to the AI. Exporting and clearing it are in Yui&apos;s Heart, Local Memory.</source>
         <translation>每条聊天消息都保存在这里，只用于导出和搜索，不会发给 AI。导出和清空在 Yui&apos;s Heart → Local Memory。</translation>
     </message>
     <message>
         <location line="-8"/>
         <source>%1 messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 条消息</translation>
     </message>
     <message>
-        <location line="-622"/>
+        <location line="-647"/>
         <location line="+10"/>
         <source>The heart core is full (%1). Move a memory out of it first.</source>
         <translation>心核已满（%1 条）。请先把一条记忆移出心核。</translation>
@@ -781,7 +686,7 @@
         <translation>想起过 %1 次</translation>
     </message>
     <message>
-        <location line="+611"/>
+        <location line="+636"/>
         <source>Search the log</source>
         <translation>搜索回忆日志</translation>
     </message>
@@ -829,12 +734,7 @@
         <translation>结衣还没有在电脑上做过操作。</translation>
     </message>
     <message>
-        <location line="-10"/>
-        <source>Clear</source>
-        <translation>清空</translation>
-    </message>
-    <message>
-        <location line="-5"/>
+        <location line="-15"/>
         <source>last 50 · read only</source>
         <translation>最近 50 条 · 只读</translation>
     </message>
@@ -882,13 +782,7 @@
         <translation>提醒内容…</translation>
     </message>
     <message>
-        <location line="+6"/>
-        <location line="+68"/>
-        <source>Add</source>
-        <translation type="unfinished">添加</translation>
-    </message>
-    <message>
-        <location line="-109"/>
+        <location line="-35"/>
         <source>No reminders.</source>
         <translation>没有提醒。</translation>
     </message>
@@ -903,12 +797,7 @@
         <translation>要记下的事</translation>
     </message>
     <message>
-        <location line="-16"/>
-        <source>Export</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="-119"/>
+        <location line="-135"/>
         <source>in a raid</source>
         <translation>专注中</translation>
     </message>
@@ -923,22 +812,7 @@
         <translation>剩余</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>Banner</source>
-        <translation>横幅</translation>
-    </message>
-    <message>
-        <location line="+5"/>
-        <source>End</source>
-        <translation>结束</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Start</source>
-        <translation>开始</translation>
-    </message>
-    <message>
-        <location line="+16"/>
+        <location line="+28"/>
         <source>next reminder</source>
         <translation>下一个提醒</translation>
     </message>
@@ -949,12 +823,7 @@
         <translation>已在 Skill Slots 中关闭</translation>
     </message>
     <message>
-        <location line="-13"/>
-        <source>Dismiss</source>
-        <translation>删除</translation>
-    </message>
-    <message>
-        <location line="+20"/>
+        <location line="+7"/>
         <source>Exported to %1</source>
         <translation>已导出到 %1</translation>
     </message>
@@ -962,16 +831,6 @@
         <location line="+0"/>
         <source>The export could not be written. See the log in System Authority.</source>
         <translation>导出失败，请查看 System Authority 的日志。</translation>
-    </message>
-    <message>
-        <location line="+50"/>
-        <source>Undo</source>
-        <translation>撤销</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Done</source>
-        <translation>已执行</translation>
     </message>
 </context>
 <context>
@@ -1023,17 +882,7 @@
         <translation>没有记录</translation>
     </message>
     <message>
-        <location line="+35"/>
-        <source>Write This Week&apos;s</source>
-        <translation>写本周小结</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Writing...</source>
-        <translation>正在写……</translation>
-    </message>
-    <message>
-        <location line="+20"/>
+        <location line="+55"/>
         <source>No reports yet.</source>
         <translation>还没有小结。</translation>
     </message>
@@ -2640,7 +2489,7 @@
     <message>
         <location line="+5"/>
         <source>%1 messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 条消息</translation>
     </message>
     <message>
         <location line="+6"/>

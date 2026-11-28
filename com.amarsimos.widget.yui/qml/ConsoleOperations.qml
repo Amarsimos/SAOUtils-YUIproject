@@ -44,7 +44,7 @@ ConsolePage {
             ConsoleChip {
                 small: true
                 visible: operations.entries.length > 0
-                text: qsTr("Clear")
+                text: "Clear"
                 onClicked: operations.yui.askConfirm(qsTr("System Console"), qsTr("Clear the list of recent operations?"), function() {
                     operations.yui.clearOperations();
                 }, true)

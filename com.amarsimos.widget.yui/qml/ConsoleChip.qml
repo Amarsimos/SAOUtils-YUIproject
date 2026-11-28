@@ -2,7 +2,7 @@ import QtQuick 2.12
 import "yui.js" as Yui
 
 // A small button of System Console (the preview's chip): paper with a light shadow, SAO UI text; SAO
-// orange with white text while hovered or checked.
+// orange with white text while hovered or checked. Its text is English, not translated (as SAO's buttons).
 Rectangle {
     id: chip
 

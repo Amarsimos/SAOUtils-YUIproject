@@ -95,12 +95,12 @@ ConsolePage {
                 ConsoleChip {
                     small: true
                     visible: quests.raiding
-                    text: qsTr("Banner")
+                    text: "Banner"
                     onClicked: quests.yui.showRaidBanner()
                 },
                 ConsoleChip {
                     small: true
-                    text: quests.raiding ? qsTr("End") : qsTr("Start")
+                    text: quests.raiding ? "End" : "Start"
                     onClicked: {
                         var yui = quests.yui;
                         if (quests.raiding)
@@ -159,7 +159,7 @@ ConsolePage {
             }
 
             ConsoleChip {
-                text: "＋ " + qsTr("Add")
+                text: "＋ Add"
                 onClicked: quests.addTypedReminder()
             }
 
@@ -187,7 +187,7 @@ ConsolePage {
 
                 ConsoleChip {
                     small: true
-                    text: qsTr("Dismiss")
+                    text: "Dismiss"
                     onClicked: quests.yui.deleteReminder(modelData.id)
                 }
 
@@ -205,7 +205,7 @@ ConsolePage {
             ConsoleChip {
                 small: true
                 enabled: quests.notes.length > 0
-                text: qsTr("Export")
+                text: "Export"
                 onClicked: quests.yui.exportNotes(function(path) {
                     quests.notesMessage = path ? qsTr("Exported to %1").arg(path) : qsTr("The export could not be written. See the log in System Authority.");
                 })
@@ -227,7 +227,7 @@ ConsolePage {
             }
 
             ConsoleChip {
-                text: "＋ " + qsTr("Add")
+                text: "＋ Add"
                 onClicked: quests.addTypedNote()
             }
 
@@ -257,7 +257,7 @@ ConsolePage {
 
                 ConsoleChip {
                     small: true
-                    text: modelData.done ? qsTr("Undo") : qsTr("Done")
+                    text: modelData.done ? "Undo" : "Done"
                     onClicked: quests.yui.editNote(modelData.id, modelData.text, !modelData.done)
                 }
 

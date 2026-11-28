@@ -8,8 +8,8 @@ import "yui.js" as Yui
 //   then the heart core or the fragments (a switch in the header, with the search), the core's
 //   capacity as a HUD bar, the memories (orange stripe: core, grey: fragment; on hover Edit, Pin (core
 //   only), To Fragments / To Core and Forget; editing in place with Save / Cancel) and a row to add one.
-// - Follow-ups: the memories about a day to come, a date box (orange today, faded once past), the
-//   state and Remove.
+// - Follow-ups: the memories about a day to come, a date box (orange today, faded once past), what Yui
+//   does about it as a tag (to cheer on, cheered on, to ask, asked) and Remove.
 // - Recollection Log: searching the chat history, the words found in orange.
 // What is remembered, the transfer, backups and forgetting everything stay in Yui's Heart.
 ColumnLayout {
@@ -79,14 +79,27 @@ ColumnLayout {
         followupItems = yui.followupList(Date.now());
     }
 
-    function followupState(item) {
+    // Under the date: how far the day is.
+    function followupWhen(item) {
         if (item.phase === "ahead")
             return item.days === 1 ? qsTr("Tomorrow") : qsTr("In %1 days").arg(item.days);
 
         if (item.phase === "today")
-            return item.stage ? qsTr("Today, cheered on") : qsTr("Today");
+            return qsTr("Today");
 
-        return item.stage === "asked" ? qsTr("Asked") : qsTr("To ask");
+        return item.days === -1 ? qsTr("Yesterday") : qsTr("%1 days ago").arg(-item.days);
+    }
+
+    // What Yui does about it: [tag text, color]. Before and on the day she cheers you on, after it she
+    // asks how it went.
+    function followupStage(item) {
+        if (item.phase === "after")
+            return item.stage === "asked" ? [qsTr("Asked"), "#9A9A9A"] : [qsTr("To ask"), "#C82864"];
+
+        if (item.phase === "today" && item.stage)
+            return [qsTr("Cheered on"), "#F1AA03"];
+
+        return [qsTr("To cheer on"), "#4BB4EC"];
     }
 
     function searchLog(text) {
@@ -129,7 +142,7 @@ ColumnLayout {
         spacing: 8
 
         Repeater {
-            model: [qsTr("Memories"), qsTr("Follow-ups"), qsTr("Recollection Log")]
+            model: ["Memories", "Follow-ups", "Recollection Log"]
 
             ConsoleChip {
                 text: modelData
@@ -202,14 +215,14 @@ ColumnLayout {
                             ConsoleChip {
                                 small: true
                                 visible: !!(memories.portrait && memories.portrait.text)
-                                text: memories.portraitOpen ? qsTr("Fold") : qsTr("Unfold")
+                                text: memories.portraitOpen ? "Fold" : "Unfold"
                                 onClicked: memories.portraitOpen = !memories.portraitOpen
                             }
 
                             ConsoleChip {
                                 small: true
                                 enabled: !memories.yui.writingPortrait && memories.yui.heartCache.length > 0
-                                text: memories.yui.writingPortrait ? qsTr("Writing...") : (memories.portrait ? qsTr("Ask Again") : qsTr("Hear from Yui"))
+                                text: memories.yui.writingPortrait ? "Writing..." : (memories.portrait ? "Ask Again" : "Hear from Yui")
                                 onClicked: memories.yui.writePortrait(function(error) {
                                     memories.message = error;
                                 })
@@ -227,7 +240,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 leading: [
                     ConsoleSwitch {
-                        model: ["◆ " + qsTr("Heart Core") + "  " + memories.core.length, "● " + qsTr("Fragments") + "  " + memories.fragments.length]
+                        model: ["◆ Heart Core  " + memories.core.length, "● Fragments  " + memories.fragments.length]
                         current: memories.side
                         onPicked: {
                             memories.side = index;
@@ -379,7 +392,7 @@ ColumnLayout {
 
                             ConsoleChip {
                                 small: true
-                                text: qsTr("Edit")
+                                text: "Edit"
                                 onClicked: {
                                     memories.editingId = item.memory.id;
                                     editor.text = item.memory.text;
@@ -390,7 +403,7 @@ ColumnLayout {
                             ConsoleChip {
                                 small: true
                                 visible: item.isCore
-                                text: item.memory.pinned ? qsTr("Unpin") : qsTr("Pin")
+                                text: item.memory.pinned ? "Unpin" : "Pin"
                                 onClicked: memories.change(item.memory.id, {
                                     "pinned": !item.memory.pinned
                                 })
@@ -398,7 +411,7 @@ ColumnLayout {
 
                             ConsoleChip {
                                 small: true
-                                text: item.isCore ? qsTr("To Fragments") : qsTr("To Core")
+                                text: item.isCore ? "To Fragments" : "To Core"
                                 onClicked: memories.change(item.memory.id, {
                                     "kind": item.isCore ? "fragment" : "core"
                                 })
@@ -406,7 +419,7 @@ ColumnLayout {
 
                             ConsoleChip {
                                 small: true
-                                text: qsTr("Forget")
+                                text: "Forget"
                                 onClicked: memories.remove(item.memory)
                             }
 
@@ -461,13 +474,13 @@ ColumnLayout {
 
                                 ConsoleChip {
                                     small: true
-                                    text: qsTr("Save")
+                                    text: "Save"
                                     onClicked: item.save()
                                 }
 
                                 ConsoleChip {
                                     small: true
-                                    text: qsTr("Cancel")
+                                    text: "Cancel"
                                     onClicked: memories.editingId = -1
                                 }
 
@@ -528,12 +541,12 @@ ColumnLayout {
                     ConsoleSwitch {
                         id: addKind
 
-                        model: [qsTr("Core"), qsTr("Fragment")]
+                        model: ["Core", "Fragment"]
                         current: memories.side
                     }
 
                     ConsoleChip {
-                        text: qsTr("Add")
+                        text: "Add"
                         enabled: addText.text.trim() !== ""
                         onClicked: {
                             if (memories.add(addText.text, addKind.current === 0 ? "core" : "fragment"))
@@ -606,7 +619,7 @@ ColumnLayout {
 
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    text: memories.followupState(modelData)
+                                    text: memories.followupWhen(modelData)
                                     font.family: Yui.fontFor(text)
                                     font.pixelSize: 10
                                     color: "#7A7A7A"
@@ -621,7 +634,7 @@ ColumnLayout {
 
                             anchors.left: dateBox.right
                             anchors.leftMargin: 12
-                            anchors.right: removeChip.left
+                            anchors.right: stageTag.left
                             anchors.rightMargin: 10
                             anchors.verticalCenter: parent.verticalCenter
                             wrapMode: Text.Wrap
@@ -632,13 +645,25 @@ ColumnLayout {
                             text: modelData.text
                         }
 
+                        ConsoleTag {
+                            id: stageTag
+
+                            readonly property var stage: memories.followupStage(modelData)
+
+                            anchors.right: removeChip.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: stage[0]
+                            color: stage[1]
+                        }
+
                         ConsoleChip {
                             id: removeChip
 
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             small: true
-                            text: qsTr("Remove")
+                            text: "Remove"
                             onClicked: memories.yui.dismissFollowup(modelData.key)
                         }
 
