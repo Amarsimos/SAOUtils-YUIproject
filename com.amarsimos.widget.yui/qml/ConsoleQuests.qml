@@ -102,8 +102,12 @@ ConsolePage {
         rowSpacing: 14
 
         ConsoleCard {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
+            // The same width for every card whatever its text (a long line widened one; from the page's
+            // width, as the grid's own width follows its cards), and the
+            // same height as the others in its row.
+            Layout.preferredWidth: (quests.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.fillHeight: true
             title: "Boss Raid"
             note: quests.yui.raidActive ? qsTr("in a raid") : quests.yui.resting ? qsTr("resting") : ""
             big: quests.raiding ? Math.floor(quests.raidLeft / 60000) + ":" + ("0" + Math.floor(quests.raidLeft % 60000 / 1000)).slice(-2) : "--:--"
@@ -134,8 +138,12 @@ ConsolePage {
         }
 
         ConsoleCard {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
+            // The same width for every card whatever its text (a long line widened one; from the page's
+            // width, as the grid's own width follows its cards), and the
+            // same height as the others in its row.
+            Layout.preferredWidth: (quests.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.fillHeight: true
             title: "Alarm"
             note: qsTr("next reminder")
             big: quests.nextReminder ? Qt.formatDateTime(new Date(quests.nextReminder.due), "HH:mm") : "--:--"

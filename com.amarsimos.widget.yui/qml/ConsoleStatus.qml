@@ -129,8 +129,12 @@ ConsolePage {
         rowSpacing: 14
 
         ConsoleCard {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
+            // The same width for every card whatever its text (a long line widened one; from the page's
+            // width, as the grid's own width follows its cards), and the
+            // same height as the others in its row.
+            Layout.preferredWidth: (status.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.fillHeight: true
             title: "Link"
             note: "Network"
             big: status.yui.settings.network_watch === false ? "--" : status.yui.networkLost ? "Offline" : "Online"
@@ -142,8 +146,12 @@ ConsolePage {
         ConsoleCard {
             readonly property real minimum: status.yui.settings.storage_free_min !== undefined ? status.yui.settings.storage_free_min : 10
 
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
+            // The same width for every card whatever its text (a long line widened one; from the page's
+            // width, as the grid's own width follows its cards), and the
+            // same height as the others in its row.
+            Layout.preferredWidth: (status.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.fillHeight: true
             title: "Storage"
             note: status.yui.systemDrive.replace(/\\$/, "")
             big: isNaN(status.diskUsed) ? "--" : Math.round(status.diskUsed) + "%"
@@ -153,8 +161,12 @@ ConsolePage {
         }
 
         ConsoleCard {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
+            // The same width for every card whatever its text (a long line widened one; from the page's
+            // width, as the grid's own width follows its cards), and the
+            // same height as the others in its row.
+            Layout.preferredWidth: (status.width - 12 - parent.columnSpacing * (parent.columns - 1)) / parent.columns
+            Layout.maximumWidth: Layout.preferredWidth
+            Layout.fillHeight: true
             title: "Col Ledger"
             note: "this month"
             big: status.kilo(status.spent)

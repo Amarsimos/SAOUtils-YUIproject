@@ -29,7 +29,8 @@ ConsolePanel {
             color: "#4D4D4D"
         }
 
-        Row {
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 6
 
             ConsoleTag {
@@ -38,9 +39,11 @@ ConsolePanel {
                 color: card.tagColor
             }
 
+            // Cut short with … when the card is narrow.
             Text {
+                Layout.fillWidth: true
                 font.family: Yui.fontFor(text)
-                anchors.verticalCenter: parent.verticalCenter
+                elide: Text.ElideRight
                 visible: card.sub !== ""
                 text: card.sub
                 font.pixelSize: 12
