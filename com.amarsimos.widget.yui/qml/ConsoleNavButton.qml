@@ -3,8 +3,8 @@ import QtQuick 2.12
 import "yui.js" as Yui
 
 // A page button of System Console, as the SAO main menu's: an icon of SAO Utils' SAO theme (item group,
-// e.g. "System/HW_info"), the theme's -hovered (white) icon while hovered or checked, an orange ring
-// while checked, its caption under it.
+// e.g. "System/HW_info") large on a white disc, orange with the theme's -hovered icon while checked,
+// its caption under it.
 Item {
     id: button
 
@@ -15,33 +15,28 @@ Item {
 
     signal clicked()
 
-    width: 72
-    height: 58 + label.implicitHeight + 4
+    width: 80
+    height: 68 + label.implicitHeight + 4
 
-    // The theme's icon is a disc of its own (grey, white while hovered): shown large, no disc around
-    // it; the page shown has an orange ring.
-    Item {
+    // A white disc (orange on the page shown) with the theme's round icon large inside it, so it reads
+    // on the code wall.
+    Rectangle {
         id: disc
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 54
-        height: 54
+        width: 64
+        height: 64
+        radius: 32
+        color: button.checked ? "#F1AA03" : "#FFFFFF"
+        border.width: button.checked ? 3 : 0
+        border.color: "#66F1AA03"
         scale: area.containsMouse && !button.checked ? 1.06 : 1
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "transparent"
-            border.width: 3
-            border.color: "#F1AA03"
-            visible: button.checked
-        }
 
         NVG.IconSource {
             anchors.centerIn: parent
-            width: 46
-            height: 46
-            hovered: button.checked || area.containsMouse
+            width: 54
+            height: 54
+            hovered: button.checked
             pressed: area.pressed
             defaultIcon {
                 normal: button.base + ".png"
@@ -63,7 +58,7 @@ Item {
         id: label
 
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 58
+        y: 68
         text: button.caption
         font.family: Yui.fontFor(text)
         font.pixelSize: 13

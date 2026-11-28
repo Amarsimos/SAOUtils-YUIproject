@@ -23,7 +23,7 @@ NVG.View {
     // Translucent as her chat (Chat Opacity in Equipment).
     readonly property real panelAlpha: targetWidget.chatOpacity !== undefined ? targetWidget.chatOpacity : 0.8
     readonly property int leastWidth: 560
-    readonly property int leastHeight: 460
+    readonly property int leastHeight: 600
     readonly property int titleHeight: 64
     readonly property int bottomHeight: 40
     // Room around the panel for its shadow (the view is this much larger on every side).
@@ -393,7 +393,7 @@ NVG.View {
 
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: 6
-                            spacing: 18
+                            spacing: 8
 
                             Repeater {
                                 model: consoleView.pages
